@@ -88,7 +88,7 @@ describe('CatalogComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Mazda');
   });
 
-  it('botón Comparar agrega id a CompareStore', async () => {
+  it('botón Comparar agrega defaultVersion.id (no model.id) a CompareStore', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
     flushItems(
@@ -100,6 +100,12 @@ describe('CatalogComponent', () => {
           brand: { name: 'Toyota' },
           minPrice: 14000000,
           segment: 'HATCHBACK',
+          defaultVersion: {
+            id: 'v1',
+            name: 'XLS',
+            priceClp: 14990000,
+            year: 2026,
+          },
         },
       ],
     );
@@ -111,7 +117,59 @@ describe('CatalogComponent', () => {
     expect(btn).not.toBeNull();
     btn!.click();
 
-    expect(store.ids()).toEqual(['m1']);
+    expect(store.ids()).toEqual(['v1']);
+  });
+
+  it('muestra el nombre+año de la versión elegida junto al botón Comparar', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    flushItems(
+      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      [
+        {
+          id: 'm1',
+          name: 'Yaris',
+          brand: { name: 'Toyota' },
+          minPrice: 14000000,
+          segment: 'HATCHBACK',
+          defaultVersion: {
+            id: 'v1',
+            name: 'XLS',
+            priceClp: 14990000,
+            year: 2026,
+          },
+        },
+      ],
+    );
+    await fixture.componentInstance.initialLoad;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('XLS 2026');
+  });
+
+  it('deshabilita el botón Comparar cuando el modelo no tiene versiones', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    flushItems(
+      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      [
+        {
+          id: 'm2',
+          name: 'CX-5',
+          brand: { name: 'Mazda' },
+          minPrice: null,
+          segment: 'SUV',
+          defaultVersion: null,
+        },
+      ],
+    );
+    await fixture.componentInstance.initialLoad;
+    fixture.detectChanges();
+
+    const btn: HTMLButtonElement | null =
+      fixture.nativeElement.querySelector('button[data-testid="compare"]');
+    expect(btn).not.toBeNull();
+    expect(btn!.disabled).toBe(true);
   });
 
   it('muestra mensaje vacío cuando no hay resultados', async () => {

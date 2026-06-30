@@ -19,7 +19,24 @@
     }
   </header>
 
-  @if (empty()) {
+  @if (loadError()) {
+    <div
+      class="rounded-lg border border-warn bg-warn-light p-6 text-center shadow-sm"
+      data-testid="load-error"
+    >
+      <p class="font-display text-lg text-warn-dark">{{ loadError() }}</p>
+      <p class="mt-2 text-sm text-ink-muted">
+        Es posible que el enlace haya expirado o que la comparación haya sido eliminada.
+      </p>
+      <a
+        routerLink="/"
+        data-testid="back-home"
+        class="mt-4 inline-block rounded bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700"
+      >
+        Volver al catálogo
+      </a>
+    </div>
+  } @else if (empty()) {
     <div
       class="rounded-lg border border-border bg-surface p-8 text-center shadow-sm"
       data-testid="empty"
@@ -38,6 +55,15 @@
       </a>
     </div>
   } @else {
+    @if (sharedMeta(); as meta) {
+      <div
+        class="rounded-md border border-brand-200 bg-brand-50 px-3 py-2 text-sm text-brand-800"
+        data-testid="shared-banner"
+      >
+        Estás viendo una comparación guardada · Creada el
+        {{ formatSharedDate(meta.createdAt) }}
+      </div>
+    }
     @if (loading()) {
       <p class="text-sm text-brand-600" data-testid="loading">Cargando…</p>
     }

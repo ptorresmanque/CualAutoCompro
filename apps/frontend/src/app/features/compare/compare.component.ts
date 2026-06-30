@@ -77,6 +77,20 @@ interface CompareResponse {
   diffHighlights: Partial<Record<DiffKey, boolean>>;
 }
 
+interface ComparisonItem {
+  versionId: string;
+  position: number;
+  version: CompareVersion;
+}
+
+interface ComparisonBySlugResponse {
+  id: string;
+  slug: string;
+  userId: string;
+  createdAt: string;
+  items: ComparisonItem[];
+}
+
 @Component({
   selector: 'app-compare',
   templateUrl: './compare.component.html',
@@ -98,12 +112,19 @@ export class CompareComponent {
   loading = signal(false);
   saving = signal(false);
   savedSlug = signal<string | null>(null);
+  sharedMeta = signal<{ slug: string; createdAt: string; userId: string } | null>(null);
+  loadError = signal<string | null>(null);
 
   readonly count = computed(() => this.versions().length);
 
   readonly empty = computed(() => {
     this.versions();
-    return this.compareStore.ids().length === 0;
+    return (
+      this.compareStore.ids().length === 0 &&
+      this.versions().length === 0 &&
+      this.sharedMeta() === null &&
+      this.loadError() === null
+    );
   });
 
   readonly ready: Promise<void>;
@@ -235,7 +256,14 @@ export class CompareComponent {
   }
 
   private async bootstrap(): Promise<void> {
-    const idsParam = this.route.snapshot.queryParamMap.get('ids');
+    const qp = this.route.snapshot.queryParamMap;
+    const slug = qp.get('slug');
+    if (slug) {
+      await this.loadBySlug(slug);
+      return;
+    }
+
+    const idsParam = qp.get('ids');
     if (idsParam) {
       this.compareStore.hydrateFromUrl(idsParam);
       this.loading.set(true);
@@ -267,6 +295,50 @@ export class CompareComponent {
       this.applyResponse(res.data);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  private async loadBySlug(slug: string): Promise<void> {
+    this.loading.set(true);
+    this.loadError.set(null);
+    try {
+      const res = await this.api.get<{ data: ComparisonBySlugResponse }>(
+        `/comparisons/${encodeURIComponent(slug)}`,
+      );
+      const cmp = res.data;
+      this.versions.set(
+        Array.isArray(cmp.items)
+          ? cmp.items
+              .slice()
+              .sort((a, b) => a.position - b.position)
+              .map((it) => it.version)
+          : [],
+      );
+      this.diffHighlights.set({});
+      this.sharedMeta.set({
+        slug: cmp.slug,
+        createdAt: cmp.createdAt,
+        userId: cmp.userId,
+      });
+      this.compareStore.hydrateFromUrl(
+        cmp.items.map((it) => it.versionId).join(','),
+      );
+    } catch {
+      this.loadError.set('No encontramos esta comparación guardada.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  formatSharedDate(value: string): string {
+    try {
+      return new Date(value).toLocaleDateString('es-CL', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch {
+      return value;
     }
   }
 

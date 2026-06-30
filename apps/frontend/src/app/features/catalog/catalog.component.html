@@ -74,11 +74,21 @@
           <button
             type="button"
             data-testid="compare"
-            class="mt-3 rounded bg-brand-600 px-3 py-1 font-sans text-sm text-white hover:bg-brand-700"
-            (click)="addToCompare(m.id)"
+            class="mt-3 rounded bg-brand-600 px-3 py-1 font-sans text-sm text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+            [disabled]="!canCompare(m)"
+            (click)="addToCompare(m)"
           >
             Comparar
           </button>
+          @if (m.defaultVersion; as dv) {
+            <p class="mt-1 font-sans text-xs text-ink-muted">
+              Comparar {{ m.name }} {{ dv.name }} {{ dv.year }}
+            </p>
+          } @else {
+            <p class="mt-1 font-sans text-xs text-ink-muted">
+              Sin versiones disponibles
+            </p>
+          }
         </li>
       }
     </ul>

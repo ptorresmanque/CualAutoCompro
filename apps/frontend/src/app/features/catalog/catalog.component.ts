@@ -11,6 +11,13 @@ type Segment =
   | 'CROSSOVER'
   | 'COMMERCIAL';
 
+export interface CatalogDefaultVersion {
+  id: string;
+  name: string;
+  priceClp: number;
+  year: number;
+}
+
 export interface CatalogItem {
   id: string;
   name: string;
@@ -19,6 +26,7 @@ export interface CatalogItem {
   maxPrice?: number | null;
   brand: { name: string };
   imageUrl?: string | null;
+  defaultVersion?: CatalogDefaultVersion | null;
 }
 
 export interface CatalogFilters {
@@ -82,8 +90,14 @@ export class CatalogComponent {
     return this.load();
   }
 
-  addToCompare(id: string): void {
-    this.compare.add(id);
+  addToCompare(item: CatalogItem): void {
+    const v = item.defaultVersion;
+    if (!v) return;
+    this.compare.add(v.id);
+  }
+
+  canCompare(item: CatalogItem): boolean {
+    return Boolean(item.defaultVersion?.id);
   }
 
   formatPrice(value: number | null | undefined): string {
