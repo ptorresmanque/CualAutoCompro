@@ -1,18 +1,37 @@
-# Comparador de Autos Chile — Spec de diseño
+# cualautocompro — Spec de diseño
 
 **Fecha:** 2026-06-30
 **Estado:** Aprobado
+**Nombre del proyecto:** cualautocompro
+**Dominio objetivo:** cualautocompro.cl
 **Stack objetivo:** Angular 22 (frontend) + Node + Express + TypeScript + PostgreSQL (backend) en monorepo con workspaces.
 
 ---
 
 ## 1. Objetivo
 
-App web que permita a usuarios en Chile explorar el catálogo de vehículos disponibles en el mercado chileno y compararlos en paralelo (ficha técnica, precios, equipamiento y costos estimados de mantención), con autenticación y capacidad de compartir comparaciones por URL.
+App web publicada en **cualautocompro.cl** que permita a usuarios en Chile explorar el catálogo de vehículos disponibles en el mercado chileno y compararlos en paralelo (ficha técnica, precios, equipamiento y costos estimados de mantención), con autenticación y capacidad de compartir comparaciones por URL.
 
 ---
 
-## 2. Fuera de alcance (v1)
+## 2. Proceso de diseño visual (Stitch)
+
+Todo el diseño visual (mockups, componentes UI, sistema de diseño) se realizará con **Stitch** (Google Stitch MCP), antes y durante la implementación:
+
+- **Stitch** se usa para: generar el sistema de diseño (paleta, tipografías, shapes, modo claro/oscuro), producir mockups de cada pantalla clave y evolucionar variantes visuales (catálogo, detalle de modelo, comparación, auth, account).
+- El sistema de diseño se modela con tokens consistentes (colores, fuentes, radio, spacing) para que el frontend Angular + Tailwind los use directo desde `tailwind.config.js` / `src/styles.css`.
+- Los mockups aprobados se versionan como referencia en `docs/superpowers/design/` y sirven de contrato visual durante la implementación.
+- **Punto de partida sugerido para el sistema de diseño:** color primario en torno a un azul/verde moderno (transmite confianza + automotriz), tipografía **Inter** para body y **Manrope** para headlines, radio medio (`ROUND_EIGHT`).
+- **Pantallas a maquetar primero en Stitch:**
+  1. Catálogo con filtros y grid.
+  2. Detalle de modelo y versiones.
+  3. Comparación (cards + tabla expandible).
+  4. Login y registro.
+  5. Historial del usuario.
+
+---
+
+## 3. Fuera de alcance (v1)
 
 - Moneda UF o USD — solo **CLP**, formateado con `Intl.NumberFormat('es-CL')`.
 - Multi-idioma — solo **español (Chile)**.
@@ -27,14 +46,14 @@ App web que permita a usuarios en Chile explorar el catálogo de vehículos disp
 
 ---
 
-## 3. Usuarios y autenticación
+## 4. Usuarios y autenticación
 
-### 3.1 Tipos de usuario
+### 4.1 Tipos de usuario
 
 - **Anónimo:** explorar, filtrar, comparar hasta 3 autos y compartir vía URL efímera (`?ids=a,b,c`).
 - **Registrado:** todo lo anterior + guardar comparaciones con slug + historial en `/account/comparisons`.
 
-### 3.2 Mecanismo de auth
+### 4.2 Mecanismo de auth
 
 - JWT firmado en cookie `HttpOnly`, `SameSite=Lax`, `Secure` en producción.
 - Hash de password con **bcrypt** (cost 10).
@@ -46,7 +65,7 @@ App web que permita a usuarios en Chile explorar el catálogo de vehículos disp
 
 ---
 
-## 4. Modelo de datos (Prisma + PostgreSQL)
+## 5. Modelo de datos (Prisma + PostgreSQL)
 
 `apps/backend/prisma/schema.prisma`:
 
@@ -77,32 +96,32 @@ Decisiones de modelado:
 
 ---
 
-## 5. API REST (`/api/v1`)
+## 6. API REST (`/api/v1`)
 
-### 5.1 Auth
+### 6.1 Auth
 - `POST /auth/register` `{ email, password, name }` → setea cookie, devuelve usuario.
 - `POST /auth/login` `{ email, password }` → setea cookie.
 - `POST /auth/logout` → limpia cookie.
 - `GET /auth/me` → usuario actual o 401.
 
-### 5.2 Catálogo público
+### 6.2 Catálogo público
 - `GET /brands` → listado simple.
 - `GET /brands/:id/models` → modelos de una marca.
 - `GET /models?brand=&segment=&year=&transmission=&fuel=&priceMin=&priceMax=&powerMin=&consumptionMax=&page=&pageSize=` → paginado.
 - `GET /models/:id` → detalle + versiones.
 - `GET /versions/:id` → versión con `equipmentItems[]` y `maintenanceCosts[]`.
 
-### 5.3 Comparación
+### 6.3 Comparación
 - `POST /compare` body `{ versionIds: string[] (1..3) }` → `{ versions: [...], diffHighlights: { [key]: boolean } }`.
 - `GET /compare?ids=a,b,c` → mismo payload (deep-link efímero).
 - `GET /comparisons/:slug` → público (compartida por un usuario registrado).
 
-### 5.4 Usuario autenticado
+### 6.4 Usuario autenticado
 - `GET /me/comparisons` → historial.
 - `POST /me/comparisons` `{ versionIds, name? }` → `{ id, slug }`.
 - `DELETE /me/comparisons/:id`.
 
-### 5.5 Formato y errores
+### 6.5 Formato y errores
 
 Respuesta estándar:
 ```json
@@ -115,9 +134,9 @@ Errores tipados:
 
 ---
 
-## 6. Frontend (Angular 22)
+## 7. Frontend (Angular 22)
 
-### 6.1 Stack y convenciones
+### 7.1 Stack y convenciones
 
 - **Angular 22** con `signals`, standalone components, nuevo control flow (`@if`, `@for`, `@switch`).
 - **CSS plano** en archivos `.css` separados. **Nada de SCSS.**
@@ -126,8 +145,9 @@ Errores tipados:
 - `provideHttpClient(withFetch(), withInterceptors([authInterceptor]))` con `withCredentials: true` en todas las llamadas.
 - Lazy routes con `loadComponent` / `loadChildren`.
 - Forms tipados (`FormGroup<...>`).
+- **Sistema de diseño Stitch**: tokens (colores, fuentes, radio, spacing) se aplican via Tailwind config y `styles.css`; cualquier ajuste de tema pasa por el design system de Stitch.
 
-### 6.2 Rutas
+### 7.2 Rutas
 
 | Ruta | Vista |
 |---|---|
@@ -137,7 +157,7 @@ Errores tipados:
 | `/login`, `/register` | Autenticación |
 | `/account/comparisons` | Historial (requiere auth) |
 
-### 6.3 Vista de comparación (híbrida)
+### 7.3 Vista de comparación (híbrida)
 
 1. **Tres cards** con resumen visual: precio destacado, potencia, consumo, transmisión.
 2. **Tabla expandible** por secciones, con badge "diff" cuando los valores difieren entre los autos seleccionados:
@@ -146,7 +166,7 @@ Errores tipados:
    - **Equipamiento**: chips por categoría.
    - **Mantención**: costos por cada `mileageTag`.
 
-### 6.4 Estado de comparación
+### 7.4 Estado de comparación
 
 - Servicio `compare-store.service` con `selectedVersionIds: Signal<string[]>` (max 3).
 - Persistido en `localStorage` (solo IDs).
@@ -154,7 +174,7 @@ Errores tipados:
 
 ---
 
-## 7. Estructura del monorepo
+## 8. Estructura del monorepo
 
 ```
 /
@@ -164,10 +184,11 @@ Errores tipados:
 ├── .gitignore
 ├── .editorconfig
 ├── .nvmrc
-├── README.md
+├── README.md                 # cualautocompro
 ├── docs/superpowers/
 │   ├── specs/
-│   └── plans/
+│   ├── plans/
+│   └── design/               # mockups y sistema Stitch
 └── apps/
     ├── backend/
     │   ├── package.json
@@ -200,7 +221,7 @@ Errores tipados:
         ├── package.json
         ├── angular.json                   # schematics en CSS
         ├── tsconfig.json
-        ├── tailwind.config.js
+        ├── tailwind.config.js             # alineado con tokens Stitch
         ├── postcss.config.js
         ├── src/
         │   ├── index.html
@@ -237,11 +258,11 @@ Scripts raíz:
 
 ---
 
-## 8. Estrategia de pruebas (TDD)
+## 9. Estrategia de pruebas (TDD)
 
 Proceso: cada unidad de trabajo sigue **red → green → refactor**. Tests primero.
 
-### 8.1 Backend (Vitest + pglite)
+### 9.1 Backend (Vitest + pglite)
 
 1. `auth.service` — register (bcrypt), login (JWT), errores (email duplicado, password débil).
 2. `auth.middleware` — setea `req.user` desde cookie; rechaza sin token o expirado.
@@ -250,7 +271,7 @@ Proceso: cada unidad de trabajo sigue **red → green → refactor**. Tests prim
 5. `comparisons.controller` — crea con slug aleatorio, lookup público por slug, listado propio por usuario.
 6. Restricciones de Prisma — validación vía tests de seed.
 
-### 8.2 Frontend (Vitest + Angular Testing Library)
+### 9.2 Frontend (Vitest + Angular Testing Library)
 
 1. `compare-store.service` — signal reactivo, máx 3, persistencia en `localStorage`, hidratación desde URL.
 2. `compare.component` — vacío, 1, 2, 3 autos; diffs destacados.
@@ -259,7 +280,7 @@ Proceso: cada unidad de trabajo sigue **red → green → refactor**. Tests prim
 5. `authInterceptor` — añade `withCredentials: true`, no expone tokens.
 6. `authGuard` — protege `/account/*`.
 
-### 8.3 E2E (Playwright)
+### 9.3 E2E (Playwright)
 
 1. Registro → login → historial (vacío).
 2. Explorar con filtros aplicados → ver grid.
@@ -268,7 +289,7 @@ Proceso: cada unidad de trabajo sigue **red → green → refactor**. Tests prim
 
 ---
 
-## 9. Riesgos y mitigaciones
+## 10. Riesgos y mitigaciones
 
 | Riesgo | Mitigación |
 |---|---|
@@ -278,19 +299,22 @@ Proceso: cada unidad de trabajo sigue **red → green → refactor**. Tests prim
 | Precios cambian | Disclaimer: "precios referencia año 2026, confirmar en concesionario" |
 | Tailwind + Playwright flakiness | Selectores por `data-testid` + `:visible` en assertions |
 | Angular 22 requiere CLI v22 | Actualizar `@angular/cli` a la latest antes de `ng new` |
+| Stitch no disponible temporalmente | Fallback a wireframes ASCII + bocetos y avanzar con tokens defaults de Tailwind hasta regenerar con Stitch |
 
 ---
 
-## 10. Open questions resueltas
+## 11. Open questions resueltas
 
 1. **Imágenes:** URLs oficiales públicas (placeholder) en v1.
 2. **Disclaimer en UI:** sí, visible y diferenciado.
 3. **Seed inicial:** marcas más vendidas en Chile (Toyota, Chevrolet, Hyundai, Kia, Mazda, Nissan, Suzuki, Subaru, Ford, Volkswagen) + expandir progresivamente.
 4. **Rango de años en seed:** 2024-2026.
+5. **Branding:** nombre "cualautocompro", dominio cualautocompro.cl.
+6. **Diseño visual:** generado con Stitch.
 
 ---
 
-## 11. Criterios de éxito (v1)
+## 12. Criterios de éxito (v1)
 
 - [ ] Catálogo público navegable con filtros combinados aplicables simultáneamente.
 - [ ] Comparación de hasta 3 autos con diff destacado en cada sección.
@@ -301,13 +325,16 @@ Proceso: cada unidad de trabajo sigue **red → green → refactor**. Tests prim
 - [ ] E2E con Playwright cubriendo los flujos críticos.
 - [ ] Builds de ambos proyectos sin errores; `npm run dev` levanta backend + frontend en paralelo.
 - [ ] `npm run test` y `npm run test:e2e` ejecutables en CI/local.
+- [ ] Sistema de diseño Stitch + mockups aprobados en `docs/superpowers/design/`.
 
 ---
 
-## 12. Decisiones de adopción y trazabilidad
+## 13. Decisiones de adopción y trazabilidad
 
 Decisiones técnicas adoptadas (resumen):
 
+- **Nombre del proyecto:** cualautocompro. **Dominio:** cualautocompro.cl.
+- **Diseño visual:** Stitch (mockups + sistema de diseño + tokens).
 - **Monorepo simple** (workspaces) sobre Nx (YAGNI para v1).
 - **Angular 22** (último estable) con signals + standalone + new control flow.
 - **CSS plano + Tailwind**, sin SCSS, sin inline templates.
