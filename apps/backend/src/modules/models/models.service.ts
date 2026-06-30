@@ -41,9 +41,18 @@ export class ModelsService {
       const prices = m.versions.map((v) => v.priceClp);
       const minPrice = prices.length ? Math.min(...prices) : null;
       const maxPrice = prices.length ? Math.max(...prices) : null;
+      const defaultVersion = m.versions.length
+        ? {
+            id: m.versions[0].id,
+            name: m.versions[0].name,
+            priceClp: m.versions[0].priceClp,
+            year: m.versions[0].year,
+          }
+        : null;
       return {
         id: m.id, brandId: m.brandId, name: m.name, segment: m.segment,
         imageUrl: m.imageUrl, brand: m.brand, minPrice, maxPrice, versionCount: m.versions.length,
+        defaultVersion,
       };
     });
 

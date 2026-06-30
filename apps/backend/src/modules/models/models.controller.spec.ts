@@ -60,6 +60,26 @@ describe("GET /api/v1/models", () => {
     expect(res.body.data.items.length).toBeGreaterThanOrEqual(1);
   });
 
+  describe("defaultVersion enrichment", () => {
+    it("Yaris expone defaultVersion con la versión de menor precio (Sport 11.5M)", async () => {
+      const res = await request(createApp()).get("/api/v1/models");
+      const yaris = res.body.data.items.find((m: { name: string }) => m.name === "Yaris");
+      expect(yaris).toBeDefined();
+      expect(yaris.defaultVersion).not.toBeNull();
+      expect(yaris.defaultVersion.name).toBe("Sport");
+      expect(yaris.defaultVersion.priceClp).toBe(11_500_000);
+      expect(yaris.defaultVersion.year).toBe(2025);
+      expect(typeof yaris.defaultVersion.id).toBe("string");
+    });
+
+    it("CX-5 (sin versiones) expone defaultVersion null", async () => {
+      const res = await request(createApp()).get("/api/v1/models");
+      const cx5 = res.body.data.items.find((m: { name: string }) => m.name === "CX-5");
+      expect(cx5).toBeDefined();
+      expect(cx5.defaultVersion).toBeNull();
+    });
+  });
+
   describe("filtro consumptionMax (DB-level, semántica some)", () => {
     it("incluye modelos con al menos una versión que cumple consumptionMax=15 (Yaris:XLS 14≤15)", async () => {
       const res = await request(createApp()).get("/api/v1/models?consumptionMax=15");
