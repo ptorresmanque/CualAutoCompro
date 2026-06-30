@@ -1,2 +1,8 @@
 packages:
   - "apps/*"
+onlyBuiltDependencies:
+  - bcrypt
+  - "@prisma/client"
+  - "@prisma/engines"
+  - prisma
+  - esbuild

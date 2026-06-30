@@ -2,13 +2,14 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import { env } from "./config/env.js";
 import { ok } from "./shared/response.js";
+import { authRouter } from "./modules/auth/auth.routes.js";
 
 export const createApp = () => {
   const app = express();
   app.use(express.json());
   app.use(cookieParser());
   app.get("/health", (_req, res) => res.json(ok({ status: "ok", env: env.WEB_ORIGIN })));
-  // módulos se montan en tareas siguientes
+  app.use("/api/v1/auth", authRouter);
   app.use((_req, res) => res.status(404).json({ data: null, error: { code: "NOT_FOUND", message: "Ruta no encontrada" } }));
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
