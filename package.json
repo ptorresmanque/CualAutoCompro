@@ -1,0 +1,22 @@
+{
+  "name": "cualautocompro",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "npm-run-all -p dev:be dev:fe",
+    "dev:be": "npm -w apps/backend run dev",
+    "dev:fe": "npm -w apps/frontend run start",
+    "test": "npm-run-all -p test:be test:fe",
+    "test:be": "npm -w apps/backend run test",
+    "test:fe": "npm -w apps/frontend run test",
+    "test:e2e": "npm -w apps/frontend run test:e2e",
+    "db:migrate": "npm -w apps/backend run db:migrate",
+    "db:seed": "npm -w apps/backend run db:seed",
+    "db:reset": "npm -w apps/backend run db:reset"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
+  },
+  "packageManager": "[email protected]"
+}
