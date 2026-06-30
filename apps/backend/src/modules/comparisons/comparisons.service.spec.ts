@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { Prisma } from "@prisma/client";
 import { ComparisonsService } from "./comparisons.service.js";
 import { setupTestPrisma, resetTestDb } from "../../../__tests__/helpers/db.js";
 import { prisma } from "../../infra/prisma.js";
@@ -44,5 +45,32 @@ describe("ComparisonsService", () => {
     expect(aList.length).toBe(1);
     const bList = await svc.listByUser(b.id);
     expect(bList.length).toBe(0);
+  });
+
+  it("create reintenta slug único en colisión P2002 hasta tener éxito", async () => {
+    const svc = new ComparisonsService(prisma);
+    const u = await prisma.user.create({ data: { email: "u2" + "@" + "cualautocompro.cl", name: "U2", passwordHash: "x" } });
+    const v = await prisma.brand.create({ data: { name: "B" } }).then((br) =>
+      prisma.model.create({ data: { brandId: br.id, name: "M", segment: "SEDAN" } })).then((m) =>
+      prisma.version.create({ data: { modelId: m.id, name: "x", year: 2026, priceClp: 1, transmission: "MANUAL", fuel: "BENCINA",
+        engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
+        hasAbs: true, hasEsp: true, hasCruiseControl: true } }));
+    const realCreate = prisma.comparison.create.bind(prisma.comparison);
+    let calls = 0;
+    const spy = vi.spyOn(prisma.comparison, "create").mockImplementation(((...args: unknown[]) => {
+      calls++;
+      if (calls === 1) {
+        throw new Prisma.PrismaClientKnownRequestError("Unique constraint failed", { code: "P2002", clientVersion: "test" });
+      }
+      return (realCreate as unknown as (a: unknown) => Promise<unknown>)(args[0]);
+    }) as unknown as typeof prisma.comparison.create);
+    try {
+      const out = await svc.create({ userId: u.id, versionIds: [v.id] });
+      expect(calls).toBeGreaterThanOrEqual(2);
+      expect(out.slug).toHaveLength(8);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
