@@ -2,17 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tokens Material 3 — "Transparencia Automotriz" */
 :root {
-  --color-brand-500: #0ea5b7;
-  --color-brand-600: #0e7490;
-  --color-bg: #ffffff;
-  --color-fg: #0f172a;
-  --color-muted: #64748b;
-  --color-accent: #0e7490;
-  --color-warn-bg: #fef3c7;
-  --color-warn-fg: #92400e;
-  --color-border: #e2e8f0;
-  --radius: 12px;
+  /* Primary */
+  --color-brand-600: #008080;      /* primary:           "Transparencia Automotriz" */
+  --color-brand-700: #006565;      /* primary oscuro */
+  --color-brand-500: #008080;
+  /* On-primary surfaces */
+  --color-on-primary:   #ffffff;
+  --color-on-primary-container: #e3fffe;
+  /* Secondary / tertiary */
+  --color-secondary-container: #c6e9e9;
+  --color-tertiary-container: #657676;
+  /* Surfaces */
+  --color-bg:         #f8fafa;       /* background */
+  --color-surface:    #ffffff;       /* surface-container-lowest */
+  --color-surface-container:       #eceeee;
+  --color-surface-container-low:  #f2f4f4;
+  --color-surface-container-high: #e6e8e9;
+  --color-fg:         #191c1d;       /* on-surface */
+  --color-muted:      #3e4949;       /* on-surface-variant */
+  --color-subtle:     #6e7979;       /* outline */
+  --color-accent:     #008080;
+  --color-warn-bg:    #fef3c7;
+  --color-warn-fg:    #92400e;
+  --color-border:     #bdc9c8;       /* outline-variant */
+  /* Radii */
+  --radius: 8px;                    /* ROUND_EIGHT */
 }
 
 html, body {
@@ -20,7 +36,7 @@ html, body {
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Hanken Grotesk', system-ui, sans-serif;
   color: var(--color-fg);
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
@@ -28,6 +44,6 @@ body {
 }
 
 h1, h2, h3, .display {
-  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
+  font-family: 'Hanken Grotesk', system-ui, sans-serif;
   letter-spacing: -0.01em;
 }
