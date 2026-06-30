@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { NgStyle } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 export interface VehicleCardInput {
   id: string;
@@ -25,7 +26,7 @@ export interface VehicleCardInput {
 
 @Component({
   selector: 'app-vehicle-card',
-  imports: [NgStyle],
+  imports: [NgStyle, RouterLink],
   templateUrl: './vehicle-card.component.html',
   styleUrl: './vehicle-card.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,6 +64,13 @@ export class VehicleCardComponent {
     const dv = this.model().defaultVersion;
     if (this.added()) return `Quitar ${this.model().name} ${dv?.name ?? ''} de la comparación`;
     return dv ? `Agregar ${this.model().name} ${dv.name} ${dv.year} a la comparación` : '';
+  });
+
+  readonly detailUrl = computed(() => {
+    const m = this.model();
+    const brandSlug = m.brand.name.toLowerCase();
+    const modelSlug = m.name.toLowerCase();
+    return ['/brand', brandSlug, 'model', modelSlug];
   });
 
   onCompare(event: Event): void {

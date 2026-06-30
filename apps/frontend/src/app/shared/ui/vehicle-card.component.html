@@ -20,9 +20,12 @@
     </span>
   }
 
-  <!-- Image area -->
-  <div
-    class="aspect-video bg-surface-muted relative overflow-hidden"
+  <!-- Image area (link al detalle del modelo) -->
+  <a
+    [routerLink]="detailUrl()"
+    [attr.aria-label]="'Ver detalle de ' + model().brand.name + ' ' + model().name"
+    data-testid="card-image-link"
+    class="block aspect-video bg-surface-muted relative overflow-hidden group focus:outline-none focus:ring-2 focus:ring-brand-600"
     [ngStyle]="imageStyle()"
     [class.bg-center]="true"
     [class.bg-cover]="true"
@@ -32,7 +35,7 @@
         <span class="material-symbols-outlined text-5xl">directions_car</span>
       </div>
     }
-  </div>
+  </a>
 
   <!-- Body -->
   <div class="p-4 flex flex-col flex-1 gap-2">

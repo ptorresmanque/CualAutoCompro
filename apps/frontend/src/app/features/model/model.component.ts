@@ -268,7 +268,9 @@ export class ModelComponent {
       const modelsRes = await this.api.get<{ data: BrandModel[] }>(
         `/brands/${brand.id}/models`,
       );
-      const brandModel = modelsRes.data.find((m) => m.name === modelSlug);
+      const brandModel = modelsRes.data.find(
+        (m) => m.name.toLowerCase() === modelSlug.toLowerCase(),
+      );
       if (!brandModel) {
         this.error.set(
           `Modelo "${modelSlug}" no encontrado en ${brand.name}.`,

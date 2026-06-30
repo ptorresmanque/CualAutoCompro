@@ -98,6 +98,10 @@ export class CatalogComponent {
     }
   }
 
+  clearSelection(): void {
+    this.compare.clear();
+  }
+
   formatPrice(value: number | null | undefined): string {
     if (value === null || value === undefined) return '';
     return new Intl.NumberFormat('es-CL').format(value);

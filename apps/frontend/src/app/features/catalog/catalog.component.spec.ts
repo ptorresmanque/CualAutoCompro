@@ -189,6 +189,59 @@ describe('CatalogComponent', () => {
     ).toBeTruthy();
   });
 
+  it('botón "Limpiar" vacía CompareStore y oculta la sticky bar', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    flushItems(
+      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      [
+        {
+          id: 'm1',
+          name: 'Yaris',
+          brand: { name: 'Toyota' },
+          minPrice: 14000000,
+          segment: 'HATCHBACK',
+          defaultVersion: { id: 'v1', name: 'XLS', priceClp: 14990000, year: 2026 },
+        },
+        {
+          id: 'm2',
+          name: 'Corolla',
+          brand: { name: 'Toyota' },
+          minPrice: 16990000,
+          segment: 'SEDAN',
+          defaultVersion: { id: 'v2', name: 'XLI', priceClp: 16990000, year: 2024 },
+        },
+      ],
+    );
+    await fixture.componentInstance.initialLoad;
+    fixture.detectChanges();
+
+    // Add 2 versions
+    const btns = fixture.nativeElement.querySelectorAll(
+      'button[data-testid^="compare-"]',
+    );
+    (btns[0] as HTMLButtonElement).click();
+    (btns[1] as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(store.ids().length).toBe(2);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="selection-bar"]'),
+    ).not.toBeNull();
+
+    // Click "Limpiar"
+    const clearBtn = fixture.nativeElement.querySelector(
+      '[data-testid="selection-bar-clear"]',
+    ) as HTMLButtonElement;
+    expect(clearBtn).not.toBeNull();
+    clearBtn.click();
+    fixture.detectChanges();
+
+    expect(store.ids()).toEqual([]);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="selection-bar"]'),
+    ).toBeNull();
+  });
+
   it('muestra el nombre+año de la versión elegida junto al botón Comparar', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
