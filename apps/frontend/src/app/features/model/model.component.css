@@ -1,0 +1,19 @@
+/* Carrusel */
+section[role='region'][aria-roledescription='carrusel'] {
+  position: relative;
+}
+
+section[role='region'][aria-roledescription='carrusel'] button {
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease;
+}
+
+section[role='region'][aria-roledescription='carrusel'] button:hover {
+  transform: translateY(-50%) scale(1.05);
+}
+
+section[role='region'][aria-roledescription='carrusel'] button:focus-visible {
+  outline: 2px solid #008080;
+  outline-offset: 2px;
+}

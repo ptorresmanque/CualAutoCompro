@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  HostListener,
   inject,
   signal,
 } from '@angular/core';
@@ -29,6 +30,7 @@ interface ModelDetail {
   segment: string;
   brand: { name: string };
   versions: ModelVersion[];
+  galleryUrls?: string[];
 }
 
 interface ModelVersion {
@@ -61,15 +63,51 @@ export class ModelComponent {
   model = signal<ModelDetail | null>(null);
 
   readonly versions = computed<ModelVersion[]>(() => this.model()?.versions ?? []);
+  readonly galleryUrls = computed<string[]>(() => this.model()?.galleryUrls ?? []);
+  readonly hasGallery = computed(() => this.galleryUrls().length > 0);
 
   readonly selectedIds = this.compare.ids;
-
   readonly maxSelected = computed(() => this.selectedIds().length >= 3);
+
+  readonly currentIndex = signal(0);
+  readonly currentUrl = computed(
+    () => this.galleryUrls()[this.currentIndex()] ?? '',
+  );
 
   readonly initialLoad: Promise<void>;
 
   constructor() {
     this.initialLoad = this.bootstrap();
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  onKey(ev: KeyboardEvent) {
+    if (!this.hasGallery() || ev.target instanceof HTMLInputElement || ev.target instanceof HTMLTextAreaElement) {
+      return;
+    }
+    if (ev.key === 'ArrowLeft') {
+      this.prev();
+    } else if (ev.key === 'ArrowRight') {
+      this.next();
+    }
+  }
+
+  prev(): void {
+    const n = this.galleryUrls().length;
+    if (n === 0) return;
+    this.currentIndex.update((i) => (i - 1 + n) % n);
+  }
+
+  next(): void {
+    const n = this.galleryUrls().length;
+    if (n === 0) return;
+    this.currentIndex.update((i) => (i + 1) % n);
+  }
+
+  goTo(i: number): void {
+    const n = this.galleryUrls().length;
+    if (i < 0 || i >= n) return;
+    this.currentIndex.set(i);
   }
 
   private async bootstrap(): Promise<void> {
