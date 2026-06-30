@@ -1,1 +1,111 @@
-<p class="p-4 font-sans text-ink-muted">Detalle de modelo (próximamente)</p>
+<section class="space-y-6 px-4 py-6 font-sans">
+  <nav class="text-sm text-ink-muted">
+    <a routerLink="/" class="hover:text-brand-700">Catálogo</a>
+    @if (brand(); as b) {
+      <span class="mx-1">/</span>
+      <span class="text-ink">{{ b.name }}</span>
+    }
+    @if (model(); as m) {
+      <span class="mx-1">/</span>
+      <span class="text-ink">{{ m.name }}</span>
+    }
+  </nav>
+
+  @if (loading()) {
+    <p class="text-sm text-brand-600" data-testid="loading">Cargando…</p>
+  }
+
+  @if (error(); as msg) {
+    <div
+      class="rounded-md border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark"
+      role="alert"
+      data-testid="error"
+    >
+      {{ msg }}
+    </div>
+  }
+
+  @if (model(); as m) {
+    <header>
+      <h1 class="font-display text-3xl text-ink">
+        {{ m.brand.name }} {{ m.name }}
+      </h1>
+      <p class="mt-1 text-sm text-ink-muted">{{ m.segment }}</p>
+    </header>
+
+    <div>
+      <h2 class="mb-3 font-display text-lg text-ink">Versiones</h2>
+
+      @if (versions().length === 0) {
+        <p class="text-sm text-ink-muted">
+          Este modelo aún no tiene versiones registradas.
+        </p>
+      }
+
+      <ul class="space-y-3" data-testid="versions">
+        @for (v of versions(); track v.id) {
+          <li
+            class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm"
+            [attr.data-testid]="'version-' + v.id"
+          >
+            <div>
+              <p class="font-display text-base text-ink">{{ v.name }}</p>
+              <p class="text-sm text-ink-muted">
+                @if (v.year) {
+                  <span>{{ v.year }}</span>
+                }
+                @if (v.transmission) {
+                  <span> · {{ v.transmission }}</span>
+                }
+                @if (v.fuel) {
+                  <span> · {{ v.fuel }}</span>
+                }
+                @if (v.powerHp) {
+                  <span> · {{ v.powerHp }} hp</span>
+                }
+              </p>
+              <p class="mt-1 font-semibold text-brand-700">
+                {{ formatPrice(v.priceClp) }}
+              </p>
+            </div>
+
+            <label
+              class="flex items-center gap-2 text-sm text-ink"
+              [class.opacity-60]="!isSelected(v.id) && maxSelected()"
+            >
+              <input
+                type="checkbox"
+                class="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
+                [checked]="isSelected(v.id)"
+                [disabled]="!isSelected(v.id) && maxSelected()"
+                (change)="toggleVersion(v.id)"
+                [attr.data-testid]="'compare-' + v.id"
+              />
+              Agregar a comparación
+            </label>
+          </li>
+        }
+      </ul>
+
+      @if (maxSelected()) {
+        <p class="mt-3 text-xs text-ink-muted">
+          Máximo 3 versiones en la comparación.
+        </p>
+      }
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a
+        routerLink="/compare"
+        class="rounded bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700"
+      >
+        Ver comparación
+      </a>
+      <span class="text-sm text-ink-muted">
+        {{ selectedIds().length }} / 3 seleccionadas
+      </span>
+    </div>
+
+    <app-disclaimer text="Las especificaciones y precios son referenciales. Confirmar en concesionario." />
+  }
+</section>

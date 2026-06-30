@@ -1,1 +1,73 @@
-<p class="p-4 font-sans text-ink-muted">Iniciar sesión (próximamente)</p>
+<section class="mx-auto max-w-md px-4 py-8 font-sans">
+  <header class="mb-6">
+    <h1 class="font-display text-2xl text-ink">Iniciar sesión</h1>
+    <p class="mt-1 text-sm text-ink-muted">
+      Entra con tu cuenta para guardar comparaciones.
+    </p>
+  </header>
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="submit()"
+    class="space-y-4 rounded-lg border border-border bg-surface p-6 shadow-sm"
+    novalidate
+  >
+    <label class="block text-sm text-ink">
+      Email
+      <input
+        type="email"
+        autocomplete="email"
+        formControlName="email"
+        class="mt-1 w-full rounded border border-border bg-surface px-3 py-2 text-ink outline-none focus:border-brand-500"
+        data-testid="email"
+      />
+      @if (form.controls.email.touched && form.controls.email.invalid) {
+        <span class="mt-1 block text-xs text-warn-dark">
+          Ingresa un email válido.
+        </span>
+      }
+    </label>
+
+    <label class="block text-sm text-ink">
+      Contraseña
+      <input
+        type="password"
+        autocomplete="current-password"
+        formControlName="password"
+        class="mt-1 w-full rounded border border-border bg-surface px-3 py-2 text-ink outline-none focus:border-brand-500"
+        data-testid="password"
+      />
+      @if (form.controls.password.touched && form.controls.password.invalid) {
+        <span class="mt-1 block text-xs text-warn-dark">
+          Mínimo 6 caracteres.
+        </span>
+      }
+    </label>
+
+    @if (error(); as msg) {
+      <p
+        class="rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark"
+        role="alert"
+        data-testid="error"
+      >
+        {{ msg }}
+      </p>
+    }
+
+    <button
+      type="submit"
+      [disabled]="submitting()"
+      class="w-full rounded bg-brand-600 px-4 py-2 font-display text-white hover:bg-brand-700 disabled:opacity-60"
+      data-testid="submit"
+    >
+      {{ submitting() ? 'Ingresando…' : 'Iniciar sesión' }}
+    </button>
+
+    <p class="text-center text-sm text-ink-muted">
+      ¿No tienes cuenta?
+      <a routerLink="/register" class="text-brand-700 hover:underline">
+        Crear cuenta
+      </a>
+    </p>
+  </form>
+</section>

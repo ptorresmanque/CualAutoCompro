@@ -1,1 +1,112 @@
-<p class="p-4 font-sans text-ink-muted">Mis comparaciones (próximamente)</p>
+<section class="space-y-6 px-4 py-6 font-sans">
+  <header>
+    <h1 class="font-display text-2xl text-ink">Mis comparaciones</h1>
+    @if (user(); as u) {
+      <p class="mt-1 text-sm text-ink-muted">
+        Hola {{ u.name }}, estas son las comparaciones que guardaste.
+      </p>
+    }
+  </header>
+
+  @if (loading()) {
+    <p class="text-sm text-brand-600" data-testid="loading">Cargando…</p>
+  }
+
+  @if (error(); as msg) {
+    <div
+      class="rounded-md border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark"
+      role="alert"
+      data-testid="error"
+    >
+      {{ msg }}
+    </div>
+  }
+
+  @if (!loading() && !hasItems() && !error()) {
+    <div
+      class="rounded-lg border border-border bg-surface p-8 text-center shadow-sm"
+      data-testid="empty"
+    >
+      <p class="font-display text-lg text-ink">
+        Aún no tienes comparaciones guardadas
+      </p>
+      <p class="mt-2 text-sm text-ink-muted">
+        Arma una comparación desde el catálogo y guárdala con tu cuenta.
+      </p>
+      <a
+        routerLink="/"
+        class="mt-4 inline-block rounded bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700"
+      >
+        Ir al catálogo
+      </a>
+    </div>
+  }
+
+  @if (hasItems()) {
+    <ul class="space-y-4" data-testid="list">
+      @for (c of comparisons(); track c.id) {
+        <li
+          class="rounded-lg border border-border bg-surface p-4 shadow-sm"
+          [attr.data-testid]="'comparison-' + c.id"
+        >
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-display text-base text-ink">
+                {{ displayName(c) }}
+              </p>
+              @if (c.slug) {
+                <p class="mt-0.5 truncate text-xs text-ink-muted" data-testid="slug">
+                  /c/{{ c.slug }}
+                </p>
+              }
+              <p class="mt-1 text-xs text-ink-subtle">
+                {{ c.items.length }} versión(es)
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                class="rounded border border-border px-3 py-1 text-sm text-ink hover:bg-surface-muted disabled:opacity-60"
+                [disabled]="!c.slug"
+                (click)="copyUrl(c)"
+                data-testid="copy"
+              >
+                @if (copiedId() === c.id) {
+                  ¡Copiado!
+                } @else {
+                  Copiar URL
+                }
+              </button>
+              <button
+                type="button"
+                class="rounded border border-border px-3 py-1 text-sm text-ink hover:bg-surface-muted disabled:opacity-60"
+                [disabled]="deletingId() === c.id"
+                (click)="deleteComparison(c)"
+                data-testid="delete"
+              >
+                {{ deletingId() === c.id ? 'Eliminando…' : 'Eliminar' }}
+              </button>
+            </div>
+          </div>
+
+          @if (c.items.length > 0) {
+            <ul class="mt-3 divide-y divide-border rounded border border-border">
+              @for (item of c.items; track item.position) {
+                <li class="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                  <span class="truncate text-ink">
+                    {{ fullName(item.version) }}
+                  </span>
+                  <span class="font-semibold text-brand-700">
+                    {{ formatPrice(item.version.priceClp) }}
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+
+    <app-disclaimer text="Las comparaciones guardadas son privadas y solo tú puedes verlas." />
+  }
+</section>
