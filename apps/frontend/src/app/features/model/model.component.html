@@ -1,13 +1,17 @@
-<section class="space-y-6 px-4 py-6 font-sans">
-  <nav class="text-sm text-ink-muted">
-    <a routerLink="/" class="hover:text-brand-700">Catálogo</a>
+<section class="mx-auto max-w-7xl px-4 py-6 md:px-8">
+  <!-- Breadcrumb -->
+  <nav
+    aria-label="Ruta"
+    class="flex items-center gap-1 text-xs uppercase tracking-wider text-ink-muted mb-4"
+  >
+    <a routerLink="/" class="hover:text-brand-700">Marcas</a>
+    <span class="material-symbols-outlined text-base">chevron_right</span>
     @if (brand(); as b) {
-      <span class="mx-1">/</span>
-      <span class="text-ink">{{ b.name }}</span>
-    }
-    @if (model(); as m) {
-      <span class="mx-1">/</span>
-      <span class="text-ink">{{ m.name }}</span>
+      <a routerLink="/" class="hover:text-brand-700">{{ b.name }}</a>
+      <span class="material-symbols-outlined text-base">chevron_right</span>
+      <span class="font-bold text-ink">{{ model()?.name }}</span>
+    } @else {
+      <span class="font-bold text-ink">{{ model()?.name }}</span>
     }
   </nav>
 
@@ -26,131 +30,227 @@
   }
 
   @if (model(); as m) {
-    <header>
-      <h1 class="font-display text-3xl text-ink">
+    <header class="mb-4">
+      <h1 class="text-3xl md:text-4xl font-bold text-ink">
         {{ m.brand.name }} {{ m.name }}
       </h1>
-      <p class="mt-1 text-sm text-ink-muted">{{ m.segment }}</p>
+      <p class="text-sm text-ink-muted uppercase tracking-wider mt-1">
+        {{ segmentLabel() }} · {{ m.versions.length }} versiones
+      </p>
     </header>
 
-    @if (hasGallery()) {
-      <section
-        role="region"
-        aria-roledescription="carrusel"
-        [attr.aria-label]="'Imágenes de ' + m.name"
-        data-testid="carousel"
-        class="relative"
+    <!-- Carousel -->
+    <section class="mb-6" data-testid="carousel">
+      <div
+        class="relative h-[300px] md:h-[500px] rounded-xl overflow-hidden border border-border shadow-sm bg-surface-muted group"
+        (mouseenter)="onCarouselHover(true)"
+        (mouseleave)="onCarouselHover(false)"
       >
-        <div class="relative aspect-video overflow-hidden rounded-lg bg-surface-muted">
-          <img
-            [src]="currentUrl()"
-            [alt]="m.name + ' — imagen ' + (currentIndex() + 1) + ' de ' + galleryUrls().length"
-            class="h-full w-full object-cover"
+        @if (hasGallery()) {
+          <div
+            class="absolute inset-0 bg-cover bg-center transition-opacity duration-300"
+            [style.background-image]="'url(' + currentUrl() + ')'"
             data-testid="carousel-image"
-            loading="lazy"
-          />
-
+          ></div>
+          <div
+            class="absolute top-4 right-4 rounded-full bg-ink/60 backdrop-blur-md text-white px-3 py-1 text-xs font-bold pointer-events-none"
+            aria-live="polite"
+            data-testid="carousel-counter"
+          >
+            Imagen {{ currentIndex() + 1 }} / {{ galleryUrls().length }}
+          </div>
           @if (galleryUrls().length > 1) {
             <button
               type="button"
+              class="absolute left-4 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-surface/80 backdrop-blur-sm shadow-lg transition-opacity"
+              [class.opacity-0]="!hovered()"
+              [class.pointer-events-none]="!hovered()"
+              [class.group-hover:opacity-100]="true"
               (click)="prev()"
-              [attr.aria-label]="'Imagen anterior (' + (currentIndex() + 1) + '/' + galleryUrls().length + ')'"
+              aria-label="Imagen anterior"
               data-testid="carousel-prev"
-              class="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface/80 text-ink shadow-md hover:bg-surface"
             >
-              <span aria-hidden="true">‹</span>
+              <span class="material-symbols-outlined">chevron_left</span>
             </button>
             <button
               type="button"
+              class="absolute right-4 top-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-surface/80 backdrop-blur-sm shadow-lg transition-opacity"
+              [class.opacity-0]="!hovered()"
+              [class.pointer-events-none]="!hovered()"
+              [class.group-hover:opacity-100]="true"
               (click)="next()"
-              [attr.aria-label]="'Imagen siguiente (' + (currentIndex() + 1) + '/' + galleryUrls().length + ')'"
+              aria-label="Imagen siguiente"
               data-testid="carousel-next"
-              class="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border bg-surface/80 text-ink shadow-md hover:bg-surface"
             >
-              <span aria-hidden="true">›</span>
+              <span class="material-symbols-outlined">chevron_right</span>
             </button>
           }
-
-          @if (galleryUrls().length > 1) {
-            <div
-              class="pointer-events-none absolute right-3 top-3 rounded-full bg-ink/40 px-3 py-1 text-xs text-surface"
-              aria-live="polite"
-              data-testid="carousel-counter"
-            >
-              Imagen {{ currentIndex() + 1 }} / {{ galleryUrls().length }}
+        } @else {
+          <div
+            class="absolute inset-0 grid place-items-center text-ink-subtle"
+            data-testid="carousel-empty"
+          >
+            <div class="text-center">
+              <span class="material-symbols-outlined text-5xl">image</span>
+              <p class="mt-2 text-sm">Imagen no disponible</p>
             </div>
-          }
-        </div>
-
-        @if (galleryUrls().length > 1) {
-          <div class="mt-3 flex justify-center gap-2" role="tablist" aria-label="Selector de imagen">
-            @for (url of galleryUrls(); track $index) {
-              <button
-                type="button"
-                (click)="goTo($index)"
-                [attr.aria-label]="'Ir a imagen ' + ($index + 1)"
-                [attr.aria-current]="$index === currentIndex() ? 'true' : null"
-                [class.bg-brand-600]="$index === currentIndex()"
-                [class.bg-border]="$index !== currentIndex()"
-                [attr.data-testid]="'carousel-dot-' + $index"
-                class="h-2 w-2 rounded-full transition-colors"
-              ></button>
-            }
           </div>
         }
-      </section>
-    } @else {
-      <section
-        class="grid aspect-video place-items-center rounded-lg bg-surface-muted"
-        data-testid="carousel-empty"
-      >
-        <span class="text-sm text-ink-muted">Imagen no disponible</span>
-      </section>
-    }
-
-    <div>
-      <h2 class="mb-3 font-display text-lg text-ink">Versiones</h2>
-
-      @if (versions().length === 0) {
-        <p class="text-sm text-ink-muted">
-          Este modelo aún no tiene versiones registradas.
-        </p>
+      </div>
+      @if (galleryUrls().length > 1) {
+        <div
+          class="mt-3 flex justify-center gap-2"
+          role="tablist"
+          aria-label="Selector de imagen"
+        >
+          @for (url of galleryUrls(); track $index) {
+            <button
+              type="button"
+              (click)="goTo($index)"
+              [attr.aria-label]="'Ir a imagen ' + ($index + 1)"
+              [attr.aria-current]="$index === currentIndex() ? 'true' : null"
+              [class.bg-brand-600]="$index === currentIndex()"
+              [class.bg-border]="$index !== currentIndex()"
+              [attr.data-testid]="'carousel-dot-' + $index"
+              class="h-2 w-2 rounded-full transition-colors"
+            ></button>
+          }
+        </div>
       }
+    </section>
 
-      <ul class="space-y-3" data-testid="versions">
+    <!-- Tabs (mobile-friendly) -->
+    <div
+      class="flex border-b border-border mb-6 overflow-x-auto"
+      role="tablist"
+      aria-label="Secciones"
+    >
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="tab() === 'specs'"
+        [attr.data-testid]="'tab-specs'"
+        (click)="setTab('specs')"
+        class="px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent"
+        [class.text-brand-700]="tab() === 'specs'"
+        [class.border-brand-600]="tab() === 'specs'"
+        [class.text-ink-muted]="tab() !== 'specs'"
+      >
+        Especificaciones
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="tab() === 'equipment'"
+        [attr.data-testid]="'tab-equipment'"
+        (click)="setTab('equipment')"
+        class="px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent"
+        [class.text-brand-700]="tab() === 'equipment'"
+        [class.border-brand-600]="tab() === 'equipment'"
+        [class.text-ink-muted]="tab() !== 'equipment'"
+      >
+        Equipamiento
+      </button>
+    </div>
+
+    <!-- Content grid: specs (or equipment) + versiones sidebar -->
+    <div
+      class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"
+    >
+      <div class="lg:col-span-2 space-y-6">
+        @if (tab() === 'specs') {
+          @for (group of specGroups(); track group.title) {
+            <article
+              class="bg-surface border border-border rounded-xl overflow-hidden"
+              [attr.data-testid]="'spec-group-' + group.title"
+            >
+              <header
+                class="bg-surface-muted px-4 py-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink"
+              >
+                <span class="material-symbols-outlined text-brand-700 text-base">
+                  {{ group.icon }}
+                </span>
+                {{ group.title }}
+              </header>
+              <dl class="divide-y divide-border text-sm">
+                @for (row of group.rows; track row.label) {
+                  <div
+                    class="flex justify-between items-center px-4 py-2.5"
+                    [class.bg-brand-50]="row.zebra"
+                    [attr.data-testid]="'spec-row-' + group.title + '-' + row.label"
+                  >
+                    <dt class="text-ink-muted">{{ row.label }}</dt>
+                    <dd class="font-semibold text-ink">{{ row.value }}</dd>
+                  </div>
+                }
+              </dl>
+            </article>
+          }
+          @if (specGroups().length === 0) {
+            <p class="text-sm text-ink-muted">Sin datos de especificación.</p>
+          }
+        } @else {
+          @if (equipmentNames().length > 0) {
+            <article
+              class="bg-surface border border-border rounded-xl p-6"
+              data-testid="equipment-list"
+            >
+              <h2 class="font-bold text-lg mb-4 text-ink">Equipamiento disponible</h2>
+              <ul class="flex flex-wrap gap-2">
+                @for (eq of equipmentNames(); track eq) {
+                  <li
+                    class="rounded-full bg-brand-100 text-brand-900 px-3 py-1 text-xs font-semibold"
+                  >
+                    {{ eq }}
+                  </li>
+                }
+              </ul>
+            </article>
+          } @else {
+            <p class="text-sm text-ink-muted">Sin equipamiento registrado.</p>
+          }
+        }
+      </div>
+
+      <aside class="space-y-3" data-testid="versions">
+        <h3 class="font-bold text-lg text-ink">Versiones</h3>
         @for (v of versions(); track v.id) {
-          <li
-            class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm"
+          <article
+            class="bg-surface border border-border rounded-xl shadow-sm hover:shadow-e2 transition-shadow p-4"
             [attr.data-testid]="'version-' + v.id"
           >
-            <div>
-              <p class="font-display text-base text-ink">{{ v.name }}</p>
-              <p class="text-sm text-ink-muted">
-                @if (v.year) {
-                  <span>{{ v.year }}</span>
-                }
-                @if (v.transmission) {
-                  <span> · {{ v.transmission }}</span>
-                }
-                @if (v.fuel) {
-                  <span> · {{ v.fuel }}</span>
-                }
-                @if (v.powerHp) {
-                  <span> · {{ v.powerHp }} hp</span>
-                }
-              </p>
-              <p class="mt-1 font-semibold text-brand-700">
-                {{ formatPrice(v.priceClp) }}
-              </p>
+            <div class="flex justify-between items-start mb-1 gap-2">
+              <div class="min-w-0">
+                <p
+                  class="text-[10px] font-bold uppercase tracking-wider text-ink-muted"
+                >
+                  {{ model()?.brand?.name }} {{ model()?.name }}
+                </p>
+                <p class="font-bold text-lg text-brand-700 truncate">
+                  {{ v.name }}
+                </p>
+              </div>
+              @if (v.transmission) {
+                <span
+                  class="flex-shrink-0 rounded bg-brand-100 text-brand-900 px-2 py-0.5 text-[10px] font-bold uppercase"
+                >
+                  {{ v.transmission }}
+                </span>
+              }
             </div>
-
+            @if (v.fuel) {
+              <p class="text-xs text-ink-muted">{{ v.fuel }} · {{ v.powerHp ?? '—' }} HP</p>
+            }
+            <p class="mt-2 font-extrabold text-2xl text-ink">
+              {{ formatPrice(v.priceClp) }}
+            </p>
             <label
-              class="flex items-center gap-2 text-sm text-ink"
-              [class.opacity-60]="!isSelected(v.id) && maxSelected()"
+              class="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-brand-700 cursor-pointer border border-brand-600 rounded-full py-2 hover:bg-brand-50 transition-colors"
+              [class.opacity-50]="!isSelected(v.id) && maxSelected()"
             >
               <input
                 type="checkbox"
-                class="h-4 w-4 rounded border-border text-brand-600 focus:ring-brand-500"
+                class="h-4 w-4 accent-brand-600"
                 [checked]="isSelected(v.id)"
                 [disabled]="!isSelected(v.id) && maxSelected()"
                 (change)="toggleVersion(v.id)"
@@ -158,21 +258,20 @@
               />
               Agregar a comparación
             </label>
-          </li>
+          </article>
         }
-      </ul>
-
-      @if (maxSelected()) {
-        <p class="mt-3 text-xs text-ink-muted">
-          Máximo 3 versiones en la comparación.
-        </p>
-      }
+        @if (maxSelected()) {
+          <p class="text-xs text-ink-muted px-1">
+            Máximo 3 versiones en la comparación.
+          </p>
+        }
+      </aside>
     </div>
 
-    <div class="flex items-center gap-3">
+    <div class="mt-8 flex items-center gap-3">
       <a
         routerLink="/compare"
-        class="rounded bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700"
+        class="rounded-full bg-brand-600 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:bg-brand-700 transition-colors"
       >
         Ver comparación
       </a>
@@ -181,6 +280,10 @@
       </span>
     </div>
 
-    <app-disclaimer text="Las especificaciones y precios son referenciales. Confirmar en concesionario." />
+    <div class="mt-6">
+      <app-disclaimer
+        text="Las especificaciones y precios son referenciales. Confirmar en concesionario."
+      />
+    </div>
   }
 </section>

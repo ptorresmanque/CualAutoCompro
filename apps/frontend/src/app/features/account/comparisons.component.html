@@ -1,11 +1,12 @@
-<section class="space-y-6 px-4 py-6 font-sans">
-  <header>
-    <h1 class="font-display text-2xl text-ink">Mis comparaciones</h1>
-    @if (user(); as u) {
-      <p class="mt-1 text-sm text-ink-muted">
-        Hola {{ u.name }}, estas son las comparaciones que guardaste.
-      </p>
-    }
+<section class="mx-auto max-w-7xl px-4 py-6 md:px-8">
+  <header class="mb-8">
+    <h1 class="text-3xl md:text-4xl font-bold text-ink tracking-tight">
+      Mis comparaciones guardadas
+    </h1>
+    <p class="mt-2 text-sm md:text-base text-ink-muted max-w-2xl">
+      Comparte estas URLs con quien quieras. Cada comparación tiene un slug
+      único de 8 caracteres.
+    </p>
   </header>
 
   @if (loading()) {
@@ -24,18 +25,18 @@
 
   @if (!loading() && !hasItems() && !error()) {
     <div
-      class="rounded-lg border border-border bg-surface p-8 text-center shadow-sm"
+      class="rounded-xl border border-border bg-surface p-12 text-center shadow-sm"
       data-testid="empty"
     >
-      <p class="font-display text-lg text-ink">
-        Aún no tienes comparaciones guardadas
+      <p class="font-bold text-lg text-ink">
+        Aún no tenés comparaciones guardadas
       </p>
       <p class="mt-2 text-sm text-ink-muted">
-        Arma una comparación desde el catálogo y guárdala con tu cuenta.
+        Armá una comparación desde el catálogo y guardala con tu cuenta.
       </p>
       <a
         routerLink="/"
-        class="mt-4 inline-block rounded bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700"
+        class="mt-4 inline-block rounded-full bg-brand-600 px-5 py-2 text-sm font-bold text-white hover:bg-brand-700 transition-colors"
       >
         Ir al catálogo
       </a>
@@ -43,70 +44,100 @@
   }
 
   @if (hasItems()) {
-    <ul class="space-y-4" data-testid="list">
+    <ul
+      class="grid grid-cols-1 md:grid-cols-2 gap-6"
+      data-testid="list"
+    >
       @for (c of comparisons(); track c.id) {
         <li
-          class="rounded-lg border border-border bg-surface p-4 shadow-sm"
+          class="bg-surface border border-border rounded-xl p-5 shadow-sm hover:shadow-e2 transition-shadow flex flex-col gap-4"
           [attr.data-testid]="'comparison-' + c.id"
         >
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div class="min-w-0">
-              <p class="font-display text-base text-ink">
-                {{ displayName(c) }}
-              </p>
-              @if (c.slug) {
-                <p class="mt-0.5 truncate text-xs text-ink-muted" data-testid="slug">
-                  /c/{{ c.slug }}
-                </p>
+          @if (c.items.length > 0) {
+            <div class="grid grid-cols-3 gap-2">
+              @for (item of c.items.slice(0, 3); track item.position) {
+                <div
+                  class="aspect-video rounded-lg bg-cover bg-center overflow-hidden border border-border bg-surface-muted"
+                  [style.background-image]="thumbStyle(item.version.model.galleryUrls?.[0] ?? item.version.model.imageUrl)"
+                  aria-hidden="true"
+                ></div>
               }
-              <p class="mt-1 text-xs text-ink-subtle">
-                {{ c.items.length }} versión(es)
-              </p>
+              @for (_ of [].constructor(maxItems() - c.items.length); track $index) {
+                <div
+                  class="aspect-video rounded-lg border border-border bg-surface-muted grid place-items-center text-ink-subtle"
+                  aria-hidden="true"
+                >
+                  <span class="material-symbols-outlined text-2xl">directions_car</span>
+                </div>
+              }
             </div>
-            <div class="flex flex-wrap items-center gap-2">
+          } @else {
+            <div
+              class="aspect-video rounded-lg border border-border bg-surface-muted grid place-items-center text-ink-subtle"
+            >
+              <span class="material-symbols-outlined text-3xl">directions_car</span>
+            </div>
+          }
+
+          <div>
+            <h3 class="font-bold text-base text-ink">
+              {{ displayName(c) }}
+            </h3>
+            <p class="mt-1 text-xs text-ink-muted">
+              Guardada el {{ formatSharedDate(c.createdAt) }} ·
+              {{ c.items.length }} versión(es)
+            </p>
+          </div>
+
+          @if (c.slug) {
+            <div
+              class="flex items-center justify-between p-2 bg-surface-muted rounded-lg"
+            >
+              <code
+                class="font-mono text-sm font-bold text-brand-700"
+                data-testid="slug"
+              >
+                /{{ c.slug }}
+              </code>
               <button
                 type="button"
-                class="rounded border border-border px-3 py-1 text-sm text-ink hover:bg-surface-muted disabled:opacity-60"
-                [disabled]="!c.slug"
+                class="flex items-center gap-1 text-brand-700 text-xs font-bold hover:underline transition-all active:scale-95"
                 (click)="copyUrl(c)"
                 data-testid="copy"
               >
-                @if (copiedId() === c.id) {
-                  ¡Copiado!
-                } @else {
-                  Copiar URL
-                }
-              </button>
-              <button
-                type="button"
-                class="rounded border border-border px-3 py-1 text-sm text-ink hover:bg-surface-muted disabled:opacity-60"
-                [disabled]="deletingId() === c.id"
-                (click)="deleteComparison(c)"
-                data-testid="delete"
-              >
-                {{ deletingId() === c.id ? 'Eliminando…' : 'Eliminar' }}
+                <span class="material-symbols-outlined text-base">content_copy</span>
+                {{ copiedId() === c.id ? '¡Copiado!' : 'Copiar URL' }}
               </button>
             </div>
-          </div>
-
-          @if (c.items.length > 0) {
-            <ul class="mt-3 divide-y divide-border rounded border border-border">
-              @for (item of c.items; track item.position) {
-                <li class="flex items-center justify-between gap-3 px-3 py-2 text-sm">
-                  <span class="truncate text-ink">
-                    {{ fullName(item.version) }}
-                  </span>
-                  <span class="font-semibold text-brand-700">
-                    {{ formatPrice(item.version.priceClp) }}
-                  </span>
-                </li>
-              }
-            </ul>
           }
+
+          <div class="flex items-center justify-between mt-auto pt-3 border-t border-border">
+            <a
+              [routerLink]="['/compare']"
+              [queryParams]="{ slug: c.slug }"
+              class="rounded-full border border-brand-600 text-brand-700 text-xs font-bold px-4 py-2 hover:bg-brand-50 transition-colors"
+            >
+              Ver
+            </a>
+            <button
+              type="button"
+              class="flex items-center gap-1 text-error text-xs font-bold hover:underline transition-all active:scale-95"
+              (click)="deleteComparison(c)"
+              [disabled]="deletingId() === c.id"
+              data-testid="delete"
+            >
+              <span class="material-symbols-outlined text-base">delete</span>
+              {{ deletingId() === c.id ? 'Eliminando…' : 'Eliminar' }}
+            </button>
+          </div>
         </li>
       }
     </ul>
 
-    <app-disclaimer text="Las comparaciones guardadas son privadas y solo tú puedes verlas." />
+    <div class="mt-6">
+      <app-disclaimer
+        text="Las comparaciones guardadas son privadas y solo vos podés verlas."
+      />
+    </div>
   }
 </section>

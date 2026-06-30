@@ -14,7 +14,12 @@ interface ComparisonVersion {
   id: string;
   name: string;
   priceClp?: number | null;
-  model: { name: string; brand: { name: string } };
+  model: {
+    name: string;
+    brand: { name: string };
+    galleryUrls?: string[];
+    imageUrl?: string | null;
+  };
 }
 
 interface ComparisonItem {
@@ -127,5 +132,25 @@ export class ComparisonsComponent {
     const brand = v.model?.brand?.name ?? '';
     const model = v.model?.name ?? '';
     return [brand, model, v.name].filter(Boolean).join(' ');
+  }
+
+  formatSharedDate(value: string): string {
+    try {
+      return new Date(value).toLocaleDateString('es-CL', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch {
+      return value;
+    }
+  }
+
+  maxItems(): number {
+    return Math.max(0, 3);
+  }
+
+  thumbStyle(url: string | null | undefined): string {
+    return url ? `url("${url}")` : 'none';
   }
 }

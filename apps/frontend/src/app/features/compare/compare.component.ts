@@ -374,6 +374,21 @@ export class CompareComponent {
       : '';
   }
 
+  sectionIcon(name: string): string {
+    switch (name) {
+      case 'specs':
+        return 'analytics';
+      case 'precio-anio':
+        return 'payments';
+      case 'equipamiento':
+        return 'inventory_2';
+      case 'mantencion':
+        return 'build';
+      default:
+        return 'analytics';
+    }
+  }
+
   trackById(_: number, v: CompareVersion): string {
     return v.id;
   }

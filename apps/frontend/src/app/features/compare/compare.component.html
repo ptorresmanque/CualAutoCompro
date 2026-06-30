@@ -1,177 +1,239 @@
-<section class="space-y-6 p-4 font-sans">
-  <header class="flex flex-wrap items-center justify-between gap-3">
-    <div>
-      <h1 class="font-display text-2xl text-ink">Comparador cualautocompro</h1>
-      <p class="text-sm text-ink-muted">
-        Compara hasta 3 versiones y revisá sus diferencias.
-      </p>
-    </div>
-    @if (versions().length > 0) {
-      <div class="flex items-center gap-2">
-        <button
-          type="button"
-          class="rounded border border-border px-3 py-1 text-sm text-ink hover:bg-surface-muted"
-          (click)="clearAll()"
-        >
-          Limpiar selección
-        </button>
-      </div>
-    }
-  </header>
-
+<section class="mx-auto max-w-7xl px-4 py-6 md:px-8">
   @if (loadError()) {
     <div
-      class="rounded-lg border border-warn bg-warn-light p-6 text-center shadow-sm"
+      class="rounded-xl border border-warn bg-warn-light p-8 text-center shadow-sm"
       data-testid="load-error"
     >
-      <p class="font-display text-lg text-warn-dark">{{ loadError() }}</p>
+      <p class="font-bold text-lg text-warn-dark">{{ loadError() }}</p>
       <p class="mt-2 text-sm text-ink-muted">
-        Es posible que el enlace haya expirado o que la comparación haya sido eliminada.
+        Es posible que el enlace haya expirado o que la comparación haya sido
+        eliminada.
       </p>
       <a
         routerLink="/"
         data-testid="back-home"
-        class="mt-4 inline-block rounded bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700"
+        class="mt-4 inline-block rounded-full bg-brand-600 px-5 py-2 text-sm font-bold text-white hover:bg-brand-700 transition-colors"
       >
         Volver al catálogo
       </a>
     </div>
   } @else if (empty()) {
     <div
-      class="rounded-lg border border-border bg-surface p-8 text-center shadow-sm"
+      class="rounded-xl border border-border bg-surface p-12 text-center shadow-sm"
       data-testid="empty"
     >
-      <p class="font-display text-lg text-ink">
+      <p class="font-bold text-lg text-ink">
         No has seleccionado ningún auto todavía
       </p>
       <p class="mt-2 text-sm text-ink-muted">
-        Agregá hasta 3 versiones desde el catálogo y comparalas acá.
+        Agregá hasta 3 versiones desde el catálogo y comparálas acá.
       </p>
       <a
         routerLink="/"
-        class="mt-4 inline-block rounded bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700"
+        class="mt-4 inline-block rounded-full bg-brand-600 px-5 py-2 text-sm font-bold text-white hover:bg-brand-700 transition-colors"
       >
         Ir al catálogo
       </a>
     </div>
   } @else {
+    <header class="mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-ink tracking-tight">
+        Comparativa de Modelos
+      </h1>
+      <p class="mt-1 text-sm text-ink-muted">
+        Analizá cada detalle técnico y comercial de tus opciones favoritas.
+      </p>
+    </header>
+
     @if (sharedMeta(); as meta) {
       <div
-        class="rounded-md border border-brand-200 bg-brand-50 px-3 py-2 text-sm text-brand-800"
+        class="mb-6 rounded-md border border-brand-200 bg-brand-50 px-3 py-2 text-sm text-brand-900"
         data-testid="shared-banner"
       >
         Estás viendo una comparación guardada · Creada el
         {{ formatSharedDate(meta.createdAt) }}
       </div>
     }
+
     @if (loading()) {
       <p class="text-sm text-brand-600" data-testid="loading">Cargando…</p>
     }
 
+    <!-- Cards -->
     <div
-      class="grid gap-4"
-      [class.md:grid-cols-1]="count() === 1"
-      [class.md:grid-cols-2]="count() === 2"
-      [class.md:grid-cols-3]="count() === 3"
+      class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10"
       data-testid="cards"
     >
       @for (v of versions(); track v.id) {
         <article
-          class="rounded-lg border border-border bg-surface p-4 shadow-sm"
+          class="relative bg-surface border border-border rounded-xl shadow-sm hover:shadow-e2 transition-shadow p-4 overflow-hidden group"
           data-testid="card"
         >
-          <p class="font-display text-base text-ink">{{ fullName(v) }}</p>
-          <p class="mt-1 text-sm text-ink-muted">{{ brandLine(v) }}</p>
-          <p class="mt-3 font-semibold text-brand-700">
-            {{ formatPrice(v.priceClp) }}
+          @if (versions().length > 1) {
+            <button
+              type="button"
+              (click)="removeFromCompare(v.id)"
+              [attr.aria-label]="'Quitar ' + fullName(v)"
+              class="absolute top-2 right-2 grid h-8 w-8 place-items-center rounded-full bg-surface-muted text-ink-subtle hover:bg-error/10 hover:text-error transition-colors"
+            >
+              <span class="material-symbols-outlined text-base">close</span>
+            </button>
+          }
+          <div class="flex items-center gap-2 mb-1">
+            <span
+              class="grid h-6 w-6 place-items-center rounded-full bg-brand-100 text-brand-900 text-[10px] font-bold"
+              aria-hidden="true"
+            >
+              {{ (v.model?.brand?.name ?? '?').charAt(0) }}
+            </span>
+            <span
+              class="text-[10px] font-bold uppercase tracking-wider text-ink-muted"
+            >
+              {{ v.model?.brand?.name }}
+            </span>
+          </div>
+          <h3 class="font-bold text-lg leading-tight text-ink mb-1 pr-8">
+            {{ v.model?.name }} {{ v.name }}
+          </h3>
+          <p class="font-extrabold text-xl text-brand-700 mb-3">
+            {{ formatPrice(v.priceClp) }} <span class="text-xs font-normal text-ink-muted">CLP</span>
           </p>
-          <button
-            type="button"
-            class="mt-3 rounded border border-border px-2 py-1 text-xs text-ink hover:bg-surface-muted"
-            (click)="removeFromCompare(v.id)"
-          >
-            Quitar
-          </button>
+          <div class="grid grid-cols-2 gap-2">
+            <div
+              class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
+            >
+              <span class="material-symbols-outlined text-brand-700 text-base">
+                settings
+              </span>
+              <span class="text-xs font-semibold">{{ v.engineDisplacementCc ? (v.engineDisplacementCc / 1000).toFixed(1) + 'L' : '—' }}</span>
+            </div>
+            <div
+              class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
+            >
+              <span class="material-symbols-outlined text-brand-700 text-base">
+                account_tree
+              </span>
+              <span class="text-xs font-semibold">{{ v.transmission ?? '—' }}</span>
+            </div>
+            <div
+              class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
+            >
+              <span class="material-symbols-outlined text-brand-700 text-base">
+                local_gas_station
+              </span>
+              <span class="text-xs font-semibold">{{ v.fuel ?? '—' }}</span>
+            </div>
+            <div
+              class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
+            >
+              <span class="material-symbols-outlined text-brand-700 text-base">
+                speed
+              </span>
+              <span class="text-xs font-semibold">{{ v.consumptionCityKmL ? v.consumptionCityKmL + ' km/l' : '—' }}</span>
+            </div>
+          </div>
         </article>
       }
     </div>
 
-    <div
-      class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark"
-    >
-      @if (user()) {
-        <span>Tu comparación se guarda automáticamente.</span>
-        <button
-          type="button"
-          class="rounded bg-brand-600 px-3 py-1 text-white hover:bg-brand-700 disabled:opacity-50"
-          [disabled]="saving()"
-          (click)="saveComparison()"
+    <!-- Collapsible sections -->
+    <div class="space-y-3">
+      @for (s of sections; track s.name) {
+        <details
+          class="group bg-surface border border-border rounded-xl overflow-hidden"
+          [open]="s.name === 'specs'"
+          [attr.data-testid]="'section-' + s.name"
         >
-          {{ saving() ? 'Guardando…' : 'Guardar comparación' }}
-        </button>
-      } @else {
-        <span>Crea una cuenta para guardar esta comparación.</span>
-        <a
-          routerLink="/register"
-          class="rounded bg-brand-600 px-3 py-1 text-white hover:bg-brand-700"
-        >
-          Crear cuenta
-        </a>
-      }
-      @if (savedSlug()) {
-        <a
-          [routerLink]="['/c', savedSlug()]"
-          class="ml-auto text-brand-700 underline"
-        >
-          Ver enlace público
-        </a>
-      }
-    </div>
-
-    @for (s of sections; track s.name) {
-      <section
-        class="overflow-hidden rounded-lg border border-border bg-surface"
-        [attr.data-testid]="'section-' + s.name"
-      >
-        <h2 class="border-b border-border bg-surface-muted px-4 py-2 font-display text-base text-ink">
-          {{ s.label }}
-        </h2>
-        <table class="w-full text-sm">
-          <thead>
-            <tr>
-              <th
-                class="w-1/4 border-b border-border px-3 py-2 text-left font-sans text-ink-muted"
-              ></th>
-              @for (v of versions(); track v.id) {
-                <th
-                  class="w-1/4 border-b border-border px-3 py-2 text-left font-sans text-ink"
-                >
-                  {{ v.name }}
-                </th>
-              }
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of s.rows; track row.key) {
-              <tr [class]="cellClass(row.key)" [attr.data-testid]="'row-' + row.key">
-                <th
-                  scope="row"
-                  class="border-b border-border px-3 py-2 text-left font-sans text-ink-muted"
-                >
-                  {{ row.label }}
-                </th>
-                @for (v of versions(); track v.id) {
-                  <td class="border-b border-border px-3 py-2 text-ink">
-                    {{ row.format(v) }}
-                  </td>
+          <summary
+            class="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-surface-muted transition-colors list-none"
+          >
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-brand-700">
+                {{ sectionIcon(s.name) }}
+              </span>
+              <h2 class="font-bold text-base">{{ s.label }}</h2>
+            </div>
+            <span
+              class="material-symbols-outlined group-open:rotate-180 transition-transform"
+            >
+              expand_more
+            </span>
+          </summary>
+          <div class="border-t border-border overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-surface-muted">
+                  <th class="w-1/4 px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-ink-muted">
+                    Atributo
+                  </th>
+                  @for (v of versions(); track v.id) {
+                    <th class="w-1/4 px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-ink-muted">
+                      {{ v.model?.name }} {{ v.name }}
+                    </th>
+                  }
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                @for (row of s.rows; track row.key) {
+                  <tr
+                    [attr.data-testid]="'row-' + row.key"
+                    [class]="cellClass(row.key)"
+                  >
+                    <th
+                      scope="row"
+                      class="px-4 py-2 text-left font-bold text-ink-muted text-xs uppercase tracking-wider"
+                    >
+                      {{ row.label }}
+                    </th>
+                    @for (v of versions(); track v.id) {
+                      <td class="px-4 py-2 text-ink">
+                        {{ row.format(v) }}
+                      </td>
+                    }
+                  </tr>
                 }
-              </tr>
-            }
-          </tbody>
-        </table>
-      </section>
-    }
+              </tbody>
+            </table>
+          </div>
+        </details>
+      }
 
-    <app-disclaimer text="Las celdas resaltadas en ámbar indican diferencias relevantes entre las versiones seleccionadas." />
+      <div
+        class="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-brand-50 border border-brand-200 px-4 py-3 text-sm text-brand-900"
+      >
+        @if (user()) {
+          <span>Tu comparación se guarda automáticamente.</span>
+          <button
+            type="button"
+            class="rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700 transition-colors disabled:opacity-60"
+            [disabled]="saving()"
+            (click)="saveComparison()"
+          >
+            {{ saving() ? 'Guardando…' : 'Guardar comparación' }}
+          </button>
+        } @else {
+          <span>Crea una cuenta para guardar esta comparación.</span>
+          <a
+            routerLink="/register"
+            class="rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700 transition-colors"
+          >
+            Crear cuenta
+          </a>
+        }
+        @if (savedSlug()) {
+          <a
+            [routerLink]="['/compare']"
+            [queryParams]="{ slug: savedSlug() }"
+            class="ml-auto text-brand-700 underline"
+          >
+            Ver enlace público
+          </a>
+        }
+      </div>
+
+      <app-disclaimer
+        text="Las celdas resaltadas en ámbar indican diferencias relevantes entre las versiones seleccionadas."
+      />
+    </div>
   }
 </section>

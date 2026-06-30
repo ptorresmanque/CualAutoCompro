@@ -1,24 +1,32 @@
-<section class="mx-auto max-w-md px-4 py-8 font-sans">
-  <header class="mb-6">
-    <h1 class="font-display text-2xl text-ink">Iniciar sesión</h1>
+<section class="mx-auto max-w-md px-4 py-12 font-sans">
+  <header class="mb-6 text-center">
+    <span
+      class="mx-auto grid h-12 w-12 place-items-center rounded-full bg-brand-600 text-white font-bold mb-3"
+      aria-hidden="true"
+    >
+      c
+    </span>
+    <h1 class="font-bold text-2xl text-ink">Iniciar sesión</h1>
     <p class="mt-1 text-sm text-ink-muted">
-      Entra con tu cuenta para guardar comparaciones.
+      Accedé a tus comparaciones guardadas.
     </p>
   </header>
 
   <form
     [formGroup]="form"
     (ngSubmit)="submit()"
-    class="space-y-4 rounded-lg border border-border bg-surface p-6 shadow-sm"
+    class="space-y-4 rounded-xl border border-border bg-surface p-6 shadow-sm"
     novalidate
   >
     <label class="block text-sm text-ink">
-      Email
+      <span class="text-xs font-bold uppercase tracking-wider text-ink-muted">
+        Email
+      </span>
       <input
         type="email"
         autocomplete="email"
         formControlName="email"
-        class="mt-1 w-full rounded border border-border bg-surface px-3 py-2 text-ink outline-none focus:border-brand-500"
+        class="mt-1 w-full rounded border border-border bg-surface px-3 py-2 text-ink outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600"
         data-testid="email"
       />
       @if (form.controls.email.touched && form.controls.email.invalid) {
@@ -29,12 +37,14 @@
     </label>
 
     <label class="block text-sm text-ink">
-      Contraseña
+      <span class="text-xs font-bold uppercase tracking-wider text-ink-muted">
+        Contraseña
+      </span>
       <input
         type="password"
         autocomplete="current-password"
         formControlName="password"
-        class="mt-1 w-full rounded border border-border bg-surface px-3 py-2 text-ink outline-none focus:border-brand-500"
+        class="mt-1 w-full rounded border border-border bg-surface px-3 py-2 text-ink outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600"
         data-testid="password"
       />
       @if (form.controls.password.touched && form.controls.password.invalid) {
@@ -57,17 +67,44 @@
     <button
       type="submit"
       [disabled]="submitting()"
-      class="w-full rounded bg-brand-600 px-4 py-2 font-display text-white hover:bg-brand-700 disabled:opacity-60"
+      class="w-full rounded-full bg-brand-600 px-4 py-2.5 font-bold text-white hover:bg-brand-700 transition-colors disabled:opacity-60 shadow-md"
       data-testid="submit"
     >
       {{ submitting() ? 'Ingresando…' : 'Iniciar sesión' }}
     </button>
-
-    <p class="text-center text-sm text-ink-muted">
-      ¿No tienes cuenta?
-      <a routerLink="/register" class="text-brand-700 hover:underline">
-        Crear cuenta
-      </a>
-    </p>
   </form>
+
+  <div class="mt-6 flex items-center gap-3 text-xs uppercase tracking-wider text-ink-muted">
+    <span class="flex-1 h-px bg-border"></span>
+    <span>o continúa sin cuenta</span>
+    <span class="flex-1 h-px bg-border"></span>
+  </div>
+
+  <div class="mt-6 space-y-2">
+    <a
+      routerLink="/"
+      class="w-full inline-flex items-center justify-center gap-2 rounded-full border border-brand-600 text-brand-700 font-bold py-2.5 px-4 text-sm hover:bg-brand-50 transition-colors"
+    >
+      <span class="material-symbols-outlined text-base">directions_car</span>
+      Explorar catálogo
+    </a>
+    <a
+      routerLink="/compare"
+      class="w-full inline-flex items-center justify-center gap-2 rounded-full border border-brand-600 text-brand-700 font-bold py-2.5 px-4 text-sm hover:bg-brand-50 transition-colors"
+    >
+      <span class="material-symbols-outlined text-base">compare_arrows</span>
+      Comparar autos
+    </a>
+  </div>
+
+  <p class="mt-6 text-center text-sm text-ink-muted">
+    ¿No tenés cuenta?
+    <a routerLink="/register" class="text-brand-700 font-bold hover:underline">
+      Crear cuenta
+    </a>
+  </p>
+
+  <p class="mt-6 text-center text-[11px] text-ink-subtle">
+    Al iniciar sesión aceptás nuestros términos de uso y política de privacidad.
+  </p>
 </section>
