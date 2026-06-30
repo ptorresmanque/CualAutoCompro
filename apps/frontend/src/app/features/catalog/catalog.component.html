@@ -150,11 +150,43 @@
             <app-vehicle-card
               [model]="m"
               [featured]="isFeatured(m.name)"
+              [added]="isAdded(m)"
+              [maxReached]="maxReached()"
               (compareTapped)="addToCompare(m)"
             />
           </li>
         }
       </ul>
+
+      <!-- Sticky selection bar -->
+      @if (selectionCount() > 0) {
+        <div
+          class="sticky bottom-4 mt-6 z-30 rounded-2xl bg-ink text-surface shadow-e2 p-4 flex items-center justify-between gap-4 border border-brand-600"
+          data-testid="selection-bar"
+        >
+          <div class="flex items-center gap-3">
+            <span
+              class="grid h-8 w-8 place-items-center rounded-full bg-brand-600 text-white text-xs font-bold"
+            >
+              {{ selectionCount() }}
+            </span>
+            <span class="text-sm">
+              {{ selectionCount() === 1 ? '1 versión seleccionada' : selectionCount() + ' versiones seleccionadas' }}
+              @if (!maxReached()) {
+                <span class="text-ink-subtle"> · podés agregar hasta 3</span>
+              }
+            </span>
+          </div>
+          <a
+            routerLink="/compare"
+            class="rounded-full bg-brand-600 text-white text-sm font-bold px-5 py-2 hover:bg-brand-700 transition-colors flex items-center gap-2"
+            data-testid="selection-bar-compare"
+          >
+            <span class="material-symbols-outlined text-base">compare_arrows</span>
+            Ver comparación
+          </a>
+        </div>
+      }
 
       <div class="mt-8">
         <app-disclaimer

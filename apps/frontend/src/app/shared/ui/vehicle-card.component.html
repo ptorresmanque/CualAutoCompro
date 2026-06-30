@@ -1,8 +1,13 @@
 <article
-  class="relative flex flex-col bg-surface border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-e2 transition-shadow group"
+  class="relative flex flex-col bg-surface border rounded-xl overflow-hidden shadow-sm hover:shadow-e2 transition-shadow group"
+  [class.border-brand-600]="added()"
+  [class.border-border]="!added()"
+  [class.bg-brand-50]="added()"
+  [class.bg-surface]="!added()"
   (mouseenter)="onMouseEnter()"
   (mouseleave)="onMouseLeave()"
   [attr.data-testid]="'vehicle-card-' + model().id"
+  [attr.data-added]="added() ? 'true' : 'false'"
 >
   <!-- Featured pill -->
   @if (featured()) {
@@ -58,12 +63,29 @@
     <button
       type="button"
       (click)="onCompare($event)"
-      [disabled]="!hasDefaultVersion()"
+      [disabled]="!hasDefaultVersion() || (!added() && maxReached())"
       [attr.aria-label]="comparabilityLabel() || 'Comparar'"
+      [attr.aria-pressed]="added() ? 'true' : 'false'"
       [attr.data-testid]="'compare-' + model().id"
-      class="mt-auto w-full bg-brand-600 text-white font-bold py-2 rounded transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+      [attr.data-state]="added() ? 'added' : 'available'"
+      class="mt-auto w-full font-bold py-2 rounded transition-colors flex items-center justify-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"
+      [class.bg-brand-600]="!added() && hasDefaultVersion()"
+      [class.text-white]="!added()"
+      [class.hover:bg-brand-700]="!added()"
+      [class.bg-surface-muted]="added()"
+      [class.text-brand-700]="added()"
+      [class.hover:bg-brand-100]="added()"
+      [class.border]="added()"
+      [class.border-brand-600]="added()"
     >
-      Comparar
+      @if (added()) {
+        <span class="material-symbols-outlined text-base">check_circle</span>
+        En comparación
+      } @else if (maxReached()) {
+        Máximo 3
+      } @else {
+        Comparar
+      }
     </button>
     @if (model().defaultVersion; as dv) {
       <p class="font-sans text-[10px] text-ink-subtle text-center">

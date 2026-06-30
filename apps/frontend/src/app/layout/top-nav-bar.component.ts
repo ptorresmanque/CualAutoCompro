@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../core/auth.service';
+import { CompareStore } from '../core/compare-store.service';
 
 interface NavLink {
   path: string;
@@ -24,10 +25,12 @@ interface NavLink {
 })
 export class TopNavBarComponent {
   private auth = inject(AuthService);
+  private compareStore = inject(CompareStore);
   private router = inject(Router);
 
   readonly user = this.auth.currentUser;
   readonly menuOpen = signal(false);
+  readonly compareCount = computed(() => this.compareStore.ids().length);
 
   readonly initials = computed(() => {
     const u = this.user();

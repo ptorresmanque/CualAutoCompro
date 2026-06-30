@@ -55,6 +55,15 @@ export class CatalogComponent {
   total = signal(0);
   loading = signal(false);
 
+  readonly selectedIds = this.compare.ids;
+  readonly selectionCount = computed(() => this.selectedIds().length);
+  readonly maxReached = computed(() => this.selectionCount() >= 3);
+
+  isAdded(item: CatalogItem): boolean {
+    const id = item.defaultVersion?.id;
+    return id ? this.selectedIds().includes(id) : false;
+  }
+
   readonly initialLoad: Promise<void>;
 
   constructor() {
@@ -80,8 +89,13 @@ export class CatalogComponent {
   }
 
   addToCompare(item: CatalogItem): void {
-    if (!item.defaultVersion) return;
-    this.compare.add(item.defaultVersion.id);
+    const v = item.defaultVersion;
+    if (!v) return;
+    if (this.selectedIds().includes(v.id)) {
+      this.compare.remove(v.id);
+    } else {
+      this.compare.add(v.id);
+    }
   }
 
   formatPrice(value: number | null | undefined): string {

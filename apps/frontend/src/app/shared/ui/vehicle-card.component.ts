@@ -33,6 +33,8 @@ export interface VehicleCardInput {
 export class VehicleCardComponent {
   readonly model = input.required<VehicleCardInput>();
   readonly featured = input<boolean>(false);
+  readonly added = input<boolean>(false);
+  readonly maxReached = input<boolean>(false);
   readonly compareTapped = output<VehicleCardInput>();
 
   private readonly _hovered = signal(false);
@@ -59,12 +61,17 @@ export class VehicleCardComponent {
 
   readonly comparabilityLabel = computed(() => {
     const dv = this.model().defaultVersion;
-    return dv ? `Comparar ${this.model().name} ${dv.name} ${dv.year}` : '';
+    if (this.added()) return `Quitar ${this.model().name} ${dv?.name ?? ''} de la comparación`;
+    return dv ? `Agregar ${this.model().name} ${dv.name} ${dv.year} a la comparación` : '';
   });
 
   onCompare(event: Event): void {
     event.stopPropagation();
     if (!this.hasDefaultVersion()) return;
+    if (this.added() || this.maxReached()) {
+      this.compareTapped.emit(this.model());
+      return;
+    }
     this.compareTapped.emit(this.model());
   }
 

@@ -36,6 +36,14 @@
             <span class="material-symbols-outlined text-base">{{ link.icon }}</span>
           }
           {{ link.label }}
+          @if (link.path === '/compare' && compareCount() > 0) {
+            <span
+              class="ml-1 grid h-5 w-5 place-items-center rounded-full bg-brand-600 text-white text-[10px] font-bold"
+              data-testid="nav-compare-count"
+            >
+              {{ compareCount() }}
+            </span>
+          }
         </a>
       }
     </nav>

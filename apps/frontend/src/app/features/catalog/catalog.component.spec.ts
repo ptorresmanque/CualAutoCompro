@@ -115,9 +115,78 @@ describe('CatalogComponent', () => {
     const btn: HTMLButtonElement | null =
       fixture.nativeElement.querySelector('button[data-testid="compare-m1"]');
     expect(btn).not.toBeNull();
+    expect(btn!.getAttribute('data-state')).toBe('available');
     btn!.click();
 
     expect(store.ids()).toEqual(['v1']);
+  });
+
+  it('botón Comparar toggle: segunda pulsación quita la versión', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    flushItems(
+      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      [
+        {
+          id: 'm1',
+          name: 'Yaris',
+          brand: { name: 'Toyota' },
+          minPrice: 14000000,
+          segment: 'HATCHBACK',
+          defaultVersion: { id: 'v1', name: 'XLS', priceClp: 14990000, year: 2026 },
+        },
+      ],
+    );
+    await fixture.componentInstance.initialLoad;
+    fixture.detectChanges();
+
+    const btn = fixture.nativeElement.querySelector(
+      'button[data-testid="compare-m1"]',
+    ) as HTMLButtonElement;
+    btn.click();
+    fixture.detectChanges();
+    expect(btn.getAttribute('data-state')).toBe('added');
+
+    btn.click();
+    fixture.detectChanges();
+    expect(btn.getAttribute('data-state')).toBe('available');
+    expect(store.ids()).toEqual([]);
+  });
+
+  it('muestra sticky selection-bar con contador cuando hay versiones seleccionadas', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    flushItems(
+      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      [
+        {
+          id: 'm1',
+          name: 'Yaris',
+          brand: { name: 'Toyota' },
+          minPrice: 14000000,
+          segment: 'HATCHBACK',
+          defaultVersion: { id: 'v1', name: 'XLS', priceClp: 14990000, year: 2026 },
+        },
+      ],
+    );
+    await fixture.componentInstance.initialLoad;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="selection-bar"]')).toBeNull();
+
+    const btn = fixture.nativeElement.querySelector(
+      'button[data-testid="compare-m1"]',
+    ) as HTMLButtonElement;
+    btn.click();
+    fixture.detectChanges();
+
+    const bar = fixture.nativeElement.querySelector('[data-testid="selection-bar"]');
+    expect(bar).not.toBeNull();
+    expect(bar.textContent).toContain('1 versión seleccionada');
+    expect(
+      fixture.nativeElement
+        .querySelector('[data-testid="selection-bar-compare"]') as HTMLAnchorElement,
+    ).toBeTruthy();
   });
 
   it('muestra el nombre+año de la versión elegida junto al botón Comparar', async () => {

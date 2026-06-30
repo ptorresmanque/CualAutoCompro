@@ -8,7 +8,13 @@ import { VehicleCardComponent, VehicleCardInput } from './vehicle-card.component
   imports: [VehicleCardComponent],
   template: `
     @if (car(); as c) {
-      <app-vehicle-card [model]="c" [featured]="featured()" (compareTapped)="captured.set($event)" />
+      <app-vehicle-card
+        [model]="c"
+        [featured]="featured()"
+        [added]="added()"
+        [maxReached]="maxReached()"
+        (compareTapped)="captured.set($event)"
+      />
     }
     <span data-testid="captured-flag">{{ captured() ? 'yes' : 'no' }}</span>
   `,
@@ -16,6 +22,8 @@ import { VehicleCardComponent, VehicleCardInput } from './vehicle-card.component
 class TestHostComponent {
   car = signal<VehicleCardInput | null>(null);
   featured = signal(false);
+  added = signal(false);
+  maxReached = signal(false);
   captured = signal<VehicleCardInput | null>(null);
 }
 
@@ -75,6 +83,40 @@ describe('VehicleCardComponent', () => {
     expect(
       f.nativeElement.querySelector('[data-testid="featured-pill"]'),
     ).toBeNull();
+  });
+
+  it('muestra "En comparación" con bg-brand-50 cuando added=true', () => {
+    TestBed.configureTestingModule({ imports: [TestHostComponent] });
+    const f = TestBed.createComponent(TestHostComponent);
+    f.componentInstance.car.set(carFixture());
+    f.detectChanges();
+    f.componentInstance.added.set(true);
+    f.detectChanges();
+
+    const btn = f.nativeElement.querySelector(
+      'button[data-testid="compare-m1"]',
+    ) as HTMLButtonElement;
+    expect(btn.getAttribute('data-state')).toBe('added');
+    expect(btn.textContent).toContain('En comparación');
+    const article = f.nativeElement.querySelector(
+      '[data-testid="vehicle-card-m1"]',
+    ) as HTMLElement;
+    expect(article.getAttribute('data-added')).toBe('true');
+    expect(article.className).toContain('border-brand-600');
+  });
+
+  it('muestra "Máximo 3" cuando maxReached=true y no está agregado', () => {
+    TestBed.configureTestingModule({ imports: [TestHostComponent] });
+    const f = TestBed.createComponent(TestHostComponent);
+    f.componentInstance.car.set(carFixture());
+    f.componentInstance.maxReached.set(true);
+    f.detectChanges();
+
+    const btn = f.nativeElement.querySelector(
+      'button[data-testid="compare-m1"]',
+    ) as HTMLButtonElement;
+    expect(btn.textContent.trim()).toBe('Máximo 3');
+    expect(btn.disabled).toBe(true);
   });
 
   it('emite compareTapped al hacer click en "Comparar"', () => {
