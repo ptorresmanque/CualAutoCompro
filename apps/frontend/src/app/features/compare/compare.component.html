@@ -1,1 +1,151 @@
-<p class="p-4 font-sans text-ink-muted">Comparar (próximamente)</p>
+<section class="space-y-6 p-4 font-sans">
+  <header class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="font-display text-2xl text-ink">Comparador cualautocompro</h1>
+      <p class="text-sm text-ink-muted">
+        Compara hasta 3 versiones y revisá sus diferencias.
+      </p>
+    </div>
+    @if (versions().length > 0) {
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="rounded border border-border px-3 py-1 text-sm text-ink hover:bg-surface-muted"
+          (click)="clearAll()"
+        >
+          Limpiar selección
+        </button>
+      </div>
+    }
+  </header>
+
+  @if (empty()) {
+    <div
+      class="rounded-lg border border-border bg-surface p-8 text-center shadow-sm"
+      data-testid="empty"
+    >
+      <p class="font-display text-lg text-ink">
+        No has seleccionado ningún auto todavía
+      </p>
+      <p class="mt-2 text-sm text-ink-muted">
+        Agregá hasta 3 versiones desde el catálogo y comparalas acá.
+      </p>
+      <a
+        routerLink="/"
+        class="mt-4 inline-block rounded bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700"
+      >
+        Ir al catálogo
+      </a>
+    </div>
+  } @else {
+    @if (loading()) {
+      <p class="text-sm text-brand-600" data-testid="loading">Cargando…</p>
+    }
+
+    <div
+      class="grid gap-4"
+      [class.md:grid-cols-1]="count() === 1"
+      [class.md:grid-cols-2]="count() === 2"
+      [class.md:grid-cols-3]="count() === 3"
+      data-testid="cards"
+    >
+      @for (v of versions(); track v.id) {
+        <article
+          class="rounded-lg border border-border bg-surface p-4 shadow-sm"
+          data-testid="card"
+        >
+          <p class="font-display text-base text-ink">{{ fullName(v) }}</p>
+          <p class="mt-1 text-sm text-ink-muted">{{ brandLine(v) }}</p>
+          <p class="mt-3 font-semibold text-brand-700">
+            {{ formatPrice(v.priceClp) }}
+          </p>
+          <button
+            type="button"
+            class="mt-3 rounded border border-border px-2 py-1 text-xs text-ink hover:bg-surface-muted"
+            (click)="removeFromCompare(v.id)"
+          >
+            Quitar
+          </button>
+        </article>
+      }
+    </div>
+
+    <div
+      class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark"
+    >
+      @if (user()) {
+        <span>Tu comparación se guarda automáticamente.</span>
+        <button
+          type="button"
+          class="rounded bg-brand-600 px-3 py-1 text-white hover:bg-brand-700 disabled:opacity-50"
+          [disabled]="saving()"
+          (click)="saveComparison()"
+        >
+          {{ saving() ? 'Guardando…' : 'Guardar comparación' }}
+        </button>
+      } @else {
+        <span>Crea una cuenta para guardar esta comparación.</span>
+        <a
+          routerLink="/register"
+          class="rounded bg-brand-600 px-3 py-1 text-white hover:bg-brand-700"
+        >
+          Crear cuenta
+        </a>
+      }
+      @if (savedSlug()) {
+        <a
+          [routerLink]="['/c', savedSlug()]"
+          class="ml-auto text-brand-700 underline"
+        >
+          Ver enlace público
+        </a>
+      }
+    </div>
+
+    @for (s of sections; track s.name) {
+      <section
+        class="overflow-hidden rounded-lg border border-border bg-surface"
+        [attr.data-testid]="'section-' + s.name"
+      >
+        <h2 class="border-b border-border bg-surface-muted px-4 py-2 font-display text-base text-ink">
+          {{ s.label }}
+        </h2>
+        <table class="w-full text-sm">
+          <thead>
+            <tr>
+              <th
+                class="w-1/4 border-b border-border px-3 py-2 text-left font-sans text-ink-muted"
+              ></th>
+              @for (v of versions(); track v.id) {
+                <th
+                  class="w-1/4 border-b border-border px-3 py-2 text-left font-sans text-ink"
+                >
+                  {{ v.name }}
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of s.rows; track row.key) {
+              <tr [class]="cellClass(row.key)" [attr.data-testid]="'row-' + row.key">
+                <th
+                  scope="row"
+                  class="border-b border-border px-3 py-2 text-left font-sans text-ink-muted"
+                >
+                  {{ row.label }}
+                </th>
+                @for (v of versions(); track v.id) {
+                  <td class="border-b border-border px-3 py-2 text-ink">
+                    {{ row.format(v) }}
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    }
+
+    <app-disclaimer text="Las celdas resaltadas en ámbar indican diferencias relevantes entre las versiones seleccionadas." />
+  }
+</section>
