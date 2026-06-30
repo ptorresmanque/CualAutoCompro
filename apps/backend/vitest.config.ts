@@ -6,5 +6,6 @@ export default defineConfig({
     include: ["src/**/*.spec.ts", "__tests__/**/*.spec.ts"],
     setupFiles: ["./__tests__/setup.ts"],
     pool: "forks",
+    fileParallelism: false,
   },
 });

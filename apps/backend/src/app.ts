@@ -3,6 +3,8 @@ import cookieParser from "cookie-parser";
 import { env } from "./config/env.js";
 import { ok } from "./shared/response.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
+import { brandsRouter } from "./modules/brands/brands.routes.js";
+import { modelsRouter } from "./modules/models/models.routes.js";
 
 export const createApp = () => {
   const app = express();
@@ -10,6 +12,8 @@ export const createApp = () => {
   app.use(cookieParser());
   app.get("/health", (_req, res) => res.json(ok({ status: "ok", env: env.WEB_ORIGIN })));
   app.use("/api/v1/auth", authRouter);
+  app.use("/api/v1/brands", brandsRouter);
+  app.use("/api/v1/models", modelsRouter);
   app.use((_req, res) => res.status(404).json({ data: null, error: { code: "NOT_FOUND", message: "Ruta no encontrada" } }));
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
