@@ -38,4 +38,19 @@ describe("CompareService", () => {
     expect(out.diffHighlights.powerHp).toBe(false);
     expect(out.diffHighlights.year).toBe(true);
   });
+
+  it("con 1 versión, todos los diffHighlights son false", async () => {
+    const { v1 } = await seed2();
+    const svc = new CompareService(prisma);
+    const out = await svc.compare([v1]);
+    expect(out.versions.length).toBe(1);
+    expect(Object.values(out.diffHighlights).every((v) => v === false)).toBe(true);
+  });
+
+  it("diffHighlights incluye todos los DIFF_KEYS (18 keys)", async () => {
+    const { v1, v2 } = await seed2();
+    const svc = new CompareService(prisma);
+    const out = await svc.compare([v1, v2]);
+    expect(Object.keys(out.diffHighlights).length).toBe(18);
+  });
 });

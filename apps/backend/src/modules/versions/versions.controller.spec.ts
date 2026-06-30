@@ -16,6 +16,10 @@ const seed = async () => {
       airbagCount: 6, hasAbs: true, hasEsp: true, hasCruiseControl: true,
     },
   });
+  const climatizador = await prisma.equipmentItem.create({ data: { name: "Climatizador", category: "Confort" } });
+  await prisma.versionEquipment.create({ data: { versionId: v.id, equipmentItemId: climatizador.id } });
+  await prisma.maintenanceCost.create({ data: { versionId: v.id, mileageTag: 10000, costClp: 250000 } });
+  await prisma.maintenanceCost.create({ data: { versionId: v.id, mileageTag: 20000, costClp: 320000 } });
   return { versionId: v.id, brandId: toyota.id, modelId: yaris.id };
 };
 
@@ -34,8 +38,22 @@ describe("GET /api/v1/versions/:id", () => {
     expect(res.body.data.modelId).toBe(modelId);
     expect(res.body.data.model.brandId).toBe(brandId);
     expect(res.body.data.model.brand.name).toBe("Toyota");
-    expect(Array.isArray(res.body.data.equipmentItems)).toBe(true);
-    expect(Array.isArray(res.body.data.maintenanceCosts)).toBe(true);
+  });
+
+  it("equipmentItems retorna estructura anidada { equipmentItem: { name, category } }", async () => {
+    const { versionId } = await seed();
+    const res = await request(createApp()).get(`/api/v1/versions/${versionId}`);
+    expect(res.body.data.equipmentItems).toHaveLength(1);
+    expect(res.body.data.equipmentItems[0].equipmentItem.name).toBe("Climatizador");
+    expect(res.body.data.equipmentItems[0].equipmentItem.category).toBe("Confort");
+  });
+
+  it("maintenanceCosts retorna fila por mileageTag (10k, 20k)", async () => {
+    const { versionId } = await seed();
+    const res = await request(createApp()).get(`/api/v1/versions/${versionId}`);
+    expect(res.body.data.maintenanceCosts).toHaveLength(2);
+    const tags = res.body.data.maintenanceCosts.map((m: { mileageTag: number }) => m.mileageTag).sort();
+    expect(tags).toEqual([10000, 20000]);
   });
 
   it("retorna 404 NOT_FOUND para id inexistente", async () => {
