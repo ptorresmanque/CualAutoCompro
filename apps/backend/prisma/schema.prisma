@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  logoUrl   String?
+  models    Model[]
+  createdAt DateTime @default(now())
+}
+
+model Model {
+  id        String    @id @default(cuid())
+  brandId   String
+  name      String
+  segment   Segment
+  imageUrl  String?
+  brand     Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  versions  Version[]
+  createdAt DateTime  @default(now())
+
+  @@unique([brandId, name])
+  @@index([segment])
+}
+
+enum Segment {
+  SEDAN
+  SUV
+  HATCHBACK
+  PICKUP
+  CROSSOVER
+  COMMERCIAL
+}
+
+model Version {
+  id                    String             @id @default(cuid())
+  modelId               String
+  name                  String
+  year                  Int
+  priceClp              Int
+  transmission          Transmission
+  fuel                  Fuel
+  engineDisplacementCc  Int
+  powerHp               Int
+  torqueNm              Int
+  consumptionCityKmL    Float
+  consumptionHighwayKmL Float
+  lengthMm              Int
+  widthMm               Int
+  heightMm              Int
+  weightKg              Int
+  trunkLiters           Int
+  airbagCount           Int
+  hasAbs                Boolean
+  hasEsp                Boolean
+  hasCruiseControl      Boolean
+  model                 Model              @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  equipmentItems        VersionEquipment[]
+  maintenanceCosts      MaintenanceCost[]
+  comparisonItems       ComparisonItem[]
+  createdAt             DateTime           @default(now())
+
+  @@index([modelId])
+  @@index([priceClp])
+  @@index([year])
+}
+
+enum Transmission {
+  MANUAL
+  AUTOMATIC
+  CVT
+  DCT
+}
+
+enum Fuel {
+  BENCINA
+  DIESEL
+  HYBRID
+  ELECTRIC
+}
+
+model EquipmentItem {
+  id       String             @id @default(cuid())
+  name     String             @unique
+  category String
+  versions VersionEquipment[]
+}
+
+model VersionEquipment {
+  versionId       String
+  equipmentItemId String
+  version         Version       @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  equipmentItem   EquipmentItem @relation(fields: [equipmentItemId], references: [id], onDelete: Cascade)
+
+  @@id([versionId, equipmentItemId])
+}
+
+model MaintenanceCost {
+  id         String  @id @default(cuid())
+  versionId  String
+  mileageTag Int
+  costClp    Int
+  version    Version @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@unique([versionId, mileageTag])
+  @@index([versionId])
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime     @default(now())
+  comparisons  Comparison[]
+}
+
+model Comparison {
+  id        String           @id @default(cuid())
+  userId    String
+  slug      String?          @unique
+  name      String?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     ComparisonItem[]
+
+  @@index([userId])
+}
+
+model ComparisonItem {
+  id           String     @id @default(cuid())
+  comparisonId String
+  versionId    String
+  position     Int
+  comparison   Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  version      Version    @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@unique([comparisonId, position])
+  @@index([versionId])
+}
