@@ -16,12 +16,13 @@ model Brand {
 }
 
 model Model {
-  id        String    @id @default(cuid())
-  brandId   String
-  name      String
-  segment   Segment
-  imageUrl  String?
-  brand     Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  brandId     String
+  name        String
+  segment     Segment
+  imageUrl    String?
+  galleryUrls String[]  @default([])
+  brand       Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
   versions  Version[]
   createdAt DateTime  @default(now())
 

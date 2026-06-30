@@ -38,8 +38,8 @@ async function main() {
     if (!brandId) throw new Error(`[seed] brand no encontrada: ${m.brandName}`);
     const row = await prisma.model.upsert({
       where: { brandId_name: { brandId, name: m.name } },
-      update: { segment: m.segment, imageUrl: m.imageUrl },
-      create: { brandId, name: m.name, segment: m.segment, imageUrl: m.imageUrl },
+      update: { segment: m.segment, imageUrl: m.imageUrl, galleryUrls: m.galleryUrls },
+      create: { brandId, name: m.name, segment: m.segment, imageUrl: m.imageUrl, galleryUrls: m.galleryUrls },
     });
     modelIdByKey.set(`${m.brandName}|${m.name}`, row.id);
   }
