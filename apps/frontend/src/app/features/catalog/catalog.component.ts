@@ -1,7 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ApiService, QueryParams } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
 import { DisclaimerComponent } from '../../shared/ui/disclaimer.component';
+import { VehicleCardComponent, VehicleCardInput } from '../../shared/ui/vehicle-card.component';
 
 type Segment =
   | 'SEDAN'
@@ -11,23 +13,7 @@ type Segment =
   | 'CROSSOVER'
   | 'COMMERCIAL';
 
-export interface CatalogDefaultVersion {
-  id: string;
-  name: string;
-  priceClp: number;
-  year: number;
-}
-
-export interface CatalogItem {
-  id: string;
-  name: string;
-  segment: Segment;
-  minPrice: number | null;
-  maxPrice?: number | null;
-  brand: { name: string };
-  imageUrl?: string | null;
-  defaultVersion?: CatalogDefaultVersion | null;
-}
+export type CatalogItem = VehicleCardInput & { segment: Segment };
 
 export interface CatalogFilters {
   brand?: string;
@@ -39,11 +25,14 @@ export interface CatalogFilters {
   powerMin?: number;
 }
 
+/** Nombres de modelos marcados como "Más Vendido" en el diseño Stitch. */
+const FEATURED_MODEL_NAMES = new Set(['Corolla', 'Tucson', 'CX-5']);
+
 @Component({
   selector: 'app-catalog',
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.css',
-  imports: [DisclaimerComponent],
+  imports: [RouterLink, DisclaimerComponent, VehicleCardComponent],
 })
 export class CatalogComponent {
   private api = inject(ApiService);
@@ -91,18 +80,22 @@ export class CatalogComponent {
   }
 
   addToCompare(item: CatalogItem): void {
-    const v = item.defaultVersion;
-    if (!v) return;
-    this.compare.add(v.id);
-  }
-
-  canCompare(item: CatalogItem): boolean {
-    return Boolean(item.defaultVersion?.id);
+    if (!item.defaultVersion) return;
+    this.compare.add(item.defaultVersion.id);
   }
 
   formatPrice(value: number | null | undefined): string {
     if (value === null || value === undefined) return '';
     return new Intl.NumberFormat('es-CL').format(value);
+  }
+
+  isFeatured(name: string): boolean {
+    return FEATURED_MODEL_NAMES.has(name);
+  }
+
+  async clearFilters(): Promise<void> {
+    this.filters.set({});
+    await this.load();
   }
 
   private cleanParams(f: CatalogFilters): QueryParams {

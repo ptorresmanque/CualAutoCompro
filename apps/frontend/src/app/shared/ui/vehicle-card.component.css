@@ -1,0 +1,16 @@
+:host {
+  display: flex;
+}
+
+article {
+  width: 100%;
+}
+
+/* Sutil escala al hover para dar feedback visual */
+article .aspect-video {
+  transition: transform 350ms ease-out;
+}
+
+article:hover .aspect-video {
+  transform: scale(1.04);
+}

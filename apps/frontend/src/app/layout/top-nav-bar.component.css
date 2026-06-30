@@ -1,0 +1,29 @@
+/* Sticky header — sombra sutil + backdrop para legibilidad sobre contenido */
+:host {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+header {
+  position: relative;
+}
+
+header::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  background: hsl(0 0% 0% / 0.04);
+}
+
+/* Dropdown del menú de usuario */
+[data-testid='user-menu'] {
+  animation: nav-drop 120ms ease-out;
+}
+
+@keyframes nav-drop {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

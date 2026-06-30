@@ -113,7 +113,7 @@ describe('CatalogComponent', () => {
     fixture.detectChanges();
 
     const btn: HTMLButtonElement | null =
-      fixture.nativeElement.querySelector('button[data-testid="compare"]');
+      fixture.nativeElement.querySelector('button[data-testid="compare-m1"]');
     expect(btn).not.toBeNull();
     btn!.click();
 
@@ -167,7 +167,7 @@ describe('CatalogComponent', () => {
     fixture.detectChanges();
 
     const btn: HTMLButtonElement | null =
-      fixture.nativeElement.querySelector('button[data-testid="compare"]');
+      fixture.nativeElement.querySelector('button[data-testid="compare-m2"]');
     expect(btn).not.toBeNull();
     expect(btn!.disabled).toBe(true);
   });

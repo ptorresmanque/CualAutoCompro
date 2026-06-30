@@ -1,0 +1,78 @@
+<article
+  class="relative flex flex-col bg-surface border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-e2 transition-shadow group"
+  (mouseenter)="onMouseEnter()"
+  (mouseleave)="onMouseLeave()"
+  [attr.data-testid]="'vehicle-card-' + model().id"
+>
+  <!-- Featured pill -->
+  @if (featured()) {
+    <span
+      class="absolute top-2 left-2 z-10 rounded-full bg-brand-600 text-white px-2 py-0.5 text-[10px] font-bold flex items-center gap-1"
+      data-testid="featured-pill"
+    >
+      <span class="material-symbols-outlined text-[12px] filled">stars</span>
+      MÁS VENDIDO
+    </span>
+  }
+
+  <!-- Image area -->
+  <div
+    class="aspect-video bg-surface-muted relative overflow-hidden"
+    [ngStyle]="imageStyle()"
+    [class.bg-center]="true"
+    [class.bg-cover]="true"
+  >
+    @if (!model().imageUrl) {
+      <div class="absolute inset-0 grid place-items-center text-ink-subtle">
+        <span class="material-symbols-outlined text-5xl">directions_car</span>
+      </div>
+    }
+  </div>
+
+  <!-- Body -->
+  <div class="p-4 flex flex-col flex-1 gap-2">
+    <div class="flex items-center justify-between gap-2">
+      <span class="text-xs font-bold uppercase tracking-wider text-ink-muted">
+        {{ model().brand.name }}
+      </span>
+      <span
+        class="rounded bg-brand-100 text-brand-900 px-2 py-0.5 text-[10px] font-bold uppercase"
+      >
+        {{ segmentLabel() }}
+      </span>
+    </div>
+
+    <h3 class="font-bold text-lg leading-tight text-ink">
+      {{ model().name }}
+    </h3>
+
+    @if (model().minPrice !== null && model().minPrice !== undefined) {
+      <p class="text-brand-700 font-extrabold text-base">
+        Desde $ {{ priceFormatted() }}
+        <span class="text-[10px] font-normal text-ink-muted">CLP</span>
+      </p>
+    } @else {
+      <p class="text-ink-subtle text-xs">Sin precio publicado</p>
+    }
+
+    <button
+      type="button"
+      (click)="onCompare($event)"
+      [disabled]="!hasDefaultVersion()"
+      [attr.aria-label]="comparabilityLabel() || 'Comparar'"
+      [attr.data-testid]="'compare-' + model().id"
+      class="mt-auto w-full bg-brand-600 text-white font-bold py-2 rounded transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      Comparar
+    </button>
+    @if (model().defaultVersion; as dv) {
+      <p class="font-sans text-[10px] text-ink-subtle text-center">
+        {{ model().name }} {{ dv.name }} {{ dv.year }}
+      </p>
+    } @else {
+      <p class="font-sans text-[10px] text-warn-dark text-center">
+        Sin versiones disponibles
+      </p>
+    }
+  </div>
+</article>

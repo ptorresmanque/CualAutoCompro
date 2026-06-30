@@ -52,7 +52,8 @@ export class ModelsService {
         : null;
       return {
         id: m.id, brandId: m.brandId, name: m.name, segment: m.segment,
-        imageUrl: m.imageUrl, galleryUrls: m.galleryUrls, brand: m.brand,
+        imageUrl: m.galleryUrls[0] ?? m.imageUrl ?? null,
+        galleryUrls: m.galleryUrls, brand: m.brand,
         minPrice, maxPrice, versionCount: m.versions.length,
         defaultVersion,
       };
