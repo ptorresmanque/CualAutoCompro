@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { Prisma } from "@prisma/client";
 import { ComparisonsService } from "./comparisons.service.js";
 import { setupTestPrisma, resetTestDb } from "../../../__tests__/helpers/db.js";
@@ -56,21 +56,56 @@ describe("ComparisonsService", () => {
         engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
         lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
         hasAbs: true, hasEsp: true, hasCruiseControl: true } }));
-    const realCreate = prisma.comparison.create.bind(prisma.comparison);
+    const originalCreate = prisma.comparison.create;
     let calls = 0;
-    const spy = vi.spyOn(prisma.comparison, "create").mockImplementation(((...args: unknown[]) => {
+    (prisma.comparison as unknown as { create: (...args: unknown[]) => Promise<unknown> }).create = async (...args: unknown[]) => {
       calls++;
       if (calls === 1) {
         throw new Prisma.PrismaClientKnownRequestError("Unique constraint failed", { code: "P2002", clientVersion: "test" });
       }
-      return (realCreate as unknown as (a: unknown) => Promise<unknown>)(args[0]);
-    }) as unknown as typeof prisma.comparison.create);
+      return (originalCreate as unknown as (a: unknown) => Promise<unknown>)(args[0]);
+    };
     try {
       const out = await svc.create({ userId: u.id, versionIds: [v.id] });
       expect(calls).toBeGreaterThanOrEqual(2);
       expect(out.slug).toHaveLength(8);
     } finally {
-      spy.mockRestore();
+      (prisma.comparison as unknown as { create: typeof originalCreate }).create = originalCreate;
     }
+  });
+
+  it("create rechaza 0 IDs con BAD_REQUEST", async () => {
+    const svc = new ComparisonsService(prisma);
+    const u = await prisma.user.create({ data: { email: "u0" + "@" + "cualautocompro.cl", name: "U0", passwordHash: "x" } });
+    await expect(svc.create({ userId: u.id, versionIds: [] }))
+      .rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("create rechaza 4 IDs con BAD_REQUEST", async () => {
+    const svc = new ComparisonsService(prisma);
+    const u = await prisma.user.create({ data: { email: "u4" + "@" + "cualautocompro.cl", name: "U4", passwordHash: "x" } });
+    await expect(svc.create({ userId: u.id, versionIds: ["a", "b", "c", "d"] }))
+      .rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("getBySlug lanza NOT_FOUND para slug inexistente", async () => {
+    const svc = new ComparisonsService(prisma);
+    await expect(svc.getBySlug("no-existe-slug")).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("delete lanza NOT_FOUND cuando la comparación pertenece a otro usuario", async () => {
+    const svc = new ComparisonsService(prisma);
+    const owner = await prisma.user.create({ data: { email: "own" + "@" + "cualautocompro.cl", name: "Own", passwordHash: "x" } });
+    const other = await prisma.user.create({ data: { email: "oth" + "@" + "cualautocompro.cl", name: "Oth", passwordHash: "x" } });
+    const v = await prisma.brand.create({ data: { name: "D" } }).then((br) =>
+      prisma.model.create({ data: { brandId: br.id, name: "M", segment: "SEDAN" } })).then((m) =>
+      prisma.version.create({ data: { modelId: m.id, name: "x", year: 2026, priceClp: 1, transmission: "MANUAL", fuel: "BENCINA",
+        engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
+        hasAbs: true, hasEsp: true, hasCruiseControl: true } }));
+    const created = await svc.create({ userId: owner.id, versionIds: [v.id] });
+    await expect(svc.delete(created.id, other.id)).rejects.toMatchObject({ code: "NOT_FOUND" });
+    const stillThere = await prisma.comparison.findUnique({ where: { id: created.id } });
+    expect(stillThere).not.toBeNull();
   });
 });

@@ -21,7 +21,9 @@ export class ComparisonsService {
         const cmp = await this.prisma.comparison.create({
           data: { ...data, slug: slugger() },
         });
-        return { id: cmp.id, slug: cmp.slug! };
+        // TODO: schema's `slug String?` is nullable; business invariant says it's always set here.
+        // Tighten later by asserting non-null at the type level (e.g. branded `Slug` type).
+        return { id: cmp.id, slug: cmp.slug ?? "" };
       } catch (e) {
         lastError = e;
         if (!(e instanceof Prisma.PrismaClientKnownRequestError) || e.code !== "P2002") throw e;
