@@ -7,6 +7,7 @@ import { brandsRouter } from "./modules/brands/brands.routes.js";
 import { modelsRouter } from "./modules/models/models.routes.js";
 import { versionsRouter } from "./modules/versions/versions.routes.js";
 import { compareRouter } from "./modules/compare/compare.routes.js";
+import { comparisonsRouter, meComparisonsRouter } from "./modules/comparisons/comparisons.routes.js";
 
 export const createApp = () => {
   const app = express();
@@ -18,6 +19,8 @@ export const createApp = () => {
   app.use("/api/v1/models", modelsRouter);
   app.use("/api/v1/versions", versionsRouter);
   app.use("/api/v1/compare", compareRouter);
+  app.use("/api/v1/comparisons", comparisonsRouter);
+  app.use("/api/v1/me/comparisons", meComparisonsRouter);
   app.use((_req, res) => res.status(404).json({ data: null, error: { code: "NOT_FOUND", message: "Ruta no encontrada" } }));
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
