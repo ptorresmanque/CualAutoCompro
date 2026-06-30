@@ -1017,7 +1017,7 @@ import { AuthService } from "./auth.service.js";
 import { prisma } from "../../infra/prisma.js";
 import { loginSchema, registerSchema } from "./auth.dto.js";
 import { unauthorized, validation } from "../../shared/errors.js";
-import { verify } from "../../infra/jwt.js";
+import { sign, verify } from "../../infra/jwt.js";
 
 const svc = new AuthService(prisma);
 
@@ -1034,7 +1034,7 @@ export const authController = {
     const parsed = registerSchema.safeParse(req.body);
     if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
     const user = await svc.register(parsed.data);
-    const token = (await import("../../infra/jwt.js")).sign({ sub: user.id, email: user.email, name: user.name });
+    const token = sign({ sub: user.id, email: user.email, name: user.name });
     res.cookie("auth", token, cookieOpts);
     return res.json(ok(user));
   }),
@@ -1246,20 +1246,24 @@ export class ModelsService {
     const where: Prisma.ModelWhereInput = {};
     if (q.brand) where.brandId = q.brand;
     if (q.segment) where.segment = q.segment;
-    if (q.year) where.versions = { some: { year: q.year } };
-    if (q.transmission || q.fuel || q.priceMin || q.priceMax || q.powerMin) {
-      const vWhere: Prisma.VersionWhereInput = {};
-      if (q.transmission) vWhere.transmission = q.transmission;
-      if (q.fuel) vWhere.fuel = q.fuel;
-      if (q.priceMin !== undefined || q.priceMax !== undefined) {
-        vWhere.priceClp = {
-          ...(q.priceMin !== undefined ? { gte: q.priceMin } : {}),
-          ...(q.priceMax !== undefined ? { lte: q.priceMax } : {}),
-        };
-      }
-      if (q.powerMin !== undefined) vWhere.powerHp = { gte: q.powerMin };
-      where.versions = { some: vWhere };
+
+    // Todos los filtros de version se aplican a nivel DB usando "some"
+    // (el modelo aparece si al menos una versión cumple cada filtro).
+    const vWhere: Prisma.VersionWhereInput = {};
+    if (q.transmission) vWhere.transmission = q.transmission;
+    if (q.fuel) vWhere.fuel = q.fuel;
+    if (q.year !== undefined) vWhere.year = q.year;
+    if (q.priceMin !== undefined || q.priceMax !== undefined) {
+      vWhere.priceClp = {
+        ...(q.priceMin !== undefined ? { gte: q.priceMin } : {}),
+        ...(q.priceMax !== undefined ? { lte: q.priceMax } : {}),
+      };
     }
+    if (q.powerMin !== undefined) vWhere.powerHp = { gte: q.powerMin };
+    if (q.consumptionMax !== undefined) vWhere.consumptionCityKmL = { lte: q.consumptionMax };
+
+    if (Object.keys(vWhere).length > 0) where.versions = { some: vWhere };
+
     const [total, items] = await this.prisma.$transaction([
       this.prisma.model.count({ where }),
       this.prisma.model.findMany({
@@ -1270,23 +1274,16 @@ export class ModelsService {
         orderBy: { name: "asc" },
       }),
     ]);
-    const enriched = items
-      .map((m) => {
-        const prices = m.versions.map((v) => v.priceClp);
-        const minPrice = prices.length ? Math.min(...prices) : null;
-        const maxPrice = prices.length ? Math.max(...prices) : null;
-        return {
-          id: m.id, brandId: m.brandId, name: m.name, segment: m.segment,
-          imageUrl: m.imageUrl, brand: m.brand, minPrice, maxPrice, versionCount: m.versions.length,
-        };
-      })
-      .filter((m) => {
-        if (q.consumptionMax !== undefined) {
-          const pass = m.versionCount > 0 && m.versions?.every?.((v) => v.consumptionCityKmL <= (q.consumptionMax as number));
-          if (!pass) return false;
-        }
-        return true;
-      });
+
+    const enriched = items.map((m) => {
+      const prices = m.versions.map((v) => v.priceClp);
+      const minPrice = prices.length ? Math.min(...prices) : null;
+      const maxPrice = prices.length ? Math.max(...prices) : null;
+      return {
+        id: m.id, brandId: m.brandId, name: m.name, segment: m.segment,
+        imageUrl: m.imageUrl, brand: m.brand, minPrice, maxPrice, versionCount: m.versions.length,
+      };
+    });
 
     return { total, items: enriched, page: q.page, pageSize: q.pageSize };
   }
@@ -1413,7 +1410,8 @@ git commit -m "feat(be): catálogo público brands + models con filtros"
 ```ts
 import { describe, it, expect, beforeEach } from "vitest";
 import { CompareService } from "./compare.service.js";
-import { prisma, setupTestPrisma, resetTestDb } from "../../../__tests__/helpers/db-setup.js";
+import { setupTestPrisma, resetTestDb } from "../../../__tests__/helpers/db.js";
+import { prisma } from "../../../infra/prisma.js";
 
 describe("CompareService", () => {
   beforeEach(async () => { setupTestPrisma(); await resetTestDb(prisma); });
@@ -1610,7 +1608,8 @@ git commit -m "feat(be): versions detail + compare con diffHighlights"
 ```ts
 import { describe, it, expect, beforeEach } from "vitest";
 import { ComparisonsService } from "./comparisons.service.js";
-import { prisma, setupTestPrisma, resetTestDb } from "../../../__tests__/helpers/db-setup.js";
+import { setupTestPrisma, resetTestDb } from "../../../__tests__/helpers/db.js";
+import { prisma } from "../../../infra/prisma.js";
 
 describe("ComparisonsService", () => {
   beforeEach(async () => { setupTestPrisma(); await resetTestDb(prisma); });
@@ -2258,6 +2257,7 @@ export class DisclaimerComponent {
 
 ```ts
 import { Routes } from '@angular/router';
+import { authGuard } from './core/auth.guard';
 
 export const routes: Routes = [
   { path: '', loadComponent: () => import('./layout/shell.component').then(m => m.ShellComponent), children: [
@@ -2265,17 +2265,20 @@ export const routes: Routes = [
     { path: 'compare', loadComponent: () => import('./features/compare/compare.component').then(m => m.CompareComponent) },
     { path: 'login', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent) },
     { path: 'register', loadComponent: () => import('./features/auth/register.component').then(m => m.RegisterComponent) },
-    { path: 'account/comparisons', canActivate: [(await import('./core/auth.guard')).authGuard], loadComponent: () => import('./features/account/comparisons.component').then(m => m.ComparisonsComponent) },
+    { path: 'account/comparisons', canActivate: [authGuard], loadComponent: () => import('./features/account/comparisons.component').then(m => m.ComparisonsComponent) },
     { path: 'brand/:brandSlug/model/:modelSlug', loadComponent: () => import('./features/model/model.component').then(m => m.ModelComponent) },
   ]},
 ];
 ```
 
-Nota: el `canActivate` con `await` requiere un ajuste: escribir como función tradicional con `inject`.
+Nota: `auth.guard.ts` usa `inject`:
 
 ```ts
-// auth.guard.ts (versión final con inject)
-import { CanActivateFn } from '@angular/router';
+// auth.guard.ts
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from './auth.service';
+
 export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService); const router = inject(Router);
   return auth.currentUser() ? true : (auth.bootstrap().then(() => auth.currentUser() ? true : router.createUrlTree(['/login'])));
