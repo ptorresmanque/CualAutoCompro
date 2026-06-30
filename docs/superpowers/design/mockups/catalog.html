@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Catálogo - cualautocompro.cl</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                "primary": "#008080",
+                "on-primary": "#ffffff",
+                "primary-container": "#cce5e5",
+                "on-primary-container": "#002020",
+                "secondary": "#446464",
+                "on-secondary": "#ffffff",
+                "secondary-container": "#c6e9e9",
+                "on-secondary-container": "#4a6a6a",
+                "tertiary": "#4d5d5e",
+                "on-tertiary": "#ffffff",
+                "error": "#ba1a1a",
+                "on-error": "#ffffff",
+                "background": "#f8fafa",
+                "on-background": "#191c1d",
+                "surface": "#f8fafa",
+                "on-surface": "#191c1d",
+                "surface-variant": "#e1e3e3",
+                "on-surface-variant": "#3e4949",
+                "outline": "#6e7979",
+                "outline-variant": "#bdc9c8",
+                "surface-container-lowest": "#ffffff",
+                "surface-container-low": "#f2f4f4",
+                "surface-container": "#eceeee",
+                "surface-container-high": "#e6e8e9",
+                "surface-container-highest": "#e1e3e3"
+              },
+              "borderRadius": {
+                "DEFAULT": "8px",
+                "lg": "8px",
+                "xl": "12px",
+                "full": "9999px"
+              },
+              "spacing": {
+                "container-max": "1200px",
+                "sm": "8px",
+                "gutter": "16px",
+                "md": "16px",
+                "xs": "4px",
+                "margin-mobile": "16px",
+                "base": "4px",
+                "margin-desktop": "32px",
+                "lg": "24px",
+                "xl": "48px"
+              },
+              "fontFamily": {
+                "body": ["Hanken Grotesk", "sans-serif"],
+                "headline": ["Hanken Grotesk", "sans-serif"]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Hanken Grotesk', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased overflow-x-hidden min-h-screen flex flex-col">
+<!-- Sticky Header -->
+<header class="bg-surface border-b border-outline-variant sticky top-0 z-50">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop h-16 w-full max-w-container-max mx-auto gap-md">
+<!-- Logo -->
+<a class="flex-shrink-0 h-10" href="#">
+<img alt="cualautocompro.cl" class="h-full object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLvvl7z10UKj-FfTce2mc263yJp4e6MwTMx0MshFoR-egl-j7KaDMKYwADAxgfC66PS6Jkyl_kgI5pIJybzawmXZ6Gj-EKETs6CTOUwZfSMpEJpXbgI25-2IVVw1tOWvVYzepHYeS4KvW4DOj8Fa6K5-pIq7IRV-8c3EiCIYt07a1ajWLtaBedxjyqmGKdlPEv3u6ADp-fXKFJ_7DJflLyFTEIrMwFDHBvviCExZHXWUo2MpdD3Jj0qjcOAB"/>
+</a>
+<!-- Search Bar (Desktop) -->
+<div class="hidden md:flex flex-1 max-w-md">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Buscar marca, modelo..." type="text"/>
+</div>
+</div>
+<!-- Navigation Links (Hidden on small mobile) -->
+<nav class="hidden lg:flex items-center gap-6">
+<a class="text-primary font-semibold border-b-2 border-primary py-5" href="#">Catálogo</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Comparar</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Fichas Técnicas</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Precios</a>
+</nav>
+<!-- Actions -->
+<div class="flex items-center gap-sm">
+<button class="hidden sm:block text-primary font-semibold px-4 py-2 rounded-full border border-primary hover:bg-primary/5 transition-colors">
+                Iniciar sesión
+            </button>
+<button class="bg-primary text-on-primary font-semibold px-4 py-2 rounded-full hover:opacity-90 transition-opacity shadow-sm">
+                Crear cuenta
+            </button>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col w-full">
+<!-- Hero Section -->
+<section class="bg-surface-container-lowest py-16 px-margin-mobile md:px-margin-desktop border-b border-outline-variant">
+<div class="max-w-container-max mx-auto text-center">
+<h1 class="text-4xl md:text-5xl font-bold text-on-surface mb-4">
+                Compara autos en Chile
+            </h1>
+<p class="text-lg text-on-surface-variant max-w-2xl mx-auto mb-8">
+                Ficha técnica, precios CLP y equipamiento en un solo lugar. Toma una decisión informada.
+            </p>
+<div class="flex flex-col sm:flex-row gap-4 justify-center">
+<button class="bg-primary text-on-primary font-bold h-12 px-8 rounded-full hover:opacity-90 transition-opacity shadow-md">
+                    Explorar catálogo
+                </button>
+<button class="text-primary border border-primary font-bold h-12 px-8 rounded-full hover:bg-primary/5 transition-colors flex items-center justify-center gap-2">
+                    Ver comparación
+                    <span class="material-symbols-outlined">compare_arrows</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Content Layout -->
+<div class="max-w-container-max mx-auto w-full flex flex-col md:flex-row gap-lg px-margin-mobile md:px-margin-desktop py-lg">
+<!-- Sidebar Filter Panel -->
+<aside class="w-full md:w-72 flex-shrink-0">
+<div class="md:sticky md:top-24 bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-xl font-bold text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined">filter_list</span>
+                        Filtros
+                    </h2>
+<button class="text-xs font-semibold text-on-surface-variant underline hover:text-primary">Limpiar</button>
+</div>
+<!-- Brand Dropdown -->
+<div class="mb-6">
+<label class="block text-sm font-semibold text-on-surface-variant mb-2">Marca</label>
+<select class="w-full bg-surface border border-outline-variant rounded p-2 text-sm focus:ring-1 focus:ring-primary appearance-none">
+<option>Todas las marcas</option>
+<option>Toyota</option>
+<option>Mazda</option>
+<option>BYD</option>
+<option>Ford</option>
+</select>
+</div>
+<!-- Segment Checkboxes -->
+<div class="mb-6">
+<label class="block text-sm font-semibold text-on-surface-variant mb-3">Segmento</label>
+<div class="space-y-2">
+<label class="flex items-center gap-2 text-sm cursor-pointer">
+<input checked="" class="rounded text-primary focus:ring-primary border-outline" type="checkbox"/>
+<span>SUV</span>
+</label>
+<label class="flex items-center gap-2 text-sm cursor-pointer">
+<input class="rounded text-primary focus:ring-primary border-outline" type="checkbox"/>
+<span>Hatchback</span>
+</label>
+<label class="flex items-center gap-2 text-sm cursor-pointer">
+<input class="rounded text-primary focus:ring-primary border-outline" type="checkbox"/>
+<span>Sedán</span>
+</label>
+<label class="flex items-center gap-2 text-sm cursor-pointer">
+<input class="rounded text-primary focus:ring-primary border-outline" type="checkbox"/>
+<span>Pick-up</span>
+</label>
+</div>
+</div>
+<!-- Price Range Slider -->
+<div class="mb-6">
+<label class="block text-sm font-semibold text-on-surface-variant mb-2">Precio (CLP)</label>
+<div class="flex gap-2 items-center mb-3">
+<div class="flex-1 bg-surface border border-outline-variant rounded p-1 text-xs text-center">$5M</div>
+<span class="text-outline">-</span>
+<div class="flex-1 bg-surface border border-outline-variant rounded p-1 text-xs text-center">$30M</div>
+</div>
+<input class="w-full h-1.5 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary" max="30" min="5" type="range" value="30"/>
+</div>
+<button class="w-full bg-primary text-on-primary font-bold h-11 rounded hover:opacity-90 transition-opacity">
+                    Aplicar filtros
+                </button>
+</div>
+</aside>
+<!-- Main Vehicle Grid -->
+<div class="flex-1">
+<div class="flex justify-between items-center mb-6">
+<p class="text-sm text-on-surface-variant">Mostrando <span class="font-bold text-on-surface">24</span> vehículos</p>
+<button class="flex items-center gap-1 text-sm text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">sort</span>
+                    Ordenar por
+                </button>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-gutter">
+<!-- Vehicle Card Template (Total 24) -->
+<!-- 1: Toyota with Más Vendido -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden hover:shadow-lg transition-all flex flex-col group relative">
+<div class="absolute top-2 left-2 z-10 bg-primary text-on-primary px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] filled">stars</span> MÁS VENDIDO
+                    </div>
+<div class="aspect-video bg-surface-container relative overflow-hidden">
+<img alt="Toyota Yaris Cross" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoYU4poKIdyxQYesGxS7dYYuDWx2DDvNn30DAj76B8c1Hyo179KH32Ga91qRiosZLFX1Bw_Ti6FzDM7mEcLxI9Rwh_fGZDbWJvngBIzyDdIhrtKNuKtl_2VAEWF4HgiQhoEe0BHm34zfvBDggF-ja2w3RZneVWuh5FQ0fKK290X5O_Z4pWaFNNUcLyM6TB8ETGzBkX1I8l3KjA6eQBGOAZVSRvUxBIJGMJoo8B07BDES_hEJDd9NU6thzJXmsK_-_RNoCe9pAxeVoC"/>
+</div>
+<div class="p-4 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-1">
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Toyota</span>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded text-[10px] font-bold">SUV</span>
+</div>
+<h2 class="text-xl font-bold text-on-surface mb-2">Yaris Cross</h2>
+<div class="text-primary font-extrabold text-lg mb-4">Desde $18.990.000 <span class="text-[10px] font-normal text-on-surface-variant">CLP</span></div>
+<div class="flex flex-wrap gap-2 mb-4 mt-auto">
+<span class="text-[10px] bg-surface-container px-2 py-1 rounded font-medium">Bencina</span>
+<span class="text-[10px] bg-surface-container px-2 py-1 rounded font-medium">CVT</span>
+<span class="text-[10px] bg-surface-container px-2 py-1 rounded font-medium">118 HP</span>
+</div>
+<button class="w-full bg-primary text-on-primary font-bold py-2 rounded transition-colors hover:bg-primary/90">Comparar</button>
+</div>
+</article>
+<!-- 2: Mazda with Más Vendido -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden hover:shadow-lg transition-all flex flex-col group relative">
+<div class="absolute top-2 left-2 z-10 bg-primary text-on-primary px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] filled">stars</span> MÁS VENDIDO
+                    </div>
+<div class="aspect-video bg-surface-container relative overflow-hidden">
+<img alt="Mazda 3" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr16j9L5KaNCD_Mgvv98gb6P2E5fyrg20Zy2GknKybFscdMblzZwZZJ2e0sqoPI__dSrA2s-aoIPPhKWD_c5DpR4DgJrtkTs_kI4-xfpOg2bUTvAhyxgs-ljqEFgBW7oXe-UUR_AxbKyCBpAfQoQwnvckccnJw_a7rXz0HowetspF47zJBHVqPon8yaJqEtQ87E6LmwHgZxwijXT9ud8Fm33aCJVZpCOSYfiUTQG4R8Y9xlmDf00N4Ria9KUEVuexv5L4eLVRV0qEy"/>
+</div>
+<div class="p-4 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-1">
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Mazda</span>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded text-[10px] font-bold">Hatchback</span>
+</div>
+<h2 class="text-xl font-bold text-on-surface mb-2">Mazda 3 Sport</h2>
+<div class="text-primary font-extrabold text-lg mb-4">Desde $20.490.000 <span class="text-[10px] font-normal text-on-surface-variant">CLP</span></div>
+<div class="flex flex-wrap gap-2 mb-4 mt-auto">
+<span class="text-[10px] bg-surface-container px-2 py-1 rounded font-medium">Bencina</span>
+<span class="text-[10px] bg-surface-container px-2 py-1 rounded font-medium">Manual</span>
+<span class="text-[10px] bg-surface-container px-2 py-1 rounded font-medium">153 HP</span>
+</div>
+<button class="w-full bg-primary text-on-primary font-bold py-2 rounded transition-colors hover:bg-primary/90">Comparar</button>
+</div>
+</article>
+<!-- 3: BYD with Más Vendido -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden hover:shadow-lg transition-all flex flex-col group relative">
+<div class="absolute top-2 left-2 z-10 bg-primary text-on-primary px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] filled">stars</span> MÁS VENDIDO
+                    </div>
+<div class="aspect-video bg-surface-container relative overflow-hidden">
+<img alt="BYD Seal" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5hwJvfJ5yMiiAeJuWy1PdJR2HSjBh543Wc6jFqMuXDMICFA2Jpoyd6nLqXMllKGUSaF9tla1vaVCuhjE1NmQyljsbLm61qW_xaY2FvalXuQATQiTB6oQp5fT6PhE-m--R3Lbc3xIxuOVLn1W14uVqLiAmlbwU0KUL4CfVsOj_2PAak7XZqCRmYpI61rj5THyUlG5Nyb4qyX58wUsYg8DTJP4xxd860iKTIJ1IuoaLbDhHSWHhtRUNCDtR2KJrpeoGea6r-Vzmr6HG"/>
+</div>
+<div class="p-4 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-1">
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">BYD</span>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded text-[10px] font-bold">Sedán</span>
+</div>
+<h2 class="text-xl font-bold text-on-surface mb-2">Seal</h2>
+<div class="text-primary font-extrabold text-lg mb-4">Desde $35.990.000 <span class="text-[10px] font-normal text-on-surface-variant">CLP</span></div>
+<div class="flex flex-wrap gap-2 mb-4 mt-auto">
+<span class="text-[10px] bg-surface-container px-2 py-1 rounded font-medium">Eléctrico</span>
+<span class="text-[10px] bg-surface-container px-2 py-1 rounded font-medium">Auto</span>
+<span class="text-[10px] bg-surface-container px-2 py-1 rounded font-medium">313 HP</span>
+</div>
+<button class="w-full bg-primary text-on-primary font-bold py-2 rounded transition-colors hover:bg-primary/90">Comparar</button>
+</div>
+</article>
+<!-- Repeating 21 more placeholder cards to total 24 -->
+<!-- Card template for loop simulation -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden hover:shadow-lg transition-all flex flex-col group">
+<div class="aspect-video bg-surface-container relative overflow-hidden">
+<div class="w-full h-full flex items-center justify-center bg-surface-container-high text-on-surface-variant">
+<span class="material-symbols-outlined text-4xl">directions_car</span>
+</div>
+</div>
+<div class="p-4 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-1">
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Marca</span>
+<span class="bg-surface-container-highest text-on-surface px-2 py-0.5 rounded text-[10px] font-bold">SUV</span>
+</div>
+<h2 class="text-xl font-bold text-on-surface mb-2">Modelo Vehículo</h2>
+<div class="text-primary font-extrabold text-lg mb-4">Desde $14.990.000 <span class="text-[10px] font-normal text-on-surface-variant">CLP</span></div>
+<div class="flex flex-wrap gap-2 mb-4 mt-auto">
+<span class="text-[10px] bg-surface-container px-2 py-1 rounded font-medium">Motor</span>
+<span class="text-[10px] bg-surface-container px-2 py-1 rounded font-medium">Transmisión</span>
+<span class="text-[10px] bg-surface-container px-2 py-1 rounded font-medium">Potencia</span>
+</div>
+<button class="w-full bg-primary text-on-primary font-bold py-2 rounded transition-colors hover:bg-primary/90">Comparar</button>
+</div>
+</article>
+<!-- Repeat block starts here (mocked 20 more times) -->
+<script>
+                    const grid = document.querySelector('.grid');
+                    const template = grid.lastElementChild.outerHTML;
+                    for(let i=0; i<20; i++) {
+                        grid.insertAdjacentHTML('beforeend', template);
+                    }
+                </script>
+</div>
+<!-- Pagination -->
+<div class="flex justify-center mt-12 mb-8">
+<div class="flex gap-2">
+<button class="w-10 h-10 rounded border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-10 h-10 rounded bg-primary text-on-primary font-bold shadow-sm">1</button>
+<button class="w-10 h-10 rounded border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-primary/5 font-bold">2</button>
+<button class="w-10 h-10 rounded border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-primary/5 font-bold">3</button>
+<button class="w-10 h-10 rounded border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container border-t border-outline-variant py-8 px-margin-mobile md:px-margin-desktop mt-auto">
+<div class="max-w-container-max mx-auto">
+<p class="text-[10px] text-on-surface-variant text-center max-w-4xl mx-auto mb-8 uppercase tracking-widest leading-relaxed">
+            Precios referencia año 2026, confirmar en concesionario. Valor estimado referencial para mantención. Las imágenes son ilustrativas y pueden no coincidir con las especificaciones exactas del modelo disponible en Chile.
+        </p>
+<div class="flex flex-col md:flex-row justify-between items-center gap-6 border-t border-outline-variant/30 pt-8">
+<div class="flex-shrink-0 h-6">
+<img alt="cualautocompro.cl" class="h-full grayscale opacity-70" src="https://lh3.googleusercontent.com/aida/AP1WRLvvl7z10UKj-FfTce2mc263yJp4e6MwTMx0MshFoR-egl-j7KaDMKYwADAxgfC66PS6Jkyl_kgI5pIJybzawmXZ6Gj-EKETs6CTOUwZfSMpEJpXbgI25-2IVVw1tOWvVYzepHYeS4KvW4DOj8Fa6K5-pIq7IRV-8c3EiCIYt07a1ajWLtaBedxjyqmGKdlPEv3u6ADp-fXKFJ_7DJflLyFTEIrMwFDHBvviCExZHXWUo2MpdD3Jj0qjcOAB"/>
+</div>
+<div class="flex flex-wrap justify-center gap-6 text-sm font-semibold text-on-surface-variant">
+<a class="hover:text-primary transition-colors" href="#">Privacidad</a>
+<a class="hover:text-primary transition-colors" href="#">Términos</a>
+<a class="hover:text-primary transition-colors" href="#">Contacto</a>
+<a class="hover:text-primary transition-colors" href="#">Marcas</a>
+</div>
+<div class="text-xs text-on-surface-variant font-medium">
+                © 2024 cualautocompro.cl. Todos los derechos reservados.
+            </div>
+</div>
+</div>
+</footer>
+</body></html>

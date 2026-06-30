@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mis comparaciones guardadas | cualautocompro.cl</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#eceeee",
+                        "on-primary-container": "#e3fffe",
+                        "on-primary-fixed": "#002020",
+                        "surface-bright": "#f8fafa",
+                        "primary-container": "#008080",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#f2f4f4",
+                        "primary-fixed": "#93f2f2",
+                        "secondary": "#446464",
+                        "on-error-container": "#93000a",
+                        "primary": "#006565",
+                        "on-primary-fixed-variant": "#004f4f",
+                        "tertiary-container": "#657676",
+                        "background": "#f8fafa",
+                        "on-tertiary-container": "#ebfdfd",
+                        "on-secondary-container": "#4a6a6a",
+                        "inverse-primary": "#76d6d5",
+                        "on-secondary-fixed": "#002020",
+                        "secondary-fixed": "#c6e9e9",
+                        "on-surface": "#191c1d",
+                        "on-secondary-fixed-variant": "#2c4c4c",
+                        "surface-tint": "#006a6a",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#3e4949",
+                        "on-tertiary-fixed": "#0e1e1f",
+                        "surface-variant": "#e1e3e3",
+                        "surface-container-highest": "#e1e3e3",
+                        "inverse-on-surface": "#eff1f1",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#abcdcd",
+                        "tertiary": "#4d5d5e",
+                        "surface-dim": "#d8dada",
+                        "primary-fixed-dim": "#76d6d5",
+                        "on-background": "#191c1d",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#bdc9c8",
+                        "on-primary": "#ffffff",
+                        "outline": "#6e7979",
+                        "tertiary-fixed-dim": "#b8caca",
+                        "inverse-surface": "#2e3131",
+                        "surface": "#f8fafa",
+                        "surface-container-high": "#e6e8e9",
+                        "secondary-container": "#c6e9e9",
+                        "on-tertiary-fixed-variant": "#3a4a4a",
+                        "tertiary-fixed": "#d4e6e6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "xs": "4px",
+                        "margin-desktop": "32px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "gutter": "16px",
+                        "margin-mobile": "16px",
+                        "container-max": "1200px",
+                        "xl": "48px",
+                        "md": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "headline-xl": ["Hanken Grotesk"],
+                        "label-md": ["Hanken Grotesk"],
+                        "headline-xl-mobile": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-xl-mobile": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Hanken Grotesk', sans-serif;
+            background-color: #f8fafa;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .car-thumbnail-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .bento-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .bento-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0, 128, 128, 0.08);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant shadow-sm h-20">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop h-full max-w-container-max mx-auto">
+<div class="flex items-center gap-md">
+<img alt="Logo" class="h-10 w-auto" src="https://lh3.googleusercontent.com/aida/AP1WRLvvl7z10UKj-FfTce2mc263yJp4e6MwTMx0MshFoR-egl-j7KaDMKYwADAxgfC66PS6Jkyl_kgI5pIJybzawmXZ6Gj-EKETs6CTOUwZfSMpEJpXbgI25-2IVVw1tOWvVYzepHYeS4KvW4DOj8Fa6K5-pIq7IRV-8c3EiCIYt07a1ajWLtaBedxjyqmGKdlPEv3u6ADp-fXKFJ_7DJflLyFTEIrMwFDHBvviCExZHXWUo2MpdD3Jj0qjcOAB"/>
+<span class="text-headline-md font-headline-md font-bold text-primary">cualautocompro.cl</span>
+</div>
+<nav class="hidden md:flex items-center gap-lg">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Catálogo</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Comparar</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Financiamiento</a>
+</nav>
+<div class="flex items-center gap-md">
+<div class="cursor-pointer active:scale-95 duration-200 text-on-surface-variant">
+<span class="material-symbols-outlined">notifications</span>
+</div>
+<div class="cursor-pointer active:scale-95 duration-200 text-primary font-bold border-b-2 border-primary pb-1">
+<span class="material-symbols-outlined">history</span>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant cursor-pointer active:scale-95 duration-200">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a smiling man named Patricio in a corporate casual setting, clean lighting, soft background focus, high quality digital photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr-uhLjW6g9VDH3NGzjAgoVDN0LU5q68h1IGdPetKbrv16_-2mQ0QSFzq_4XggGZO09gBZd0_-S7I9MFyJ8ahiOPUkHhhm0eDLNRvqWFGGNcmZjQotkwGJ-k7ZwD6dxaz3xM2-4zL2IooIA8_19VUgdGDJxynHMb2A5fNl5v0dt8YAksN3lClXgI2wxnmFELaYqTIPq9bXMOQIaNJxKwWSTSmt2XOB0D9XPFZNXtiUADMqb8kiKhQ1hiFrGrKnIet1lJV-qtUbbdfO"/>
+</div>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-xl px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+<!-- Hero Section -->
+<div class="mb-xl">
+<h1 class="font-headline-xl-mobile md:font-headline-xl text-headline-xl-mobile md:text-headline-xl text-on-surface mb-sm">Mis comparaciones guardadas</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+                Comparte estas URLs con quien quieras. Cada comparación tiene un slug único de 8 caracteres.
+            </p>
+</div>
+<!-- Grid of Comparison Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-lg">
+<!-- Card 1 -->
+<div class="bento-card bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col gap-md">
+<div class="car-thumbnail-grid">
+<div class="aspect-video rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A front three-quarter studio shot of a white Toyota Yaris hatchback, clean minimalist aesthetic, sharp focus, professional automotive photography with teal lighting accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBel-A_EfclUh-Xq3TwtAdz92bvu4e6daMFp1PFdbbBxR-bnT06u4ls2r1u8ltRtsCIkZR_-mu_jRnmWNZ0JhVSOEo_ZbrQTRGxuRDlmgJ43AkKIy8gGfkZtIOAAr5yQXzmXcMvdCTMa8dVqciDs2TybkdKGrAvUVG6VNk0xHExFBDafbAD5_n_pt2iAz1v0Yfgyf2dx-3cw0uOJ5YRv1WqweQl_IZe6DzPK_LoUIbsr6L3ySw7KkHavSJ709fyRhCmB021hTkLE3k-"/>
+</div>
+<div class="aspect-video rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A front three-quarter studio shot of a charcoal grey Hyundai Tucson SUV, high contrast lighting, professional automotive photography, sharp reflections, teal color palette integration." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDci1qIbjE0mbH6EtClrtzEdN2ytGtXejYbktvSF_rM1dahZhnPzty1jZGjH5S5h71y3FtANHU5jOJKW5tqngv_hqNoV5LiDeThqqWgOwSlLJOAsgP2ualRJqeUX4tFo1TxB6g8AWbGVrar6i1k2OVBjqrnj6LX3PFs14apOTS-ZIHjhimhBi-RVhGc0MkTk1Htuo1Rcb7ISbtB_UUBDGhatzoOU8Ob0tWu4tNuvY-Z6gspNBWcgHQzHLz3K2fUNQnGNlwCz3t0FJt"/>
+</div>
+<div class="aspect-video rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A front three-quarter studio shot of a deep red Mazda CX-5, elegant and clean presentation, automotive marketing style, soft shadows, pristine white background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8ufouu8pFWl1YkwPK-HnqgIR6hGsuHLkZIEVApbct4TCDrI5M9KE7jBV0Ka3y-4DkuqVI0Qi5XqVa-TYjnyCi9eTXHwrxVYVa0Gf1iOhraX0VUodo5YdqfM2Ys_DI9TgTTn9srSZyiteTBN3MTCJALu3bJNMZgLVY764Qy_jk6coEFD7a6QewKORt-JODi-nnRjuX4iXUpqsGsemJJqxkkX1xn7nw8bcva_XUr_TjFPy6NfD1-uqlk4GN59m-FDej76KTUHtIzwWK"/>
+</div>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-xs">Toyota Yaris vs Hyundai Tucson vs Mazda CX-5</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Guardada el 15 jun 2026</p>
+</div>
+<div class="flex items-center justify-between p-sm bg-surface-container-low rounded-lg">
+<code class="font-mono text-primary font-bold">a7b8c9d0</code>
+<button class="flex items-center gap-xs text-primary font-label-md text-label-md hover:underline active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+                        Copiar URL
+                    </button>
+</div>
+<div class="flex items-center justify-between mt-auto pt-sm border-t border-outline-variant">
+<button class="px-lg py-sm rounded-full border border-primary text-primary font-label-md text-label-md hover:bg-primary/5 transition-all active:scale-95">Ver</button>
+<button class="flex items-center gap-xs text-error font-label-md text-label-md hover:underline cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">delete</span>
+                        Eliminar
+                    </button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bento-card bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col gap-md">
+<div class="car-thumbnail-grid">
+<div class="aspect-video rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A side profile studio shot of a silver Kia Rio sedan, professional lighting, clean white environment, sharp details, modern corporate automotive aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6jPyLL8xnpx_4oDLku6gLDWOwfBcdwiBBBnb-S0UrlnnXN6uvjo19JgF6bLp6JWfmRMlnjnb2XnlV7LUx1p4Z68XtqQQqby1QWIJZ8sWEfhzIr0v9qdgE-WsD7LR9gn0GX0_zeiLpVLGLm2oGEFKkVRlrZKUJXPDiSW1Bwz8rNPg85ayXbrW1kEz5okQ7KGnDVRoQVXwmRR5AVIirR5cWxSVvMXPWCa87bdwVMOb_vK15-6mI0gKo-HzcU-eVWrUoVqteIvrxobPJ"/>
+</div>
+<div class="aspect-video rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A front view of a blue Suzuki Swift, bright and airy lighting, minimalist automotive photography, vibrant colors against a neutral light grey background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiYF6oCWggen-udJEhtlArUC_jKl3RyT5xDm5BFlky_AuYnPaEKNiGQt58jI2d51K_OxQ0R_T_A83h8HoSv-KEYibD7Bk8_cxmNDa4-MJ619JU-CRQa7rsvnCE_nuHosp6vv38DxIqWXqS_0kyBBdKE8TeEGoXYR9Wx1_pMCYqNU2iclMSxjSLv5EPAOEdc1Wsj9spuHrwl4CiN8tY7TQDEAnHvMgm9f4B-UcaNh6HS046u0qJoXEmQPpps_OLNzWaq27NRiJwKbq-"/>
+</div>
+<div class="aspect-video rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A three-quarter shot of a white Chevrolet Onix, professional studio photography, soft lighting, clean lines, representing a modern urban vehicle." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKnl4dpxkMVfMwEXLycSWdIe3zoC5RTAfSgdy6kmc1DGBaUbuQkhFcYGlPE5seCgRGSrK_X3dMebi71eRRe_C2PoJHst_TJ5laiQWGZMpVUT8jWHSdL98-d3D-eeLt5vmWvmidhLtB5xtncwZVgjPmKsUw0WZHG3N2VWvJqFXXgcRHRoW_PJxoDFRxnXg2ARZQHX_kFqv3nv4ZXMbjcwPlF5OtbBLqaO6pkhLkMr_gaAg2nwuVK5RmVavFQJgoSmDrWKSA4MDm5oGi"/>
+</div>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-xs">Kia Rio vs Suzuki Swift vs Chevrolet Onix</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Guardada el 12 jun 2026</p>
+</div>
+<div class="flex items-center justify-between p-sm bg-surface-container-low rounded-lg">
+<code class="font-mono text-primary font-bold">k2j9m1p4</code>
+<button class="flex items-center gap-xs text-primary font-label-md text-label-md hover:underline active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+                        Copiar URL
+                    </button>
+</div>
+<div class="flex items-center justify-between mt-auto pt-sm border-t border-outline-variant">
+<button class="px-lg py-sm rounded-full border border-primary text-primary font-label-md text-label-md hover:bg-primary/5 transition-all active:scale-95">Ver</button>
+<button class="flex items-center gap-xs text-error font-label-md text-label-md hover:underline cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">delete</span>
+                        Eliminar
+                    </button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bento-card bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col gap-md">
+<div class="car-thumbnail-grid">
+<div class="aspect-video rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A rugged black Ford F-150 truck in a studio setting, dramatic top lighting creating highlights on the body, premium automotive commercial style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnomf2n4loisgAxk84aXAqhlnEyBQYaDiI5xTWVvhbjFcbYGI0QWOpONUx60AF0fdCrBmaXtowDWKkaRcNgP_fT6sILLbOWDBJc4Zgvb6e4HddK3UN-YvGcokfu0ZZwgtnP2USTjatkQoV2eRCkkr4iBYESglzHY6_6RWM70MotmjY_AxIj_STWtT2WjhmSXpiXrA2WZ0AlOxItapzg7cZQ77abpEUOSbFLAa-SkyZR3k7-CeXCnh30MjPeHNm4lkSRuakWRvRB1Cb"/>
+</div>
+<div class="aspect-video rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A metallic silver Toyota Hilux pickup, side profile, sharp focus on the wheels and body contour, professional automotive product photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCg8rY_tWodIQjEXdlcLkhH-fQuNxJHTqcYqbIoLQBcxF1bHYdxRkeggDkkeoHadWuE8uvT3-7AWCwc0kiWMOs9I7XGYM1s_ev3QfT-v6C6kUkYBTftj28TmG_Fl3iplK2I0vEQ3aL_A1Bi_61PsgtvSxVr4TSeFxC1LFB9Fd8ofc3qEFrTTP7QzyJb9BHSXfCTVUVe3kYOJwZrGABfvnvVVhrCQo3xrnWcN3G2TVXYH5F7GT8YaO5DLvFjiqR-ZpxjAwAlXCQengy"/>
+</div>
+<div class="aspect-video rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A dark blue Mitsubishi L200, front three-quarter view, crisp lighting, modern corporate presentation for a vehicle marketplace." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGQiM0wjrWnYwCmUSKFXfGwqyP_lOuxM3WJ_gc_KzHyq8c0SaTyrgiDV94Kt26YFtUoodtDN7-Tl5dGYYWLlVIGAiHV1RfVjQ_7yQtn-y1NdLufrLqbQeqkMqBX5RHNFYRE2zjHKEr_kv2mhfQWzSFOKGXPTM4QFL95uSW_LjgVNEsRo7wsRPwzowXxUzKyuxcN3db2b7Q61GD_7mflLkLcrvk3lw2cng1EgCjuMFtQjdofQruWxMnB1DW0aD4-W8dfeYSBsWagM-W"/>
+</div>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-xs">Pickups: Ford F-150 vs Hilux vs L200</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Guardada el 05 jun 2026</p>
+</div>
+<div class="flex items-center justify-between p-sm bg-surface-container-low rounded-lg">
+<code class="font-mono text-primary font-bold">r5t6v9y1</code>
+<button class="flex items-center gap-xs text-primary font-label-md text-label-md hover:underline active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+                        Copiar URL
+                    </button>
+</div>
+<div class="flex items-center justify-between mt-auto pt-sm border-t border-outline-variant">
+<button class="px-lg py-sm rounded-full border border-primary text-primary font-label-md text-label-md hover:bg-primary/5 transition-all active:scale-95">Ver</button>
+<button class="flex items-center gap-xs text-error font-label-md text-label-md hover:underline cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">delete</span>
+                        Eliminar
+                    </button>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bento-card bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col gap-md">
+<div class="car-thumbnail-grid">
+<div class="aspect-video rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A sleek white Tesla Model 3 in a minimalist futuristic studio, glowing teal accents, sharp digital aesthetic, high-end automotive visualization." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbxk1Ydi633B5sITp7YBGPQcI7H0DX3R6uZTjW3O48gEf2S1N2sk6FJ56Lnof_SHQRUnhwcb75_zA-bZo3NsI4zLo-u9DOm40HSHMzNFj23OuIZgOY_F0PldXmwlbFb5xten7m5c-qG5-t5gGd3QXXmq1cAGGtIGvZQsZj6yuhdooCJM2tl_SB_L4JzVOoud7A6T8G_MnH596bKDzGNg--9f8FKu9l0oQnvOkiF5VmFBm1kwTwBzTDvNLbYmPek8uSqYtpGIUSA5Ig"/>
+</div>
+<div class="aspect-video rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A modern electric Hyundai Ioniq 5, side profile, soft futuristic lighting, clean corporate marketplace style, crisp focus on geometric details." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoS9Z0wGbcXjcE3Av3Mj-jSuZ3FNTdsjiQHgGf79uHfcv3jJQ7TV1Se-WKV2sWWWyDLPjsfWSKKhZut6QLKTL75MtEa-tgR4EydQQ6pLVyQ7nSFAoN7vQNoFCwWjX-frXmHBpezN3wsz93D2aB33OnKHmc1ewal5f6sdiYJrMTyeA4K8wJ_X5Yjll4hlb2KDiTK1LEol5AUr7FOwe9nDskxKqgdFltC8uBVcsh-wZj2OuE98ayn7VgAQ5GET3FGDaUz18vKWMRaPcq"/>
+</div>
+<div class="aspect-video rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A metallic grey Kia EV6, front three-quarter view, high-end commercial photography, minimalist tech-driven atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuACMLEKpVtJWLOgyqzWKOYDDblT37QuzGx4nuV4Q2OJX59IsvHqQJ64YTWgoMwTYxznbQ6MF9f3FijVB_05WlkdfDLw4Zxn_EW4Dz3XNQvaHpCIbKpHSOoZ5hpgKVo5dxjkNAYTbcfb_PsvzKm_-n1u8abKa7LgialmavhH6_vpArdw8851bMuR6_61XmQx0AQ-3czEB1tPSsrTtzWX8yK-5IUCK1D-z_aGaPDAGe_h71gkrfy7TR4phJZwUQq1TkekSQyuALFjGSj-"/>
+</div>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-xs">Eléctricos: Tesla M3 vs Ioniq 5 vs Kia EV6</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Guardada el 01 jun 2026</p>
+</div>
+<div class="flex items-center justify-between p-sm bg-surface-container-low rounded-lg">
+<code class="font-mono text-primary font-bold">e8w2q0z4</code>
+<button class="flex items-center gap-xs text-primary font-label-md text-label-md hover:underline active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+                        Copiar URL
+                    </button>
+</div>
+<div class="flex items-center justify-between mt-auto pt-sm border-t border-outline-variant">
+<button class="px-lg py-sm rounded-full border border-primary text-primary font-label-md text-label-md hover:bg-primary/5 transition-all active:scale-95">Ver</button>
+<button class="flex items-center gap-xs text-error font-label-md text-label-md hover:underline cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">delete</span>
+                        Eliminar
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-xl bg-surface-container-lowest border-t border-outline-variant">
+<div class="flex flex-col md:flex-row justify-between items-center py-lg px-margin-mobile md:px-margin-desktop gap-md max-w-container-max mx-auto">
+<div class="flex flex-col gap-xs">
+<span class="text-headline-sm font-headline-sm text-on-surface">cualautocompro.cl</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 cualautocompro.cl. Todos los derechos reservados.</p>
+</div>
+<nav class="flex flex-wrap justify-center gap-md">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-all cursor-pointer" href="#">Términos y Condiciones</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-all cursor-pointer" href="#">Política de Privacidad</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-all cursor-pointer" href="#">Contacto</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-all cursor-pointer" href="#">Preguntas Frecuentes</a>
+</nav>
+</div>
+</footer>
+<!-- Micro-interaction Script -->
+<script>
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                if(e.currentTarget.textContent.includes('Copiar URL')) {
+                    const originalText = e.currentTarget.innerHTML;
+                    e.currentTarget.innerHTML = '<span class="material-symbols-outlined text-sm">check</span> ¡Copiado!';
+                    setTimeout(() => {
+                        e.currentTarget.innerHTML = originalText;
+                    }, 2000);
+                }
+            });
+        });
+    </script>
+</body></html>
