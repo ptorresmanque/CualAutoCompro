@@ -1,3 +1,55 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/auth.guard';
 
-export const routes: Routes = [];
+export const routes: Routes = [
+  {
+    path: '',
+    loadComponent: () =>
+      import('./layout/shell.component').then((m) => m.ShellComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/catalog/catalog.component').then(
+            (m) => m.CatalogComponent,
+          ),
+      },
+      {
+        path: 'compare',
+        loadComponent: () =>
+          import('./features/compare/compare.component').then(
+            (m) => m.CompareComponent,
+          ),
+      },
+      {
+        path: 'login',
+        loadComponent: () =>
+          import('./features/auth/login.component').then(
+            (m) => m.LoginComponent,
+          ),
+      },
+      {
+        path: 'register',
+        loadComponent: () =>
+          import('./features/auth/register.component').then(
+            (m) => m.RegisterComponent,
+          ),
+      },
+      {
+        path: 'account/comparisons',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/account/comparisons.component').then(
+            (m) => m.ComparisonsComponent,
+          ),
+      },
+      {
+        path: 'brand/:brandSlug/model/:modelSlug',
+        loadComponent: () =>
+          import('./features/model/model.component').then(
+            (m) => m.ModelComponent,
+          ),
+      },
+    ],
+  },
+];
