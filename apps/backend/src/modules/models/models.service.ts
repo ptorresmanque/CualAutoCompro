@@ -34,7 +34,10 @@ export class ModelsService {
     if (q.powerMin !== undefined) vWhere.powerHp = { gte: q.powerMin };
     if (q.consumptionMax !== undefined) vWhere.consumptionCityKmL = { lte: q.consumptionMax };
 
-    if (Object.keys(vWhere).length > 0) where.versions = { some: vWhere };
+    if (Object.keys(vWhere).length > 0) {
+      vWhere.deletedAt = null;
+      where.versions = { some: vWhere };
+    }
 
     const [total, items] = await this.prisma.$transaction([
       this.prisma.model.count({ where }),
