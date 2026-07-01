@@ -550,7 +550,9 @@ export class CompareComponent {
         error?: { error?: { code?: string; slug?: string; message?: string } };
       };
       const dup = err?.error?.error;
-      if (err?.status === 409 && dup?.code === 'COMPARISON_DUPLICATE' && dup.slug) {
+      // 409 + slug presente = ya existía esa comparación (dedup). El código
+      // retornado es 'CONFLICT' (ver apps/backend/src/shared/response.ts).
+      if (err?.status === 409 && dup?.slug) {
         this.duplicateSlug.set(dup.slug);
         this.savedSlug.set(dup.slug);
       } else {
