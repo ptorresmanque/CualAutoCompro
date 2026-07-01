@@ -24,8 +24,8 @@ export const favoritesController = {
     const u = req.user; if (!u) throw unauthorized();
     const parsed = addSchema.safeParse(req.body);
     if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
-    const { modelId, created } = await svc.add(u.id, parsed.data.modelId);
-    res.json(ok({ modelId, created }));
+    const { created } = await svc.add(u.id, parsed.data.modelId);
+    res.json(ok({ modelId: parsed.data.modelId, created }));
   }),
 
   remove: ah(async (req: Request, res: Response) => {
