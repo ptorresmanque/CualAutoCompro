@@ -21,7 +21,7 @@ export class CompareService {
             versions: { where: { deletedAt: null }, orderBy: { priceClp: "asc" } },
           },
         },
-        maintenanceCosts: true,
+        maintenanceCosts: { where: { deletedAt: null } },
       },
     });
     if (versions.length !== versionIds.length) throw notFound("Alguna versión no existe");

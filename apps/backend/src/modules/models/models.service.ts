@@ -113,7 +113,7 @@ export class ModelsService {
 
   async detail(id: string) {
     const m = await this.prisma.model.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, brand: { deletedAt: null } },
       include: {
         brand: true,
         versions: { where: { deletedAt: null }, orderBy: { priceClp: "asc" } },
@@ -128,14 +128,19 @@ export class ModelsService {
       where: { id: input.brandId, deletedAt: null },
     });
     if (!brand) throw notFound("Marca no encontrada");
-    return this.prisma.model.create({ data: input });
+    return this.prisma.model.create({
+      data: input as Prisma.ModelUncheckedCreateInput,
+    });
   }
 
   async update(id: string, input: UpdateModelInput) {
+    const data = Object.fromEntries(
+      Object.entries(input).filter(([, v]) => v !== undefined),
+    ) as Prisma.ModelUpdateInput;
     try {
       return await this.prisma.model.update({
         where: { id, deletedAt: null },
-        data: input,
+        data,
       });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {

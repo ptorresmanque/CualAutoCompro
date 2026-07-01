@@ -12,4 +12,9 @@ const schema = z.object({
 });
 
 export const env = schema.parse(process.env);
+
+if (process.env.NODE_ENV === "production" && env.ADMIN_INITIAL_PASSWORD === "admin1234") {
+  throw new Error("ADMIN_INITIAL_PASSWORD must be overridden in production");
+}
+
 export type Env = z.infer<typeof schema>;

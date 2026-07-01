@@ -1,5 +1,5 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
-import { notFound } from "../../shared/errors.js";
+import { conflict, notFound } from "../../shared/errors.js";
 import type { CreateEquipmentInput, UpdateEquipmentInput } from "./equipment.dto.admin.js";
 
 export class EquipmentService {
@@ -13,14 +13,17 @@ export class EquipmentService {
   }
 
   async create(input: CreateEquipmentInput) {
-    return this.prisma.equipmentItem.create({ data: input });
+    return this.prisma.equipmentItem.create({ data: input as Prisma.EquipmentItemCreateInput });
   }
 
   async update(id: string, input: UpdateEquipmentInput) {
+    const data = Object.fromEntries(
+      Object.entries(input).filter(([, v]) => v !== undefined),
+    ) as Prisma.EquipmentItemUpdateInput;
     try {
       return await this.prisma.equipmentItem.update({
         where: { id, deletedAt: null },
-        data: input,
+        data,
       });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
@@ -46,15 +49,31 @@ export class EquipmentService {
   }
 
   async attach(versionId: string, itemId: string) {
-    return this.prisma.versionEquipment.create({
-      data: { versionId, equipmentItemId: itemId },
-    });
+    try {
+      return await this.prisma.versionEquipment.create({
+        data: { versionId, equipmentItemId: itemId },
+      });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        throw conflict("El equipamiento ya está asociado a esta versión", {
+          code: "EQUIPMENT_ALREADY_ATTACHED",
+        });
+      }
+      throw e;
+    }
   }
 
   async detach(versionId: string, itemId: string) {
-    await this.prisma.versionEquipment.delete({
-      where: { versionId_equipmentItemId: { versionId, equipmentItemId: itemId } },
-    });
-    return { detached: true };
+    try {
+      await this.prisma.versionEquipment.delete({
+        where: { versionId_equipmentItemId: { versionId, equipmentItemId: itemId } },
+      });
+      return { detached: true };
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+        throw notFound("Asociación no encontrada");
+      }
+      throw e;
+    }
   }
 }

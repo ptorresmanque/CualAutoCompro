@@ -13,14 +13,19 @@ export class MaintenanceService {
   }
 
   async create(input: CreateMaintenanceInput) {
-    return this.prisma.maintenanceCost.create({ data: input });
+    return this.prisma.maintenanceCost.create({
+      data: input as Prisma.MaintenanceCostUncheckedCreateInput,
+    });
   }
 
   async update(id: string, input: UpdateMaintenanceInput) {
+    const data = Object.fromEntries(
+      Object.entries(input).filter(([, v]) => v !== undefined),
+    ) as Prisma.MaintenanceCostUpdateInput;
     try {
       return await this.prisma.maintenanceCost.update({
         where: { id, deletedAt: null },
-        data: input,
+        data,
       });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {

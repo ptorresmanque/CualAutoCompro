@@ -23,7 +23,11 @@ export class VersionsService {
 
   async detail(id: string) {
     const v = await this.prisma.version.findFirst({
-      where: { id, deletedAt: null },
+      where: {
+        id,
+        deletedAt: null,
+        model: { deletedAt: null, brand: { deletedAt: null } },
+      },
       include: {
         model: { include: { brand: true } },
         equipmentItems: { include: { equipmentItem: true } },
@@ -39,14 +43,19 @@ export class VersionsService {
       where: { id: input.modelId, deletedAt: null },
     });
     if (!model) throw notFound("Modelo no encontrado");
-    return this.prisma.version.create({ data: input });
+    return this.prisma.version.create({
+      data: input as Prisma.VersionUncheckedCreateInput,
+    });
   }
 
   async update(id: string, input: UpdateVersionInput) {
+    const data = Object.fromEntries(
+      Object.entries(input).filter(([, v]) => v !== undefined),
+    ) as Prisma.VersionUpdateInput;
     try {
       return await this.prisma.version.update({
         where: { id, deletedAt: null },
-        data: input,
+        data,
       });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {

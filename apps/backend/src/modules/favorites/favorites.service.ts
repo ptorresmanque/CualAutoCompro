@@ -38,7 +38,11 @@ export class FavoritesService {
 
   async listModels(userId: string): Promise<FavoriteModelCard[]> {
     const favs = await this.prisma.favorite.findMany({
-      where: { userId, model: { deletedAt: null } },
+      where: {
+        userId,
+        model: { deletedAt: null },
+        version: { deletedAt: null },
+      },
       include: {
         model: {
           include: {
@@ -58,7 +62,9 @@ export class FavoritesService {
     args: { modelId: string; versionId: string },
   ): Promise<{ created: boolean; versionId: string }> {
     const { modelId, versionId } = args;
-    const version = await this.prisma.version.findUnique({ where: { id: versionId } });
+    const version = await this.prisma.version.findFirst({
+      where: { id: versionId, deletedAt: null },
+    });
     if (!version) throw notFound("Versión no encontrada");
     if (version.modelId !== modelId) {
       throw badRequest("La versión no pertenece al modelo indicado");
@@ -140,7 +146,6 @@ export class FavoritesService {
       versionId,
       versions: m.versions.map((v) => ({
         id: v.id,
-        modelId: v.modelId,
         name: v.name,
         year: v.year,
         priceClp: v.priceClp,

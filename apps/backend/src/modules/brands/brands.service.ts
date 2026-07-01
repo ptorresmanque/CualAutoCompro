@@ -20,14 +20,17 @@ export class BrandsService {
   }
 
   async create(input: CreateBrandInput) {
-    return this.prisma.brand.create({ data: input });
+    return this.prisma.brand.create({ data: input as Prisma.BrandCreateInput });
   }
 
   async update(id: string, input: UpdateBrandInput) {
+    const data = Object.fromEntries(
+      Object.entries(input).filter(([, v]) => v !== undefined),
+    ) as Prisma.BrandUpdateInput;
     try {
       return await this.prisma.brand.update({
         where: { id, deletedAt: null },
-        data: input,
+        data,
       });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
