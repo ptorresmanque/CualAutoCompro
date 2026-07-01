@@ -1,6 +1,7 @@
+import crypto from "node:crypto";
 import { customAlphabet } from "nanoid";
 import { Prisma, type PrismaClient } from "@prisma/client";
-import { badRequest, notFound } from "../../shared/errors.js";
+import { badRequest, conflict, notFound } from "../../shared/errors.js";
 
 const slugger = customAlphabet("abcdefghijkmnpqrstuvwxyz23456789", 8);
 const SLUG_RETRY_LIMIT = 5;
@@ -10,8 +11,24 @@ export class ComparisonsService {
 
   async create({ userId, versionIds, name }: { userId: string; versionIds: string[]; name?: string }) {
     if (versionIds.length < 1 || versionIds.length > 3) throw badRequest("Compara entre 1 y 3 versiones");
+
+    const sorted = [...versionIds].sort();
+    const versionsHash = crypto.createHash("sha1").update(sorted.join(",")).digest("hex");
+
+    const existing = await this.prisma.comparison.findUnique({
+      where: { userId_versionsHash: { userId, versionsHash } },
+      select: { slug: true },
+    });
+    if (existing) {
+      throw conflict("Ya existe una comparación guardada con esos modelos", {
+        code: "COMPARISON_DUPLICATE",
+        slug: existing.slug ?? "",
+      });
+    }
+
     const data = {
       userId,
+      versionsHash,
       ...(name !== undefined ? { name } : {}),
       items: { create: versionIds.map((versionId, i) => ({ versionId, position: i + 1 })) },
     };
