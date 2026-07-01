@@ -247,5 +247,36 @@ describe('VehicleCardComponent', () => {
       btn.click();
       expect(emitted).toBe(true);
     });
+
+    it('botón corazón se muestra DESHABILITADO con tooltip cuando no hay sesión (I6)', () => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [TestHostComponent],
+        providers: [
+          provideRouter([]),
+          {
+            provide: AuthService,
+            useClass: class {
+              currentUser = signal<User | null>(null);
+            },
+          },
+        ],
+      });
+
+      const fixture = TestBed.createComponent(TestHostComponent);
+      fixture.componentInstance.car.set(carFixture());
+      fixture.detectChanges();
+
+      const btn: HTMLButtonElement = fixture.nativeElement.querySelector(
+        `[data-testid="favorite-${carFixture().id}"]`,
+      );
+      expect(btn).not.toBeNull();
+      expect(btn.disabled).toBe(true);
+      expect(btn.getAttribute('title')).toBe('Inicia sesión para guardar favoritos');
+      expect(btn.getAttribute('aria-pressed')).toBe('false');
+      // captured es un signal — sigue siendo null porque no hubo compareTapped
+      btn.click();
+      expect(fixture.componentInstance.captured()).toBeNull();
+    });
   });
 });
