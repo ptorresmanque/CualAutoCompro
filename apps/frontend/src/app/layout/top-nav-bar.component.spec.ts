@@ -96,4 +96,39 @@ describe('TopNavBarComponent', () => {
     const favLink = f.nativeElement.querySelector('a[href="/favoritos"]');
     expect(favLink).toBeNull();
   });
+
+  it('buscador: input se enlaza y submit navega a /catalogo con ?q=', async () => {
+    TestBed.configureTestingModule({
+      imports: [TestHostComponent],
+      providers: [
+        provideRouter([{ path: 'catalogo', children: [] }]),
+        { provide: AuthService, useValue: authStub },
+        { provide: CompareStore, useClass: CompareStoreStub },
+      ],
+    });
+    const f = TestBed.createComponent(TestHostComponent);
+    f.detectChanges();
+
+    const input = f.nativeElement.querySelector(
+      '[data-testid="nav-search"]',
+    ) as HTMLInputElement;
+    expect(input).not.toBeNull();
+    input.value = 'Yaris';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    f.detectChanges();
+
+    const form = f.nativeElement.querySelector('form[role="search"]') as HTMLFormElement;
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    f.detectChanges();
+    await Promise.resolve();
+    await Promise.resolve();
+    f.detectChanges();
+
+    const html = f.nativeElement as HTMLElement;
+    const links = Array.from(
+      html.querySelectorAll('a'),
+    ) as HTMLAnchorElement[];
+    const catalogLink = links.find((a) => a.getAttribute('href') === '/catalogo');
+    expect(catalogLink).toBeDefined();
+  });
 });

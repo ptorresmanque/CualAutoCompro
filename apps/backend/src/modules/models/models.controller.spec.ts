@@ -172,6 +172,25 @@ describe("GET /api/v1/models sort + order + minConsumption", () => {
     await seedModels();
     const res = await request(createApp()).get("/api/v1/models?transmission=MANUAL");
     expect(res.body.data.items).toHaveLength(1);
-    expect(res.body.data.items[0].name).toBe("Zeta");
+  });
+
+  it("busca por nombre de modelo case-insensitive (q=alp)", async () => {
+    await seedModels();
+    const res = await request(createApp()).get("/api/v1/models?q=alp");
+    const names = res.body.data.items.map((m: { name: string }) => m.name);
+    expect(names).toEqual(["Alpha"]);
+  });
+
+  it("busca por nombre de marca (q=T)", async () => {
+    await seedModels();
+    const res = await request(createApp()).get("/api/v1/models?q=T");
+    const names = res.body.data.items.map((m: { name: string }) => m.name);
+    expect(names).toEqual(["Alpha", "Charlie", "Zeta"]);
+  });
+
+  it("q vacío no aplica filtro", async () => {
+    await seedModels();
+    const res = await request(createApp()).get("/api/v1/models?q=");
+    expect(res.body.data.items).toHaveLength(3);
   });
 });

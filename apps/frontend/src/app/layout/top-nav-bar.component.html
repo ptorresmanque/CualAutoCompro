@@ -50,7 +50,11 @@
 
     <!-- Search desktop -->
     <div class="hidden lg:flex flex-1 max-w-sm">
-      <div class="relative w-full">
+      <form
+        class="relative w-full"
+        role="search"
+        (submit)="$event.preventDefault(); onSearchSubmit()"
+      >
         <span
           class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-base text-ink-muted pointer-events-none"
         >
@@ -58,11 +62,15 @@
         </span>
         <input
           type="search"
+          name="q"
           placeholder="Buscar marca, modelo…"
           aria-label="Buscar"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchInput($event)"
+          data-testid="nav-search"
           class="w-full rounded-full border border-border bg-surface-muted pl-10 pr-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600"
         />
-      </div>
+      </form>
     </div>
 
     <!-- Auth actions -->

@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService, QueryParams } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
@@ -23,6 +23,7 @@ type Sort = 'name' | 'minPrice' | 'minConsumption';
 type Order = 'asc' | 'desc';
 
 export interface CatalogFilters {
+  q?: string;
   brand?: string;
   segment?: Segment;
   priceMin?: number;
@@ -48,6 +49,7 @@ const YEARS: ReadonlyArray<number> = [2024, 2025, 2026, 2027];
 export class CatalogComponent {
   private api = inject(ApiService);
   private compare = inject(CompareStore);
+  private route = inject(ActivatedRoute);
   readonly favorites = inject(FavoritesStore);
 
   readonly segments: ReadonlyArray<{ value: Segment; label: string }> = [
@@ -87,6 +89,7 @@ export class CatalogComponent {
   items = signal<VehicleCardInput[]>([]);
   total = signal(0);
   loading = signal(false);
+  currentQuery = signal<string>('');
 
   readonly selectedVersions = signal<Record<string, string>>({});
 
@@ -112,6 +115,9 @@ export class CatalogComponent {
   readonly initialLoad: Promise<unknown>;
 
   constructor() {
+    const q = this.route.snapshot.queryParamMap.get('q')?.trim() ?? '';
+    this.currentQuery.set(q);
+    if (q) this.filters.update((f) => ({ ...f, q }));
     this.initialLoad = Promise.all([this.loadBrands(), this.load()]);
   }
 

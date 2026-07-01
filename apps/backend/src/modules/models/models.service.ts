@@ -8,6 +8,15 @@ export class ModelsService {
 
   async list(q: z.infer<typeof listModelsQuerySchema>) {
     const where: Prisma.ModelWhereInput = {};
+    if (q.q) {
+      const term = q.q.trim();
+      if (term.length > 0) {
+        where.OR = [
+          { name: { contains: term, mode: "insensitive" } },
+          { brand: { name: { contains: term, mode: "insensitive" } } },
+        ];
+      }
+    }
     if (q.brand) where.brandId = q.brand;
     if (q.segment) where.segment = q.segment;
 

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const listModelsQuerySchema = z.object({
+  q: z.string().optional(),
   brand: z.string().optional(),
   segment: z.enum(["SEDAN", "SUV", "HATCHBACK", "PICKUP", "CROSSOVER", "COMMERCIAL"]).optional(),
   year: z.coerce.number().int().optional(),

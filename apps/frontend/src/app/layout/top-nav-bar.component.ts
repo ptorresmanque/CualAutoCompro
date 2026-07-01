@@ -5,7 +5,8 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { CompareStore } from '../core/compare-store.service';
 
@@ -20,17 +21,22 @@ interface NavLink {
   selector: 'app-top-nav-bar',
   templateUrl: './top-nav-bar.component.html',
   styleUrl: './top-nav-bar.component.css',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [FormsModule, RouterLink, RouterLinkActive],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TopNavBarComponent {
   private auth = inject(AuthService);
   private compareStore = inject(CompareStore);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   readonly user = this.auth.currentUser;
   readonly menuOpen = signal(false);
   readonly compareCount = computed(() => this.compareStore.ids().length);
+
+  readonly searchTerm = signal(
+    this.route.snapshot.queryParamMap.get('q') ?? '',
+  );
 
   readonly initials = computed(() => {
     const u = this.user();
@@ -52,6 +58,17 @@ export class TopNavBarComponent {
     }
     return base;
   });
+
+  onSearchInput(value: string): void {
+    this.searchTerm.set(value);
+  }
+
+  onSearchSubmit(): void {
+    const term = this.searchTerm().trim();
+    void this.router.navigate(['/catalogo'], {
+      queryParams: term ? { q: term } : {},
+    });
+  }
 
   toggleMenu(): void {
     this.menuOpen.update((v) => !v);
