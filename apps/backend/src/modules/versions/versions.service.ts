@@ -23,7 +23,10 @@ export class VersionsService {
 
   async listAll() {
     return this.prisma.version.findMany({
-      where: { model: { deletedAt: null, brand: { deletedAt: null } } },
+      where: {
+        deletedAt: null,
+        model: { deletedAt: null, brand: { deletedAt: null } },
+      },
       orderBy: { createdAt: "desc" },
       include: { model: { select: { id: true, name: true } } },
     });

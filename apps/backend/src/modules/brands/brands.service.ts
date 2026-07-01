@@ -14,6 +14,7 @@ export class BrandsService {
 
   listAll() {
     return this.prisma.brand.findMany({
+      where: { deletedAt: null },
       orderBy: { name: "asc" },
     });
   }

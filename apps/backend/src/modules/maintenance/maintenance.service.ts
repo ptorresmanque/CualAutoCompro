@@ -14,7 +14,10 @@ export class MaintenanceService {
 
   listAll() {
     return this.prisma.maintenanceCost.findMany({
-      where: { version: { deletedAt: null } },
+      where: {
+        deletedAt: null,
+        version: { deletedAt: null, model: { deletedAt: null, brand: { deletedAt: null } } },
+      },
       orderBy: [{ versionId: "asc" }, { mileageTag: "asc" }],
     });
   }

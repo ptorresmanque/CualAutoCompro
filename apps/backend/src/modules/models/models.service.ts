@@ -113,7 +113,7 @@ export class ModelsService {
 
   async listAll() {
     return this.prisma.model.findMany({
-      where: { brand: { deletedAt: null } },
+      where: { deletedAt: null, brand: { deletedAt: null } },
       orderBy: { name: "asc" },
       include: { brand: { select: { id: true, name: true } } },
     });

@@ -14,6 +14,7 @@ export class EquipmentService {
 
   listAll() {
     return this.prisma.equipmentItem.findMany({
+      where: { deletedAt: null },
       orderBy: { name: "asc" },
     });
   }
