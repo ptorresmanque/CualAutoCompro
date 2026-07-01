@@ -2,12 +2,13 @@ import type { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import type { z } from "zod";
 import type { listModelsQuerySchema } from "./models.dto.js";
+import { notFound } from "../../shared/errors.js";
 
 export class ModelsService {
   constructor(private readonly prisma: PrismaClient) {}
 
   async list(q: z.infer<typeof listModelsQuerySchema>) {
-    const where: Prisma.ModelWhereInput = {};
+    const where: Prisma.ModelWhereInput = { deletedAt: null };
     if (q.q) {
       const term = q.q.trim();
       if (term.length > 0) {
@@ -39,7 +40,10 @@ export class ModelsService {
       this.prisma.model.count({ where }),
       this.prisma.model.findMany({
         where,
-        include: { brand: true, versions: { orderBy: { priceClp: "asc" } } },
+        include: {
+          brand: true,
+          versions: { where: { deletedAt: null }, orderBy: { priceClp: "asc" } },
+        },
         skip: (q.page - 1) * q.pageSize,
         take: q.pageSize,
         orderBy: { name: "asc" },
@@ -101,5 +105,17 @@ export class ModelsService {
     });
 
     return { total, items: enriched, page: q.page, pageSize: q.pageSize };
+  }
+
+  async detail(id: string) {
+    const m = await this.prisma.model.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        brand: true,
+        versions: { where: { deletedAt: null }, orderBy: { priceClp: "asc" } },
+      },
+    });
+    if (!m) throw notFound("Modelo no encontrado");
+    return m;
   }
 }

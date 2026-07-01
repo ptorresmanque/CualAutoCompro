@@ -18,11 +18,6 @@ export const modelsController = {
   detail: ah(async (req: Request, res: Response) => {
     const id = req.params.id ?? "";
     if (!id) return res.status(400).json({ data: null, error: { code: "BAD_REQUEST", message: "id requerido" } });
-    const m = await prisma.model.findUnique({
-      where: { id },
-      include: { brand: true, versions: { orderBy: { priceClp: "asc" } } },
-    });
-    if (!m) return res.status(404).json({ data: null, error: { code: "NOT_FOUND", message: "Modelo no encontrado" } });
-    res.json(ok(m));
+    res.json(ok(await svc.detail(id)));
   }),
 };
