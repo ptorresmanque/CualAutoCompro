@@ -8,6 +8,13 @@ import {
 import { provideRouter } from '@angular/router';
 import { CatalogComponent } from './catalog.component';
 import { CompareStore } from '../../core/compare-store.service';
+import { FavoritesStore } from '../../core/favorites-store.service';
+
+class FavoritesStoreStub {
+  isFavorite(): boolean { return false; }
+  async toggle(): Promise<void> { /* noop */ }
+  load(): Promise<void> { return Promise.resolve(); }
+}
 
 describe('CatalogComponent', () => {
   let http: HttpTestingController;
@@ -22,6 +29,7 @@ describe('CatalogComponent', () => {
         provideHttpClientTesting(),
         provideRouter([]),
         CompareStore,
+        { provide: FavoritesStore, useClass: FavoritesStoreStub },
       ],
     });
     http = TestBed.inject(HttpTestingController);

@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ApiService, QueryParams } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
+import { FavoritesStore } from '../../core/favorites-store.service';
 import {
   VehicleCardComponent,
   VehicleCardInput,
@@ -47,6 +48,7 @@ const YEARS: ReadonlyArray<number> = [2024, 2025, 2026, 2027];
 export class CatalogComponent {
   private api = inject(ApiService);
   private compare = inject(CompareStore);
+  readonly favorites = inject(FavoritesStore);
 
   readonly segments: ReadonlyArray<{ value: Segment; label: string }> = [
     { value: 'SEDAN', label: 'Sedán' },
