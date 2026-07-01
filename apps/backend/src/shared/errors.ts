@@ -47,3 +47,5 @@ export const conflict = (msg: string, details?: Record<string, unknown>) =>
   new AppError("CONFLICT", msg, details);
 export const validation = (msg: string) => new AppError("VALIDATION", msg);
 export const badRequest = (msg: string) => new AppError("BAD_REQUEST", msg);
+export const cannotDemoteSelf = (msg = "No podés degradarte a vos mismo") =>
+  new AppError("CANNOT_DEMOTE_SELF", msg);

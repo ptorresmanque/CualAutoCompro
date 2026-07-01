@@ -1,5 +1,5 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
-import { badRequest, notFound } from "../../shared/errors.js";
+import { badRequest, cannotDemoteSelf, notFound } from "../../shared/errors.js";
 
 export class AdminUsersService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -28,7 +28,7 @@ export class AdminUsersService {
 
   async demote(id: string, actorId: string) {
     if (id === actorId) {
-      throw badRequest("No podés degradarte a vos mismo");
+      throw cannotDemoteSelf();
     }
     try {
       return await this.prisma.user.update({
