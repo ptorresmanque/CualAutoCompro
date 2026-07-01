@@ -4,7 +4,7 @@ import { env } from "./config/env.js";
 import { ok } from "./shared/response.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { brandsAdminRouter, brandsRouter } from "./modules/brands/brands.routes.js";
-import { modelsRouter } from "./modules/models/models.routes.js";
+import { modelsAdminRouter, modelsRouter } from "./modules/models/models.routes.js";
 import { versionsRouter } from "./modules/versions/versions.routes.js";
 import { compareRouter } from "./modules/compare/compare.routes.js";
 import { comparisonsRouter, meComparisonsRouter } from "./modules/comparisons/comparisons.routes.js";
@@ -40,6 +40,7 @@ export const createApp = () => {
   app.use("/api/v1/brands", brandsRouter);
   app.use("/api/v1/admin/brands", brandsAdminRouter);
   app.use("/api/v1/models", modelsRouter);
+  app.use("/api/v1/admin/models", modelsAdminRouter);
   app.use("/api/v1/versions", versionsRouter);
   app.use("/api/v1/compare", compareRouter);
   app.use("/api/v1/comparisons", comparisonsRouter);

@@ -2,7 +2,8 @@ import type { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import type { z } from "zod";
 import type { listModelsQuerySchema } from "./models.dto.js";
-import { notFound } from "../../shared/errors.js";
+import { conflict, notFound } from "../../shared/errors.js";
+import type { CreateModelInput, UpdateModelInput } from "./models.dto.admin.js";
 
 export class ModelsService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -120,5 +121,44 @@ export class ModelsService {
     });
     if (!m) throw notFound("Modelo no encontrado");
     return m;
+  }
+
+  async create(input: CreateModelInput) {
+    const brand = await this.prisma.brand.findFirst({
+      where: { id: input.brandId, deletedAt: null },
+    });
+    if (!brand) throw notFound("Marca no encontrada");
+    return this.prisma.model.create({ data: input });
+  }
+
+  async update(id: string, input: UpdateModelInput) {
+    try {
+      return await this.prisma.model.update({
+        where: { id, deletedAt: null },
+        data: input,
+      });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+        throw notFound("Modelo no encontrado");
+      }
+      throw e;
+    }
+  }
+
+  async softDelete(id: string) {
+    const count = await this.prisma.version.count({
+      where: { modelId: id, deletedAt: null },
+    });
+    if (count > 0) {
+      throw conflict("No se puede eliminar: tiene versiones asociadas", {
+        code: "MODEL_HAS_VERSIONS",
+        versionCount: count,
+      });
+    }
+    await this.prisma.model.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+    return { deleted: true };
   }
 }
