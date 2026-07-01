@@ -21,8 +21,8 @@ export const authController = {
   register: ah(async (req: Request, res: Response) => {
     const parsed = registerSchema.safeParse(req.body);
     if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
-    const { passwordHash: _omit, ...safe } = await svc.register(parsed.data);
-    const token = sign({ sub: safe.id, email: safe.email, name: safe.name });
+    const safe = await svc.register(parsed.data);
+    const token = sign({ sub: safe.id, email: safe.email, name: safe.name, role: safe.role });
     res.cookie("auth", token, cookieOpts);
     return res.json(ok(safe));
   }),
@@ -45,7 +45,7 @@ export const authController = {
     if (!token) throw unauthorized();
     try {
       const payload = verify(token);
-      return res.json(ok({ id: payload.sub, email: payload.email, name: payload.name }));
+      return res.json(ok({ id: payload.sub, email: payload.email, name: payload.name, role: payload.role }));
     } catch {
       throw unauthorized();
     }

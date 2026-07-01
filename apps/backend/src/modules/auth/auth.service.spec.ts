@@ -14,7 +14,10 @@ describe("AuthService", () => {
     const u = await svc.register({ email: "patricio" + "@" + "test.cl", password: "secreto123", name: "Patricio" });
     expect(u.email).toBe("patricio" + "@" + "test.cl");
     expect(u.name).toBe("Patricio");
-    expect(u.passwordHash).not.toBe("secreto123");
+    expect(u.role).toBe("USER");
+    const dbUser = await prisma.user.findUnique({ where: { email: "patricio" + "@" + "test.cl" } });
+    expect(dbUser?.passwordHash).not.toBe("secreto123");
+    expect(dbUser?.passwordHash).toMatch(/^\$2[aby]\$/);
   });
 
   it("rechaza email duplicado con CONFLICT", async () => {

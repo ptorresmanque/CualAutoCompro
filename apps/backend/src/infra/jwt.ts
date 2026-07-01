@@ -1,7 +1,12 @@
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 
-export type JwtPayload = { sub: string; email: string; name: string };
+export type JwtPayload = {
+  sub: string;
+  email: string;
+  name: string;
+  role: "USER" | "ADMIN";
+};
 
 export const sign = (payload: JwtPayload): string =>
   jwt.sign(payload, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN } as jwt.SignOptions);

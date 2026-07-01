@@ -13,8 +13,10 @@ export class AuthService {
     const exists = await this.prisma.user.findUnique({ where: { email } });
     if (exists) throw conflict("Email ya registrado");
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await this.prisma.user.create({ data: { email, passwordHash, name } });
-    return { id: user.id, email: user.email, name: user.name, passwordHash };
+    const user = await this.prisma.user.create({
+      data: { email, passwordHash, name, role: "USER" },
+    });
+    return { id: user.id, email: user.email, name: user.name, role: user.role };
   }
 
   async login(input: z.infer<typeof loginSchema>) {
@@ -23,7 +25,10 @@ export class AuthService {
     if (!user) throw unauthorized("Credenciales inválidas");
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) throw unauthorized("Credenciales inválidas");
-    const token = sign({ sub: user.id, email: user.email, name: user.name });
-    return { user: { id: user.id, email: user.email, name: user.name }, token };
+    const token = sign({ sub: user.id, email: user.email, name: user.name, role: user.role });
+    return {
+      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      token,
+    };
   }
 }
