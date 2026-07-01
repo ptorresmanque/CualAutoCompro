@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   effect,
   EventEmitter,
   inject,
@@ -48,25 +47,40 @@ export class AdminEditDialogComponent {
   readonly jsonText = signal<string>('{}');
   readonly jsonError = signal<string | null>(null);
   readonly emptyTemplate = signal<Record<string, unknown>>({});
-  readonly form: FormGroup = this.fb.group({});
+  readonly loadError = signal<string | null>(null);
+  readonly loading = signal(true);
 
-  readonly isEdit = computed(() => this.entity() !== null);
+  readonly form = signal<FormGroup>(this.fb.group({}));
+  readonly isEdit = signal(false);
 
   constructor() {
-    effect(async () => {
+    effect(() => {
       const key = this.entityKey();
       const e = this.entity();
+      this.isEdit.set(e !== null);
+      void this.loadAndBuild(key, e);
+    });
+  }
+
+  private async loadAndBuild(key: EntityKey, current: Record<string, unknown> | null): Promise<void> {
+    this.loading.set(true);
+    this.loadError.set(null);
+    try {
       const res = await this.api.get<{ data: Record<string, unknown> }>(
         `/admin/seed/template/${key}`,
       );
       const tpl = res.data;
       this.emptyTemplate.set(tpl);
-      this.buildForm(tpl, e);
-      this.jsonText.set(JSON.stringify(e ?? tpl, null, 2));
-    });
+      this.form.set(this.buildFormGroup(tpl, current));
+      this.jsonText.set(JSON.stringify(current ?? tpl, null, 2));
+    } catch (err) {
+      this.loadError.set(`No se pudo cargar la plantilla: ${(err as Error).message}`);
+    } finally {
+      this.loading.set(false);
+    }
   }
 
-  private buildForm(tpl: Record<string, unknown>, current: Record<string, unknown> | null): void {
+  private buildFormGroup(tpl: Record<string, unknown>, current: Record<string, unknown> | null): FormGroup {
     const value = current ?? tpl;
     const controls: Record<string, FormControl> = {};
     for (const [k, v] of Object.entries(tpl)) {
@@ -77,10 +91,7 @@ export class AdminEditDialogComponent {
       }
       controls[k] = ctrl;
     }
-    while (Object.keys(this.form.controls).length > 0) {
-      this.form.removeControl(Object.keys(this.form.controls)[0]!);
-    }
-    for (const [k, c] of Object.entries(controls)) this.form.addControl(k, c);
+    return this.fb.group(controls);
   }
 
   switchTab(t: Tab): void {
@@ -98,7 +109,7 @@ export class AdminEditDialogComponent {
         return;
       }
       this.jsonError.set(null);
-      this.buildForm(this.emptyTemplate(), result.data);
+      this.form.set(this.buildFormGroup(this.emptyTemplate(), result.data));
       this.tab.set('form');
     } catch (e) {
       this.jsonError.set(`JSON inválido: ${(e as Error).message}`);
@@ -106,11 +117,12 @@ export class AdminEditDialogComponent {
   }
 
   onSubmit(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    const form = this.form();
+    if (form.invalid) {
+      form.markAllAsTouched();
       return;
     }
-    this.save.emit(this.form.getRawValue() as Record<string, unknown>);
+    this.save.emit(form.getRawValue() as Record<string, unknown>);
   }
 
   onCancel(): void {

@@ -29,9 +29,16 @@
     </header>
 
     <div class="flex-1 overflow-y-auto px-4 py-4">
-      @if (tab() === 'form') {
-        <form [formGroup]="form" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          @for (key of form.controls | keyvalue; track key.key) {
+      @if (loadError(); as err) {
+        <div class="rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark mb-3">
+          {{ err }}
+        </div>
+      }
+      @if (loading()) {
+        <p class="text-sm text-ink-muted">Cargando plantilla…</p>
+      } @else if (tab() === 'form') {
+        <form [formGroup]="form()" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          @for (key of form().controls | keyvalue; track key.key) {
             <label class="flex flex-col text-xs">
               <span class="font-bold mb-1">{{ key.key }}</span>
               @if (key.value.value === null || typeof key.value.value === 'boolean' || typeof key.value.value === 'number') {
@@ -84,7 +91,8 @@
       >Cancelar</button>
       <button
         type="button"
-        class="rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700"
+        class="rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        [disabled]="loading()"
         (click)="onSubmit()"
       >Guardar</button>
     </footer>

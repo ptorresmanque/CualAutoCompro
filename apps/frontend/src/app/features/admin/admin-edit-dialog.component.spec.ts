@@ -18,7 +18,7 @@ describe('AdminEditDialogComponent', () => {
     req.flush({ data: { name: '', logoUrl: null } });
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
-    expect(fixture.componentInstance.form.contains('name')).toBe(true);
+    expect(fixture.componentInstance.form().contains('name')).toBe(true);
   });
 
   it('loadJson parsea y popula form', async () => {
@@ -37,6 +37,21 @@ describe('AdminEditDialogComponent', () => {
     fixture.componentInstance.switchTab('json');
     fixture.componentInstance.jsonText.set(JSON.stringify({ name: 'Toyota', logoUrl: null }));
     fixture.componentInstance.loadJson();
-    expect(fixture.componentInstance.form.get('name')?.value).toBe('Toyota');
+    expect(fixture.componentInstance.form().get('name')?.value).toBe('Toyota');
+  });
+
+  it('muestra "Cargando plantilla…" mientras el template está en fetch', () => {
+    TestBed.configureTestingModule({
+      imports: [AdminEditDialogComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(AdminEditDialogComponent);
+    fixture.componentRef.setInput('entityKey', 'brand');
+    fixture.componentRef.setInput('apiPath', 'brands');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.loading()).toBe(true);
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/brand'))
+      .flush({ data: { name: '', logoUrl: null } });
   });
 });
