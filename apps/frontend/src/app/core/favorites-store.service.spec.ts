@@ -48,7 +48,7 @@ describe('FavoritesStore', () => {
   });
 
   it('toggle con user llama POST y agrega al set', async () => {
-    authStub.setUser({ id: 'u1', email: 'u@test.cl', name: 'U' });
+    authStub.setUser({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
     TestBed.flushEffects();
     const getReq = http.expectOne((r) => r.url.includes('/me/favorites'));
     getReq.flush({ data: { versionIds: [] } });
@@ -65,7 +65,7 @@ describe('FavoritesStore', () => {
   });
 
   it('toggle cuando ya es favorito llama DELETE y remueve', async () => {
-    authStub.setUser({ id: 'u1', email: 'u@test.cl', name: 'U' });
+    authStub.setUser({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
     TestBed.flushEffects();
     http.expectOne((r) => r.url.includes('/me/favorites')).flush({ data: { versionIds: ['v1'] } });
     await flushMicrotasks();
@@ -80,7 +80,7 @@ describe('FavoritesStore', () => {
   });
 
   it('logout limpia el set', async () => {
-    authStub.setUser({ id: 'u1', email: 'u@test.cl', name: 'U' });
+    authStub.setUser({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
     TestBed.flushEffects();
     http.expectOne((r) => r.url.includes('/me/favorites')).flush({ data: { versionIds: ['v1', 'v2'] } });
     await flushMicrotasks();
@@ -93,7 +93,7 @@ describe('FavoritesStore', () => {
   });
 
   it('load() en vuelo se descarta si el usuario cambió antes de resolver (C4)', async () => {
-    authStub.setUser({ id: 'u1', email: 'u@test.cl', name: 'U' });
+    authStub.setUser({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
     TestBed.flushEffects();
     const getReq = http.expectOne((r) => r.url.includes('/me/favorites'));
     authStub.setUser(null);
@@ -105,7 +105,7 @@ describe('FavoritesStore', () => {
   });
 
   it('changeVersion hace PATCH y reemplaza la versionId en el set', async () => {
-    authStub.setUser({ id: 'u1', email: 'u@test.cl', name: 'U' });
+    authStub.setUser({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
     TestBed.flushEffects();
     http.expectOne((r) => r.url.includes('/me/favorites')).flush({ data: { versionIds: ['v1'] } });
     await flushMicrotasks();
@@ -122,7 +122,7 @@ describe('FavoritesStore', () => {
   });
 
   it('changeVersion es noop si currentVersionId === newVersionId', async () => {
-    authStub.setUser({ id: 'u1', email: 'u@test.cl', name: 'U' });
+    authStub.setUser({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
     TestBed.flushEffects();
     http.expectOne((r) => r.url.includes('/me/favorites')).flush({ data: { versionIds: ['v1'] } });
     await flushMicrotasks();

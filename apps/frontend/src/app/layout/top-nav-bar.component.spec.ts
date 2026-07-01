@@ -73,7 +73,7 @@ describe('TopNavBarComponent', () => {
       ],
     });
     const f = TestBed.createComponent(TestHostComponent);
-    authStub.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U' });
+    authStub.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
     f.detectChanges();
 
     const favLink = f.nativeElement.querySelector('a[href="/favoritos"]');
@@ -95,6 +95,40 @@ describe('TopNavBarComponent', () => {
 
     const favLink = f.nativeElement.querySelector('a[href="/favoritos"]');
     expect(favLink).toBeNull();
+  });
+
+  it('muestra link Admin cuando role es ADMIN', () => {
+    TestBed.configureTestingModule({
+      imports: [TestHostComponent],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: authStub },
+        { provide: CompareStore, useClass: CompareStoreStub },
+      ],
+    });
+    const f = TestBed.createComponent(TestHostComponent);
+    authStub.currentUser.set({ id: 'u1', email: 'admin@test.cl', name: 'Admin', role: 'ADMIN' });
+    f.detectChanges();
+
+    const adminLink = f.nativeElement.querySelector('a[href="/admin"]');
+    expect(adminLink).not.toBeNull();
+  });
+
+  it('oculta link Admin cuando role es USER', () => {
+    TestBed.configureTestingModule({
+      imports: [TestHostComponent],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: authStub },
+        { provide: CompareStore, useClass: CompareStoreStub },
+      ],
+    });
+    const f = TestBed.createComponent(TestHostComponent);
+    authStub.currentUser.set({ id: 'u1', email: 'user@test.cl', name: 'User', role: 'USER' });
+    f.detectChanges();
+
+    const adminLink = f.nativeElement.querySelector('a[href="/admin"]');
+    expect(adminLink).toBeNull();
   });
 
   it('buscador: input se enlaza y submit navega a /catalogo con ?q=', async () => {

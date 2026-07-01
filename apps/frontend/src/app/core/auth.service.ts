@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { ApiService } from './api.service';
 
-export type User = { id: string; email: string; name: string };
+export type User = { id: string; email: string; name: string; role: 'USER' | 'ADMIN' };
 
 type AuthEnvelope<T> = { data: T } | { error: { code: string } };
 

@@ -337,6 +337,7 @@ describe('CompareComponent', () => {
       id: 'u1',
       email: 'u@test.cl',
       name: 'U',
+      role: 'USER',
     });
     const fixture = TestBed.createComponent(CompareComponent);
     const ready = fixture.componentInstance.ready;
@@ -412,7 +413,7 @@ describe('CompareComponent', () => {
     store = TestBed.inject(CompareStore);
 
     const auth = TestBed.inject(AuthService);
-    auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U' });
+    auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
 
     const fixture = TestBed.createComponent(CompareComponent);
     fixture.autoDetectChanges(true);
@@ -506,7 +507,7 @@ describe('CompareComponent', () => {
     store = TestBed.inject(CompareStore);
 
     const auth = TestBed.inject(AuthService);
-    auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U' });
+    auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
 
     const fixture = TestBed.createComponent(CompareComponent);
     fixture.autoDetectChanges(true);
@@ -605,7 +606,7 @@ describe('CompareComponent', () => {
     store = TestBed.inject(CompareStore);
 
     const auth = TestBed.inject(AuthService);
-    auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U' });
+    auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
 
     const fixture = TestBed.createComponent(CompareComponent);
     fixture.autoDetectChanges(true);
@@ -710,7 +711,7 @@ describe('CompareComponent', () => {
     http.expectNone((r) => r.url.includes('/me/favorites/models'));
 
     // Ahora el usuario hace login en otra parte de la app.
-    auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U' });
+    auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
     TestBed.flushEffects();
     const favReq = http.expectOne((r) =>
       r.url.includes('/me/favorites/models'),

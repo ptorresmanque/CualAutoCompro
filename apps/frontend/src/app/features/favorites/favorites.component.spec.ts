@@ -12,7 +12,7 @@ import { CompareStore } from '../../core/compare-store.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
 
 class AuthServiceStub {
-  currentUser = signal<User | null>({ id: 'u1', email: 'u@test.cl', name: 'U' });
+  currentUser = signal<User | null>({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
 }
 class FavoritesStoreStub {
   isFavorite(): boolean { return true; }

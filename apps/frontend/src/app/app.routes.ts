@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth.guard';
+import { adminGuard } from './core/admin.guard';
 
 export const routes: Routes = [
   {
@@ -65,6 +66,58 @@ export const routes: Routes = [
           import('./features/model/model.component').then(
             (m) => m.ModelComponent,
           ),
+      },
+      {
+        path: 'admin',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/admin-shell.component').then(
+            (m) => m.AdminShellComponent,
+          ),
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/admin/admin-dashboard.component').then(
+                (m) => m.AdminDashboardComponent,
+              ),
+          },
+          {
+            path: 'brands',
+            loadComponent: () =>
+              import('./features/admin/brands-admin.component').then(
+                (m) => m.BrandsAdminComponent,
+              ),
+          },
+          {
+            path: 'models',
+            loadComponent: () =>
+              import('./features/admin/models-admin.component').then(
+                (m) => m.ModelsAdminComponent,
+              ),
+          },
+          {
+            path: 'versions',
+            loadComponent: () =>
+              import('./features/admin/versions-admin.component').then(
+                (m) => m.VersionsAdminComponent,
+              ),
+          },
+          {
+            path: 'equipment',
+            loadComponent: () =>
+              import('./features/admin/equipment-admin.component').then(
+                (m) => m.EquipmentAdminComponent,
+              ),
+          },
+          {
+            path: 'maintenance',
+            loadComponent: () =>
+              import('./features/admin/maintenance-admin.component').then(
+                (m) => m.MaintenanceAdminComponent,
+              ),
+          },
+        ],
       },
     ],
   },

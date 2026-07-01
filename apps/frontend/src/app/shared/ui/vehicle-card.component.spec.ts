@@ -56,7 +56,7 @@ function carFixture(overrides: Partial<VehicleCardInput> = {}): VehicleCardInput
 }
 
 class AuthServiceStub {
-  currentUser = signal<User | null>({ id: 'u1', email: 'u@test.cl', name: 'U' });
+  currentUser = signal<User | null>({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
 }
 
 describe('VehicleCardComponent', () => {

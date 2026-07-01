@@ -50,6 +50,7 @@ describe('AuthService', () => {
       id: 'u1',
       email: '[email protected]',
       name: 'P',
+      role: 'USER',
     });
     const p = svc.logout();
     const req = http.expectOne(`${ENV.apiBase}/auth/logout`);
