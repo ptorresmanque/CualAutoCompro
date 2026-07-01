@@ -24,6 +24,7 @@ model Model {
   galleryUrls String[]  @default([])
   brand       Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
   versions  Version[]
+  favorites Favorite[]
   createdAt DateTime  @default(now())
 
   @@unique([brandId, name])
@@ -120,17 +121,20 @@ model User {
   name         String
   createdAt    DateTime     @default(now())
   comparisons  Comparison[]
+  favorites    Favorite[]
 }
 
 model Comparison {
-  id        String           @id @default(cuid())
-  userId    String
-  slug      String?          @unique
-  name      String?
-  createdAt DateTime         @default(now())
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     ComparisonItem[]
+  id           String           @id @default(cuid())
+  userId       String
+  slug         String?          @unique
+  name         String?
+  versionsHash String
+  createdAt    DateTime         @default(now())
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items        ComparisonItem[]
 
+  @@unique([userId, versionsHash])
   @@index([userId])
 }
 
@@ -144,4 +148,16 @@ model ComparisonItem {
 
   @@unique([comparisonId, position])
   @@index([versionId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  modelId   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  model     Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, modelId])
+  @@index([userId])
 }
