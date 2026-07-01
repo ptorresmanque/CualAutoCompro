@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   HostListener,
   inject,
   signal,
@@ -283,11 +284,18 @@ export class CompareComponent {
   ];
 
   constructor() {
+    effect(() => {
+      const u = this.user();
+      if (u) {
+        void this.loadFavorites();
+      } else {
+        this.favoriteModels.set([]);
+      }
+    });
     this.ready = this.bootstrap();
   }
 
   private bootstrap(): Promise<void> {
-    void this.loadFavorites();
     return this.bootstrapInner();
   }
 

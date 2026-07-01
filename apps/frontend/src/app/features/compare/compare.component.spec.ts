@@ -374,6 +374,7 @@ describe('CompareComponent', () => {
     auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U' });
 
     const fixture = TestBed.createComponent(CompareComponent);
+    fixture.autoDetectChanges(true);
     const ready = fixture.componentInstance.ready;
     const compareReq = http.expectOne((r) =>
       r.url.includes('/api/v1/compare'),
@@ -400,6 +401,7 @@ describe('CompareComponent', () => {
         diffHighlights: {},
       },
     });
+    await ready;
     const favReq = http.expectOne((r) =>
       r.url.includes('/me/favorites/models'),
     );
@@ -420,9 +422,7 @@ describe('CompareComponent', () => {
         },
       ],
     });
-    await ready;
     await fixture.whenStable();
-    fixture.detectChanges();
 
     const carousel = fixture.nativeElement.querySelector(
       '[data-testid="favorites-carousel"]',
@@ -468,6 +468,7 @@ describe('CompareComponent', () => {
     auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U' });
 
     const fixture = TestBed.createComponent(CompareComponent);
+    fixture.autoDetectChanges(true);
     const ready = fixture.componentInstance.ready;
     // initial /compare POST for store ids [v1]
     const compareReq = http.expectOne((r) => r.url.includes('/api/v1/compare'));
@@ -492,6 +493,7 @@ describe('CompareComponent', () => {
         diffHighlights: {},
       },
     });
+    await ready;
     const favReq = http.expectOne((r) =>
       r.url.includes('/me/favorites/models'),
     );
@@ -515,9 +517,7 @@ describe('CompareComponent', () => {
         },
       ],
     });
-    await ready;
     await fixture.whenStable();
-    fixture.detectChanges();
 
     // m1 (whose version v1 is in store) should be hidden
 
@@ -567,6 +567,7 @@ describe('CompareComponent', () => {
     auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U' });
 
     const fixture = TestBed.createComponent(CompareComponent);
+    fixture.autoDetectChanges(true);
     const ready = fixture.componentInstance.ready;
     http.expectOne((r) => r.url.includes('/api/v1/compare')).flush({
       data: {
@@ -589,6 +590,7 @@ describe('CompareComponent', () => {
         diffHighlights: {},
       },
     });
+    await ready;
     const favReq = http.expectOne((r) =>
       r.url.includes('/me/favorites/models'),
     );
@@ -606,9 +608,7 @@ describe('CompareComponent', () => {
         },
       ],
     });
-    await ready;
     await fixture.whenStable();
-    fixture.detectChanges();
 
     const btn = fixture.nativeElement.querySelector(
       '[data-testid="favorite-carousel-btn-m1"]',
@@ -630,5 +630,52 @@ describe('CompareComponent', () => {
         '[data-testid="favorite-carousel-popover-m1"]',
       ),
     ).toBeNull();
+  });
+
+  it('carrusel: carga favoritos reactivo cuando el user hace login después de mount (C2)', async () => {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        CompareStore,
+        AuthService,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: {
+                get: () => null,
+                has: () => false,
+                keys: [],
+              },
+            },
+          },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    store = TestBed.inject(CompareStore);
+    const auth = TestBed.inject(AuthService);
+    auth.currentUser.set(null);
+
+    // Mount sin usuario: NO debe dispararse /me/favorites/models todavía.
+    const fixture = TestBed.createComponent(CompareComponent);
+    fixture.autoDetectChanges(true);
+    const ready = fixture.componentInstance.ready;
+    await ready;
+    http.expectNone((r) => r.url.includes('/me/favorites/models'));
+
+    // Ahora el usuario hace login en otra parte de la app.
+    auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U' });
+    TestBed.flushEffects();
+    const favReq = http.expectOne((r) =>
+      r.url.includes('/me/favorites/models'),
+    );
+    expect(favReq.request.method).toBe('GET');
+    favReq.flush({ data: [] });
+    await fixture.whenStable();
   });
 });
