@@ -560,4 +560,27 @@ describe('CatalogComponent', () => {
     req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await p2;
   });
+
+  it('clearFilters también resetea selectedVersions (I8)', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
+    flushItems(http.expectOne((r) => r.url.includes('/api/v1/models')), []);
+    await fixture.componentInstance.initialLoad;
+
+    // El usuario seleccionó una versión alternativa
+    fixture.componentInstance.onVersionSelected(
+      { id: 'm1' } as never,
+      { id: 'v-alt', name: 'X', priceClp: 1, year: 2025 } as never,
+    );
+    expect(fixture.componentInstance.selectedVersions()).toEqual({ m1: 'v-alt' });
+
+    const p = fixture.componentInstance.clearFilters();
+    flushItems(http.expectOne((r) => r.url.includes('/api/v1/models')), []);
+    await p;
+
+    expect(fixture.componentInstance.selectedVersions()).toEqual({});
+  });
 });

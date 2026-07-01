@@ -160,6 +160,7 @@ export class CatalogComponent {
 
   async clearFilters(): Promise<void> {
     this.filters.set({ sort: 'name', order: 'asc' });
+    this.selectedVersions.set({});
     await this.load();
   }
 
