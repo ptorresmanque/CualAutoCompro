@@ -1,8 +1,21 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { LandingComponent } from './landing.component';
+import { AuthService, type User } from '../../core/auth.service';
+import { FavoritesStore } from '../../core/favorites-store.service';
+
+class AuthServiceStub {
+  currentUser = signal<User | null>(null);
+}
+
+class FavoritesStoreStub {
+  isFavorite(): boolean { return false; }
+  async toggle(): Promise<void> { /* noop */ }
+  load(): Promise<void> { return Promise.resolve(); }
+}
 
 describe('LandingComponent', () => {
   let http: HttpTestingController;
@@ -14,6 +27,8 @@ describe('LandingComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: AuthService, useClass: AuthServiceStub },
+        { provide: FavoritesStore, useClass: FavoritesStoreStub },
       ],
     });
     http = TestBed.inject(HttpTestingController);

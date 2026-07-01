@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
+import { FavoritesStore } from '../../core/favorites-store.service';
 import {
   VehicleCardComponent,
   VehicleCardInput,
@@ -29,6 +30,7 @@ const FEATURED_ON_LANDING = new Set(['Corolla', 'Tucson', 'CX-5']);
 })
 export class LandingComponent {
   private api = inject(ApiService);
+  readonly favorites = inject(FavoritesStore);
 
   readonly featured = signal<VehicleCardInput[]>([]);
   readonly loading = signal(true);
