@@ -52,6 +52,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'favoritos',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/favorites/favorites.component').then(
+            (m) => m.FavoritesComponent,
+          ),
+      },
+      {
         path: 'brand/:brandSlug/model/:modelSlug',
         loadComponent: () =>
           import('./features/model/model.component').then(
