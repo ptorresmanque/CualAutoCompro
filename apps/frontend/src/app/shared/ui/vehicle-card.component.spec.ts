@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { VehicleCardComponent, VehicleCardInput } from './vehicle-card.component';
+import { VehicleVersion } from '../../core/types/vehicle';
 
 @Component({
   selector: 'app-test-host',
@@ -14,7 +15,9 @@ import { VehicleCardComponent, VehicleCardInput } from './vehicle-card.component
         [featured]="featured()"
         [added]="added()"
         [maxReached]="maxReached()"
+        [selectedVersionId]="selectedVersionId()"
         (compareTapped)="captured.set($event)"
+        (versionSelected)="versionPicked.set($event)"
       />
     }
     <span data-testid="captured-flag">{{ captured() ? 'yes' : 'no' }}</span>
@@ -25,7 +28,9 @@ class TestHostComponent {
   featured = signal(false);
   added = signal(false);
   maxReached = signal(false);
-  captured = signal<VehicleCardInput | null>(null);
+  selectedVersionId = signal<string | null>(null);
+  captured = signal<VehicleVersion | null>(null);
+  versionPicked = signal<VehicleVersion | null>(null);
 }
 
 function carFixture(overrides: Partial<VehicleCardInput> = {}): VehicleCardInput {
@@ -42,6 +47,9 @@ function carFixture(overrides: Partial<VehicleCardInput> = {}): VehicleCardInput
       priceClp: 14_990_000,
       year: 2026,
     },
+    versions: [
+      { id: 'v1', name: 'XLS', priceClp: 14_990_000, year: 2026 },
+    ],
     ...overrides,
   };
 }
@@ -62,7 +70,13 @@ describe('VehicleCardComponent', () => {
     expect(html.textContent).toContain('Hatchback');
     expect(html.textContent).toContain('$');
     expect(html.textContent).toContain('CLP');
-    expect(html.textContent).toContain('Yaris XLS 2026');
+    // Con 1 versión no se renderiza el grupo de chips
+    expect(html.querySelector('[data-testid="version-chips"]')).toBeNull();
+    // El botón expone qué versión se va a agregar
+    const btn = html.querySelector(
+      'button[data-testid="compare-m1"]',
+    ) as HTMLButtonElement;
+    expect(btn.getAttribute('data-selected-version')).toBe('v1');
   });
 
   it('muestra el pill "MÁS VENDIDO" cuando featured=true', () => {

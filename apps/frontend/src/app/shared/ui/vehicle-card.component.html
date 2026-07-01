@@ -54,13 +54,47 @@
       {{ model().name }}
     </h3>
 
-    @if (model().minPrice !== null && model().minPrice !== undefined) {
+    @if (priceFormatted()) {
       <p class="text-brand-700 font-extrabold text-base">
-        Desde $ {{ priceFormatted() }}
+        $ {{ priceFormatted() }}
         <span class="text-[10px] font-normal text-ink-muted">CLP</span>
       </p>
     } @else {
       <p class="text-ink-subtle text-xs">Sin precio publicado</p>
+    }
+
+    <!-- Version chips: solo visible cuando hay > 1 versión y el card no está en compare -->
+    @if (hasMultipleVersions() && !added()) {
+      <div
+        class="flex flex-wrap gap-1.5"
+        role="radiogroup"
+        aria-label="Seleccionar versión a comparar"
+        data-testid="version-chips"
+      >
+        @for (v of model().versions; track v.id) {
+          <button
+            type="button"
+            role="radio"
+            [attr.aria-checked]="v.id === selectedVersionId()"
+            [attr.data-testid]="'version-chip-' + v.id"
+            [attr.data-selected]="v.id === selectedVersionId() ? 'true' : 'false'"
+            (click)="onSelectVersion($event, v)"
+            [disabled]="added()"
+            class="rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-colors flex items-center gap-1 disabled:cursor-not-allowed"
+            [class.bg-brand-600]="v.id === selectedVersionId()"
+            [class.text-white]="v.id === selectedVersionId()"
+            [class.border-brand-600]="v.id === selectedVersionId()"
+            [class.bg-surface]="v.id !== selectedVersionId()"
+            [class.border-border]="v.id !== selectedVersionId()"
+            [class.hover:border-brand-600]="v.id !== selectedVersionId()"
+          >
+            @if (v.id === selectedVersionId()) {
+              <span class="material-symbols-outlined text-[10px]">check</span>
+            }
+            {{ v.name }} {{ v.year }}
+          </button>
+        }
+      </div>
     }
 
     <button
@@ -71,6 +105,7 @@
       [attr.aria-pressed]="added() ? 'true' : 'false'"
       [attr.data-testid]="'compare-' + model().id"
       [attr.data-state]="added() ? 'added' : 'available'"
+      [attr.data-selected-version]="selectedVersion()?.id ?? ''"
       class="mt-auto w-full font-bold py-2 rounded transition-colors flex items-center justify-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"
       [class.bg-brand-600]="!added() && hasDefaultVersion()"
       [class.text-white]="!added()"
@@ -90,14 +125,5 @@
         Comparar
       }
     </button>
-    @if (model().defaultVersion; as dv) {
-      <p class="font-sans text-[10px] text-ink-subtle text-center">
-        {{ model().name }} {{ dv.name }} {{ dv.year }}
-      </p>
-    } @else {
-      <p class="font-sans text-[10px] text-warn-dark text-center">
-        Sin versiones disponibles
-      </p>
-    }
   </div>
 </article>

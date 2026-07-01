@@ -152,7 +152,9 @@
               [featured]="isFeatured(m.name)"
               [added]="isAdded(m)"
               [maxReached]="maxReached()"
+              [selectedVersionId]="selectedVersionId(m)"
               (compareTapped)="addToCompare(m)"
+              (versionSelected)="onVersionSelected(m, $event)"
             />
           </li>
         }

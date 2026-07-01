@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { VehicleVersion } from '../../core/types/vehicle';
 
 export interface VehicleCardInput {
   id: string;
@@ -16,12 +17,8 @@ export interface VehicleCardInput {
   brand: { name: string };
   imageUrl?: string | null;
   minPrice: number | null;
-  defaultVersion?: {
-    id: string;
-    name: string;
-    priceClp: number;
-    year: number;
-  } | null;
+  defaultVersion?: VehicleVersion | null;
+  versions: VehicleVersion[];
 }
 
 @Component({
@@ -36,7 +33,9 @@ export class VehicleCardComponent {
   readonly featured = input<boolean>(false);
   readonly added = input<boolean>(false);
   readonly maxReached = input<boolean>(false);
-  readonly compareTapped = output<VehicleCardInput>();
+  readonly selectedVersionId = input<string | null>(null);
+  readonly compareTapped = output<VehicleVersion>();
+  readonly versionSelected = output<VehicleVersion>();
 
   private readonly _hovered = signal(false);
   readonly hovered = this._hovered.asReadonly();
@@ -45,25 +44,38 @@ export class VehicleCardComponent {
     Boolean(this.model().defaultVersion?.id),
   );
 
+  readonly hasMultipleVersions = computed(() => this.model().versions.length > 1);
+
+  readonly selectedVersion = computed<VehicleVersion | null>(() => {
+    const id = this.selectedVersionId();
+    if (id) {
+      const found = this.model().versions.find((v) => v.id === id);
+      if (found) return found;
+    }
+    return this.model().versions[0] ?? null;
+  });
+
   readonly segmentLabel = computed(() => this.segmentToLabel(this.model().segment));
   readonly priceFormatted = computed(() => {
+    const v = this.selectedVersion();
+    if (v) return new Intl.NumberFormat('es-CL').format(v.priceClp);
     const minPrice = this.model().minPrice;
-    const value = this.model().defaultVersion?.priceClp ?? minPrice ?? null;
-    if (value === null) return '';
-    return new Intl.NumberFormat('es-CL').format(value);
+    return minPrice != null ? new Intl.NumberFormat('es-CL').format(minPrice) : '';
   });
 
   readonly imageStyle = computed(() => {
     const url = this.model().imageUrl;
-    return url
-      ? { 'background-image': `url("${url}")` }
-      : {};
+    return url ? { 'background-image': `url("${url}")` } : {};
   });
 
   readonly comparabilityLabel = computed(() => {
-    const dv = this.model().defaultVersion;
-    if (this.added()) return `Quitar ${this.model().name} ${dv?.name ?? ''} de la comparación`;
-    return dv ? `Agregar ${this.model().name} ${dv.name} ${dv.year} a la comparación` : '';
+    const v = this.selectedVersion();
+    if (this.added()) {
+      return `Quitar ${this.model().name} ${v?.name ?? ''} de la comparación`;
+    }
+    return v
+      ? `Agregar ${this.model().name} ${v.name} ${v.year} a la comparación`
+      : '';
   });
 
   readonly detailUrl = computed(() => {
@@ -76,11 +88,12 @@ export class VehicleCardComponent {
   onCompare(event: Event): void {
     event.stopPropagation();
     if (!this.hasDefaultVersion()) return;
-    if (this.added() || this.maxReached()) {
-      this.compareTapped.emit(this.model());
-      return;
-    }
-    this.compareTapped.emit(this.model());
+    this.compareTapped.emit(this.selectedVersion() ?? this.model().defaultVersion!);
+  }
+
+  onSelectVersion(event: Event, v: VehicleVersion): void {
+    event.stopPropagation();
+    this.versionSelected.emit(v);
   }
 
   onMouseEnter(): void {
