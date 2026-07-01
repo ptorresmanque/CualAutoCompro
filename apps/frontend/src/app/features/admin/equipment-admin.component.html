@@ -1,0 +1,60 @@
+<section>
+  <header class="flex items-center justify-between mb-4 gap-2">
+    <h2 class="text-xl font-bold">Equipamiento</h2>
+    <button
+      type="button"
+      (click)="openCreate()"
+      class="rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700"
+    >+ Nuevo</button>
+  </header>
+
+  <input
+    type="text"
+    placeholder="Buscar equipamiento o categoría…"
+    class="w-full mb-4 rounded border border-border px-3 py-2 text-sm"
+    [value]="search()"
+    (input)="onSearch($any($event.target).value)"
+  />
+
+  @if (error(); as err) {
+    <div class="mb-3 rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark">{{ err }}</div>
+  }
+
+  @if (loading()) {
+    <p class="text-sm text-ink-muted">Cargando…</p>
+  } @else if (filtered().length === 0) {
+    <p class="text-sm text-ink-muted">No hay equipamiento.</p>
+  } @else {
+    <table class="w-full text-sm">
+      <thead class="text-left text-xs text-ink-muted">
+        <tr>
+          <th class="py-2">Nombre</th>
+          <th class="py-2">Categoría</th>
+          <th class="py-2 w-32">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (e of filtered(); track e.id) {
+          <tr class="border-t border-border">
+            <td class="py-2">{{ e.name }}</td>
+            <td class="py-2">{{ e.category }}</td>
+            <td class="py-2">
+              <button class="text-brand-700 mr-2" (click)="openEdit(e)">Editar</button>
+              <button class="text-warn-dark" (click)="confirmDelete(e)">Eliminar</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+  @if (dialogMode() === 'open') {
+    <app-admin-edit-dialog
+      [entityKey]="'equipment'"
+      [apiPath]="'equipment'"
+      [entity]="$any(dialogEntity())"
+      (save)="onSave($event)"
+      (cancel)="closeDialog()"
+    />
+  }
+</section>

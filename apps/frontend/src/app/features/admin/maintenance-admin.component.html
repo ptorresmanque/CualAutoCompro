@@ -1,0 +1,69 @@
+<section>
+  <header class="flex items-center justify-between mb-4 gap-2">
+    <h2 class="text-xl font-bold">Mantención</h2>
+    <button
+      type="button"
+      (click)="openCreate()"
+      [disabled]="!selectedVersion()"
+      class="rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700 disabled:opacity-50"
+    >+ Nuevo</button>
+  </header>
+
+  <label class="flex flex-col text-xs mb-4 max-w-md">
+    <span class="font-bold mb-1">Versión</span>
+    <select
+      class="rounded border border-border px-3 py-2 text-sm bg-surface"
+      [value]="selectedVersion()"
+      (change)="onVersionChange($any($event.target).value)"
+    >
+      <option value="">— Selecciona una versión —</option>
+      @for (v of versions(); track v.id) {
+        <option [value]="v.id">{{ v.model?.name ? v.model.name + ' · ' : '' }}{{ v.name }}</option>
+      }
+    </select>
+  </label>
+
+  @if (error(); as err) {
+    <div class="mb-3 rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark">{{ err }}</div>
+  }
+
+  @if (loading()) {
+    <p class="text-sm text-ink-muted">Cargando…</p>
+  } @else if (!selectedVersion()) {
+    <p class="text-sm text-ink-muted">Selecciona una versión para ver su mantención.</p>
+  } @else if (items().length === 0) {
+    <p class="text-sm text-ink-muted">No hay registros de mantención para esta versión.</p>
+  } @else {
+    <table class="w-full text-sm">
+      <thead class="text-left text-xs text-ink-muted">
+        <tr>
+          <th class="py-2">Kilometraje</th>
+          <th class="py-2">Costo</th>
+          <th class="py-2 w-32">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (m of items(); track m.id) {
+          <tr class="border-t border-border">
+            <td class="py-2">{{ m.mileageTag | number }} km</td>
+            <td class="py-2">{{ formatPrice(m.costClp) }}</td>
+            <td class="py-2">
+              <button class="text-brand-700 mr-2" (click)="openEdit(m)">Editar</button>
+              <button class="text-warn-dark" (click)="confirmDelete(m)">Eliminar</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+  @if (dialogMode() === 'open') {
+    <app-admin-edit-dialog
+      [entityKey]="'maintenance'"
+      [apiPath]="'maintenance'"
+      [entity]="$any(dialogEntity())"
+      (save)="onSave($event)"
+      (cancel)="closeDialog()"
+    />
+  }
+</section>
