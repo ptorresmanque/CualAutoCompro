@@ -244,7 +244,7 @@
       <div
         class="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-brand-50 border border-brand-200 px-4 py-3 text-sm text-brand-900"
       >
-        @if (user()) {
+        @if (user() && !savedSlug()) {
           <span>Tu comparación se guarda automáticamente.</span>
           <button
             type="button"
@@ -254,7 +254,7 @@
           >
             {{ saving() ? 'Guardando…' : 'Guardar comparación' }}
           </button>
-        } @else {
+        } @else if (!user()) {
           <span>Crea una cuenta para guardar esta comparación.</span>
           <a
             routerLink="/register"
@@ -264,13 +264,18 @@
           </a>
         }
         @if (savedSlug()) {
-          <a
-            [routerLink]="['/compare']"
-            [queryParams]="{ slug: savedSlug() }"
-            class="ml-auto text-brand-700 underline"
-          >
-            Ver enlace público
-          </a>
+          <span data-testid="saved-link" class="ml-auto">
+            @if (duplicateSlug()) {
+              Ya tenés esta comparación guardada.
+            }
+            <a
+              [routerLink]="['/compare']"
+              [queryParams]="{ slug: savedSlug() }"
+              class="text-brand-700 underline"
+            >
+              Ver enlace público
+            </a>
+          </span>
         }
       </div>
 

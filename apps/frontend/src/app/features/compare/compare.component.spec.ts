@@ -304,6 +304,30 @@ describe('CompareComponent', () => {
     ).toBeNull();
   });
 
+  it('saveComparison con 409 muestra "Ya guardada" + link al slug', async () => {
+    store.hydrateFromUrl('a,b');
+    const fixture = TestBed.createComponent(CompareComponent);
+    const ready = fixture.componentInstance.ready;
+    http.expectOne((r) => r.url.includes('/api/v1/compare')).flush({
+      data: { versions: [{ id: 'a' }, { id: 'b' }], diffHighlights: {} },
+    });
+    await ready;
+    fixture.detectChanges();
+
+    const p = fixture.componentInstance.saveComparison();
+    const saveReq = http.expectOne((r) => r.url.includes('/api/v1/me/comparisons'));
+    saveReq.flush(
+      { data: null, error: { code: 'COMPARISON_DUPLICATE', slug: 'abc12345', message: 'dup' } },
+      { status: 409, statusText: 'Conflict' },
+    );
+    await p;
+    fixture.detectChanges();
+
+    const banner = fixture.nativeElement.querySelector('[data-testid="saved-link"]');
+    expect(banner).not.toBeNull();
+    expect(banner.textContent).toContain('Ya tenés esta comparación guardada');
+  });
+
   it('compareStore: setIds() reemplaza la lista y persiste en localStorage', () => {
     store.setIds(['x', 'y', 'z']);
     expect(store.ids()).toEqual(['x', 'y', 'z']);

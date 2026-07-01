@@ -122,6 +122,7 @@ export class CompareComponent {
   loading = signal(false);
   saving = signal(false);
   savedSlug = signal<string | null>(null);
+  duplicateSlug = signal<string | null>(null);
   sharedMeta = signal<{ slug: string; createdAt: string; userId: string } | null>(null);
   loadError = signal<string | null>(null);
   swappingFor = signal<string | null>(null); // versionId of card with open popover
@@ -483,6 +484,19 @@ export class CompareComponent {
         data: { slug: string };
       }>('/me/comparisons', { versionIds: ids });
       this.savedSlug.set(res.data.slug);
+      this.duplicateSlug.set(null);
+    } catch (e) {
+      const err = e as {
+        status?: number;
+        error?: { error?: { code?: string; slug?: string; message?: string } };
+      };
+      const dup = err?.error?.error;
+      if (err?.status === 409 && dup?.code === 'COMPARISON_DUPLICATE' && dup.slug) {
+        this.duplicateSlug.set(dup.slug);
+        this.savedSlug.set(dup.slug);
+      } else {
+        throw e;
+      }
     } finally {
       this.saving.set(false);
     }
