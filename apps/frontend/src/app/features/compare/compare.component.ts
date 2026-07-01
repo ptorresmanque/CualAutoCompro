@@ -130,6 +130,7 @@ export class CompareComponent {
   swappingFor = signal<string | null>(null); // versionId of card with open popover
   favoriteModels = signal<VehicleCardInput[]>([]);
   carouselOpenFor = signal<string | null>(null); // model.id del popover abierto
+  carouselPopoverPos = signal<{ top: number; left: number } | null>(null);
 
   readonly count = computed(() => this.versions().length);
 
@@ -160,6 +161,7 @@ export class CompareComponent {
     // close carousel popover
     if (this.carouselOpenFor() !== null && !target.closest('[data-testid^="favorite-carousel-popover-"]') && !target.closest('[data-testid^="favorite-carousel-btn-"]')) {
       this.carouselOpenFor.set(null);
+      this.carouselPopoverPos.set(null);
     }
   }
 
@@ -514,8 +516,23 @@ export class CompareComponent {
     return url ? `url("${url}")` : 'none';
   }
 
-  toggleCarouselFor(modelId: string): void {
-    this.carouselOpenFor.update((c) => (c === modelId ? null : modelId));
+  toggleCarouselFor(modelId: string, buttonEl?: EventTarget | null): void {
+    if (this.carouselOpenFor() === modelId) {
+      this.carouselOpenFor.set(null);
+      this.carouselPopoverPos.set(null);
+      return;
+    }
+    if (buttonEl instanceof HTMLElement) {
+      const rect = buttonEl.getBoundingClientRect();
+      const popoverWidth = 224;
+      const margin = 8;
+      const left = Math.max(margin, rect.right - popoverWidth);
+      const top = rect.bottom + 4;
+      this.carouselPopoverPos.set({ top, left });
+    } else {
+      this.carouselPopoverPos.set(null);
+    }
+    this.carouselOpenFor.set(modelId);
   }
 
   async addFavoriteVersionToCompare(
@@ -525,6 +542,7 @@ export class CompareComponent {
     if (this.compareStore.ids().length >= 3) return;
     this.compareStore.setIds([...this.compareStore.ids(), versionId]);
     this.carouselOpenFor.set(null);
+    this.carouselPopoverPos.set(null);
     await this.reloadCompare();
   }
 

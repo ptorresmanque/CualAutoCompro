@@ -68,7 +68,7 @@
                 </p>
                 <button
                   type="button"
-                  (click)="toggleCarouselFor(m.id); $event.stopPropagation()"
+                  (click)="toggleCarouselFor(m.id, $event.currentTarget); $event.stopPropagation()"
                   [attr.aria-expanded]="carouselOpenFor() === m.id"
                   [attr.data-testid]="'favorite-carousel-btn-' + m.id"
                   class="mt-2 w-full text-xs font-bold bg-brand-600 text-white rounded-full py-1.5 hover:bg-brand-700"
@@ -77,9 +77,12 @@
                 </button>
                 @if (carouselOpenFor() === m.id) {
                   <ul
-                    class="absolute z-30 right-0 top-full mt-1 bg-surface border border-border rounded-lg shadow-e2 p-1 w-56 max-h-60"
+                    class="fixed z-50 bg-surface border border-border rounded-lg shadow-e2 p-1"
+                    style="width: 14rem; max-height: 15rem; overflow-y: auto;"
                     role="listbox"
                     [attr.data-testid]="'favorite-carousel-popover-' + m.id"
+                    [style.top.px]="carouselPopoverPos()?.top ?? 0"
+                    [style.left.px]="carouselPopoverPos()?.left ?? 0"
                   >
                     @for (v of m.versions; track v.id) {
                       <li>
