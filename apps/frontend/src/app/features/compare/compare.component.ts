@@ -523,7 +523,8 @@ export class CompareComponent {
       return;
     }
     if (buttonEl instanceof HTMLElement) {
-      const rect = buttonEl.getBoundingClientRect();
+      const card = buttonEl.closest('li');
+      const rect = (card ?? buttonEl).getBoundingClientRect();
       const popoverWidth = 224;
       const margin = 8;
       const left = Math.max(margin, rect.right - popoverWidth);
