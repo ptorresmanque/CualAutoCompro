@@ -1,0 +1,92 @@
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-xl bg-surface shadow-e2 overflow-hidden">
+    <header class="flex items-center justify-between border-b border-border px-4 py-3">
+      <div class="flex gap-2">
+        <button
+          type="button"
+          class="px-3 py-1.5 rounded-full text-sm font-bold"
+          [class.bg-brand-600]="tab() === 'form'"
+          [class.text-white]="tab() === 'form'"
+          [class.text-ink]="tab() !== 'form'"
+          (click)="switchTab('form')"
+        >Formulario</button>
+        <button
+          type="button"
+          class="px-3 py-1.5 rounded-full text-sm font-bold"
+          [class.bg-brand-600]="tab() === 'json'"
+          [class.text-white]="tab() === 'json'"
+          [class.text-ink]="tab() !== 'json'"
+          (click)="switchTab('json')"
+        >JSON</button>
+      </div>
+      <button type="button" class="text-ink-muted" (click)="onCancel()" aria-label="Cerrar">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+
+    <div class="flex-1 overflow-y-auto px-4 py-4">
+      @if (tab() === 'form') {
+        <form [formGroup]="form" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          @for (key of form.controls | keyvalue; track key.key) {
+            <label class="flex flex-col text-xs">
+              <span class="font-bold mb-1">{{ key.key }}</span>
+              @if (key.value.value === null || typeof key.value.value === 'boolean' || typeof key.value.value === 'number') {
+                <input
+                  [type]="typeof key.value.value === 'number' ? 'number' : 'text'"
+                  [formControlName]="key.key"
+                  class="rounded border border-border px-2 py-1.5 text-sm"
+                />
+              } @else if (Array.isArray(key.value.value)) {
+                <textarea
+                  [formControlName]="key.key"
+                  rows="2"
+                  class="rounded border border-border px-2 py-1.5 text-sm"
+                  placeholder="[] (JSON array)"
+                ></textarea>
+              } @else {
+                <input
+                  type="text"
+                  [formControlName]="key.key"
+                  class="rounded border border-border px-2 py-1.5 text-sm"
+                />
+              }
+            </label>
+          }
+        </form>
+      } @else {
+        <div class="flex flex-col gap-2">
+          <textarea
+            class="w-full h-96 font-mono text-xs rounded border border-border px-3 py-2"
+            [value]="jsonText()"
+            (input)="jsonText.set($any($event.target).value)"
+          ></textarea>
+          @if (jsonError(); as err) {
+            <p class="text-warn-dark text-xs">{{ err }}</p>
+          }
+          <button
+            type="button"
+            class="self-start rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700"
+            (click)="loadJson()"
+          >Cargar</button>
+        </div>
+      }
+    </div>
+
+    <footer class="flex justify-end gap-2 border-t border-border px-4 py-3">
+      <button
+        type="button"
+        class="rounded-full bg-surface border border-border px-4 py-1.5 text-sm font-bold"
+        (click)="onCancel()"
+      >Cancelar</button>
+      <button
+        type="button"
+        class="rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700"
+        (click)="onSubmit()"
+      >Guardar</button>
+    </footer>
+  </div>
+</div>
