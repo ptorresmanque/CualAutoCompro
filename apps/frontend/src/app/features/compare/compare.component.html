@@ -129,11 +129,45 @@
       </div>
     }
 
+    @if (saveError() || duplicateSlug() || !user()) {
+    <div
+        class="mb-6 rounded-md border border-brand-200 bg-brand-50 px-3 py-2 text-sm text-brand-900"
+      >
+        @if (saveError(); as msg) {
+          <div
+            class="w-full mb-2 rounded-md border border-error bg-red-50 px-3 py-2 text-sm text-error-dark"
+            role="alert"
+            data-testid="save-error"
+          >
+            {{ msg }}
+          </div>
+        }
+        @if (!user()) {
+          <span>Crea una cuenta para guardar esta comparación.</span>
+        }
+        @if (savedSlug()) {
+          <span data-testid="saved-link">
+            @if (duplicateSlug()) {
+              Ya tenés esta comparación guardada.
+            }
+            <a
+              [routerLink]="['/compare']"
+              [queryParams]="{ slug: savedSlug() }"
+              class="text-brand-700 underline"
+            >
+              Ver enlace público
+            </a>
+          </span>
+        }
+      </div>
+    }
+
     @if (loading()) {
       <p class="text-sm text-brand-600" data-testid="loading">Cargando…</p>
     }
 
 
+  @if (versions().length > 0) {
 
     <!-- Cards -->
     <div
@@ -323,38 +357,8 @@
           </div>
         </details>
       }
-
-      <div
-        class="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-brand-50 border border-brand-200 px-4 py-3 text-sm text-brand-900"
-      >
-        @if (saveError(); as msg) {
-          <div
-            class="w-full mb-2 rounded-md border border-error bg-red-50 px-3 py-2 text-sm text-error-dark"
-            role="alert"
-            data-testid="save-error"
-          >
-            {{ msg }}
-          </div>
-        }
-        @if (!user()) {
-          <span>Crea una cuenta para guardar esta comparación.</span>
-        }
-        @if (savedSlug()) {
-          <span data-testid="saved-link">
-            @if (duplicateSlug()) {
-              Ya tenés esta comparación guardada.
-            }
-            <a
-              [routerLink]="['/compare']"
-              [queryParams]="{ slug: savedSlug() }"
-              class="text-brand-700 underline"
-            >
-              Ver enlace público
-            </a>
-          </span>
-        }
-      </div>
     </div>
+  }
   }
 
   <!-- Floating action button: guardar comparación -->
@@ -366,7 +370,7 @@
       data-testid="save-fab"
       class="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-brand-600 text-white pl-5 pr-5 py-3 text-sm font-bold shadow-e2 hover:bg-brand-700 transition-colors disabled:opacity-60"
     >
-      {{ saving() ? 'Guardando…' : 'Guardar comparación' }}
+      {{ saving() ? 'Guardando…' : 'Guardar' }}
       <span class="material-symbols-outlined text-base">save</span>
     </button>
   }
