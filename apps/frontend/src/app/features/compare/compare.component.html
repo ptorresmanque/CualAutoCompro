@@ -179,6 +179,77 @@
       }
     </div>
 
+    @if (user() && favoriteModels().length > 0) {
+      <section class="mb-8" data-testid="favorites-carousel">
+        <header class="flex items-center justify-between mb-3">
+          <h2 class="font-bold text-base">
+            Tus favoritos · Agregá uno a la comparación
+          </h2>
+        </header>
+        <ul
+          class="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2"
+          role="list"
+        >
+          @for (m of favoriteModels(); track m.id) {
+            @if (!isModelInCompare(m)) {
+              <li
+                class="snap-start shrink-0 w-56 bg-surface border border-border rounded-xl p-3 relative"
+                [attr.data-testid]="'favorite-carousel-item-' + m.id"
+              >
+                <div
+                  class="aspect-video rounded-lg bg-cover bg-center mb-2 bg-surface-muted"
+                  [style.background-image]="thumbStyle(m.imageUrl ?? null)"
+                ></div>
+                <p class="text-xs text-ink-muted">{{ m.brand.name }}</p>
+                <h3 class="font-bold text-sm">{{ m.name }}</h3>
+                <p class="text-xs text-brand-700 mt-1">
+                  @if (m.minPrice != null) {
+                    $ {{ formatPricePlain(m.minPrice) }}
+                  } @else {
+                    Sin precio publicado
+                  }
+                </p>
+                <button
+                  type="button"
+                  (click)="toggleCarouselFor(m.id); $event.stopPropagation()"
+                  [attr.aria-expanded]="carouselOpenFor() === m.id"
+                  [attr.data-testid]="'favorite-carousel-btn-' + m.id"
+                  class="mt-2 w-full text-xs font-bold bg-brand-600 text-white rounded-full py-1.5 hover:bg-brand-700"
+                >
+                  Agregar versión
+                </button>
+                @if (carouselOpenFor() === m.id) {
+                  <ul
+                    class="absolute z-30 right-0 top-full mt-1 bg-surface border border-border rounded-lg shadow-e2 p-1 w-56 max-h-60 overflow-auto"
+                    role="listbox"
+                    [attr.data-testid]="'favorite-carousel-popover-' + m.id"
+                  >
+                    @for (v of m.versions; track v.id) {
+                      <li>
+                        <button
+                          type="button"
+                          role="option"
+                          (click)="addFavoriteVersionToCompare(m.id, v.id)"
+                          [attr.data-testid]="'favorite-carousel-opt-' + v.id"
+                          class="block w-full text-left text-xs px-2 py-1.5 rounded hover:bg-surface-muted"
+                        >
+                          <span class="font-semibold">{{ v.name }} {{ v.year }}</span>
+                          @if (v.priceClp != null) {
+                            <span class="text-ink-muted">
+                              · ${{ formatPricePlain(v.priceClp) }}</span>
+                          }
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+              </li>
+            }
+          }
+        </ul>
+      </section>
+    }
+
     <!-- Collapsible sections -->
     <div class="space-y-3">
       @for (s of sections; track s.name) {

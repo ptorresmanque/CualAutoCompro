@@ -10,6 +10,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { CompareStore } from '../../core/compare-store.service';
+import { VehicleCardInput } from '../../shared/ui/vehicle-card.component';
 
 interface ModelLite {
   name: string;
@@ -125,6 +126,8 @@ export class CompareComponent {
   sharedMeta = signal<{ slug: string; createdAt: string; userId: string } | null>(null);
   loadError = signal<string | null>(null);
   swappingFor = signal<string | null>(null); // versionId of card with open popover
+  favoriteModels = signal<VehicleCardInput[]>([]);
+  carouselOpenFor = signal<string | null>(null); // model.id del popover abierto
 
   readonly count = computed(() => this.versions().length);
 
@@ -145,12 +148,16 @@ export class CompareComponent {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (this.swappingFor() === null) return;
     const target = event.target as HTMLElement | null;
     if (!target) return;
-    if (target.closest('[data-testid^="swap-popover-"]')) return;
-    if (target.closest('[data-testid^="swap-button-"]')) return;
-    this.closeSwap();
+    // close swap
+    if (this.swappingFor() !== null && !target.closest('[data-testid^="swap-popover-"]') && !target.closest('[data-testid^="swap-button-"]')) {
+      this.closeSwap();
+    }
+    // close carousel popover
+    if (this.carouselOpenFor() !== null && !target.closest('[data-testid^="favorite-carousel-popover-"]') && !target.closest('[data-testid^="favorite-carousel-btn-"]')) {
+      this.carouselOpenFor.set(null);
+    }
   }
 
   readonly sections: ReadonlyArray<Section> = [
@@ -279,7 +286,12 @@ export class CompareComponent {
     this.ready = this.bootstrap();
   }
 
-  private async bootstrap(): Promise<void> {
+  private bootstrap(): Promise<void> {
+    void this.loadFavorites();
+    return this.bootstrapInner();
+  }
+
+  private async bootstrapInner(): Promise<void> {
     const qp = this.route.snapshot.queryParamMap;
     const slug = qp.get('slug');
     if (slug) {
@@ -469,6 +481,41 @@ export class CompareComponent {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  async loadFavorites(): Promise<void> {
+    if (!this.user()) return;
+    try {
+      const res = await this.api.get<{ data: VehicleCardInput[] }>(
+        '/me/favorites/models',
+      );
+      this.favoriteModels.set(res.data ?? []);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  isModelInCompare(m: VehicleCardInput): boolean {
+    const inStore = new Set(this.compareStore.ids());
+    return m.versions.some((v) => inStore.has(v.id));
+  }
+
+  thumbStyle(url: string | null | undefined): string {
+    return url ? `url("${url}")` : 'none';
+  }
+
+  toggleCarouselFor(modelId: string): void {
+    this.carouselOpenFor.update((c) => (c === modelId ? null : modelId));
+  }
+
+  async addFavoriteVersionToCompare(
+    modelId: string,
+    versionId: string,
+  ): Promise<void> {
+    if (this.compareStore.ids().length >= 3) return;
+    this.compareStore.setIds([...this.compareStore.ids(), versionId]);
+    this.carouselOpenFor.set(null);
+    await this.reloadCompare();
   }
 
   clearAll(): void {

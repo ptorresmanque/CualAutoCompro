@@ -7,6 +7,7 @@ import {
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { CompareComponent } from './compare.component';
 import { CompareStore } from '../../core/compare-store.service';
+import { AuthService } from '../../core/auth.service';
 
 describe('CompareComponent', () => {
   let http: HttpTestingController;
@@ -25,10 +26,12 @@ describe('CompareComponent', () => {
     });
     http = TestBed.inject(HttpTestingController);
     store = TestBed.inject(CompareStore);
+    TestBed.inject(AuthService).currentUser.set(null);
   });
 
   afterEach(() => {
     http.verify();
+    TestBed.inject(AuthService).currentUser.set(null);
     localStorage.clear();
   });
 
@@ -337,5 +340,295 @@ describe('CompareComponent', () => {
     // Cap a 3
     store.setIds(['a', 'b', 'c', 'd', 'e']);
     expect(store.ids()).toEqual(['a', 'b', 'c']);
+  });
+
+  it('carrusel de favoritos aparece cuando hay user y favoritos', async () => {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+    store.hydrateFromUrl('x');
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        CompareStore,
+        AuthService,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: {
+                get: () => null,
+                has: () => false,
+                keys: [],
+              },
+            },
+          },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    store = TestBed.inject(CompareStore);
+
+    const auth = TestBed.inject(AuthService);
+    auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U' });
+
+    const fixture = TestBed.createComponent(CompareComponent);
+    const ready = fixture.componentInstance.ready;
+    const compareReq = http.expectOne((r) =>
+      r.url.includes('/api/v1/compare'),
+    );
+    expect(compareReq.request.method).toBe('POST');
+    compareReq.flush({
+      data: {
+        versions: [
+          {
+            id: 'x',
+            name: 'Base',
+            priceClp: 10000000,
+            year: 2025,
+            model: {
+              id: 'm0',
+              name: 'Corolla',
+              brand: { name: 'Toyota' },
+              availableVersions: [
+                { id: 'x', name: 'Base', year: 2025, priceClp: 10000000 },
+              ],
+            },
+          },
+        ],
+        diffHighlights: {},
+      },
+    });
+    const favReq = http.expectOne((r) =>
+      r.url.includes('/me/favorites/models'),
+    );
+    expect(favReq.request.method).toBe('GET');
+    favReq.flush({
+      data: [
+        {
+          id: 'm1',
+          name: 'Yaris',
+          brand: { name: 'Toyota' },
+          segment: 'HATCHBACK',
+          minPrice: 14000000,
+          imageUrl: 'https://example.com/yaris.jpg',
+          versions: [
+            { id: 'v1', name: 'XLS', year: 2026, priceClp: 14990000 },
+            { id: 'v2', name: 'Sport', year: 2025, priceClp: 11500000 },
+          ],
+        },
+      ],
+    });
+    await ready;
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const carousel = fixture.nativeElement.querySelector(
+      '[data-testid="favorites-carousel"]',
+    );
+    expect(carousel).not.toBeNull();
+    const item = fixture.nativeElement.querySelector(
+      '[data-testid="favorite-carousel-item-m1"]',
+    );
+    expect(item).not.toBeNull();
+    expect(item.textContent).toContain('Yaris');
+    expect(item.textContent).toContain('Toyota');
+  });
+
+  it('carrusel oculta modelos cuyas versiones ya están en compare', async () => {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+    store.hydrateFromUrl('v1');
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        CompareStore,
+        AuthService,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: {
+                get: () => null,
+                has: () => false,
+                keys: [],
+              },
+            },
+          },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    store = TestBed.inject(CompareStore);
+
+    const auth = TestBed.inject(AuthService);
+    auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U' });
+
+    const fixture = TestBed.createComponent(CompareComponent);
+    const ready = fixture.componentInstance.ready;
+    // initial /compare POST for store ids [v1]
+    const compareReq = http.expectOne((r) => r.url.includes('/api/v1/compare'));
+    compareReq.flush({
+      data: {
+        versions: [
+          {
+            id: 'v1',
+            name: 'XLS',
+            priceClp: 14990000,
+            year: 2026,
+            model: {
+              id: 'm1',
+              name: 'Yaris',
+              brand: { name: 'Toyota' },
+              availableVersions: [
+                { id: 'v1', name: 'XLS', year: 2026, priceClp: 14990000 },
+              ],
+            },
+          },
+        ],
+        diffHighlights: {},
+      },
+    });
+    const favReq = http.expectOne((r) =>
+      r.url.includes('/me/favorites/models'),
+    );
+    favReq.flush({
+      data: [
+        {
+          id: 'm1',
+          name: 'Yaris',
+          brand: { name: 'Toyota' },
+          segment: 'HATCHBACK',
+          minPrice: 14000000,
+          versions: [{ id: 'v1', name: 'XLS', year: 2026, priceClp: 14990000 }],
+        },
+        {
+          id: 'm2',
+          name: 'Corolla',
+          brand: { name: 'Toyota' },
+          segment: 'SEDAN',
+          minPrice: 17000000,
+          versions: [{ id: 'v3', name: 'Hybrid', year: 2026, priceClp: 18990000 }],
+        },
+      ],
+    });
+    await ready;
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // m1 (whose version v1 is in store) should be hidden
+
+    // m1 (whose version v1 is in store) should be hidden
+    expect(
+      fixture.nativeElement.querySelector(
+        '[data-testid="favorite-carousel-item-m1"]',
+      ),
+    ).toBeNull();
+    // m2 should still appear
+    expect(
+      fixture.nativeElement.querySelector(
+        '[data-testid="favorite-carousel-item-m2"]',
+      ),
+    ).not.toBeNull();
+  });
+
+  it('carrusel: click en "Agregar versión" abre popover; click fuera cierra', async () => {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+    store.hydrateFromUrl('x');
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        CompareStore,
+        AuthService,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: {
+                get: () => null,
+                has: () => false,
+                keys: [],
+              },
+            },
+          },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    store = TestBed.inject(CompareStore);
+
+    const auth = TestBed.inject(AuthService);
+    auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U' });
+
+    const fixture = TestBed.createComponent(CompareComponent);
+    const ready = fixture.componentInstance.ready;
+    http.expectOne((r) => r.url.includes('/api/v1/compare')).flush({
+      data: {
+        versions: [
+          {
+            id: 'x',
+            name: 'Base',
+            priceClp: 10000000,
+            year: 2025,
+            model: {
+              id: 'm0',
+              name: 'Corolla',
+              brand: { name: 'Toyota' },
+              availableVersions: [
+                { id: 'x', name: 'Base', year: 2025, priceClp: 10000000 },
+              ],
+            },
+          },
+        ],
+        diffHighlights: {},
+      },
+    });
+    const favReq = http.expectOne((r) =>
+      r.url.includes('/me/favorites/models'),
+    );
+    favReq.flush({
+      data: [
+        {
+          id: 'm1',
+          name: 'Yaris',
+          brand: { name: 'Toyota' },
+          segment: 'HATCHBACK',
+          minPrice: 14000000,
+          versions: [
+            { id: 'v1', name: 'XLS', year: 2026, priceClp: 14990000 },
+          ],
+        },
+      ],
+    });
+    await ready;
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const btn = fixture.nativeElement.querySelector(
+      '[data-testid="favorite-carousel-btn-m1"]',
+    ) as HTMLButtonElement;
+    btn.click();
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector(
+        '[data-testid="favorite-carousel-popover-m1"]',
+      ),
+    ).not.toBeNull();
+
+    // click outside the popover
+    const outsideClick = new MouseEvent('click', { bubbles: true });
+    document.body.dispatchEvent(outsideClick);
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector(
+        '[data-testid="favorite-carousel-popover-m1"]',
+      ),
+    ).toBeNull();
   });
 });
