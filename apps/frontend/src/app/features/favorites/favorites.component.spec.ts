@@ -108,8 +108,10 @@ describe('FavoritesComponent', () => {
     fixture.detectChanges();
 
     const btn: HTMLButtonElement = fixture.nativeElement.querySelector(
-      '[data-testid="compare-one-m1"]',
+      '[data-testid="compare-m1"]',
     );
+    expect(btn).not.toBeNull();
+    expect(btn.textContent).toContain('Agregar a comparación');
     btn.click();
     fixture.detectChanges();
     await Promise.resolve();

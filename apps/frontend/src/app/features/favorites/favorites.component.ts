@@ -13,6 +13,7 @@ import {
   VehicleCardComponent,
   VehicleCardInput,
 } from '../../shared/ui/vehicle-card.component';
+import { VehicleVersion } from '../../core/types/vehicle';
 
 @Component({
   selector: 'app-favorites',
@@ -34,6 +35,7 @@ export class FavoritesComponent {
 
   readonly hasItems = computed(() => this.models().length > 0);
   readonly compareCount = computed(() => Math.min(this.models().length, 3));
+  readonly maxReached = computed(() => this.compare.ids().length >= 3);
 
   readonly initialLoad: Promise<void>;
 
@@ -57,7 +59,7 @@ export class FavoritesComponent {
   }
 
   isAdded(m: VehicleCardInput): boolean {
-    const id = m.defaultVersion?.id;
+    const id = this.selectedVersionId(m);
     return id ? this.compare.ids().includes(id) : false;
   }
 
@@ -70,16 +72,15 @@ export class FavoritesComponent {
     return m.defaultVersion?.id ?? m.versions[0]?.id ?? null;
   }
 
-  async compareOne(m: VehicleCardInput): Promise<void> {
+  async onCompareTapped(m: VehicleCardInput, v: VehicleVersion): Promise<void> {
     if (this.compare.ids().length >= 3) {
       this.compareMessage.set(
         'Máximo 3, limpiá la comparación actual primero.',
       );
       return;
     }
-    const vid = this.selectedVersionId(m);
-    if (!vid) return;
-    this.compare.setIds([...this.compare.ids(), vid]);
+    if (!v?.id) return;
+    this.compare.setIds([...this.compare.ids(), v.id]);
     this.compareMessage.set(null);
     await this.router.navigate(['/compare']);
   }

@@ -136,7 +136,7 @@
       type="button"
       (click)="onCompare($event)"
       [disabled]="!hasDefaultVersion() || (!added() && maxReached())"
-      [attr.aria-label]="comparabilityLabel() || 'Comparar'"
+      [attr.aria-label]="comparabilityLabel() || compareLabel()"
       [attr.aria-pressed]="added() ? 'true' : 'false'"
       [attr.data-testid]="'compare-' + model().id"
       [attr.data-state]="added() ? 'added' : 'available'"
@@ -157,7 +157,7 @@
       } @else if (maxReached()) {
         Máximo 3
       } @else {
-        Comparar
+        {{ compareLabel() }}
       }
     </button>
   </div>

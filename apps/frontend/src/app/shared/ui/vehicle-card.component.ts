@@ -39,6 +39,7 @@ export class VehicleCardComponent {
   readonly maxReached = input<boolean>(false);
   readonly selectedVersionId = input<string | null>(null);
   readonly isFavorite = input<boolean>(false);
+  readonly compareLabel = input<string>('Comparar');
   readonly compareTapped = output<VehicleVersion>();
   readonly versionSelected = output<VehicleVersion>();
   readonly favoriteToggled = output<void>();
