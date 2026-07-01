@@ -3,7 +3,7 @@ import cookieParser from "cookie-parser";
 import { env } from "./config/env.js";
 import { ok } from "./shared/response.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
-import { brandsRouter } from "./modules/brands/brands.routes.js";
+import { brandsAdminRouter, brandsRouter } from "./modules/brands/brands.routes.js";
 import { modelsRouter } from "./modules/models/models.routes.js";
 import { versionsRouter } from "./modules/versions/versions.routes.js";
 import { compareRouter } from "./modules/compare/compare.routes.js";
@@ -38,6 +38,7 @@ export const createApp = () => {
   app.get("/health", (_req, res) => res.json(ok({ status: "ok", env: env.WEB_ORIGIN })));
   app.use("/api/v1/auth", authRouter);
   app.use("/api/v1/brands", brandsRouter);
+  app.use("/api/v1/admin/brands", brandsAdminRouter);
   app.use("/api/v1/models", modelsRouter);
   app.use("/api/v1/versions", versionsRouter);
   app.use("/api/v1/compare", compareRouter);
