@@ -42,7 +42,8 @@ export class TopNavBarComponent {
   readonly navLinks = computed<NavLink[]>(() => {
     const u = this.user();
     const base: NavLink[] = [
-      { path: '/', label: 'Catálogo', icon: 'directions_car', exact: true },
+      { path: '/', label: 'Inicio', icon: 'home', exact: true },
+      { path: '/catalogo', label: 'Catálogo', icon: 'directions_car' },
       { path: '/compare', label: 'Comparar', icon: 'compare_arrows' },
     ];
     if (u) base.push({ path: '/account/comparisons', label: 'Mis comparaciones', icon: 'bookmarks' });

@@ -9,6 +9,14 @@ export const routes: Routes = [
     children: [
       {
         path: '',
+        pathMatch: 'full',
+        loadComponent: () =>
+          import('./features/landing/landing.component').then(
+            (m) => m.LandingComponent,
+          ),
+      },
+      {
+        path: 'catalogo',
         loadComponent: () =>
           import('./features/catalog/catalog.component').then(
             (m) => m.CatalogComponent,

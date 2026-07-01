@@ -2,7 +2,6 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ApiService, QueryParams } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
-import { DisclaimerComponent } from '../../shared/ui/disclaimer.component';
 import {
   VehicleCardComponent,
   VehicleCardInput,
@@ -33,7 +32,7 @@ const FEATURED_MODEL_NAMES = new Set(['Corolla', 'Tucson', 'CX-5']);
   selector: 'app-catalog',
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.css',
-  imports: [RouterLink, DisclaimerComponent, VehicleCardComponent],
+  imports: [RouterLink, VehicleCardComponent],
 })
 export class CatalogComponent {
   private api = inject(ApiService);

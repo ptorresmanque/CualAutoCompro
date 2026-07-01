@@ -391,11 +391,17 @@ describe('CatalogComponent', () => {
     await fixture.componentInstance.initialLoad;
     fixture.detectChanges();
 
-    const heroCompare = fixture.nativeElement.querySelector(
-      '[data-testid="hero-compare"]',
+    // Trigger sticky bar visibility by adding a version
+    (fixture.nativeElement.querySelector(
+      'button[data-testid="compare-m1"]',
+    ) as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const stickyCompare = fixture.nativeElement.querySelector(
+      '[data-testid="selection-bar-compare"]',
     ) as HTMLAnchorElement;
-    expect(heroCompare.getAttribute('href')).toBe('/compare');
-    expect(heroCompare.getAttribute('href')).not.toBeNull();
+    expect(stickyCompare).not.toBeNull();
+    expect(stickyCompare.getAttribute('href')).toBe('/compare');
   });
 
   it('muestra chips de versión solo cuando hay > 1 versión', async () => {
