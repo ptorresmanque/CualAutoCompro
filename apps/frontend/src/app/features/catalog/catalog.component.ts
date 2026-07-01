@@ -3,7 +3,11 @@ import { RouterLink } from '@angular/router';
 import { ApiService, QueryParams } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
 import { DisclaimerComponent } from '../../shared/ui/disclaimer.component';
-import { VehicleCardComponent, VehicleCardInput } from '../../shared/ui/vehicle-card.component';
+import {
+  VehicleCardComponent,
+  VehicleCardInput,
+} from '../../shared/ui/vehicle-card.component';
+import { VehicleVersion } from '../../core/types/vehicle';
 
 type Segment =
   | 'SEDAN'
@@ -12,8 +16,6 @@ type Segment =
   | 'PICKUP'
   | 'CROSSOVER'
   | 'COMMERCIAL';
-
-export type CatalogItem = VehicleCardInput & { segment: Segment };
 
 export interface CatalogFilters {
   brand?: string;
@@ -25,7 +27,6 @@ export interface CatalogFilters {
   powerMin?: number;
 }
 
-/** Nombres de modelos marcados como "Más Vendido" en el diseño Stitch. */
 const FEATURED_MODEL_NAMES = new Set(['Corolla', 'Tucson', 'CX-5']);
 
 @Component({
@@ -38,10 +39,7 @@ export class CatalogComponent {
   private api = inject(ApiService);
   private compare = inject(CompareStore);
 
-  readonly segments: ReadonlyArray<{
-    value: Segment;
-    label: string;
-  }> = [
+  readonly segments: ReadonlyArray<{ value: Segment; label: string }> = [
     { value: 'SEDAN', label: 'Sedán' },
     { value: 'SUV', label: 'SUV' },
     { value: 'HATCHBACK', label: 'Hatchback' },
@@ -51,17 +49,30 @@ export class CatalogComponent {
   ];
 
   filters = signal<CatalogFilters>({});
-  items = signal<CatalogItem[]>([]);
+  items = signal<VehicleCardInput[]>([]);
   total = signal(0);
   loading = signal(false);
+
+  /** modelId -> versionId */
+  readonly selectedVersions = signal<Record<string, string>>({});
 
   readonly selectedIds = this.compare.ids;
   readonly selectionCount = computed(() => this.selectedIds().length);
   readonly maxReached = computed(() => this.selectionCount() >= 3);
 
-  isAdded(item: CatalogItem): boolean {
-    const id = item.defaultVersion?.id;
+  isAdded(item: VehicleCardInput): boolean {
+    const id = this.selectedVersionId(item);
     return id ? this.selectedIds().includes(id) : false;
+  }
+
+  selectedVersionId(item: VehicleCardInput): string | null {
+    const override = this.selectedVersions()[item.id];
+    if (override) return override;
+    return item.versions[0]?.id ?? item.defaultVersion?.id ?? null;
+  }
+
+  isFeatured(name: string): boolean {
+    return FEATURED_MODEL_NAMES.has(name);
   }
 
   readonly initialLoad: Promise<void>;
@@ -74,7 +85,7 @@ export class CatalogComponent {
     this.loading.set(true);
     try {
       const res = await this.api.get<{
-        data: { items: CatalogItem[]; total: number };
+        data: { items: VehicleCardInput[]; total: number };
       }>('/models', this.cleanParams(this.filters()));
       this.items.set(res.data.items);
       this.total.set(res.data.total);
@@ -88,32 +99,32 @@ export class CatalogComponent {
     return this.load();
   }
 
-  addToCompare(item: CatalogItem): void {
-    const v = item.defaultVersion;
-    if (!v) return;
-    if (this.selectedIds().includes(v.id)) {
-      this.compare.remove(v.id);
+  addToCompare(item: VehicleCardInput): void {
+    const versionId = this.selectedVersionId(item);
+    if (!versionId) return;
+    if (this.selectedIds().includes(versionId)) {
+      this.compare.remove(versionId);
     } else {
-      this.compare.add(v.id);
+      this.compare.add(versionId);
     }
+  }
+
+  onVersionSelected(item: VehicleCardInput, v: VehicleVersion): void {
+    this.selectedVersions.update((m) => ({ ...m, [item.id]: v.id }));
   }
 
   clearSelection(): void {
     this.compare.clear();
   }
 
-  formatPrice(value: number | null | undefined): string {
-    if (value === null || value === undefined) return '';
-    return new Intl.NumberFormat('es-CL').format(value);
-  }
-
-  isFeatured(name: string): boolean {
-    return FEATURED_MODEL_NAMES.has(name);
-  }
-
   async clearFilters(): Promise<void> {
     this.filters.set({});
     await this.load();
+  }
+
+  formatPrice(value: number | null | undefined): string {
+    if (value === null || value === undefined) return '';
+    return new Intl.NumberFormat('es-CL').format(value);
   }
 
   private cleanParams(f: CatalogFilters): QueryParams {
