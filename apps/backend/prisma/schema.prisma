@@ -88,6 +88,11 @@ enum Fuel {
   ELECTRIC
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model EquipmentItem {
   id       String             @id @default(cuid())
   name     String             @unique
@@ -120,6 +125,7 @@ model User {
   email        String       @unique
   passwordHash String
   name         String
+  role         UserRole     @default(USER)
   createdAt    DateTime     @default(now())
   comparisons  Comparison[]
   favorites    Favorite[]

@@ -13,6 +13,8 @@
 // completo usar `pnpm db:reset` (definido en package.json).
 
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
+import { env } from "../src/config/env.js";
 import { catalog, generateMaintenanceCosts } from "./catalog.js";
 
 const prisma = new PrismaClient();
@@ -20,6 +22,22 @@ const prisma = new PrismaClient();
 async function main() {
   const t0 = Date.now();
   console.log("[seed] iniciando…");
+
+  const adminEmail = env.ADMIN_EMAIL;
+  const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
+  if (!existingAdmin) {
+    const passwordHash = await bcrypt.hash(env.ADMIN_INITIAL_PASSWORD, 10);
+    await prisma.user.create({
+      data: { email: adminEmail, passwordHash, name: "Admin", role: "ADMIN" },
+    });
+    console.log(`[seed] admin creado: ${adminEmail}`);
+  } else if (existingAdmin.role !== "ADMIN") {
+    await prisma.user.update({
+      where: { id: existingAdmin.id },
+      data: { role: "ADMIN" },
+    });
+    console.log(`[seed] admin promovido: ${adminEmail}`);
+  }
 
   const brandIdByName = new Map<string, string>();
   for (const b of catalog.brands) {
