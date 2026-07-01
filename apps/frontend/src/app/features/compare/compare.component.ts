@@ -126,6 +126,7 @@ export class CompareComponent {
   duplicateSlug = signal<string | null>(null);
   sharedMeta = signal<{ slug: string; createdAt: string; userId: string } | null>(null);
   loadError = signal<string | null>(null);
+  saveError = signal<string | null>(null);
   swappingFor = signal<string | null>(null); // versionId of card with open popover
   favoriteModels = signal<VehicleCardInput[]>([]);
   carouselOpenFor = signal<string | null>(null); // model.id del popover abierto
@@ -536,6 +537,7 @@ export class CompareComponent {
     const ids = this.compareStore.ids();
     if (ids.length === 0) return;
     this.saving.set(true);
+    this.saveError.set(null);
     try {
       const res = await this.api.post<{
         data: { slug: string };
@@ -552,7 +554,9 @@ export class CompareComponent {
         this.duplicateSlug.set(dup.slug);
         this.savedSlug.set(dup.slug);
       } else {
-        throw e;
+        this.saveError.set(
+          'No pudimos guardar la comparación. Intentá de nuevo.',
+        );
       }
     } finally {
       this.saving.set(false);
