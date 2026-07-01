@@ -4,6 +4,7 @@ import { requireRole } from "../auth/role.middleware.js";
 import { versionsController } from "./versions.controller.js";
 
 export const versionsRouter = Router();
+versionsRouter.get("/", versionsController.list);
 versionsRouter.get("/:id", versionsController.detail);
 
 export const versionsAdminRouter = Router();

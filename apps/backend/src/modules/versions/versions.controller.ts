@@ -9,6 +9,12 @@ import { validation } from "../../shared/errors.js";
 const svc = new VersionsService(prisma);
 
 export const versionsController = {
+  list: ah(async (req: Request, res: Response) => {
+    const page = Number(req.query.page) || 1;
+    const pageSize = Math.min(Number(req.query.pageSize) || 50, 50);
+    res.json(ok(await svc.list({ page, pageSize })));
+  }),
+
   detail: ah(async (req: Request, res: Response) => {
     const id = req.params.id ?? "";
     if (!id) return res.status(400).json({ data: null, error: { code: "BAD_REQUEST", message: "id requerido" } });

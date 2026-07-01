@@ -5,6 +5,22 @@ import type { CreateVersionInput, UpdateVersionInput } from "./versions.dto.admi
 export class VersionsService {
   constructor(private readonly prisma: PrismaClient) {}
 
+  async list(q: { page?: number; pageSize?: number } = {}) {
+    const page = q.page ?? 1;
+    const pageSize = q.pageSize ?? 50;
+    const where: Prisma.VersionWhereInput = { deletedAt: null };
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.version.count({ where }),
+      this.prisma.version.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+    return { total, items, page, pageSize };
+  }
+
   async detail(id: string) {
     const v = await this.prisma.version.findFirst({
       where: { id, deletedAt: null },

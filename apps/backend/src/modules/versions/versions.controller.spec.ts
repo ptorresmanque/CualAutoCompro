@@ -23,6 +23,33 @@ const seed = async () => {
   return { versionId: v.id, brandId: toyota.id, modelId: yaris.id };
 };
 
+describe("GET /api/v1/versions", () => {
+  beforeEach(async () => {
+    setupTestPrisma();
+    await resetTestDb(prisma);
+    await seed();
+  });
+
+  it("GET /api/v1/versions lista versiones paginadas", async () => {
+    const res = await request(createApp()).get("/api/v1/versions");
+    expect(res.status).toBe(200);
+    expect(res.body.error).toBeNull();
+    expect(res.body.data).toHaveProperty("total");
+    expect(res.body.data).toHaveProperty("items");
+    expect(res.body.data).toHaveProperty("page");
+    expect(res.body.data).toHaveProperty("pageSize");
+    expect(Array.isArray(res.body.data.items)).toBe(true);
+    expect(res.body.data.total).toBeGreaterThanOrEqual(1);
+  });
+
+  it("respeta pageSize=1 limitando items", async () => {
+    const res = await request(createApp()).get("/api/v1/versions?pageSize=1");
+    expect(res.status).toBe(200);
+    expect(res.body.data.items).toHaveLength(1);
+    expect(res.body.data.pageSize).toBe(1);
+  });
+});
+
 describe("GET /api/v1/versions/:id", () => {
   beforeEach(async () => {
     setupTestPrisma();
