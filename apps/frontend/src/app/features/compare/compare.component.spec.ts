@@ -227,4 +227,91 @@ describe('CompareComponent', () => {
     expect(cta).not.toBeNull();
     expect(cta!.getAttribute('href') || cta!.getAttribute('routerLink')).toBeTruthy();
   });
+
+  it('swap de versión: al elegir otra, reemplaza id en store y re-fetcha', async () => {
+    store.hydrateFromUrl('a,b');
+    const fixture = TestBed.createComponent(CompareComponent);
+    const ready = fixture.componentInstance.ready;
+    const initialReq = http.expectOne((r) => r.url.includes('/api/v1/compare'));
+    expect(initialReq.request.body).toEqual({ versionIds: ['a', 'b'] });
+    initialReq.flush({
+      data: {
+        versions: [
+          {
+            id: 'a',
+            name: 'XLS',
+            priceClp: 14990000,
+            year: 2026,
+            model: {
+              id: 'm1',
+              name: 'Yaris',
+              brand: { name: 'Toyota' },
+              availableVersions: [
+                { id: 'a', name: 'XLS', year: 2026, priceClp: 14990000 },
+                { id: 'a2', name: 'Sport', year: 2025, priceClp: 11500000 },
+              ],
+            },
+          },
+          {
+            id: 'b',
+            name: 'Base',
+            model: { name: 'CX-5', brand: { name: 'Mazda' } },
+          },
+        ],
+        diffHighlights: { priceClp: true },
+      },
+    });
+    await ready;
+    fixture.detectChanges();
+
+    // Open swap popover on card "a"
+    const swapBtn = fixture.nativeElement.querySelector(
+      'button[data-testid="swap-button-a"]',
+    ) as HTMLButtonElement;
+    swapBtn.click();
+    fixture.detectChanges();
+
+    const popover = fixture.nativeElement.querySelector(
+      '[data-testid="swap-popover-a"]',
+    );
+    expect(popover).not.toBeNull();
+    const a2Option = fixture.nativeElement.querySelector(
+      'button[data-testid="swap-option-a2"]',
+    ) as HTMLButtonElement;
+    expect(a2Option).not.toBeNull();
+
+    // Click Sport option — should fire swapVersion → setIds(['a2', 'b']) + reload POST
+    a2Option.click();
+    const reloadReq = http.expectOne((r) => r.url.includes('/api/v1/compare'));
+    expect(reloadReq.request.body).toEqual({ versionIds: ['a2', 'b'] });
+    reloadReq.flush({
+      data: {
+        versions: [
+          { id: 'a2', name: 'Sport', priceClp: 11500000, year: 2025,
+            model: { name: 'Yaris', brand: { name: 'Toyota' } } },
+          { id: 'b', name: 'Base', model: { name: 'CX-5', brand: { name: 'Mazda' } } },
+        ],
+        diffHighlights: { priceClp: true },
+      },
+    });
+    await fixture.componentInstance.ready;
+    fixture.detectChanges();
+
+    expect(store.ids()).toEqual(['a2', 'b']);
+    // Popover should be closed after swap
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="swap-popover-a"]'),
+    ).toBeNull();
+  });
+
+  it('compareStore: setIds() reemplaza la lista y persiste en localStorage', () => {
+    store.setIds(['x', 'y', 'z']);
+    expect(store.ids()).toEqual(['x', 'y', 'z']);
+    expect(localStorage.getItem('cualautocompro:selectedVersionIds')).toBe(
+      JSON.stringify(['x', 'y', 'z']),
+    );
+    // Cap a 3
+    store.setIds(['a', 'b', 'c', 'd', 'e']);
+    expect(store.ids()).toEqual(['a', 'b', 'c']);
+  });
 });

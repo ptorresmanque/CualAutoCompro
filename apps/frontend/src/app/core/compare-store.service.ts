@@ -33,6 +33,12 @@ export class CompareStore {
     this.save(ids);
   }
 
+  setIds(ids: string[]): void {
+    const capped = ids.slice(0, MAX);
+    this._ids.set([...capped]);
+    this.save(capped);
+  }
+
   private save(ids: string[]): void {
     try {
       localStorage.setItem(KEY, JSON.stringify(ids));

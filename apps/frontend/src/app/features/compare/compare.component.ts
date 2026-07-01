@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  HostListener,
   inject,
   signal,
 } from '@angular/core';
@@ -14,6 +15,15 @@ import { DisclaimerComponent } from '../../shared/ui/disclaimer.component';
 interface ModelLite {
   name: string;
   brand: { name: string };
+}
+
+interface AvailableVersionLite {
+  id: string;
+  name: string;
+  year: number;
+  priceClp: number;
+  transmission?: string | null;
+  fuel?: string | null;
 }
 
 export interface CompareVersion {
@@ -37,7 +47,7 @@ export interface CompareVersion {
   hasAbs?: boolean | null;
   hasEsp?: boolean | null;
   hasCruiseControl?: boolean | null;
-  model?: ModelLite;
+  model?: ModelLite & { id?: string; availableVersions?: AvailableVersionLite[] };
 }
 
 type DiffKey =
@@ -114,6 +124,7 @@ export class CompareComponent {
   savedSlug = signal<string | null>(null);
   sharedMeta = signal<{ slug: string; createdAt: string; userId: string } | null>(null);
   loadError = signal<string | null>(null);
+  swappingFor = signal<string | null>(null); // versionId of card with open popover
 
   readonly count = computed(() => this.versions().length);
 
@@ -128,6 +139,16 @@ export class CompareComponent {
   });
 
   readonly ready: Promise<void>;
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.swappingFor() === null) return;
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+    if (target.closest('[data-testid^="swap-popover-"]')) return;
+    if (target.closest('[data-testid^="swap-button-"]')) return;
+    this.closeSwap();
+  }
 
   readonly sections: ReadonlyArray<Section> = [
     {
@@ -352,6 +373,10 @@ export class CompareComponent {
     return `$${new Intl.NumberFormat('es-CL').format(value)}`;
   }
 
+  formatPricePlain(value: number): string {
+    return new Intl.NumberFormat('es-CL').format(value);
+  }
+
   fullName(v: CompareVersion): string {
     const brand = v.model?.brand?.name ?? '';
     const model = v.model?.name ?? '';
@@ -404,6 +429,43 @@ export class CompareComponent {
   removeFromCompare(id: string): void {
     this.compareStore.remove(id);
     this.versions.update((vs) => vs.filter((v) => v.id !== id));
+  }
+
+  toggleSwap(versionId: string): void {
+    this.swappingFor.update((current) => (current === versionId ? null : versionId));
+  }
+
+  closeSwap(): void {
+    this.swappingFor.set(null);
+  }
+
+  availableVersionsFor(v: CompareVersion): AvailableVersionLite[] {
+    return v.model?.availableVersions ?? [];
+  }
+
+  async swapVersion(currentVersionId: string, newVersionId: string): Promise<void> {
+    const currentIds = this.compareStore.ids();
+    const newIds = currentIds.map((id) => (id === currentVersionId ? newVersionId : id));
+    this.compareStore.setIds(newIds);
+    this.closeSwap();
+    await this.reloadCompare();
+  }
+
+  private async reloadCompare(): Promise<void> {
+    const ids = this.compareStore.ids();
+    if (ids.length === 0) {
+      this.versions.set([]);
+      return;
+    }
+    this.loading.set(true);
+    try {
+      const res = await this.api.post<{ data: CompareResponse }>('/compare', {
+        versionIds: ids,
+      });
+      this.applyResponse(res.data);
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   clearAll(): void {
