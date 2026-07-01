@@ -86,7 +86,6 @@ export class FavoritesComponent {
     if (!v?.id) return;
     this.compare.setIds([...this.compare.ids(), v.id]);
     this.compareMessage.set(null);
-    await this.router.navigate(['/compare']);
   }
 
   async onVersionSelected(
