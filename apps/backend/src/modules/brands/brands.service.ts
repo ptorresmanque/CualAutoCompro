@@ -12,6 +12,12 @@ export class BrandsService {
     });
   }
 
+  listAll() {
+    return this.prisma.brand.findMany({
+      orderBy: { name: "asc" },
+    });
+  }
+
   models(brandId: string) {
     return this.prisma.model.findMany({
       where: { brandId, deletedAt: null },

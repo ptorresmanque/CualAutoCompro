@@ -8,6 +8,7 @@ maintenanceRouter.get("/version/:versionId", maintenanceController.listByVersion
 
 export const maintenanceAdminRouter = Router();
 maintenanceAdminRouter.use(authenticate, requireRole("ADMIN"));
+maintenanceAdminRouter.get("/", maintenanceController.listAll);
 maintenanceAdminRouter.post("/", maintenanceController.create);
 maintenanceAdminRouter.patch("/:id", maintenanceController.update);
 maintenanceAdminRouter.delete("/:id", maintenanceController.softDelete);

@@ -12,6 +12,12 @@ export class EquipmentService {
     });
   }
 
+  listAll() {
+    return this.prisma.equipmentItem.findMany({
+      orderBy: { name: "asc" },
+    });
+  }
+
   async create(input: CreateEquipmentInput) {
     return this.prisma.equipmentItem.create({ data: input as Prisma.EquipmentItemCreateInput });
   }

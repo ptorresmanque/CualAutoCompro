@@ -8,6 +8,7 @@ equipmentRouter.get("/", equipmentController.list);
 
 export const equipmentAdminRouter = Router();
 equipmentAdminRouter.use(authenticate, requireRole("ADMIN"));
+equipmentAdminRouter.get("/", equipmentController.listAll);
 equipmentAdminRouter.post("/", equipmentController.create);
 equipmentAdminRouter.patch("/:id", equipmentController.update);
 equipmentAdminRouter.delete("/:id", equipmentController.softDelete);

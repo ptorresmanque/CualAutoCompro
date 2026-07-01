@@ -194,3 +194,10 @@ describe("GET /api/v1/models sort + order + minConsumption", () => {
     expect(res.body.data.items).toHaveLength(3);
   });
 });
+
+describe("GET /api/v1/admin/models", () => {
+  it("sin auth → 401", async () => {
+    const res = await request(createApp()).get("/api/v1/admin/models");
+    expect(res.status).toBe(401);
+  });
+});

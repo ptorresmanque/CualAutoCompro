@@ -13,6 +13,10 @@ export const brandsController = {
     res.json(ok(await svc.list())),
   ),
 
+  listAll: ah(async (_req: Request, res: Response) =>
+    res.json(ok(await svc.listAll())),
+  ),
+
   models: ah(async (req: Request, res: Response) => {
     const id = req.params.id ?? "";
     if (!id) {

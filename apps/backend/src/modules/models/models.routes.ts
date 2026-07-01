@@ -9,6 +9,7 @@ modelsRouter.get("/:id", modelsController.detail);
 
 export const modelsAdminRouter = Router();
 modelsAdminRouter.use(authenticate, requireRole("ADMIN"));
+modelsAdminRouter.get("/", modelsController.listAll);
 modelsAdminRouter.post("/", modelsController.create);
 modelsAdminRouter.patch("/:id", modelsController.update);
 modelsAdminRouter.delete("/:id", modelsController.softDelete);

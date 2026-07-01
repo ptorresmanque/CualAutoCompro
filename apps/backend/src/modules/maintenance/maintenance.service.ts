@@ -12,6 +12,13 @@ export class MaintenanceService {
     });
   }
 
+  listAll() {
+    return this.prisma.maintenanceCost.findMany({
+      where: { version: { deletedAt: null } },
+      orderBy: [{ versionId: "asc" }, { mileageTag: "asc" }],
+    });
+  }
+
   async create(input: CreateMaintenanceInput) {
     return this.prisma.maintenanceCost.create({
       data: input as Prisma.MaintenanceCostUncheckedCreateInput,

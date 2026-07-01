@@ -14,6 +14,10 @@ export const maintenanceController = {
     res.json(ok(await svc.listByVersion(versionId)));
   }),
 
+  listAll: ah(async (_req: Request, res: Response) => {
+    res.json(ok(await svc.listAll()));
+  }),
+
   create: ah(async (req: Request, res: Response) => {
     const parsed = createMaintenanceSchema.safeParse(req.body);
     if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));

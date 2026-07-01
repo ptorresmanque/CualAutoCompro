@@ -21,6 +21,10 @@ export const versionsController = {
     res.json(ok(await svc.detail(id)));
   }),
 
+  listAll: ah(async (_req: Request, res: Response) => {
+    res.json(ok(await svc.listAll()));
+  }),
+
   create: ah(async (req: Request, res: Response) => {
     const parsed = createVersionSchema.safeParse(req.body);
     if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));

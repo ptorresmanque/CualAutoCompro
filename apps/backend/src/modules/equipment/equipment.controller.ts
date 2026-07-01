@@ -15,6 +15,8 @@ const svc = new EquipmentService(prisma);
 export const equipmentController = {
   list: ah(async (_req: Request, res: Response) => res.json(ok(await svc.list()))),
 
+  listAll: ah(async (_req: Request, res: Response) => res.json(ok(await svc.listAll()))),
+
   create: ah(async (req: Request, res: Response) => {
     const parsed = createEquipmentSchema.safeParse(req.body);
     if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));

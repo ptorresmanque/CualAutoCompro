@@ -90,3 +90,10 @@ describe("GET /api/v1/versions/:id", () => {
     expect(res.body.error.code).toBe("NOT_FOUND");
   });
 });
+
+describe("GET /api/v1/admin/versions", () => {
+  it("sin auth → 401", async () => {
+    const res = await request(createApp()).get("/api/v1/admin/versions");
+    expect(res.status).toBe(401);
+  });
+});

@@ -21,6 +21,14 @@ export class VersionsService {
     return { total, items, page, pageSize };
   }
 
+  async listAll() {
+    return this.prisma.version.findMany({
+      where: { model: { deletedAt: null, brand: { deletedAt: null } } },
+      orderBy: { createdAt: "desc" },
+      include: { model: { select: { id: true, name: true } } },
+    });
+  }
+
   async detail(id: string) {
     const v = await this.prisma.version.findFirst({
       where: {

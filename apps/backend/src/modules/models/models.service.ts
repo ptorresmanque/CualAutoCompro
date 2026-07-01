@@ -111,6 +111,14 @@ export class ModelsService {
     return { total, items: enriched, page: q.page, pageSize: q.pageSize };
   }
 
+  async listAll() {
+    return this.prisma.model.findMany({
+      where: { brand: { deletedAt: null } },
+      orderBy: { name: "asc" },
+      include: { brand: { select: { id: true, name: true } } },
+    });
+  }
+
   async detail(id: string) {
     const m = await this.prisma.model.findFirst({
       where: { id, deletedAt: null, brand: { deletedAt: null } },
