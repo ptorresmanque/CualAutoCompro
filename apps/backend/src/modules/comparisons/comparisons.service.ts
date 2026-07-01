@@ -52,7 +52,7 @@ export class ComparisonsService {
   async getBySlug(slug: string) {
     const cmp = await this.prisma.comparison.findUnique({
       where: { slug },
-      include: { items: { include: { version: { include: { model: { include: { brand: true } } } } }, orderBy: { position: "asc" } } },
+      include: { items: { where: { version: { deletedAt: null } }, include: { version: { include: { model: { include: { brand: true } } } } }, orderBy: { position: "asc" } } },
     });
     if (!cmp) throw notFound("Comparación no encontrada");
     return cmp;
@@ -61,7 +61,7 @@ export class ComparisonsService {
   async listByUser(userId: string) {
     return this.prisma.comparison.findMany({
       where: { userId },
-      include: { items: { include: { version: { include: { model: { include: { brand: true } } } } }, orderBy: { position: "asc" } } },
+      include: { items: { where: { version: { deletedAt: null } }, include: { version: { include: { model: { include: { brand: true } } } } }, orderBy: { position: "asc" } } },
       orderBy: { createdAt: "desc" },
     });
   }

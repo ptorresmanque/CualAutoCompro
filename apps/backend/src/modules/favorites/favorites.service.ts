@@ -38,12 +38,12 @@ export class FavoritesService {
 
   async listModels(userId: string): Promise<FavoriteModelCard[]> {
     const favs = await this.prisma.favorite.findMany({
-      where: { userId },
+      where: { userId, model: { deletedAt: null } },
       include: {
         model: {
           include: {
             brand: true,
-            versions: { orderBy: { priceClp: "asc" } },
+            versions: { where: { deletedAt: null }, orderBy: { priceClp: "asc" } },
           },
         },
         version: true,

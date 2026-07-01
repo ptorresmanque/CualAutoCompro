@@ -13,12 +13,12 @@ export class CompareService {
   async compare(versionIds: string[]) {
     if (versionIds.length < 1 || versionIds.length > 3) throw badRequest("Compara entre 1 y 3 versiones");
     const versions = await this.prisma.version.findMany({
-      where: { id: { in: versionIds } },
+      where: { id: { in: versionIds }, deletedAt: null, model: { deletedAt: null } },
       include: {
         model: {
           include: {
             brand: true,
-            versions: { orderBy: { priceClp: "asc" } },
+            versions: { where: { deletedAt: null }, orderBy: { priceClp: "asc" } },
           },
         },
         maintenanceCosts: true,
