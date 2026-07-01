@@ -46,8 +46,11 @@ export const createApp = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     if (err && typeof err === "object" && "code" in err && "message" in err) {
-      const e = err as { code: string; message: string; status?: number };
-      return res.status(e.status ?? 500).json({ data: null, error: { code: e.code, message: e.message } });
+      const e = err as { code: string; message: string; status?: number; details?: Record<string, unknown> };
+      return res.status(e.status ?? 500).json({
+        data: null,
+        error: { code: e.code, message: e.message, ...(e.details ?? {}) },
+      });
     }
     return res.status(500).json({ data: null, error: { code: "INTERNAL", message: "Error interno" } });
   });
