@@ -320,7 +320,7 @@ describe('CompareComponent', () => {
     const p = fixture.componentInstance.saveComparison();
     const saveReq = http.expectOne((r) => r.url.includes('/api/v1/me/comparisons'));
     saveReq.flush(
-      { data: null, error: { code: 'CONFLICT', slug: 'abc12345', message: 'dup' } },
+      { data: null, error: { code: 'COMPARISON_DUPLICATE', slug: 'abc12345', message: 'dup' } },
       { status: 409, statusText: 'Conflict' },
     );
     await p;

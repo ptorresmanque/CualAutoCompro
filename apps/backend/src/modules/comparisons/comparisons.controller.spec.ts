@@ -43,7 +43,7 @@ describe("Comparisons endpoints", () => {
       .set("Cookie", cookie)
       .send({ versionIds: [v.id] });
     expect(second.status).toBe(409);
-    expect(second.body.error.code).toBe("CONFLICT");
+    expect(second.body.error.code).toBe("COMPARISON_DUPLICATE");
     expect(second.body.error.slug).toBe(slug);
   });
 

@@ -49,10 +49,9 @@ export const createApp = () => {
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     if (err && typeof err === "object" && "code" in err && "message" in err) {
       const e = err as { code: string; message: string; status?: number; details?: Record<string, unknown> };
-      const { code: _omitCode, message: _omitMsg, ...rest } = e.details ?? {};
       return res.status(e.status ?? 500).json({
         data: null,
-        error: { code: e.code, message: e.message, ...rest },
+        error: { code: e.code, message: e.message, ...(e.details ?? {}) },
       });
     }
     return res.status(500).json({ data: null, error: { code: "INTERNAL", message: "Error interno" } });
