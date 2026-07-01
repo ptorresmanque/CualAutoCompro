@@ -46,7 +46,10 @@ export class TopNavBarComponent {
       { path: '/catalogo', label: 'Catálogo', icon: 'directions_car' },
       { path: '/compare', label: 'Comparar', icon: 'compare_arrows' },
     ];
-    if (u) base.push({ path: '/account/comparisons', label: 'Mis comparaciones', icon: 'bookmarks' });
+    if (u) {
+      base.splice(2, 0, { path: '/favoritos', label: 'Favoritos', icon: 'favorite' });
+      base.push({ path: '/account/comparisons', label: 'Mis comparaciones', icon: 'bookmarks' });
+    }
     return base;
   });
 
