@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { VehicleCardComponent, VehicleCardInput } from './vehicle-card.component';
 import { VehicleVersion } from '../../core/types/vehicle';
+import { AuthService, User } from '../../core/auth.service';
 
 @Component({
   selector: 'app-test-host',
@@ -54,12 +55,22 @@ function carFixture(overrides: Partial<VehicleCardInput> = {}): VehicleCardInput
   };
 }
 
+class AuthServiceStub {
+  currentUser = signal<User | null>({ id: 'u1', email: 'u@test.cl', name: 'U' });
+}
+
 describe('VehicleCardComponent', () => {
-  it('renderiza nombre + marca + chip de segmento + precio + versión', () => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [TestHostComponent],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useClass: AuthServiceStub },
+      ],
     });
+  });
+
+  it('renderiza nombre + marca + chip de segmento + precio + versión', () => {
     const f = TestBed.createComponent(TestHostComponent);
     f.componentInstance.car.set(carFixture());
     f.detectChanges();
@@ -80,10 +91,6 @@ describe('VehicleCardComponent', () => {
   });
 
   it('muestra el pill "MÁS VENDIDO" cuando featured=true', () => {
-    TestBed.configureTestingModule({
-      imports: [TestHostComponent],
-      providers: [provideRouter([])],
-    });
     const f = TestBed.createComponent(TestHostComponent);
     f.componentInstance.car.set(carFixture());
     f.componentInstance.featured.set(true);
@@ -96,10 +103,6 @@ describe('VehicleCardComponent', () => {
   });
 
   it('oculta el pill cuando featured=false', () => {
-    TestBed.configureTestingModule({
-      imports: [TestHostComponent],
-      providers: [provideRouter([])],
-    });
     const f = TestBed.createComponent(TestHostComponent);
     f.componentInstance.car.set(carFixture());
     f.detectChanges();
@@ -110,10 +113,6 @@ describe('VehicleCardComponent', () => {
   });
 
   it('emite compareTapped al hacer click en "Comparar"', () => {
-    TestBed.configureTestingModule({
-      imports: [TestHostComponent],
-      providers: [provideRouter([])],
-    });
     const f = TestBed.createComponent(TestHostComponent);
     f.componentInstance.car.set(carFixture());
     f.detectChanges();
@@ -130,10 +129,6 @@ describe('VehicleCardComponent', () => {
   });
 
   it('deshabilita el botón "Comparar" cuando no hay defaultVersion', () => {
-    TestBed.configureTestingModule({
-      imports: [TestHostComponent],
-      providers: [provideRouter([])],
-    });
     const f = TestBed.createComponent(TestHostComponent);
     f.componentInstance.car.set(carFixture({ defaultVersion: null, minPrice: null }));
     f.detectChanges();
@@ -145,10 +140,6 @@ describe('VehicleCardComponent', () => {
   });
 
   it('muestra "En comparación" con bg-brand-50 cuando added=true', () => {
-    TestBed.configureTestingModule({
-      imports: [TestHostComponent],
-      providers: [provideRouter([])],
-    });
     const f = TestBed.createComponent(TestHostComponent);
     f.componentInstance.car.set(carFixture());
     f.detectChanges();
@@ -168,10 +159,6 @@ describe('VehicleCardComponent', () => {
   });
 
   it('muestra "Máximo 3" cuando maxReached=true y no está agregado', () => {
-    TestBed.configureTestingModule({
-      imports: [TestHostComponent],
-      providers: [provideRouter([])],
-    });
     const f = TestBed.createComponent(TestHostComponent);
     f.componentInstance.car.set(carFixture());
     f.componentInstance.maxReached.set(true);
@@ -185,10 +172,6 @@ describe('VehicleCardComponent', () => {
   });
 
   it('envuelve la imagen en un link a /brand/:brand/model/:model', () => {
-    TestBed.configureTestingModule({
-      imports: [TestHostComponent],
-      providers: [provideRouter([])],
-    });
     const f = TestBed.createComponent(TestHostComponent);
     f.componentInstance.car.set(carFixture());
     f.detectChanges();
@@ -202,10 +185,6 @@ describe('VehicleCardComponent', () => {
   });
 
   it('el link al detalle usa brand/model en lowercase', () => {
-    TestBed.configureTestingModule({
-      imports: [TestHostComponent],
-      providers: [provideRouter([])],
-    });
     const f = TestBed.createComponent(TestHostComponent);
     f.componentInstance.car.set(
       carFixture({ brand: { name: 'Hyundai' }, name: 'Tucson' }),
@@ -219,10 +198,6 @@ describe('VehicleCardComponent', () => {
   });
 
   it('click en el botón Comparar NO navega al detalle (stopPropagation)', () => {
-    TestBed.configureTestingModule({
-      imports: [TestHostComponent],
-      providers: [provideRouter([])],
-    });
     const f = TestBed.createComponent(TestHostComponent);
     f.componentInstance.car.set(carFixture());
     f.detectChanges();
@@ -232,5 +207,45 @@ describe('VehicleCardComponent', () => {
     ) as HTMLButtonElement;
     expect(() => btn.click()).not.toThrow();
     expect(f.componentInstance.captured()).not.toBeNull();
+  });
+
+  describe('botón corazón (favorito)', () => {
+    const testModel = carFixture();
+
+    it('botón corazón filled cuando isFavorite=true', () => {
+      const fixture = TestBed.createComponent(VehicleCardComponent);
+      fixture.componentRef.setInput('model', testModel);
+      fixture.componentRef.setInput('isFavorite', true);
+      fixture.detectChanges();
+      const btn = fixture.nativeElement.querySelector(
+        `[data-testid="favorite-${testModel.id}"]`,
+      );
+      expect(btn).not.toBeNull();
+      expect(btn.getAttribute('data-favorite')).toBe('true');
+    });
+
+    it('botón corazón outline cuando isFavorite=false', () => {
+      const fixture = TestBed.createComponent(VehicleCardComponent);
+      fixture.componentRef.setInput('model', testModel);
+      fixture.componentRef.setInput('isFavorite', false);
+      fixture.detectChanges();
+      const btn = fixture.nativeElement.querySelector(
+        `[data-testid="favorite-${testModel.id}"]`,
+      );
+      expect(btn.getAttribute('data-favorite')).toBe('false');
+    });
+
+    it('click emite favoriteToggled', () => {
+      const fixture = TestBed.createComponent(VehicleCardComponent);
+      fixture.componentRef.setInput('model', testModel);
+      let emitted = false;
+      fixture.componentInstance.favoriteToggled.subscribe(() => (emitted = true));
+      fixture.detectChanges();
+      const btn: HTMLButtonElement = fixture.nativeElement.querySelector(
+        `[data-testid="favorite-${testModel.id}"]`,
+      );
+      btn.click();
+      expect(emitted).toBe(true);
+    });
   });
 });

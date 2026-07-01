@@ -9,6 +9,25 @@
   [attr.data-testid]="'vehicle-card-' + model().id"
   [attr.data-added]="added() ? 'true' : 'false'"
 >
+  @if (canFavorite()) {
+    <button
+      type="button"
+      (click)="onFavorite($event)"
+      [attr.aria-label]="(isFavorite() ? 'Quitar ' : 'Marcar ') + model().brand.name + ' ' + model().name + ' como favorito'"
+      [attr.aria-pressed]="isFavorite() ? 'true' : 'false'"
+      [attr.data-testid]="'favorite-' + model().id"
+      [attr.data-favorite]="isFavorite() ? 'true' : 'false'"
+      class="absolute top-2 right-2 z-20 grid h-8 w-8 place-items-center rounded-full bg-surface/90 hover:bg-surface transition-colors"
+    >
+      <span
+        class="material-symbols-outlined text-lg"
+        [class.text-error]="isFavorite()"
+        [class.text-ink-muted]="!isFavorite()"
+        [style.font-variation-settings]="favoriteIconVariation()"
+      >favorite</span>
+    </button>
+  }
+
   <!-- Featured pill -->
   @if (featured()) {
     <span

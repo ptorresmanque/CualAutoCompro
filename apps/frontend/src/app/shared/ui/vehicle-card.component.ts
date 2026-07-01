@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
   output,
   signal,
@@ -9,6 +10,7 @@ import {
 import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { VehicleVersion } from '../../core/types/vehicle';
+import { AuthService } from '../../core/auth.service';
 
 export interface VehicleCardInput {
   id: string;
@@ -29,13 +31,23 @@ export interface VehicleCardInput {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VehicleCardComponent {
+  private auth = inject(AuthService);
+
   readonly model = input.required<VehicleCardInput>();
   readonly featured = input<boolean>(false);
   readonly added = input<boolean>(false);
   readonly maxReached = input<boolean>(false);
   readonly selectedVersionId = input<string | null>(null);
+  readonly isFavorite = input<boolean>(false);
   readonly compareTapped = output<VehicleVersion>();
   readonly versionSelected = output<VehicleVersion>();
+  readonly favoriteToggled = output<void>();
+
+  readonly canFavorite = computed(() => this.auth.currentUser() !== null);
+
+  readonly favoriteIconVariation = computed(() =>
+    this.isFavorite() ? "'FILL' 1" : "'FILL' 0",
+  );
 
   private readonly _hovered = signal(false);
   readonly hovered = this._hovered.asReadonly();
@@ -89,6 +101,12 @@ export class VehicleCardComponent {
     event.stopPropagation();
     if (!this.hasDefaultVersion()) return;
     this.compareTapped.emit(this.selectedVersion() ?? this.model().defaultVersion!);
+  }
+
+  onFavorite(event: Event): void {
+    event.stopPropagation();
+    if (!this.canFavorite()) return;
+    this.favoriteToggled.emit();
   }
 
   onSelectVersion(event: Event, v: VehicleVersion): void {
