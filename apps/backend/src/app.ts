@@ -11,6 +11,7 @@ import { comparisonsRouter, meComparisonsRouter } from "./modules/comparisons/co
 import { meFavoritesRouter } from "./modules/favorites/favorites.routes.js";
 import { equipmentAdminRouter, equipmentRouter } from "./modules/equipment/equipment.routes.js";
 import { maintenanceAdminRouter, maintenanceRouter } from "./modules/maintenance/maintenance.routes.js";
+import { adminRouter } from "./modules/admin/admin.routes.js";
 
 export const createApp = () => {
   const app = express();
@@ -53,6 +54,7 @@ export const createApp = () => {
   app.use("/api/v1/admin/equipment", equipmentAdminRouter);
   app.use("/api/v1/maintenance", maintenanceRouter);
   app.use("/api/v1/admin/maintenance", maintenanceAdminRouter);
+  app.use("/api/v1/admin", adminRouter);
   app.use((_req, res) => res.status(404).json({ data: null, error: { code: "NOT_FOUND", message: "Ruta no encontrada" } }));
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
