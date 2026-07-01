@@ -40,19 +40,24 @@ describe('CatalogComponent', () => {
   it('carga modelos al init', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
-    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
-    flushItems(req, [
-      {
-        id: 'm1',
-        name: 'Yaris',
-        brand: { name: 'Toyota' },
-        minPrice: 14000000,
-        segment: 'HATCHBACK',
-        versions: [
-          { id: 'v1', name: 'XLS', priceClp: 14990000, year: 2026 },
-        ],
-      },
-    ]);
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [{ id: 'toyota', name: 'Toyota' }] });
+    flushItems(
+      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      [
+        {
+          id: 'm1',
+          name: 'Yaris',
+          brand: { name: 'Toyota' },
+          minPrice: 14000000,
+          segment: 'HATCHBACK',
+          versions: [
+            { id: 'v1', name: 'XLS', priceClp: 14990000, year: 2026 },
+          ],
+        },
+      ],
+    );
     await fixture.componentInstance.initialLoad;
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Yaris');
@@ -62,6 +67,9 @@ describe('CatalogComponent', () => {
   it('updateFilter refetch con params mergeados', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
     flushItems(
       http.expectOne((r) => r.url.includes('/api/v1/models')),
       [],
@@ -97,6 +105,9 @@ describe('CatalogComponent', () => {
   it('botón Comparar agrega version por defaultVersion (no model.id) a CompareStore', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
     flushItems(
       http.expectOne((r) => r.url.includes('/api/v1/models')),
       [
@@ -135,6 +146,9 @@ describe('CatalogComponent', () => {
   it('botón Comparar agrega la versión SELECCIONADA vía chip, no la default', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
     flushItems(
       http.expectOne((r) => r.url.includes('/api/v1/models')),
       [
@@ -160,14 +174,12 @@ describe('CatalogComponent', () => {
     await fixture.componentInstance.initialLoad;
     fixture.detectChanges();
 
-    // Click "Sport" chip
     const sportChip = fixture.nativeElement.querySelector(
       'button[data-testid="version-chip-v2"]',
     ) as HTMLButtonElement;
     sportChip.click();
     fixture.detectChanges();
 
-    // Compare button now uses v2
     const btn = fixture.nativeElement.querySelector(
       'button[data-testid="compare-m1"]',
     ) as HTMLButtonElement;
@@ -180,6 +192,9 @@ describe('CatalogComponent', () => {
   it('botón Comparar toggle: segunda pulsación quita la versión', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
     flushItems(
       http.expectOne((r) => r.url.includes('/api/v1/models')),
       [
@@ -213,6 +228,9 @@ describe('CatalogComponent', () => {
   it('muestra sticky selection-bar con contador cuando hay versiones seleccionadas', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
     flushItems(
       http.expectOne((r) => r.url.includes('/api/v1/models')),
       [
@@ -250,6 +268,9 @@ describe('CatalogComponent', () => {
   it('botón "Limpiar" vacía CompareStore y oculta la sticky bar', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
     flushItems(
       http.expectOne((r) => r.url.includes('/api/v1/models')),
       [
@@ -300,6 +321,9 @@ describe('CatalogComponent', () => {
   it('muestra el nombre+año de la versión elegida junto al botón Comparar', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
     flushItems(
       http.expectOne((r) => r.url.includes('/api/v1/models')),
       [
@@ -333,6 +357,9 @@ describe('CatalogComponent', () => {
   it('deshabilita el botón Comparar cuando el modelo no tiene versiones', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
     flushItems(
       http.expectOne((r) => r.url.includes('/api/v1/models')),
       [
@@ -359,6 +386,9 @@ describe('CatalogComponent', () => {
   it('muestra mensaje vacío cuando no hay resultados', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
     flushItems(
       http.expectOne((r) => r.url.includes('/api/v1/models')),
       [],
@@ -374,6 +404,9 @@ describe('CatalogComponent', () => {
   it('botones "Ver comparación" tienen routerLink generado (no <a> sin href)', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
     flushItems(
       http.expectOne((r) => r.url.includes('/api/v1/models')),
       [
@@ -391,7 +424,6 @@ describe('CatalogComponent', () => {
     await fixture.componentInstance.initialLoad;
     fixture.detectChanges();
 
-    // Trigger sticky bar visibility by adding a version
     (fixture.nativeElement.querySelector(
       'button[data-testid="compare-m1"]',
     ) as HTMLButtonElement).click();
@@ -407,6 +439,9 @@ describe('CatalogComponent', () => {
   it('muestra chips de versión solo cuando hay > 1 versión', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
     flushItems(
       http.expectOne((r) => r.url.includes('/api/v1/models')),
       [
@@ -454,5 +489,75 @@ describe('CatalogComponent', () => {
       fixture.nativeElement.querySelectorAll('button[data-testid^="version-chip-"]')
         .length,
     ).toBe(2);
+  });
+
+  it('aplica filtro transmission=AUTOMATIC y se ve en request', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
+    http
+      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await fixture.componentInstance.initialLoad;
+
+    const p = fixture.componentInstance.updateFilter({ transmission: 'AUTOMATIC' });
+    const req = http.expectOne(
+      (r) =>
+        r.url.includes('/api/v1/models') &&
+        r.params.get('transmission') === 'AUTOMATIC',
+    );
+    req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await p;
+  });
+
+  it('cambia sort a minPrice y se ve en request', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
+    http
+      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await fixture.componentInstance.initialLoad;
+
+    const p = fixture.componentInstance.updateFilter({ sort: 'minPrice' });
+    const req = http.expectOne(
+      (r) =>
+        r.url.includes('/api/v1/models') &&
+        r.params.get('sort') === 'minPrice',
+    );
+    req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await p;
+  });
+
+  it('clearFilters resetea sort y order a defaults', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
+    http
+      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await fixture.componentInstance.initialLoad;
+
+    const p1 = fixture.componentInstance.updateFilter({ sort: 'minPrice', order: 'desc' });
+    http
+      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await p1;
+
+    const p2 = fixture.componentInstance.clearFilters();
+    const req = http.expectOne(
+      (r) =>
+        r.url.includes('/api/v1/models') &&
+        r.params.get('sort') === 'name' &&
+        r.params.get('order') === 'asc',
+    );
+    req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await p2;
   });
 });

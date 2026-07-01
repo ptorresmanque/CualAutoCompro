@@ -16,17 +16,27 @@ type Segment =
   | 'CROSSOVER'
   | 'COMMERCIAL';
 
+type Transmission = 'MANUAL' | 'AUTOMATIC' | 'CVT' | 'DCT';
+type Fuel = 'BENCINA' | 'DIESEL' | 'HYBRID' | 'ELECTRIC';
+type Sort = 'name' | 'minPrice' | 'minConsumption';
+type Order = 'asc' | 'desc';
+
 export interface CatalogFilters {
   brand?: string;
   segment?: Segment;
   priceMin?: number;
   priceMax?: number;
-  transmission?: string;
-  fuel?: string;
+  transmission?: Transmission;
+  fuel?: Fuel;
+  year?: number;
   powerMin?: number;
+  consumptionMax?: number;
+  sort?: Sort;
+  order?: Order;
 }
 
 const FEATURED_MODEL_NAMES = new Set(['Corolla', 'Tucson', 'CX-5']);
+const YEARS: ReadonlyArray<number> = [2024, 2025, 2026, 2027];
 
 @Component({
   selector: 'app-catalog',
@@ -47,12 +57,35 @@ export class CatalogComponent {
     { value: 'COMMERCIAL', label: 'Comercial' },
   ];
 
-  filters = signal<CatalogFilters>({});
+  readonly transmissions: ReadonlyArray<{ value: Transmission; label: string }> = [
+    { value: 'MANUAL', label: 'Manual' },
+    { value: 'AUTOMATIC', label: 'Automática' },
+    { value: 'CVT', label: 'CVT' },
+    { value: 'DCT', label: 'DCT' },
+  ];
+
+  readonly fuels: ReadonlyArray<{ value: Fuel; label: string }> = [
+    { value: 'BENCINA', label: 'Bencina' },
+    { value: 'DIESEL', label: 'Diésel' },
+    { value: 'HYBRID', label: 'Híbrido' },
+    { value: 'ELECTRIC', label: 'Eléctrico' },
+  ];
+
+  readonly sortOptions: ReadonlyArray<{ value: Sort; label: string; tip?: string }> = [
+    { value: 'name', label: 'Nombre' },
+    { value: 'minPrice', label: 'Precio' },
+    { value: 'minConsumption', label: 'Rendimiento', tip: 'Rendimiento = menor consumo de combustible en ciudad (km/L).' },
+  ];
+
+  readonly years = YEARS;
+
+  readonly brands = signal<Array<{ id: string; name: string }>>([]);
+
+  filters = signal<CatalogFilters>({ sort: 'name', order: 'asc' });
   items = signal<VehicleCardInput[]>([]);
   total = signal(0);
   loading = signal(false);
 
-  /** modelId -> versionId */
   readonly selectedVersions = signal<Record<string, string>>({});
 
   readonly selectedIds = this.compare.ids;
@@ -74,10 +107,19 @@ export class CatalogComponent {
     return FEATURED_MODEL_NAMES.has(name);
   }
 
-  readonly initialLoad: Promise<void>;
+  readonly initialLoad: Promise<unknown>;
 
   constructor() {
-    this.initialLoad = this.load();
+    this.initialLoad = Promise.all([this.loadBrands(), this.load()]);
+  }
+
+  private async loadBrands(): Promise<void> {
+    try {
+      const res = await this.api.get<{ data: Array<{ id: string; name: string }> }>('/brands');
+      this.brands.set(res.data);
+    } catch {
+      /* ignore */
+    }
   }
 
   async load(): Promise<void> {
@@ -117,13 +159,20 @@ export class CatalogComponent {
   }
 
   async clearFilters(): Promise<void> {
-    this.filters.set({});
+    this.filters.set({ sort: 'name', order: 'asc' });
     await this.load();
   }
 
   formatPrice(value: number | null | undefined): string {
     if (value === null || value === undefined) return '';
     return new Intl.NumberFormat('es-CL').format(value);
+  }
+
+  sortTip(): string {
+    const opt = this.sortOptions.find(
+      (o) => o.value === (this.filters().sort ?? 'name'),
+    );
+    return opt?.tip ?? '';
   }
 
   private cleanParams(f: CatalogFilters): QueryParams {

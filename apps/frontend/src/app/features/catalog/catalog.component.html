@@ -1,5 +1,4 @@
 <section>
-  <!-- Header (sin hero: ya está en la landing) -->
   <div class="border-b border-border bg-surface-muted">
     <div class="mx-auto max-w-7xl px-4 py-6 flex items-end justify-between">
       <div>
@@ -11,20 +10,14 @@
         </h1>
       </div>
       <p class="hidden md:block text-sm text-ink-muted">
-        Filtrá por marca, segmento y rango de precio.
+        Filtrá por marca, segmento, transmisión, combustible y rango de precio.
       </p>
     </div>
   </div>
 
-  <!-- Catalog body -->
-  <div
-    class="mx-auto max-w-7xl px-4 py-6 md:py-8 flex flex-col md:flex-row gap-6"
-  >
-    <!-- Sidebar filters -->
+  <div class="mx-auto max-w-7xl px-4 py-6 md:py-8 flex flex-col md:flex-row gap-6">
     <aside class="w-full md:w-72 flex-shrink-0">
-      <div
-        class="md:sticky md:top-24 bg-surface border border-border rounded-xl shadow-sm p-5 space-y-5"
-      >
+      <div class="md:sticky md:top-24 bg-surface border border-border rounded-xl shadow-sm p-5 space-y-5">
         <header class="flex items-center justify-between">
           <h2 class="font-bold text-ink flex items-center gap-2 text-lg">
             <span class="material-symbols-outlined">filter_list</span>
@@ -35,68 +28,129 @@
             class="text-xs font-semibold text-ink-muted underline hover:text-brand-700"
             (click)="clearFilters()"
             data-testid="filters-clear"
-          >
-            Limpiar
-          </button>
+          >Limpiar</button>
         </header>
 
         <div>
-          <label class="block text-sm font-semibold text-ink-muted mb-2">
-            Segmento
-          </label>
+          <label class="block text-sm font-semibold text-ink-muted mb-2">Segmento</label>
           <div class="space-y-2">
+            <label class="flex items-center gap-2 text-sm cursor-pointer text-ink">
+              <input type="radio" name="segment" class="rounded text-brand-600 focus:ring-brand-500 border-border"
+                [checked]="!filters().segment"
+                (change)="updateFilter({ segment: undefined })" />
+              Cualquiera
+            </label>
             @for (s of segments; track s.value) {
               <label class="flex items-center gap-2 text-sm cursor-pointer text-ink">
-                <input
-                  type="radio"
-                  name="segment"
-                  class="rounded text-brand-600 focus:ring-brand-500 border-border"
+                <input type="radio" name="segment" class="rounded text-brand-600 focus:ring-brand-500 border-border"
                   [checked]="filters().segment === s.value"
-                  (change)="updateFilter({ segment: s.value })"
-                />
+                  (change)="updateFilter({ segment: s.value })" />
                 {{ s.label }}
               </label>
-            }
-            @if (filters().segment) {
-              <button
-                type="button"
-                class="text-xs text-ink-muted underline"
-                (click)="updateFilter({ segment: undefined })"
-              >
-                Limpiar segmento
-              </button>
             }
           </div>
         </div>
 
         <div>
-          <label class="block text-sm font-semibold text-ink-muted mb-2">
-            Precio mínimo (CLP)
-          </label>
-          <input
-            type="number"
-            min="0"
-            step="100000"
-            placeholder="0"
+          <label class="block text-sm font-semibold text-ink-muted mb-2" for="filter-brand">Marca</label>
+          <select id="filter-brand"
             class="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
-            (change)="updateFilter({ priceMin: +$any($event.target).value || undefined })"
-            [value]="filters().priceMin ?? ''"
-          />
+            [value]="filters().brand ?? ''"
+            (change)="updateFilter({ brand: $any($event.target).value || undefined })"
+            data-testid="filter-brand">
+            <option value="">Cualquiera</option>
+            @for (b of brands(); track b.id) {
+              <option [value]="b.id">{{ b.name }}</option>
+            }
+          </select>
         </div>
 
         <div>
-          <label class="block text-sm font-semibold text-ink-muted mb-2">
-            Precio máximo (CLP)
-          </label>
-          <input
-            type="number"
-            min="0"
-            step="100000"
-            placeholder="30.000.000"
+          <label class="block text-sm font-semibold text-ink-muted mb-2">Transmisión</label>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 text-sm cursor-pointer text-ink">
+              <input type="radio" name="transmission" class="rounded text-brand-600 focus:ring-brand-500 border-border"
+                [checked]="!filters().transmission"
+                (change)="updateFilter({ transmission: undefined })" />
+              Cualquiera
+            </label>
+            @for (t of transmissions; track t.value) {
+              <label class="flex items-center gap-2 text-sm cursor-pointer text-ink">
+                <input type="radio" name="transmission" class="rounded text-brand-600 focus:ring-brand-500 border-border"
+                  [checked]="filters().transmission === t.value"
+                  (change)="updateFilter({ transmission: t.value })" />
+                {{ t.label }}
+              </label>
+            }
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-ink-muted mb-2">Combustible</label>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 text-sm cursor-pointer text-ink">
+              <input type="radio" name="fuel" class="rounded text-brand-600 focus:ring-brand-500 border-border"
+                [checked]="!filters().fuel"
+                (change)="updateFilter({ fuel: undefined })" />
+              Cualquiera
+            </label>
+            @for (f of fuels; track f.value) {
+              <label class="flex items-center gap-2 text-sm cursor-pointer text-ink">
+                <input type="radio" name="fuel" class="rounded text-brand-600 focus:ring-brand-500 border-border"
+                  [checked]="filters().fuel === f.value"
+                  (change)="updateFilter({ fuel: f.value })" />
+                {{ f.label }}
+              </label>
+            }
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-ink-muted mb-2" for="filter-year">Año</label>
+          <select id="filter-year"
+            class="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
+            [value]="filters().year ?? ''"
+            (change)="updateFilter({ year: +$any($event.target).value || undefined })"
+            data-testid="filter-year">
+            <option value="">Cualquiera</option>
+            @for (y of years; track y) {
+              <option [value]="y">{{ y }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-ink-muted mb-2" for="filter-priceMin">Precio mínimo (CLP)</label>
+          <input id="filter-priceMin" type="number" min="0" step="100000" placeholder="0"
+            class="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
+            (change)="updateFilter({ priceMin: +$any($event.target).value || undefined })"
+            [value]="filters().priceMin ?? ''" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-ink-muted mb-2" for="filter-priceMax">Precio máximo (CLP)</label>
+          <input id="filter-priceMax" type="number" min="0" step="100000" placeholder="30.000.000"
             class="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
             (change)="updateFilter({ priceMax: +$any($event.target).value || undefined })"
-            [value]="filters().priceMax ?? ''"
-          />
+            [value]="filters().priceMax ?? ''" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-ink-muted mb-2" for="filter-powerMin">Potencia mínima (hp)</label>
+          <input id="filter-powerMin" type="number" min="0" step="10" placeholder="80"
+            class="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
+            (change)="updateFilter({ powerMin: +$any($event.target).value || undefined })"
+            [value]="filters().powerMin ?? ''"
+            data-testid="filter-powerMin" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-ink-muted mb-2" for="filter-consumptionMax">Consumo máx. ciudad (km/L)</label>
+          <input id="filter-consumptionMax" type="number" min="0" step="0.5" placeholder="20"
+            class="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
+            (change)="updateFilter({ consumptionMax: +$any($event.target).value || undefined })"
+            [value]="filters().consumptionMax ?? ''"
+            data-testid="filter-consumptionMax" />
         </div>
 
         <p class="text-xs text-ink-muted">
@@ -106,35 +160,60 @@
       </div>
     </aside>
 
-    <!-- Grid -->
     <main class="flex-1">
+      <div class="mb-4 flex items-center gap-3 justify-end" data-testid="sort-bar">
+        <label class="text-xs text-ink-muted" for="sort-select">Ordenar por</label>
+        <select id="sort-select"
+          class="rounded border border-border bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
+          [value]="filters().sort ?? 'name'"
+          (change)="updateFilter({ sort: $any($event.target).value })"
+          [attr.title]="sortTip()"
+          data-testid="sort-select">
+          @for (opt of sortOptions; track opt.value) {
+            <option [value]="opt.value" [attr.title]="opt.tip ?? ''">{{ opt.label }}</option>
+          }
+        </select>
+        <div class="flex items-center border border-border rounded overflow-hidden" role="group" aria-label="Dirección">
+          <button type="button"
+            (click)="updateFilter({ order: 'asc' })"
+            [attr.aria-pressed]="(filters().order ?? 'asc') === 'asc'"
+            [class.bg-brand-600]="(filters().order ?? 'asc') === 'asc'"
+            [class.text-white]="(filters().order ?? 'asc') === 'asc'"
+            [class.text-ink-muted]="(filters().order ?? 'asc') !== 'asc'"
+            class="grid place-items-center w-8 h-8 hover:bg-surface-muted"
+            data-testid="sort-asc"
+            aria-label="Ascendente">
+            <span class="material-symbols-outlined text-base">arrow_upward</span>
+          </button>
+          <button type="button"
+            (click)="updateFilter({ order: 'desc' })"
+            [attr.aria-pressed]="filters().order === 'desc'"
+            [class.bg-brand-600]="filters().order === 'desc'"
+            [class.text-white]="filters().order === 'desc'"
+            [class.text-ink-muted]="filters().order !== 'desc'"
+            class="grid place-items-center w-8 h-8 hover:bg-surface-muted"
+            data-testid="sort-desc"
+            aria-label="Descendente">
+            <span class="material-symbols-outlined text-base">arrow_downward</span>
+          </button>
+        </div>
+      </div>
+
       @if (loading()) {
         <p class="text-sm text-brand-600" data-testid="loading">Cargando…</p>
       }
 
       @if (items().length === 0 && !loading()) {
-        <div
-          class="rounded-xl border border-border bg-surface p-12 text-center shadow-sm"
-          data-testid="empty"
-        >
+        <div class="rounded-xl border border-border bg-surface p-12 text-center shadow-sm" data-testid="empty">
           <p class="font-bold text-ink mb-2">No se encontraron modelos</p>
-          <p class="text-sm text-ink-muted">
-            Probá ajustar los filtros o limpiarlos.
-          </p>
-          <button
-            type="button"
+          <p class="text-sm text-ink-muted">Probá ajustar los filtros o limpiarlos.</p>
+          <button type="button"
             class="mt-4 inline-block rounded bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700"
-            (click)="clearFilters()"
-          >
-            Limpiar filtros
-          </button>
+            (click)="clearFilters()">Limpiar filtros</button>
         </div>
       }
 
-      <ul
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-        data-testid="catalog-grid"
-      >
+      <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="catalog-grid">
         @for (m of items(); track m.id) {
           <li>
             <app-vehicle-card
@@ -150,18 +229,10 @@
         }
       </ul>
 
-      <!-- Sticky selection bar -->
       @if (selectionCount() > 0) {
-        <div
-          class="sticky bottom-4 mt-6 z-30 rounded-2xl bg-ink text-surface shadow-e2 p-4 flex items-center justify-between gap-4 border border-brand-600"
-          data-testid="selection-bar"
-        >
+        <div class="sticky bottom-4 mt-6 z-30 rounded-2xl bg-ink text-surface shadow-e2 p-4 flex items-center justify-between gap-4 border border-brand-600" data-testid="selection-bar">
           <div class="flex items-center gap-3">
-            <span
-              class="grid h-8 w-8 place-items-center rounded-full bg-brand-600 text-white text-xs font-bold"
-            >
-              {{ selectionCount() }}
-            </span>
+            <span class="grid h-8 w-8 place-items-center rounded-full bg-brand-600 text-white text-xs font-bold">{{ selectionCount() }}</span>
             <span class="text-sm">
               {{ selectionCount() === 1 ? '1 versión seleccionada' : selectionCount() + ' versiones seleccionadas' }}
               @if (!maxReached()) {
@@ -170,28 +241,22 @@
             </span>
           </div>
           <div class="flex items-center gap-2">
-            <button
-              type="button"
-              (click)="clearSelection()"
+            <button type="button" (click)="clearSelection()"
               [attr.aria-label]="'Limpiar selección de ' + selectionCount() + ' versiones'"
               data-testid="selection-bar-clear"
-              class="rounded-full bg-ink text-surface border border-surface-muted hover:bg-surface-muted text-xs font-bold px-3 py-2 transition-colors flex items-center gap-1.5"
-            >
+              class="rounded-full bg-ink text-surface border border-surface-muted hover:bg-surface-muted text-xs font-bold px-3 py-2 transition-colors flex items-center gap-1.5">
               <span class="material-symbols-outlined text-base">delete_sweep</span>
               Limpiar
             </button>
-            <a
-              routerLink="/compare"
+            <a routerLink="/compare"
               class="rounded-full bg-brand-600 text-white text-sm font-bold px-5 py-2 hover:bg-brand-700 transition-colors flex items-center gap-2"
-              data-testid="selection-bar-compare"
-            >
+              data-testid="selection-bar-compare">
               <span class="material-symbols-outlined text-base">compare_arrows</span>
               Ver comparación
             </a>
           </div>
         </div>
       }
-
     </main>
   </div>
 </section>
