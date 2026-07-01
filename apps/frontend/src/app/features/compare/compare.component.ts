@@ -142,7 +142,8 @@ export class CompareComponent {
       this.compareStore.ids().length === 0 &&
       this.versions().length === 0 &&
       this.sharedMeta() === null &&
-      this.loadError() === null
+      this.loadError() === null &&
+      this.favoriteModels().length === 0
     );
   });
 
