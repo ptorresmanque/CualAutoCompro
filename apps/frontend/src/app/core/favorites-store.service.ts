@@ -48,11 +48,18 @@ export class FavoritesStore {
   }
 
   async load(): Promise<void> {
+    const userIdAtStart = this.auth.currentUser()?.id ?? null;
     try {
       const res = await this.api.get<{ data: { modelIds: string[] } }>('/me/favorites');
+      const userIdNow = this.auth.currentUser()?.id ?? null;
+      if (userIdAtStart !== userIdNow) return;
       this._ids.set(new Set(res.data.modelIds));
     } finally {
-      this.loaded.set(true);
+      // Solo marcar como cargado si seguimos autenticados con el mismo user
+      const userIdNow = this.auth.currentUser()?.id ?? null;
+      if (userIdAtStart === userIdNow) {
+        this.loaded.set(true);
+      }
     }
   }
 }

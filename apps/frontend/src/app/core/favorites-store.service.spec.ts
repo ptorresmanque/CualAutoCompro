@@ -88,4 +88,18 @@ describe('FavoritesStore', () => {
     expect(store.count()).toBe(0);
     expect(store.isFavorite('m1')).toBe(false);
   });
+
+  it('load() en vuelo se descarta si el usuario cambió antes de resolver (C4)', async () => {
+    authStub.setUser({ id: 'u1', email: 'u@test.cl', name: 'U' });
+    TestBed.flushEffects();
+    const getReq = http.expectOne((r) => r.url.includes('/me/favorites'));
+    // Simulamos logout mientras el GET está en vuelo
+    authStub.setUser(null);
+    TestBed.flushEffects();
+    // Al flushear, load() debe detectar que el user cambió y NO popular _ids
+    getReq.flush({ data: { modelIds: ['m1', 'm2'] } });
+    await flushMicrotasks();
+    expect(store.count()).toBe(0);
+    expect(store.loaded()).toBe(false);
+  });
 });
