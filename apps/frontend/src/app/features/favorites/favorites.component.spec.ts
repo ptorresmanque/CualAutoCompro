@@ -16,7 +16,8 @@ class AuthServiceStub {
 }
 class FavoritesStoreStub {
   isFavorite(): boolean { return true; }
-  async toggle(): Promise<void> {}
+  toggled: string[] = [];
+  async toggle(modelId: string): Promise<void> { this.toggled.push(modelId); }
   load(): Promise<void> { return Promise.resolve(); }
 }
 
@@ -114,5 +115,56 @@ describe('FavoritesComponent', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(store.ids()).toEqual(['v1']);
+  });
+
+  it('click en corazón llama favorites.toggle y remueve el modelo del grid', async () => {
+    const favStub = TestBed.inject(FavoritesStore) as unknown as FavoritesStoreStub;
+    const fixture = TestBed.createComponent(FavoritesComponent);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/me/favorites/models')).flush({
+      data: [
+        {
+          id: 'm1',
+          name: 'Yaris',
+          brand: { name: 'Toyota' },
+          segment: 'HATCHBACK',
+          minPrice: 14000000,
+          defaultVersion: { id: 'v1', name: 'XLS', priceClp: 14990000, year: 2026 },
+          versions: [{ id: 'v1', name: 'XLS', priceClp: 14990000, year: 2026 }],
+        },
+        {
+          id: 'm2',
+          name: 'Corolla',
+          brand: { name: 'Toyota' },
+          segment: 'SEDAN',
+          minPrice: 17000000,
+          defaultVersion: { id: 'v2', name: 'XLI', priceClp: 16990000, year: 2024 },
+          versions: [{ id: 'v2', name: 'XLI', priceClp: 16990000, year: 2024 }],
+        },
+      ],
+    });
+    await fixture.componentInstance.initialLoad;
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="favorite-m1"]'),
+    ).not.toBeNull();
+
+    const heartBtn = fixture.nativeElement.querySelector(
+      '[data-testid="favorite-m1"]',
+    ) as HTMLButtonElement;
+    heartBtn.click();
+    fixture.detectChanges();
+    await Promise.resolve();
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    expect(favStub.toggled).toEqual(['m1']);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="favorite-m1"]'),
+    ).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="favorite-m2"]'),
+    ).not.toBeNull();
   });
 });

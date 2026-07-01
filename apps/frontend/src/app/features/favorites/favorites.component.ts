@@ -61,6 +61,11 @@ export class FavoritesComponent {
     return id ? this.compare.ids().includes(id) : false;
   }
 
+  async onRemove(m: VehicleCardInput): Promise<void> {
+    await this.favorites.toggle(m.id);
+    this.models.update((arr) => arr.filter((x) => x.id !== m.id));
+  }
+
   selectedVersionId(m: VehicleCardInput): string | null {
     return m.defaultVersion?.id ?? m.versions[0]?.id ?? null;
   }

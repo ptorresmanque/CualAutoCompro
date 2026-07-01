@@ -54,6 +54,8 @@
             [model]="m"
             [added]="isAdded(m)"
             [selectedVersionId]="selectedVersionId(m)"
+            [isFavorite]="true"
+            (favoriteToggled)="onRemove(m)"
           />
           <button type="button"
             (click)="compareOne(m)"
