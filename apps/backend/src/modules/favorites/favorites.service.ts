@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import { notFound } from "../../shared/errors.js";
+import { notFound, badRequest } from "../../shared/errors.js";
 
 export interface FavoriteModelCard {
   id: string;
@@ -8,7 +8,7 @@ export interface FavoriteModelCard {
   brand: { id: string; name: string };
   imageUrl: string | null;
   minPrice: number | null;
-  defaultVersion: { id: string; name: string; priceClp: number; year: number } | null;
+  versionId: string;
   versions: Array<{
     id: string;
     name: string;
@@ -30,10 +30,10 @@ export class FavoritesService {
   async listIds(userId: string): Promise<string[]> {
     const rows = await this.prisma.favorite.findMany({
       where: { userId },
-      select: { modelId: true },
+      select: { versionId: true },
       orderBy: { createdAt: "desc" },
     });
-    return rows.map((r) => r.modelId);
+    return rows.map((r) => r.versionId);
   }
 
   async listModels(userId: string): Promise<FavoriteModelCard[]> {
@@ -46,53 +46,90 @@ export class FavoritesService {
             versions: { orderBy: { priceClp: "asc" } },
           },
         },
+        version: true,
       },
       orderBy: { createdAt: "desc" },
     });
-    return favs.map((f) => this.toCard(f.model));
+    return favs.map((f) => this.toCard(f.model, f.version.id));
   }
 
-  async add(userId: string, modelId: string): Promise<{ created: boolean }> {
-    const model = await this.prisma.model.findUnique({ where: { id: modelId } });
-    if (!model) throw notFound("Modelo no encontrado");
+  async add(
+    userId: string,
+    args: { modelId: string; versionId: string },
+  ): Promise<{ created: boolean; versionId: string }> {
+    const { modelId, versionId } = args;
+    const version = await this.prisma.version.findUnique({ where: { id: versionId } });
+    if (!version) throw notFound("Versión no encontrada");
+    if (version.modelId !== modelId) {
+      throw badRequest("La versión no pertenece al modelo indicado");
+    }
     try {
-      await this.prisma.favorite.create({ data: { userId, modelId } });
-      return { created: true };
+      await this.prisma.favorite.create({ data: { userId, modelId, versionId } });
+      return { created: true, versionId };
     } catch (e) {
       const err = e as { code?: string };
-      if (err.code === "P2002") return { created: false };
+      if (err.code === "P2002") return { created: false, versionId };
       throw e;
     }
   }
 
-  async remove(userId: string, modelId: string): Promise<void> {
-    await this.prisma.favorite.deleteMany({ where: { userId, modelId } });
+  async updateVersion(
+    userId: string,
+    args: { currentVersionId: string; modelId: string; newVersionId: string },
+  ): Promise<void> {
+    const { currentVersionId, modelId, newVersionId } = args;
+    if (currentVersionId === newVersionId) return;
+    const newVersion = await this.prisma.version.findUnique({ where: { id: newVersionId } });
+    if (!newVersion) throw notFound("Versión no encontrada");
+    if (newVersion.modelId !== modelId) {
+      throw badRequest("La versión no pertenece al modelo indicado");
+    }
+    // Eliminar el viejo y crear el nuevo (idempotente: si ya existe el nuevo,
+    // el create chocará con P2002, lo atrapamos).
+    await this.prisma.favorite.deleteMany({
+      where: { userId, versionId: currentVersionId },
+    });
+    try {
+      await this.prisma.favorite.create({
+        data: { userId, modelId, versionId: newVersionId },
+      });
+    } catch (e) {
+      const err = e as { code?: string };
+      if (err.code !== "P2002") throw e;
+      // ya existe esa versión en favoritos — noop
+    }
   }
 
-  private toCard(m: {
-    id: string;
-    name: string;
-    segment: string;
-    imageUrl: string | null;
-    galleryUrls: string[];
-    brand: { id: string; name: string };
-    versions: Array<{
+  async remove(userId: string, versionId: string): Promise<void> {
+    await this.prisma.favorite.deleteMany({ where: { userId, versionId } });
+  }
+
+  private toCard(
+    m: {
       id: string;
       name: string;
-      year: number;
-      priceClp: number;
-      transmission: string;
-      fuel: string;
-      engineDisplacementCc: number;
-      powerHp: number;
-      torqueNm: number;
-      consumptionCityKmL: number;
-      consumptionHighwayKmL: number;
-    }>;
-  }): FavoriteModelCard {
+      segment: string;
+      imageUrl: string | null;
+      galleryUrls: string[];
+      brand: { id: string; name: string };
+      versions: Array<{
+        id: string;
+        name: string;
+        year: number;
+        priceClp: number;
+        transmission: string;
+        fuel: string;
+        engineDisplacementCc: number;
+        powerHp: number;
+        torqueNm: number;
+        consumptionCityKmL: number;
+        consumptionHighwayKmL: number;
+      }>;
+    },
+    versionId: string,
+  ): FavoriteModelCard {
     const prices = m.versions.map((v) => v.priceClp);
     const minPrice = prices.length ? Math.min(...prices) : null;
-    const firstVersion = m.versions[0];
     return {
       id: m.id,
       name: m.name,
@@ -100,9 +137,7 @@ export class FavoritesService {
       brand: { id: m.brand.id, name: m.brand.name },
       imageUrl: m.galleryUrls[0] ?? m.imageUrl ?? null,
       minPrice,
-      defaultVersion: firstVersion
-        ? { id: firstVersion.id, name: firstVersion.name, priceClp: firstVersion.priceClp, year: firstVersion.year }
-        : null,
+      versionId,
       versions: m.versions.map((v) => ({
         id: v.id,
         name: v.name,

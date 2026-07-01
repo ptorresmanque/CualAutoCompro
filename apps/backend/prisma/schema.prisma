@@ -66,6 +66,7 @@ model Version {
   equipmentItems        VersionEquipment[]
   maintenanceCosts      MaintenanceCost[]
   comparisonItems       ComparisonItem[]
+  favorites             Favorite[]
   createdAt             DateTime           @default(now())
 
   @@index([modelId])
@@ -154,10 +155,13 @@ model Favorite {
   id        String   @id @default(cuid())
   userId    String
   modelId   String
+  versionId String
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   model     Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  version   Version  @relation(fields: [versionId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, modelId])
+  @@unique([userId, versionId])
   @@index([userId])
+  @@index([modelId])
 }

@@ -7,4 +7,5 @@ meFavoritesRouter.use(authenticate);
 meFavoritesRouter.get("/", favoritesController.listIds);
 meFavoritesRouter.get("/models", favoritesController.listModels);
 meFavoritesRouter.post("/", favoritesController.add);
-meFavoritesRouter.delete("/:modelId", favoritesController.remove);
+meFavoritesRouter.patch("/:versionId", favoritesController.updateVersion);
+meFavoritesRouter.delete("/:versionId", favoritesController.remove);
