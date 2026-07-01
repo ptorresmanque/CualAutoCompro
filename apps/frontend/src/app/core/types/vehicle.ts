@@ -1,5 +1,6 @@
 export interface VehicleVersion {
   id: string;
+  modelId?: string;
   name: string;
   year: number;
   priceClp: number;

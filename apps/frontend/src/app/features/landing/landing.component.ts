@@ -12,6 +12,7 @@ import {
   VehicleCardComponent,
   VehicleCardInput,
 } from '../../shared/ui/vehicle-card.component';
+import { VehicleVersion } from '../../core/types/vehicle';
 
 interface Stats {
   total: number;
@@ -37,6 +38,10 @@ export class LandingComponent {
   readonly loadError = signal<string | null>(null);
 
   readonly stats = signal<Stats | null>(null);
+
+  onFavoriteToggle(m: VehicleCardInput, v: VehicleVersion): void {
+    void this.favorites.toggle({ modelId: m.id, versionId: v.id });
+  }
 
   readonly ready: Promise<void>;
 

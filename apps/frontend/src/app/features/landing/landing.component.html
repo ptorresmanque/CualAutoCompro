@@ -131,8 +131,8 @@
               [model]="m"
               [featured]="true"
               [selectedVersionId]="m.versions[0]?.id ?? null"
-              [isFavorite]="favorites.isFavorite(m.id)"
-              (favoriteToggled)="favorites.toggle(m.id)"
+              [isFavorite]="favorites.isFavorite(m.versions[0]?.id ?? '')"
+              (favoriteToggled)="onFavoriteToggle(m, $event)"
             />
           </li>
         }

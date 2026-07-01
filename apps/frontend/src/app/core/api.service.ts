@@ -33,6 +33,14 @@ export class ApiService {
     );
   }
 
+  patch<T>(path: string, body: unknown): Promise<T> {
+    return firstValueFrom(
+      this.http.patch<T>(`${ENV.apiBase}${path}`, body, {
+        withCredentials: true,
+      }),
+    );
+  }
+
   delete<T>(path: string): Promise<T> {
     return firstValueFrom(
       this.http.delete<T>(`${ENV.apiBase}${path}`, {

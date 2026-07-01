@@ -156,6 +156,10 @@ export class CatalogComponent {
     this.selectedVersions.update((m) => ({ ...m, [item.id]: v.id }));
   }
 
+  onFavoriteToggled(item: VehicleCardInput, v: VehicleVersion): void {
+    void this.favorites.toggle({ modelId: item.id, versionId: v.id });
+  }
+
   clearSelection(): void {
     this.compare.clear();
   }

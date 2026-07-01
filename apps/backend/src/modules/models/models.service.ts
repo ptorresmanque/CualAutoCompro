@@ -56,6 +56,7 @@ export class ModelsService {
         : null;
       const versions = m.versions.map((v) => ({
         id: v.id,
+        modelId: v.modelId,
         name: v.name,
         year: v.year,
         priceClp: v.priceClp,

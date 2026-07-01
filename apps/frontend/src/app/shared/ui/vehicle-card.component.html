@@ -99,7 +99,7 @@
     }
 
     <!-- Version chips: solo visible cuando hay > 1 versión y el card no está en compare -->
-    @if (hasMultipleVersions() && !added()) {
+    @if (hasMultipleVersions() && (!added() || forceShowChips())) {
       <div
         class="flex flex-wrap gap-1.5"
         role="radiogroup"

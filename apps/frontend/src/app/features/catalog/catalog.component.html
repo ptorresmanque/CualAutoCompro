@@ -222,10 +222,10 @@
               [added]="isAdded(m)"
               [maxReached]="maxReached()"
               [selectedVersionId]="selectedVersionId(m)"
-              [isFavorite]="favorites.isFavorite(m.id)"
+              [isFavorite]="favorites.isFavorite(selectedVersionId(m) ?? '')"
               (compareTapped)="addToCompare(m)"
               (versionSelected)="onVersionSelected(m, $event)"
-              (favoriteToggled)="favorites.toggle(m.id)"
+              (favoriteToggled)="onFavoriteToggled(m, $event)"
             />
           </li>
         }

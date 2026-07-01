@@ -40,9 +40,10 @@ export class VehicleCardComponent {
   readonly selectedVersionId = input<string | null>(null);
   readonly isFavorite = input<boolean>(false);
   readonly compareLabel = input<string>('Comparar');
+  readonly forceShowChips = input<boolean>(false);
   readonly compareTapped = output<VehicleVersion>();
   readonly versionSelected = output<VehicleVersion>();
-  readonly favoriteToggled = output<void>();
+  readonly favoriteToggled = output<VehicleVersion>();
 
   readonly canFavorite = computed(() => this.auth.currentUser() !== null);
 
@@ -54,7 +55,7 @@ export class VehicleCardComponent {
   readonly hovered = this._hovered.asReadonly();
 
   readonly hasDefaultVersion = computed(() =>
-    Boolean(this.model().defaultVersion?.id),
+    Boolean(this.model().defaultVersion?.id) || this.model().versions.length > 0,
   );
 
   readonly hasMultipleVersions = computed(() => this.model().versions.length > 1);
@@ -107,7 +108,9 @@ export class VehicleCardComponent {
   onFavorite(event: Event): void {
     event.stopPropagation();
     if (!this.canFavorite()) return;
-    this.favoriteToggled.emit();
+    const v = this.selectedVersion();
+    if (!v) return;
+    this.favoriteToggled.emit(v);
   }
 
   onSelectVersion(event: Event, v: VehicleVersion): void {

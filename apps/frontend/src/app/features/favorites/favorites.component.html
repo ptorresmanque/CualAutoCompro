@@ -3,7 +3,7 @@
     <div>
       <h1 class="text-3xl md:text-4xl font-bold text-ink tracking-tight">Mis favoritos</h1>
       <p class="mt-2 text-sm md:text-base text-ink-muted max-w-2xl">
-        Modelos que marcaste con el corazón. Comparálos entre sí o agregalos a la comparación actual.
+        Modelos que marcaste con el corazón. Elegí la versión que querés comparar y agregala.
       </p>
     </div>
     @if (hasItems()) {
@@ -57,8 +57,10 @@
             [selectedVersionId]="selectedVersionId(m)"
             [isFavorite]="true"
             [compareLabel]="'Agregar a comparación'"
+            [forceShowChips]="true"
             (compareTapped)="onCompareTapped(m, $event)"
-            (favoriteToggled)="onRemove(m)"
+            (versionSelected)="onVersionSelected(m, $event)"
+            (favoriteToggled)="onRemove(m, $event)"
           />
         </li>
       }

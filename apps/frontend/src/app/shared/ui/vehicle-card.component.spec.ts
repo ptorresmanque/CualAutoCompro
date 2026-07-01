@@ -49,7 +49,7 @@ function carFixture(overrides: Partial<VehicleCardInput> = {}): VehicleCardInput
       year: 2026,
     },
     versions: [
-      { id: 'v1', name: 'XLS', priceClp: 14_990_000, year: 2026 },
+      { id: 'v1', modelId: 'm1', name: 'XLS', priceClp: 14_990_000, year: 2026 },
     ],
     ...overrides,
   };
@@ -128,9 +128,11 @@ describe('VehicleCardComponent', () => {
     ).toContain('yes');
   });
 
-  it('deshabilita el botón "Comparar" cuando no hay defaultVersion', () => {
+  it('deshabilita el botón "Comparar" cuando no hay defaultVersion ni versiones', () => {
     const f = TestBed.createComponent(TestHostComponent);
-    f.componentInstance.car.set(carFixture({ defaultVersion: null, minPrice: null }));
+    f.componentInstance.car.set(
+      carFixture({ defaultVersion: null, minPrice: null, versions: [] }),
+    );
     f.detectChanges();
 
     const btn = f.nativeElement.querySelector(
@@ -235,17 +237,20 @@ describe('VehicleCardComponent', () => {
       expect(btn.getAttribute('data-favorite')).toBe('false');
     });
 
-    it('click emite favoriteToggled', () => {
+    it('click emite favoriteToggled con la versión seleccionada', () => {
       const fixture = TestBed.createComponent(VehicleCardComponent);
       fixture.componentRef.setInput('model', testModel);
-      let emitted = false;
-      fixture.componentInstance.favoriteToggled.subscribe(() => (emitted = true));
+      let emittedVersionId: string | null = null;
+      fixture.componentInstance.favoriteToggled.subscribe((v) => {
+        emittedVersionId = v.id;
+      });
       fixture.detectChanges();
       const btn: HTMLButtonElement = fixture.nativeElement.querySelector(
         `[data-testid="favorite-${testModel.id}"]`,
       );
       btn.click();
-      expect(emitted).toBe(true);
+      expect(emittedVersionId).toBeTruthy();
+      expect(emittedVersionId).toBe(testModel.versions[0].id);
     });
 
     it('botón corazón se muestra DESHABILITADO con tooltip cuando no hay sesión (I6)', () => {

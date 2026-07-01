@@ -24,38 +24,58 @@ export class FavoritesStore {
     });
   }
 
-  isFavorite(modelId: string): boolean {
-    return this._ids().has(modelId);
+  isFavorite(versionId: string): boolean {
+    return this._ids().has(versionId);
   }
 
-  async toggle(modelId: string): Promise<void> {
+  async toggle(args: { modelId: string; versionId: string }): Promise<void> {
     if (!this.auth.currentUser()) throw new Error('UNAUTHORIZED');
-    if (this._ids().has(modelId)) {
-      await this.api.delete(`/me/favorites/${modelId}`);
+    const { modelId, versionId } = args;
+    if (this._ids().has(versionId)) {
+      await this.api.delete(`/me/favorites/${versionId}`);
       this._ids.update((s) => {
         const n = new Set(s);
-        n.delete(modelId);
+        n.delete(versionId);
         return n;
       });
     } else {
-      await this.api.post('/me/favorites', { modelId });
+      await this.api.post('/me/favorites', { modelId, versionId });
       this._ids.update((s) => {
         const n = new Set(s);
-        n.add(modelId);
+        n.add(versionId);
         return n;
       });
     }
   }
 
+  async changeVersion(args: {
+    currentVersionId: string;
+    modelId: string;
+    newVersionId: string;
+  }): Promise<void> {
+    if (!this.auth.currentUser()) throw new Error('UNAUTHORIZED');
+    const { currentVersionId, modelId, newVersionId } = args;
+    if (currentVersionId === newVersionId) return;
+    await this.api.patch(`/me/favorites/${currentVersionId}`, {
+      modelId,
+      newVersionId,
+    });
+    this._ids.update((s) => {
+      const n = new Set(s);
+      n.delete(currentVersionId);
+      n.add(newVersionId);
+      return n;
+    });
+  }
+
   async load(): Promise<void> {
     const userIdAtStart = this.auth.currentUser()?.id ?? null;
     try {
-      const res = await this.api.get<{ data: { modelIds: string[] } }>('/me/favorites');
+      const res = await this.api.get<{ data: { versionIds: string[] } }>('/me/favorites');
       const userIdNow = this.auth.currentUser()?.id ?? null;
       if (userIdAtStart !== userIdNow) return;
-      this._ids.set(new Set(res.data.modelIds));
+      this._ids.set(new Set(res.data.versionIds));
     } finally {
-      // Solo marcar como cargado si seguimos autenticados con el mismo user
       const userIdNow = this.auth.currentUser()?.id ?? null;
       if (userIdAtStart === userIdNow) {
         this.loaded.set(true);

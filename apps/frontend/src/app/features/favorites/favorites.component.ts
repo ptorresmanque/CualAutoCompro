@@ -15,6 +15,10 @@ import {
 } from '../../shared/ui/vehicle-card.component';
 import { VehicleVersion } from '../../core/types/vehicle';
 
+interface FavoriteModel extends VehicleCardInput {
+  versionId: string;
+}
+
 @Component({
   selector: 'app-favorites',
   templateUrl: './favorites.component.html',
@@ -28,10 +32,11 @@ export class FavoritesComponent {
   private favorites = inject(FavoritesStore);
   private router = inject(Router);
 
-  readonly models = signal<VehicleCardInput[]>([]);
+  readonly models = signal<FavoriteModel[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly compareMessage = signal<string | null>(null);
+  readonly changingVersionFor = signal<string | null>(null);
 
   readonly hasItems = computed(() => this.models().length > 0);
   readonly compareCount = computed(() => Math.min(this.models().length, 3));
@@ -47,7 +52,7 @@ export class FavoritesComponent {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const res = await this.api.get<{ data: VehicleCardInput[] }>(
+      const res = await this.api.get<{ data: FavoriteModel[] }>(
         '/me/favorites/models',
       );
       this.models.set(res.data ?? []);
@@ -58,21 +63,20 @@ export class FavoritesComponent {
     }
   }
 
-  isAdded(m: VehicleCardInput): boolean {
-    const id = this.selectedVersionId(m);
-    return id ? this.compare.ids().includes(id) : false;
+  isAdded(m: FavoriteModel): boolean {
+    return this.compare.ids().includes(m.versionId);
   }
 
-  async onRemove(m: VehicleCardInput): Promise<void> {
-    await this.favorites.toggle(m.id);
+  async onRemove(m: FavoriteModel, _v: VehicleVersion): Promise<void> {
+    await this.favorites.toggle({ modelId: m.id, versionId: m.versionId });
     this.models.update((arr) => arr.filter((x) => x.id !== m.id));
   }
 
-  selectedVersionId(m: VehicleCardInput): string | null {
-    return m.defaultVersion?.id ?? m.versions[0]?.id ?? null;
+  selectedVersionId(m: FavoriteModel): string {
+    return m.versionId;
   }
 
-  async onCompareTapped(m: VehicleCardInput, v: VehicleVersion): Promise<void> {
+  async onCompareTapped(m: FavoriteModel, v: VehicleVersion): Promise<void> {
     if (this.compare.ids().length >= 3) {
       this.compareMessage.set(
         'Máximo 3, limpiá la comparación actual primero.',
@@ -85,17 +89,39 @@ export class FavoritesComponent {
     await this.router.navigate(['/compare']);
   }
 
+  async onVersionSelected(
+    m: FavoriteModel,
+    v: VehicleVersion,
+  ): Promise<void> {
+    if (!v?.id || v.id === m.versionId) return;
+    this.changingVersionFor.set(m.id);
+    try {
+      await this.favorites.changeVersion({
+        currentVersionId: m.versionId,
+        modelId: m.id,
+        newVersionId: v.id,
+      });
+      this.models.update((arr) =>
+        arr.map((x) => (x.id === m.id ? { ...x, versionId: v.id } : x)),
+      );
+    } catch {
+      this.error.set('No pudimos cambiar la versión favorita.');
+    } finally {
+      this.changingVersionFor.set(null);
+    }
+  }
+
   async compareAllMine(): Promise<void> {
     const ids = this.models()
       .slice(0, 3)
-      .map((m) => this.selectedVersionId(m))
-      .filter((id): id is string => id != null);
+      .map((m) => m.versionId)
+      .filter((id) => id != null);
     if (ids.length === 0) return;
     this.compare.setIds(ids);
     await this.router.navigate(['/compare']);
   }
 
-  trackById(_: number, m: VehicleCardInput): string {
+  trackById(_: number, m: FavoriteModel): string {
     return m.id;
   }
 }
