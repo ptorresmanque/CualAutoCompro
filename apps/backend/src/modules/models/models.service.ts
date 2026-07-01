@@ -50,12 +50,26 @@ export class ModelsService {
             year: firstVersion.year,
           }
         : null;
+      const versions = m.versions.map((v) => ({
+        id: v.id,
+        name: v.name,
+        year: v.year,
+        priceClp: v.priceClp,
+        transmission: v.transmission,
+        fuel: v.fuel,
+        engineDisplacementCc: v.engineDisplacementCc,
+        powerHp: v.powerHp,
+        torqueNm: v.torqueNm,
+        consumptionCityKmL: v.consumptionCityKmL,
+        consumptionHighwayKmL: v.consumptionHighwayKmL,
+      }));
       return {
         id: m.id, brandId: m.brandId, name: m.name, segment: m.segment,
         imageUrl: m.galleryUrls[0] ?? m.imageUrl ?? null,
         galleryUrls: m.galleryUrls, brand: m.brand,
         minPrice, maxPrice, versionCount: m.versions.length,
         defaultVersion,
+        versions,
       };
     });
 
