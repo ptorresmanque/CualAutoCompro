@@ -195,6 +195,13 @@
                 {{ sectionIcon(s.name) }}
               </span>
               <h2 class="font-bold text-base">{{ s.label }}</h2>
+              <span
+                class="material-symbols-outlined text-ink-muted cursor-help text-base"
+                [attr.title]="disclaimerText"
+                tabindex="0"
+                [attr.aria-label]="disclaimerText"
+                data-testid="info-icon"
+              >info</span>
             </div>
             <span
               class="material-symbols-outlined group-open:rotate-180 transition-transform"
@@ -278,10 +285,6 @@
           </span>
         }
       </div>
-
-      <app-disclaimer
-        text="Las celdas resaltadas en ámbar indican diferencias relevantes entre las versiones seleccionadas."
-      />
     </div>
   }
 </section>

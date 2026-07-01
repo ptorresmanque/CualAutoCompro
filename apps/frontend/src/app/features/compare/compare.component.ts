@@ -10,7 +10,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { CompareStore } from '../../core/compare-store.service';
-import { DisclaimerComponent } from '../../shared/ui/disclaimer.component';
 
 interface ModelLite {
   name: string;
@@ -105,7 +104,7 @@ interface ComparisonBySlugResponse {
   selector: 'app-compare',
   templateUrl: './compare.component.html',
   styleUrl: './compare.component.css',
-  imports: [DisclaimerComponent, RouterLink],
+  imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CompareComponent {
@@ -128,6 +127,9 @@ export class CompareComponent {
   swappingFor = signal<string | null>(null); // versionId of card with open popover
 
   readonly count = computed(() => this.versions().length);
+
+  readonly disclaimerText =
+    'Las celdas resaltadas en ámbar indican diferencias relevantes entre las versiones seleccionadas.';
 
   readonly empty = computed(() => {
     this.versions();
