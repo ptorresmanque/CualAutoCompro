@@ -336,27 +336,11 @@
             {{ msg }}
           </div>
         }
-        @if (user() && !savedSlug()) {
-          <span>Tu comparación se guarda automáticamente.</span>
-          <button
-            type="button"
-            class="rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700 transition-colors disabled:opacity-60"
-            [disabled]="saving()"
-            (click)="saveComparison()"
-          >
-            {{ saving() ? 'Guardando…' : 'Guardar comparación' }}
-          </button>
-        } @else if (!user()) {
+        @if (!user()) {
           <span>Crea una cuenta para guardar esta comparación.</span>
-          <a
-            routerLink="/register"
-            class="rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700 transition-colors"
-          >
-            Crear cuenta
-          </a>
         }
         @if (savedSlug()) {
-          <span data-testid="saved-link" class="ml-auto">
+          <span data-testid="saved-link">
             @if (duplicateSlug()) {
               Ya tenés esta comparación guardada.
             }
@@ -371,5 +355,19 @@
         }
       </div>
     </div>
+  }
+
+  <!-- Floating action button: guardar comparación -->
+  @if (user() && !savedSlug()) {
+    <button
+      type="button"
+      (click)="saveComparison()"
+      [disabled]="saving()"
+      data-testid="save-fab"
+      class="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-brand-600 text-white pl-5 pr-5 py-3 text-sm font-bold shadow-e2 hover:bg-brand-700 transition-colors disabled:opacity-60"
+    >
+      {{ saving() ? 'Guardando…' : 'Guardar comparación' }}
+      <span class="material-symbols-outlined text-base">save</span>
+    </button>
   }
 </section>
