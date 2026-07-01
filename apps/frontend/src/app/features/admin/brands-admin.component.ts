@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ApiService } from '../../core/api.service';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
+import { sortItems, type SortDir } from './sort-utils';
 
 interface BrandRow { id: string; name: string; logoUrl: string | null; }
+type SortKey = 'name';
 
 @Component({
   selector: 'app-brands-admin',
@@ -21,10 +23,13 @@ export class BrandsAdminComponent {
   readonly error = signal<string | null>(null);
   readonly loading = signal(false);
 
-  readonly filtered = computed(() => {
+  readonly sortKey = signal<SortKey | null>(null);
+  readonly sortDir = signal<SortDir>('asc');
+
+  readonly displayed = computed<BrandRow[]>(() => {
     const q = this.search().trim().toLowerCase();
-    if (!q) return this.items();
-    return this.items().filter((b) => b.name.toLowerCase().includes(q));
+    const filtered = q ? this.items().filter((b) => b.name.toLowerCase().includes(q)) : this.items();
+    return sortItems(filtered, this.sortKey(), this.sortDir(), (b, k) => b[k as SortKey]);
   });
 
   constructor() {
@@ -83,5 +88,14 @@ export class BrandsAdminComponent {
 
   onSearch(value: string): void {
     this.search.set(value);
+  }
+
+  toggleSort(key: SortKey): void {
+    if (this.sortKey() === key) {
+      this.sortDir.update((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      this.sortKey.set(key);
+      this.sortDir.set('asc');
+    }
   }
 }

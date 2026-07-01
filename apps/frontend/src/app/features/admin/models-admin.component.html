@@ -22,20 +22,41 @@
 
   @if (loading()) {
     <p class="text-sm text-ink-muted">Cargando…</p>
-  } @else if (filtered().length === 0) {
+  } @else if (displayed().length === 0) {
     <p class="text-sm text-ink-muted">No hay modelos.</p>
   } @else {
     <table class="w-full text-sm">
       <thead class="text-left text-xs text-ink-muted">
         <tr>
-          <th class="py-2">Nombre</th>
-          <th class="py-2">Marca</th>
-          <th class="py-2">Segmento</th>
+          <th class="py-2">
+            <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
+              (click)="toggleSort('name')"
+              [attr.aria-sort]="sortKey() === 'name' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+              Nombre
+              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'name' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+            </button>
+          </th>
+          <th class="py-2">
+            <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
+              (click)="toggleSort('brandName')"
+              [attr.aria-sort]="sortKey() === 'brandName' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+              Marca
+              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'brandName' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+            </button>
+          </th>
+          <th class="py-2">
+            <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
+              (click)="toggleSort('segment')"
+              [attr.aria-sort]="sortKey() === 'segment' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+              Segmento
+              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'segment' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+            </button>
+          </th>
           <th class="py-2 w-32">Acciones</th>
         </tr>
       </thead>
       <tbody>
-        @for (m of filtered(); track m.id) {
+        @for (m of displayed(); track m.id) {
           <tr class="border-t border-border">
             <td class="py-2">{{ m.name }}</td>
             <td class="py-2">{{ m.brand?.name ?? '—' }}</td>

@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ApiService } from '../../core/api.service';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
+import { sortItems, type SortDir } from './sort-utils';
 
 interface ModelRow { id: string; name: string; segment: string; brand: { name: string } | null; }
 interface BrandOption { id: string; name: string; }
+type SortKey = 'name' | 'segment' | 'brandName';
 
 @Component({
   selector: 'app-models-admin',
@@ -23,16 +25,24 @@ export class ModelsAdminComponent {
   readonly error = signal<string | null>(null);
   readonly loading = signal(false);
 
-  readonly filtered = computed(() => {
+  readonly sortKey = signal<SortKey | null>(null);
+  readonly sortDir = signal<SortDir>('asc');
+
+  readonly displayed = computed<ModelRow[]>(() => {
     const q = this.search().trim().toLowerCase();
-    if (!q) return this.items();
-    return this.items().filter((m) => {
-      const brandName = m.brand?.name ?? '';
-      return (
-        m.name.toLowerCase().includes(q) ||
-        m.segment.toLowerCase().includes(q) ||
-        brandName.toLowerCase().includes(q)
-      );
+    const filtered = q
+      ? this.items().filter((m) => {
+          const brandName = m.brand?.name ?? '';
+          return (
+            m.name.toLowerCase().includes(q) ||
+            m.segment.toLowerCase().includes(q) ||
+            brandName.toLowerCase().includes(q)
+          );
+        })
+      : this.items();
+    return sortItems(filtered, this.sortKey(), this.sortDir(), (m, k) => {
+      if (k === 'brandName') return m.brand?.name ?? '';
+      return m[k as Exclude<SortKey, 'brandName'>];
     });
   });
 
@@ -102,5 +112,14 @@ export class ModelsAdminComponent {
 
   onSearch(value: string): void {
     this.search.set(value);
+  }
+
+  toggleSort(key: SortKey): void {
+    if (this.sortKey() === key) {
+      this.sortDir.update((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      this.sortKey.set(key);
+      this.sortDir.set('asc');
+    }
   }
 }

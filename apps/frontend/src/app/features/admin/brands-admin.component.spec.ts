@@ -34,4 +34,37 @@ describe('BrandsAdminComponent', () => {
     fixture.componentInstance.openCreate();
     expect(fixture.componentInstance.dialogEntity()).toBeNull();
   });
+
+  it('ordena por nombre asc/desc', async () => {
+    TestBed.configureTestingModule({
+      imports: [BrandsAdminComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(BrandsAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    for (const r of http.match(() => true)) {
+      r.flush({
+        data: [
+          { id: 'b1', name: 'Zoe', logoUrl: null },
+          { id: 'b2', name: 'Audi', logoUrl: null },
+          { id: 'b3', name: 'Mazda', logoUrl: null },
+        ],
+      });
+    }
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+    const cmp = fixture.componentInstance;
+    expect(cmp.sortKey()).toBeNull();
+    expect(cmp.displayed().map((b) => b.name)).toEqual(['Zoe', 'Audi', 'Mazda']);
+
+    cmp.toggleSort('name');
+    expect(cmp.sortKey()).toBe('name');
+    expect(cmp.sortDir()).toBe('asc');
+    expect(cmp.displayed().map((b) => b.name)).toEqual(['Audi', 'Mazda', 'Zoe']);
+
+    cmp.toggleSort('name');
+    expect(cmp.sortDir()).toBe('desc');
+    expect(cmp.displayed().map((b) => b.name)).toEqual(['Zoe', 'Mazda', 'Audi']);
+  });
 });

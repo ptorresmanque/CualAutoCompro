@@ -22,21 +22,49 @@
 
   @if (loading()) {
     <p class="text-sm text-ink-muted">Cargando…</p>
-  } @else if (filtered().length === 0) {
+  } @else if (displayed().length === 0) {
     <p class="text-sm text-ink-muted">No hay versiones.</p>
   } @else {
     <table class="w-full text-sm">
       <thead class="text-left text-xs text-ink-muted">
         <tr>
-          <th class="py-2">Nombre</th>
-          <th class="py-2">Modelo</th>
-          <th class="py-2">Año</th>
-          <th class="py-2">Precio</th>
+          <th class="py-2">
+            <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
+              (click)="toggleSort('name')"
+              [attr.aria-sort]="sortKey() === 'name' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+              Nombre
+              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'name' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+            </button>
+          </th>
+          <th class="py-2">
+            <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
+              (click)="toggleSort('modelName')"
+              [attr.aria-sort]="sortKey() === 'modelName' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+              Modelo
+              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'modelName' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+            </button>
+          </th>
+          <th class="py-2">
+            <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
+              (click)="toggleSort('year')"
+              [attr.aria-sort]="sortKey() === 'year' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+              Año
+              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'year' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+            </button>
+          </th>
+          <th class="py-2">
+            <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
+              (click)="toggleSort('priceClp')"
+              [attr.aria-sort]="sortKey() === 'priceClp' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+              Precio
+              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'priceClp' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+            </button>
+          </th>
           <th class="py-2 w-32">Acciones</th>
         </tr>
       </thead>
       <tbody>
-        @for (v of filtered(); track v.id) {
+        @for (v of displayed(); track v.id) {
           <tr class="border-t border-border">
             <td class="py-2">{{ v.name }}</td>
             <td class="py-2">{{ v.model?.name ?? '—' }}</td>

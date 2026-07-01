@@ -2,9 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../core/api.service';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
+import { sortItems, type SortDir } from './sort-utils';
 
 interface MaintenanceRow { id: string; versionId: string; mileageTag: number; costClp: number; }
 interface VersionOption { id: string; name: string; model?: { name: string } | null; }
+type SortKey = 'versionId' | 'mileageTag' | 'costClp';
 
 @Component({
   selector: 'app-maintenance-admin',
@@ -23,6 +25,13 @@ export class MaintenanceAdminComponent {
   readonly dialogMode = computed(() => (this.dialogEntity() === undefined ? 'closed' : 'open'));
   readonly error = signal<string | null>(null);
   readonly loading = signal(false);
+
+  readonly sortKey = signal<SortKey | null>('mileageTag');
+  readonly sortDir = signal<SortDir>('asc');
+
+  readonly displayed = computed<MaintenanceRow[]>(() =>
+    sortItems(this.items(), this.sortKey(), this.sortDir(), (m, k) => m[k as SortKey]),
+  );
 
   constructor() {
     void this.loadVersions();
@@ -104,6 +113,15 @@ export class MaintenanceAdminComponent {
       await this.loadMaintenance(this.selectedVersion());
     } catch (err) {
       this.error.set((err as Error).message);
+    }
+  }
+
+  toggleSort(key: SortKey): void {
+    if (this.sortKey() === key) {
+      this.sortDir.update((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      this.sortKey.set(key);
+      this.sortDir.set('asc');
     }
   }
 

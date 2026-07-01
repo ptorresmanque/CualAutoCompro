@@ -37,13 +37,27 @@
     <table class="w-full text-sm">
       <thead class="text-left text-xs text-ink-muted">
         <tr>
-          <th class="py-2">Kilometraje</th>
-          <th class="py-2">Costo</th>
+          <th class="py-2">
+            <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
+              (click)="toggleSort('mileageTag')"
+              [attr.aria-sort]="sortKey() === 'mileageTag' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+              Kilometraje
+              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'mileageTag' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+            </button>
+          </th>
+          <th class="py-2">
+            <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
+              (click)="toggleSort('costClp')"
+              [attr.aria-sort]="sortKey() === 'costClp' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+              Costo
+              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'costClp' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+            </button>
+          </th>
           <th class="py-2 w-32">Acciones</th>
         </tr>
       </thead>
       <tbody>
-        @for (m of items(); track m.id) {
+        @for (m of displayed(); track m.id) {
           <tr class="border-t border-border">
             <td class="py-2">{{ m.mileageTag | number }} km</td>
             <td class="py-2">{{ formatPrice(m.costClp) }}</td>
