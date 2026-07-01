@@ -5,7 +5,7 @@ import { ok } from "./shared/response.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { brandsAdminRouter, brandsRouter } from "./modules/brands/brands.routes.js";
 import { modelsAdminRouter, modelsRouter } from "./modules/models/models.routes.js";
-import { versionsRouter } from "./modules/versions/versions.routes.js";
+import { versionsAdminRouter, versionsRouter } from "./modules/versions/versions.routes.js";
 import { compareRouter } from "./modules/compare/compare.routes.js";
 import { comparisonsRouter, meComparisonsRouter } from "./modules/comparisons/comparisons.routes.js";
 import { meFavoritesRouter } from "./modules/favorites/favorites.routes.js";
@@ -42,6 +42,7 @@ export const createApp = () => {
   app.use("/api/v1/models", modelsRouter);
   app.use("/api/v1/admin/models", modelsAdminRouter);
   app.use("/api/v1/versions", versionsRouter);
+  app.use("/api/v1/admin/versions", versionsAdminRouter);
   app.use("/api/v1/compare", compareRouter);
   app.use("/api/v1/comparisons", comparisonsRouter);
   app.use("/api/v1/me/comparisons", meComparisonsRouter);
