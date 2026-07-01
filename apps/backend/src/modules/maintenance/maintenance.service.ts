@@ -1,0 +1,47 @@
+import { Prisma, type PrismaClient } from "@prisma/client";
+import { notFound } from "../../shared/errors.js";
+import type { CreateMaintenanceInput, UpdateMaintenanceInput } from "./maintenance.dto.admin.js";
+
+export class MaintenanceService {
+  constructor(private readonly prisma: PrismaClient) {}
+
+  listByVersion(versionId: string) {
+    return this.prisma.maintenanceCost.findMany({
+      where: { versionId, deletedAt: null },
+      orderBy: { mileageTag: "asc" },
+    });
+  }
+
+  async create(input: CreateMaintenanceInput) {
+    return this.prisma.maintenanceCost.create({ data: input });
+  }
+
+  async update(id: string, input: UpdateMaintenanceInput) {
+    try {
+      return await this.prisma.maintenanceCost.update({
+        where: { id, deletedAt: null },
+        data: input,
+      });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+        throw notFound("Maintenance cost no encontrado");
+      }
+      throw e;
+    }
+  }
+
+  async softDelete(id: string) {
+    try {
+      await this.prisma.maintenanceCost.update({
+        where: { id, deletedAt: null },
+        data: { deletedAt: new Date() },
+      });
+      return { deleted: true };
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+        throw notFound("Maintenance cost no encontrado");
+      }
+      throw e;
+    }
+  }
+}
