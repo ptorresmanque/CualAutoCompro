@@ -106,3 +106,72 @@ describe("GET /api/v1/models", () => {
     });
   });
 });
+
+describe("GET /api/v1/models sort + order + minConsumption", () => {
+  beforeEach(async () => {
+    setupTestPrisma();
+    await resetTestDb(prisma);
+  });
+
+  async function seedModels() {
+    const b = await prisma.brand.create({ data: { name: "T" } });
+    const a = await prisma.model.create({ data: { brandId: b.id, name: "Alpha", segment: "SEDAN" } });
+    const c = await prisma.model.create({ data: { brandId: b.id, name: "Charlie", segment: "SUV" } });
+    const z = await prisma.model.create({ data: { brandId: b.id, name: "Zeta", segment: "HATCHBACK" } });
+    await prisma.version.create({
+      data: { modelId: a.id, name: "A1", year: 2026, priceClp: 20000000, transmission: "AUTOMATIC", fuel: "BENCINA",
+        engineDisplacementCc: 1500, powerHp: 120, torqueNm: 145, consumptionCityKmL: 10, consumptionHighwayKmL: 14,
+        lengthMm: 4200, widthMm: 1760, heightMm: 1480, weightKg: 1100, trunkLiters: 360, airbagCount: 6,
+        hasAbs: true, hasEsp: true, hasCruiseControl: true },
+    });
+    await prisma.version.create({
+      data: { modelId: c.id, name: "C1", year: 2026, priceClp: 15000000, transmission: "AUTOMATIC", fuel: "BENCINA",
+        engineDisplacementCc: 2000, powerHp: 150, torqueNm: 200, consumptionCityKmL: 14, consumptionHighwayKmL: 18,
+        lengthMm: 4500, widthMm: 1850, heightMm: 1500, weightKg: 1300, trunkLiters: 420, airbagCount: 6,
+        hasAbs: true, hasEsp: true, hasCruiseControl: true },
+    });
+    await prisma.version.create({
+      data: { modelId: z.id, name: "Z1", year: 2026, priceClp: 10000000, transmission: "MANUAL", fuel: "BENCINA",
+        engineDisplacementCc: 1200, powerHp: 80, torqueNm: 110, consumptionCityKmL: 16, consumptionHighwayKmL: 20,
+        lengthMm: 4000, widthMm: 1700, heightMm: 1450, weightKg: 1000, trunkLiters: 320, airbagCount: 4,
+        hasAbs: true, hasEsp: false, hasCruiseControl: false },
+    });
+    return { a, c, z };
+  }
+
+  it("default ordena por nombre asc", async () => {
+    await seedModels();
+    const res = await request(createApp()).get("/api/v1/models");
+    expect(res.status).toBe(200);
+    const names = res.body.data.items.map((m: { name: string }) => m.name);
+    expect(names).toEqual(["Alpha", "Charlie", "Zeta"]);
+  });
+
+  it("sort=minPrice&order=asc ordena por menor precio", async () => {
+    await seedModels();
+    const res = await request(createApp()).get("/api/v1/models?sort=minPrice&order=asc");
+    const names = res.body.data.items.map((m: { name: string }) => m.name);
+    expect(names).toEqual(["Zeta", "Charlie", "Alpha"]);
+  });
+
+  it("sort=minPrice&order=desc ordena por mayor precio", async () => {
+    await seedModels();
+    const res = await request(createApp()).get("/api/v1/models?sort=minPrice&order=desc");
+    const names = res.body.data.items.map((m: { name: string }) => m.name);
+    expect(names).toEqual(["Alpha", "Charlie", "Zeta"]);
+  });
+
+  it("sort=minConsumption&order=asc ordena por menor consumo", async () => {
+    await seedModels();
+    const res = await request(createApp()).get("/api/v1/models?sort=minConsumption&order=asc");
+    const names = res.body.data.items.map((m: { name: string }) => m.name);
+    expect(names).toEqual(["Alpha", "Charlie", "Zeta"]);
+  });
+
+  it("filtra por transmission=MANUAL", async () => {
+    await seedModels();
+    const res = await request(createApp()).get("/api/v1/models?transmission=MANUAL");
+    expect(res.body.data.items).toHaveLength(1);
+    expect(res.body.data.items[0].name).toBe("Zeta");
+  });
+});

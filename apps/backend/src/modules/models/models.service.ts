@@ -39,7 +39,11 @@ export class ModelsService {
 
     const enriched = items.map((m) => {
       const prices = m.versions.map((v) => v.priceClp);
+      const consumptions = m.versions
+        .map((v) => v.consumptionCityKmL)
+        .filter((c): c is number => typeof c === "number");
       const minPrice = prices.length ? Math.min(...prices) : null;
+      const minConsumption = consumptions.length ? Math.min(...consumptions) : null;
       const maxPrice = prices.length ? Math.max(...prices) : null;
       const firstVersion = m.versions[0];
       const defaultVersion = firstVersion
@@ -67,10 +71,23 @@ export class ModelsService {
         id: m.id, brandId: m.brandId, name: m.name, segment: m.segment,
         imageUrl: m.galleryUrls[0] ?? m.imageUrl ?? null,
         galleryUrls: m.galleryUrls, brand: m.brand,
-        minPrice, maxPrice, versionCount: m.versions.length,
+        minPrice, minConsumption, maxPrice, versionCount: m.versions.length,
         defaultVersion,
         versions,
       };
+    });
+
+    enriched.sort((a, b) => {
+      const dir = q.order === "desc" ? -1 : 1;
+      let cmp = 0;
+      if (q.sort === "minPrice") {
+        cmp = ((a.minPrice ?? Infinity) - (b.minPrice ?? Infinity));
+      } else if (q.sort === "minConsumption") {
+        cmp = ((a.minConsumption ?? Infinity) - (b.minConsumption ?? Infinity));
+      } else {
+        cmp = a.name.localeCompare(b.name);
+      }
+      return cmp * dir;
     });
 
     return { total, items: enriched, page: q.page, pageSize: q.pageSize };
