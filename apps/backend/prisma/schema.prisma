@@ -8,11 +8,14 @@ datasource db {
 }
 
 model Brand {
-  id        String   @id @default(cuid())
-  name      String   @unique
+  id        String    @id @default(cuid())
+  name      String    @unique
   logoUrl   String?
   models    Model[]
-  createdAt DateTime @default(now())
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([deletedAt])
 }
 
 model Model {
@@ -25,10 +28,12 @@ model Model {
   brand       Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
   versions  Version[]
   favorites Favorite[]
+  deletedAt   DateTime?
   createdAt DateTime  @default(now())
 
   @@unique([brandId, name])
   @@index([segment])
+  @@index([deletedAt])
 }
 
 enum Segment {
@@ -67,11 +72,13 @@ model Version {
   maintenanceCosts      MaintenanceCost[]
   comparisonItems       ComparisonItem[]
   favorites             Favorite[]
+  deletedAt             DateTime?
   createdAt             DateTime           @default(now())
 
   @@index([modelId])
   @@index([priceClp])
   @@index([year])
+  @@index([deletedAt])
 }
 
 enum Transmission {
@@ -94,10 +101,13 @@ enum UserRole {
 }
 
 model EquipmentItem {
-  id       String             @id @default(cuid())
-  name     String             @unique
-  category String
-  versions VersionEquipment[]
+  id        String             @id @default(cuid())
+  name      String             @unique
+  category  String
+  versions  VersionEquipment[]
+  deletedAt DateTime?
+
+  @@index([deletedAt])
 }
 
 model VersionEquipment {
@@ -110,14 +120,16 @@ model VersionEquipment {
 }
 
 model MaintenanceCost {
-  id         String  @id @default(cuid())
+  id         String   @id @default(cuid())
   versionId  String
   mileageTag Int
   costClp    Int
-  version    Version @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  version    Version  @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  deletedAt  DateTime?
 
   @@unique([versionId, mileageTag])
   @@index([versionId])
+  @@index([deletedAt])
 }
 
 model User {
