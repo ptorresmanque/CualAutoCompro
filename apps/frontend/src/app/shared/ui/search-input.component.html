@@ -1,0 +1,21 @@
+<div class="relative w-full">
+  <input
+    type="text"
+    class="w-full rounded border border-border pl-9 pr-9 py-2 text-sm bg-surface"
+    [value]="value()"
+    (input)="onInput($any($event.target).value)"
+    [placeholder]="placeholder()"
+    [attr.aria-label]="placeholder()"
+  />
+  <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-muted text-base pointer-events-none">search</span>
+  @if (value()) {
+    <button
+      type="button"
+      class="absolute right-2 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink rounded-full p-0.5"
+      (click)="clear()"
+      aria-label="Limpiar búsqueda"
+    >
+      <span class="material-symbols-outlined text-base">close</span>
+    </button>
+  }
+</div>
