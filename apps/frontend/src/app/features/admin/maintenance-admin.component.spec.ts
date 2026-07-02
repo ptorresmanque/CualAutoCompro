@@ -68,4 +68,71 @@ describe('MaintenanceAdminComponent', () => {
     expect(items.length).toBe(2);
     expect(items.every((i) => i.versionId === 'v1')).toBe(true);
   });
+
+  it('onSave en modo edit NO sobrescribe versionId con el del dropdown', async () => {
+    TestBed.configureTestingModule({
+      imports: [MaintenanceAdminComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(MaintenanceAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+
+    const versionsReq = http.expectOne((r) => r.url.includes('/api/v1/versions'));
+    versionsReq.flush({
+      data: {
+        items: [
+          { id: 'v1', name: '1.6', model: { name: 'A' } },
+          { id: 'v2', name: '2.0', model: { name: 'B' } },
+        ],
+      },
+    });
+    await fixture.whenStable();
+
+    fixture.componentInstance.onVersionChange('v1');
+    fixture.detectChanges();
+    const adminReq1 = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance'));
+    adminReq1.flush({
+      data: [{ id: 'm1', versionId: 'v1', mileageTag: 10000, costClp: 50000 }],
+    });
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+
+    // User switches the dropdown to v2 WHILE editing m1 (a v1 record).
+    fixture.componentInstance.onVersionChange('v2');
+    fixture.detectChanges();
+    const adminReq2 = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance'));
+    adminReq2.flush({ data: [] });
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+
+    // Set dialogEntity directly to simulate the user having clicked "Editar"
+    // on the m1 row. We do NOT call detectChanges() here because rendering
+    // the dialog component would trigger an extra GET to
+    // /admin/seed/template/maintenance that this test does not need.
+    // onSave reads dialogEntity from the signal directly.
+    const m1 = { id: 'm1', versionId: 'v1', mileageTag: 10000, costClp: 99999 };
+    fixture.componentInstance.dialogEntity.set(m1);
+
+    const savePromise = fixture.componentInstance.onSave({
+      mileageTag: 11000,
+      costClp: 99999,
+      versionId: 'v1',
+    });
+
+    const patchReq = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance/m1'));
+    expect(patchReq.request.method).toBe('PATCH');
+    // versionId must remain v1 (the entity's original) — NOT v2 (the dropdown)
+    expect(patchReq.request.body.versionId).toBe('v1');
+    patchReq.flush({ data: { ...m1, mileageTag: 11000 } });
+
+    // Drain the PATCH microtask so the post-PATCH loadMaintenance fires its GET.
+    await new Promise((r) => setTimeout(r, 0));
+
+    // The reload GET triggered by onSave for the currently-selected version (v2).
+    const reloadReq = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance'));
+    reloadReq.flush({ data: [] });
+    await savePromise;
+    await fixture.whenStable();
+  });
 });

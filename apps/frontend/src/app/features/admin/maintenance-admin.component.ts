@@ -92,7 +92,13 @@ export class MaintenanceAdminComponent {
 
   async onSave(value: Record<string, unknown>): Promise<void> {
     const e = this.dialogEntity();
-    const payload: Record<string, unknown> = { ...value, versionId: this.selectedVersion() };
+    // In create mode, versionId is required and comes from the parent selector.
+    // In edit mode, the entity already carries its own versionId; do NOT
+    // overwrite it with the currently-selected version (otherwise switching
+    // the dropdown while editing would silently reparent the record).
+    const payload: Record<string, unknown> = e
+      ? value
+      : { ...value, versionId: this.selectedVersion() };
     try {
       if (e) {
         await this.api.patch(`/admin/maintenance/${e.id}`, payload);
