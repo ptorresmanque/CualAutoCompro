@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
-import { ENV } from '../../../core/env';
+import { toAbsoluteUploadUrl } from '../../../core/upload-url';
 
 @Component({
   selector: 'app-image-upload-field',
@@ -18,10 +18,7 @@ export class ImageUploadFieldComponent {
   readonly error = signal<string | null>(null);
 
   previewUrl(): string | null {
-    const v = this.control().value;
-    if (!v) return null;
-    if (v.startsWith('http')) return v;
-    return `${ENV.apiBase.replace(/\/api\/v1$/, '')}${v}`;
+    return toAbsoluteUploadUrl(this.control().value);
   }
 
   async onFileChange(ev: Event): Promise<void> {

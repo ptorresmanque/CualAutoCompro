@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
-import { ENV } from '../../../core/env';
+import { toAbsoluteUploadUrl } from '../../../core/upload-url';
 
 @Component({
   selector: 'app-gallery-upload-field',
@@ -29,8 +29,7 @@ export class GalleryUploadFieldComponent {
   }
 
   previewUrl(url: string): string {
-    if (url.startsWith('http')) return url;
-    return `${ENV.apiBase.replace(/\/api\/v1$/, '')}${url}`;
+    return toAbsoluteUploadUrl(url) ?? url;
   }
 
   trackByUrl = (_: number, url: string): string => url;

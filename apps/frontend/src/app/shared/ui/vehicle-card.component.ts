@@ -11,6 +11,7 @@ import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { VehicleVersion } from '../../core/types/vehicle';
 import { AuthService } from '../../core/auth.service';
+import { toAbsoluteUploadUrl } from '../../core/upload-url';
 
 export interface VehicleCardInput {
   id: string;
@@ -78,7 +79,7 @@ export class VehicleCardComponent {
   });
 
   readonly imageStyle = computed(() => {
-    const url = this.model().imageUrl;
+    const url = toAbsoluteUploadUrl(this.model().imageUrl);
     return url ? { 'background-image': `url("${url}")` } : {};
   });
 

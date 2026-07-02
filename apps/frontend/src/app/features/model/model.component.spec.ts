@@ -73,6 +73,22 @@ describe('ModelComponent — carrusel', () => {
     expect(cmp.currentUrl()).toBe(GALLERY[0]);
   });
 
+  it('currentUrl resuelve URLs relativas /uploads/ al origen del backend (regression 404 en dev)', () => {
+    // Regression: when the API returns a relative URL like
+    // '/uploads/2026-07/abc.png' the browser would resolve it against the
+    // current page (frontend origin :4200) and 404 in dev. currentUrl
+    // now prepends the backend origin via toAbsoluteUploadUrl so the
+    // browser hits the correct server.
+    const RELATIVE_GALLERY = [
+      '/uploads/2026-07/abc.png',
+      '/uploads/2026-07/def.jpg',
+    ];
+    const { cmp } = createWithGallery(RELATIVE_GALLERY);
+    expect(cmp.currentUrl()).toBe('http://localhost:3000/uploads/2026-07/abc.png');
+    cmp.next();
+    expect(cmp.currentUrl()).toBe('http://localhost:3000/uploads/2026-07/def.jpg');
+  });
+
   it('next() avanza circularmente y envuelve al final', () => {
     const { cmp } = createWithGallery(GALLERY);
     cmp.next();

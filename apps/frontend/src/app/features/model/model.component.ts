@@ -10,6 +10,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
+import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { DisclaimerComponent } from '../../shared/ui/disclaimer.component';
 
 interface Brand {
@@ -99,9 +100,14 @@ export class ModelComponent {
   readonly maxSelected = computed(() => this.selectedIds().length >= 3);
 
   readonly currentIndex = signal(0);
-  readonly currentUrl = computed(
-    () => this.galleryUrls()[this.currentIndex()] ?? '',
-  );
+  readonly currentUrl = computed(() => {
+    const raw = this.galleryUrls()[this.currentIndex()] ?? '';
+    // Resolves relative /uploads/... URLs to the backend origin so the
+    // browser can fetch the image even in dev (frontend on :4200,
+    // backend on :3000). In production the apiBase is the same origin
+    // so this is a no-op.
+    return toAbsoluteUploadUrl(raw) ?? raw;
+  });
   private readonly _hovered = signal(false);
   readonly hovered = this._hovered.asReadonly();
 
