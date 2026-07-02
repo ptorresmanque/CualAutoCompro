@@ -66,6 +66,32 @@ describe('GalleryUploadFieldComponent', () => {
     expect(ctrl.dirty).toBe(true);
   });
 
+  it('removeAt actualiza el DOM (regression: computed no invalidaba)', () => {
+    // Regression for the bug where the `urls` computed depended only on the
+    // input signal (which returns the same FormControl reference) and never
+    // invalidated when setValue was called. The fix converts `urls` to a
+    // method so the template re-reads the current value on every CD cycle.
+    const { fixture, ctrl } = setup(['/uploads/a.png', '/uploads/b.png', '/uploads/c.png']);
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelectorAll('[data-testid="gallery-thumb"]').length,
+    ).toBe(3);
+
+    const removeButtons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll(
+      '[data-testid="gallery-remove"]',
+    );
+    removeButtons[1].click();
+    fixture.detectChanges();
+
+    // The FormControl value updated...
+    expect(ctrl.value).toEqual(['/uploads/a.png', '/uploads/c.png']);
+    // ...and the DOM reflects the new list.
+    const remaining = fixture.nativeElement.querySelectorAll('[data-testid="gallery-thumb"]');
+    expect(remaining.length).toBe(2);
+    expect(remaining[0].getAttribute('src')).toContain('/uploads/a.png');
+    expect(remaining[1].getAttribute('src')).toContain('/uploads/c.png');
+  });
+
   it('si la subida falla, muestra error y no modifica el control', async () => {
     const { fixture, ctrl, http } = setup(['/uploads/existing.png']);
     const file = new File([new Uint8Array([1])], 'broken.png', { type: 'image/png' });
