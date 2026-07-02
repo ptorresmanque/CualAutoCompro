@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   EventEmitter,
   inject,
@@ -19,7 +20,6 @@ import {
 } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
-import { ApiService } from '../../core/api.service';
 import { ENV } from '../../core/env';
 import {
   entitySchemaByKey,
@@ -97,6 +97,11 @@ export class AdminEditDialogComponent {
   private fetchAbort = new Subject<void>();
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      this.fetchAbort.next();
+      this.fetchAbort.complete();
+    });
+
     effect(() => {
       const key = this.entityKey();
       untracked(() => {
