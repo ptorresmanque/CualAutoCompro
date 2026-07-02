@@ -66,4 +66,45 @@ describe('SelectSearchComponent', () => {
     btn.click();
     expect(ctrl.value).toBe('ELECTRIC_SUV');
   });
+
+  it('navega con ArrowDown/Enter y selecciona el highlighted option', () => {
+    TestBed.configureTestingModule({
+      imports: [SelectSearchComponent, ReactiveFormsModule],
+    });
+    const fixture = TestBed.createComponent(SelectSearchComponent);
+    const ctrl = new FormControl<string>('', { nonNullable: true });
+    fixture.componentRef.setInput('control', ctrl);
+    fixture.componentRef.setInput('options', ['SEDAN', 'SUV', 'PICKUP', 'HATCHBACK']);
+    fixture.detectChanges();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[role="combobox"]');
+    input.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+    fixture.detectChanges();
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+    fixture.detectChanges();
+    expect(input.getAttribute('aria-activedescendant')).toBe('option-2');
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+    expect(ctrl.value).toBe('PICKUP');
+  });
+
+  it('ArrowUp desde índice 0 hace wrap al último option', () => {
+    TestBed.configureTestingModule({
+      imports: [SelectSearchComponent, ReactiveFormsModule],
+    });
+    const fixture = TestBed.createComponent(SelectSearchComponent);
+    const ctrl = new FormControl<string>('', { nonNullable: true });
+    fixture.componentRef.setInput('control', ctrl);
+    fixture.componentRef.setInput('options', ['SEDAN', 'SUV', 'PICKUP']);
+    fixture.detectChanges();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[role="combobox"]');
+    input.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.activeIndex()).toBe(0);
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+    fixture.detectChanges();
+    expect(fixture.componentInstance.activeIndex()).toBe(2);
+    expect(input.getAttribute('aria-activedescendant')).toBe('option-2');
+  });
 });

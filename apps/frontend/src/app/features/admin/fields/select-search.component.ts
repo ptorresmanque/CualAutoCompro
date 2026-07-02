@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   ElementRef,
   HostListener,
   inject,
@@ -34,8 +35,16 @@ export class SelectSearchComponent implements OnInit {
 
   readonly query = signal('');
   readonly open = signal(false);
+  readonly activeIndex = signal(0);
   readonly remoteOptions = signal<{ id: string; [k: string]: unknown }[]>([]);
   private inputRef = viewChild<ElementRef<HTMLInputElement>>('input');
+
+  constructor() {
+    effect(() => {
+      this.query();
+      this.activeIndex.set(0);
+    });
+  }
 
   readonly filtered = computed<OptionItem[]>(() => {
     const q = this.query().toLowerCase();
@@ -81,6 +90,29 @@ export class SelectSearchComponent implements OnInit {
       this.control().setValue(item.value ?? item.label);
     }
     this.open.set(false);
+  }
+
+  onArrowDown(e: Event): void {
+    e.preventDefault();
+    const len = this.filtered().length;
+    if (len === 0) return;
+    this.activeIndex.update((i) => (i + 1) % len);
+  }
+
+  onArrowUp(e: Event): void {
+    e.preventDefault();
+    const len = this.filtered().length;
+    if (len === 0) return;
+    this.activeIndex.update((i) => (i <= 0 ? len - 1 : i - 1));
+  }
+
+  onEnter(e: Event): void {
+    const idx = this.activeIndex();
+    const list = this.filtered();
+    if (idx >= 0 && list.length > 0) {
+      e.preventDefault();
+      this.pick(list[idx]);
+    }
   }
 
   @HostListener('document:click', ['$event'])
