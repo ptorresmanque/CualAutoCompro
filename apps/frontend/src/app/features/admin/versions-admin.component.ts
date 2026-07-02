@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ApiService } from '../../core/api.service';
+import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { sortItems, type SortDir } from './sort-utils';
 
@@ -9,7 +10,7 @@ type SortKey = 'name' | 'year' | 'priceClp' | 'modelName';
 
 @Component({
   selector: 'app-versions-admin',
-  imports: [AdminEditDialogComponent],
+  imports: [AdminEditDialogComponent, SearchInputComponent],
   templateUrl: './versions-admin.component.html',
   styleUrl: './versions-admin.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
