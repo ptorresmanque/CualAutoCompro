@@ -64,7 +64,7 @@ export class MaintenanceAdminComponent {
           );
           return pub;
         });
-      this.items.set(res.data);
+      this.items.set(res.data.filter((m) => m.versionId === versionId));
     } catch (e) {
       this.error.set((e as Error).message);
     } finally {
