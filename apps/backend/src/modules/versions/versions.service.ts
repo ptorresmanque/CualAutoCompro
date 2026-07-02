@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { notFound } from "../../shared/errors.js";
 import { extendEnum } from "../../shared/enum-extension.js";
@@ -110,7 +111,7 @@ export class VersionsService {
       await extendEnum(this.prisma, "Transmission", input.transmission);
     }
 
-    const id = `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+    const id = randomUUID();
     // SCHEMA-DRIFT NOTE: raw SQL is required because Prisma 5's query engine
     // validates enums against the codegen-time schema and rejects new values
     // even after ALTER TYPE ADD VALUE succeeds on the live DB. The column list
