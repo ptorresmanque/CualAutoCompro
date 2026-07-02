@@ -1,0 +1,24 @@
+<div class="flex flex-col gap-2 w-full">
+  @if (previewUrl(); as url) {
+    <div class="relative w-full h-32 rounded border border-border overflow-hidden bg-surface">
+      <img data-testid="preview" [src]="url" alt="Preview" class="w-full h-full object-contain" />
+      <button
+        type="button"
+        data-testid="clear"
+        (click)="clear()"
+        class="absolute top-1 right-1 rounded-full bg-surface/90 p-1 text-ink-muted hover:text-warn-dark"
+        aria-label="Quitar imagen"
+      >
+        <span class="material-symbols-outlined text-base">close</span>
+      </button>
+    </div>
+  }
+  <label class="inline-flex items-center gap-2 rounded border border-border px-3 py-1.5 text-sm cursor-pointer hover:bg-surface w-fit">
+    <span class="material-symbols-outlined text-base">upload</span>
+    <span>{{ uploading() ? 'Subiendo…' : 'Subir imagen' }}</span>
+    <input type="file" accept="image/*" class="hidden" (change)="onFileChange($event)" />
+  </label>
+  @if (error(); as err) {
+    <p class="text-warn-dark text-xs">{{ err }}</p>
+  }
+</div>
