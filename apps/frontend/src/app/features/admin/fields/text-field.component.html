@@ -1,0 +1,13 @@
+@if (multiline()) {
+  <textarea
+    rows="2"
+    class="rounded border border-border px-2 py-1.5 text-sm bg-surface"
+    [formControl]="$any(control())"
+  ></textarea>
+} @else {
+  <input
+    type="text"
+    class="rounded border border-border px-2 py-1.5 text-sm bg-surface w-full"
+    [formControl]="$any(control())"
+  />
+}
