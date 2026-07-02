@@ -78,7 +78,6 @@ export class AdminEditDialogComponent {
   readonly loadError = signal<string | null>(null);
   readonly loading = signal(true);
   readonly form = signal<FormGroup>(this.fb.group({}));
-  readonly isEdit = signal(false);
 
   readonly fieldMetas = computed<FieldMeta[]>(() => {
     const key = this.entityKey();
@@ -141,7 +140,6 @@ export class AdminEditDialogComponent {
       const tpl = this.emptyTemplate();
       const e = this.entity();
       untracked(() => {
-        this.isEdit.set(e !== null);
         if (Object.keys(tpl).length === 0) return;
         const form = this.form();
         const existing = new Set(Object.keys(form.controls));

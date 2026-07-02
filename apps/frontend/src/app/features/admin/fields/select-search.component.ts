@@ -9,7 +9,6 @@ import {
   input,
   OnInit,
   signal,
-  viewChild,
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/api.service';
@@ -37,7 +36,6 @@ export class SelectSearchComponent implements OnInit {
   readonly open = signal(false);
   readonly activeIndex = signal(0);
   readonly remoteOptions = signal<{ id: string; [k: string]: unknown }[]>([]);
-  private inputRef = viewChild<ElementRef<HTMLInputElement>>('input');
 
   constructor() {
     effect(() => {
