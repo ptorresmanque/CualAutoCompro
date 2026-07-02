@@ -10,17 +10,36 @@ export const FUELS = ['BENCINA', 'DIESEL', 'HYBRID', 'ELECTRIC'] as const;
 // add them to the Postgres enum at insert time.
 export const ENUM_REGEX = /^[A-Z0-9_]+$/;
 
+// Mirrors backend `imageUrl` helper (apps/backend/src/shared/image-url.ts).
+// Accepts both absolute URLs and relative /uploads/* paths (returned by
+// POST /api/v1/admin/uploads).
+const imageUrlField = z
+  .string()
+  .min(1)
+  .refine(
+    (v) => {
+      if (v.startsWith('/uploads/')) return true;
+      try {
+        new URL(v);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { message: 'URL inválida (debe ser absoluta o ruta /uploads/...)' },
+  );
+
 export const brandSchema = z.object({
   name: z.string().min(2).max(80),
-  logoUrl: z.string().url().nullable().optional(),
+  logoUrl: imageUrlField.nullable().optional(),
 });
 
 export const modelSchema = z.object({
   brandId: z.string().min(1),
   name: z.string().min(2).max(80),
   segment: z.string().min(1).max(40).regex(ENUM_REGEX),
-  imageUrl: z.string().url().nullable().optional(),
-  galleryUrls: z.array(z.string().url()).default([]),
+  imageUrl: imageUrlField.nullable().optional(),
+  galleryUrls: z.array(imageUrlField).default([]),
 });
 
 export const versionSchema = z.object({

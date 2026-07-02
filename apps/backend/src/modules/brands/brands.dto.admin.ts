@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { imageUrl } from "../../shared/image-url.js";
 
 export const createBrandSchema = z.object({
   name: z.string().min(2).max(80),
-  logoUrl: z.string().url().nullable().optional(),
+  logoUrl: imageUrl.nullable().optional(),
 });
 
 export const updateBrandSchema = createBrandSchema.partial();
