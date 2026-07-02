@@ -4,6 +4,12 @@ export const SEGMENTS = ['SEDAN', 'SUV', 'HATCHBACK', 'PICKUP', 'CROSSOVER', 'CO
 export const TRANSMISSIONS = ['MANUAL', 'AUTOMATIC', 'CVT', 'DCT'] as const;
 export const FUELS = ['BENCINA', 'DIESEL', 'HYBRID', 'ELECTRIC'] as const;
 
+// Mirrors backend `ENUM_REGEX` (apps/backend/src/modules/*/dto.admin.ts).
+// New values for Segment/Fuel/Transmission can be typed via the "otro" option
+// in the form or directly in the JSON tab; the backend's extendEnum will
+// add them to the Postgres enum at insert time.
+export const ENUM_REGEX = /^[A-Z0-9_]+$/;
+
 export const brandSchema = z.object({
   name: z.string().min(2).max(80),
   logoUrl: z.string().url().nullable().optional(),
@@ -12,7 +18,7 @@ export const brandSchema = z.object({
 export const modelSchema = z.object({
   brandId: z.string().min(1),
   name: z.string().min(2).max(80),
-  segment: z.enum(SEGMENTS),
+  segment: z.string().min(1).max(40).regex(ENUM_REGEX),
   imageUrl: z.string().url().nullable().optional(),
   galleryUrls: z.array(z.string().url()).default([]),
 });
@@ -22,8 +28,8 @@ export const versionSchema = z.object({
   name: z.string().min(2).max(80),
   year: z.number().int().min(1990).max(2100),
   priceClp: z.number().int().nonnegative(),
-  transmission: z.enum(TRANSMISSIONS),
-  fuel: z.enum(FUELS),
+  transmission: z.string().min(1).max(40).regex(ENUM_REGEX),
+  fuel: z.string().min(1).max(40).regex(ENUM_REGEX),
   engineDisplacementCc: z.number().int().nonnegative(),
   powerHp: z.number().int().nonnegative(),
   torqueNm: z.number().int().nonnegative(),
