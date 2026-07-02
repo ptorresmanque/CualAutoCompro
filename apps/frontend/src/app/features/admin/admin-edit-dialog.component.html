@@ -38,28 +38,19 @@
         <p class="text-sm text-ink-muted">Cargando plantilla…</p>
       } @else if (tab() === 'form') {
         <form [formGroup]="form()" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          @for (key of form().controls | keyvalue; track key.key) {
+          @for (meta of fieldMetas(); track meta.field) {
             <label class="flex flex-col text-xs">
-              <span class="font-bold mb-1">{{ key.key }}</span>
-              @if (key.value.value === null || typeof key.value.value === 'boolean' || typeof key.value.value === 'number') {
-                <input
-                  [type]="typeof key.value.value === 'number' ? 'number' : 'text'"
-                  [formControlName]="key.key"
-                  class="rounded border border-border px-2 py-1.5 text-sm"
-                />
-              } @else if (Array.isArray(key.value.value)) {
-                <textarea
-                  [formControlName]="key.key"
-                  rows="2"
-                  class="rounded border border-border px-2 py-1.5 text-sm"
-                  placeholder="[] (JSON array)"
-                ></textarea>
-              } @else {
-                <input
-                  type="text"
-                  [formControlName]="key.key"
-                  class="rounded border border-border px-2 py-1.5 text-sm"
-                />
+              <span class="font-bold mb-1">
+                {{ meta.label }} <span class="font-normal text-ink-muted">({{ meta.field }})</span>
+              </span>
+              @switch (meta.kind) {
+                @case ('text')       { <app-text-field         [control]="$any(controlFor(meta.field))" /> }
+                @case ('number')     { <app-number-field       [control]="$any(controlFor(meta.field))" /> }
+                @case ('boolean')    { <app-toggle-field       [control]="$any(controlFor(meta.field))" /> }
+                @case ('foreignKey') { <app-select-search      [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi!" [optionLabel]="meta.optionLabel!" /> }
+                @case ('enumWithOther') { <app-select-search   [control]="$any(controlFor(meta.field))" [options]="meta.options!" [allowOther]="true" /> }
+                @case ('imageUrl')   { <app-image-upload-field [control]="$any(controlFor(meta.field))" /> }
+                @case ('array')      { <app-text-field         [control]="$any(controlFor(meta.field))" [multiline]="true" /> }
               }
             </label>
           }

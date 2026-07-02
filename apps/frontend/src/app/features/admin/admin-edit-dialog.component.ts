@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   EventEmitter,
   inject,
   input,
   Output,
   signal,
+  untracked,
 } from '@angular/core';
 import {
   FormBuilder,
@@ -15,25 +17,52 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { KeyValuePipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../core/api.service';
+import { ENV } from '../../core/env';
 import {
   entitySchemaByKey,
+  FIELD_METAS,
   type EntityKey,
+  type FieldMeta,
 } from './entity-schemas';
+import { TextFieldComponent } from './fields/text-field.component';
+import { NumberFieldComponent } from './fields/number-field.component';
+import { ToggleFieldComponent } from './fields/toggle-field.component';
+import { SelectSearchComponent } from './fields/select-search.component';
+import { ImageUploadFieldComponent } from './fields/image-upload-field.component';
 
 type Tab = 'form' | 'json';
+const HIDDEN_KEYS = new Set(['id', 'createdAt', 'updatedAt', 'deletedAt']);
+
+function sanitize(value: Record<string, unknown> | null): Record<string, unknown> {
+  if (!value) return {};
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(value)) {
+    if (HIDDEN_KEYS.has(k)) continue;
+    out[k] = v;
+  }
+  return out;
+}
 
 @Component({
   selector: 'app-admin-edit-dialog',
-  imports: [ReactiveFormsModule, KeyValuePipe],
+  imports: [
+    ReactiveFormsModule,
+    TextFieldComponent,
+    NumberFieldComponent,
+    ToggleFieldComponent,
+    SelectSearchComponent,
+    ImageUploadFieldComponent,
+  ],
   templateUrl: './admin-edit-dialog.component.html',
   styleUrl: './admin-edit-dialog.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminEditDialogComponent {
   private fb = inject(FormBuilder);
-  private api = inject(ApiService);
+  private http = inject(HttpClient);
 
   readonly entityKey = input.required<EntityKey>();
   readonly entity = input<Record<string, unknown> | null>(null);
@@ -43,55 +72,104 @@ export class AdminEditDialogComponent {
   @Output() cancel = new EventEmitter<void>();
 
   readonly tab = signal<Tab>('form');
-  readonly Array = Array;
   readonly jsonText = signal<string>('{}');
   readonly jsonError = signal<string | null>(null);
   readonly emptyTemplate = signal<Record<string, unknown>>({});
   readonly loadError = signal<string | null>(null);
   readonly loading = signal(true);
-
   readonly form = signal<FormGroup>(this.fb.group({}));
   readonly isEdit = signal(false);
+
+  readonly fieldMetas = computed<FieldMeta[]>(() => {
+    const key = this.entityKey();
+    const tpl = this.emptyTemplate();
+    const all = FIELD_METAS[key] ?? [];
+    const known = new Set(all.map((m) => m.field));
+    const extras: FieldMeta[] = [];
+    for (const k of Object.keys(tpl)) {
+      if (!known.has(k) && !HIDDEN_KEYS.has(k)) {
+        extras.push({ field: k, label: k, kind: 'text' });
+      }
+    }
+    return [...all, ...extras];
+  });
+
+  private fetchAbort = new Subject<void>();
 
   constructor() {
     effect(() => {
       const key = this.entityKey();
+      untracked(() => {
+        if (Object.keys(this.form().controls).length === 0) {
+          this.form.set(this.fb.group(this.buildInitialControls(key)));
+        }
+      });
+    });
+
+    effect(() => {
+      const key = this.entityKey();
+      this.fetchAbort.next();
+      untracked(() => {
+        this.loading.set(true);
+        this.loadError.set(null);
+        this.http
+          .get<{ data: Record<string, unknown> }>(`${ENV.apiBase}/admin/seed/template/${key}`)
+          .pipe(takeUntil(this.fetchAbort))
+          .subscribe({
+            next: (res) => {
+              untracked(() => {
+                this.emptyTemplate.set(res.data);
+                this.loading.set(false);
+              });
+            },
+            error: (err: Error) => {
+              untracked(() => {
+                this.loadError.set(`No se pudo cargar la plantilla: ${err.message}`);
+                this.loading.set(false);
+              });
+            },
+          });
+      });
+    });
+
+    effect(() => {
+      const tpl = this.emptyTemplate();
       const e = this.entity();
-      this.isEdit.set(e !== null);
-      void this.loadAndBuild(key, e);
+      untracked(() => {
+        this.isEdit.set(e !== null);
+        if (Object.keys(tpl).length === 0) return;
+        const form = this.form();
+        const existing = new Set(Object.keys(form.controls));
+        for (const k of Object.keys(tpl)) {
+          if (!existing.has(k) && !HIDDEN_KEYS.has(k)) {
+            form.addControl(k, new FormControl(tpl[k]));
+          }
+        }
+        const value = sanitize(e) ?? tpl;
+        for (const [k, v] of Object.entries(value)) {
+          if (HIDDEN_KEYS.has(k)) continue;
+          form.get(k)?.setValue(v);
+        }
+        this.jsonText.set(JSON.stringify(value, null, 2));
+      });
     });
   }
 
-  private async loadAndBuild(key: EntityKey, current: Record<string, unknown> | null): Promise<void> {
-    this.loading.set(true);
-    this.loadError.set(null);
-    try {
-      const res = await this.api.get<{ data: Record<string, unknown> }>(
-        `/admin/seed/template/${key}`,
-      );
-      const tpl = res.data;
-      this.emptyTemplate.set(tpl);
-      this.form.set(this.buildFormGroup(tpl, current));
-      this.jsonText.set(JSON.stringify(current ?? tpl, null, 2));
-    } catch (err) {
-      this.loadError.set(`No se pudo cargar la plantilla: ${(err as Error).message}`);
-    } finally {
-      this.loading.set(false);
-    }
-  }
-
-  private buildFormGroup(tpl: Record<string, unknown>, current: Record<string, unknown> | null): FormGroup {
-    const value = current ?? tpl;
+  private buildInitialControls(key: EntityKey): Record<string, FormControl> {
+    const metas = FIELD_METAS[key] ?? [];
     const controls: Record<string, FormControl> = {};
-    for (const [k, v] of Object.entries(tpl)) {
-      const initial = (value as Record<string, unknown>)[k] ?? v;
-      const ctrl = new FormControl(initial);
-      if (k !== 'brandId' && k !== 'modelId' && k !== 'versionId') {
+    for (const meta of metas) {
+      const ctrl = new FormControl(null);
+      if (meta.kind !== 'foreignKey' && meta.kind !== 'imageUrl' && meta.kind !== 'array') {
         ctrl.addValidators([Validators.required]);
       }
-      controls[k] = ctrl;
+      controls[meta.field] = ctrl;
     }
-    return this.fb.group(controls);
+    return controls;
+  }
+
+  controlFor(field: string): FormControl {
+    return this.form().get(field) as FormControl;
   }
 
   switchTab(t: Tab): void {
@@ -109,7 +187,12 @@ export class AdminEditDialogComponent {
         return;
       }
       this.jsonError.set(null);
-      this.form.set(this.buildFormGroup(this.emptyTemplate(), result.data));
+      const form = this.form();
+      const value = sanitize(parsed);
+      for (const [k, v] of Object.entries(value)) {
+        if (HIDDEN_KEYS.has(k)) continue;
+        form.get(k)?.setValue(v);
+      }
       this.tab.set('form');
     } catch (e) {
       this.jsonError.set(`JSON inválido: ${(e as Error).message}`);
