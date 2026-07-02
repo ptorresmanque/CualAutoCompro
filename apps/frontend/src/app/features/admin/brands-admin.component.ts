@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ApiService } from '../../core/api.service';
+import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { sortItems, type SortDir } from './sort-utils';
 
@@ -8,7 +9,7 @@ type SortKey = 'name';
 
 @Component({
   selector: 'app-brands-admin',
-  imports: [AdminEditDialogComponent],
+  imports: [AdminEditDialogComponent, SearchInputComponent],
   templateUrl: './brands-admin.component.html',
   styleUrl: './brands-admin.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -14,6 +14,10 @@ export const maintenanceController = {
     res.json(ok(await svc.listByVersion(versionId)));
   }),
 
+  listAllPublic: ah(async (_req: Request, res: Response) => {
+    res.json(ok(await svc.listAllPublic()));
+  }),
+
   listAll: ah(async (_req: Request, res: Response) => {
     res.json(ok(await svc.listAll()));
   }),

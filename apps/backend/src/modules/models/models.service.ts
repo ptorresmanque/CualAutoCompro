@@ -3,7 +3,8 @@ import { Prisma } from "@prisma/client";
 import type { z } from "zod";
 import type { listModelsQuerySchema } from "./models.dto.js";
 import { conflict, notFound } from "../../shared/errors.js";
-import type { CreateModelInput, UpdateModelInput } from "./models.dto.admin.js";
+import { extendEnum } from "../../shared/enum-extension.js";
+import { SEGMENTS, type CreateModelInput, type UpdateModelInput } from "./models.dto.admin.js";
 
 export class ModelsService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -136,12 +137,81 @@ export class ModelsService {
       where: { id: input.brandId, deletedAt: null },
     });
     if (!brand) throw notFound("Marca no encontrada");
-    return this.prisma.model.create({
-      data: input as Prisma.ModelUncheckedCreateInput,
-    });
+
+    const knownSegment = SEGMENTS.includes(input.segment as (typeof SEGMENTS)[number]);
+    if (knownSegment) {
+      return this.prisma.model.create({
+        data: input as Prisma.ModelUncheckedCreateInput,
+      });
+    }
+
+    await extendEnum(this.prisma, "Segment", input.segment);
+    const id = `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+    const rows = await this.prisma.$queryRawUnsafe<Array<{
+      id: string;
+      brandId: string;
+      name: string;
+      segment: string;
+      imageUrl: string | null;
+      galleryUrls: string[];
+      deletedAt: Date | null;
+      createdAt: Date;
+    }>>(
+      `INSERT INTO "Model" (id, "brandId", name, segment, "imageUrl", "galleryUrls", "createdAt", "deletedAt")
+       VALUES ($1, $2, $3, $4::"Segment", $5, $6::text[], NOW(), NULL)
+       RETURNING id, "brandId", name, segment, "imageUrl", "galleryUrls", "deletedAt", "createdAt"`,
+      id,
+      input.brandId,
+      input.name,
+      input.segment,
+      input.imageUrl ?? null,
+      input.galleryUrls ?? [],
+    );
+    return rows[0]!;
   }
 
   async update(id: string, input: UpdateModelInput) {
+    const newSegment = input.segment && !SEGMENTS.includes(input.segment as (typeof SEGMENTS)[number])
+      ? input.segment
+      : null;
+    if (newSegment) {
+      await extendEnum(this.prisma, "Segment", newSegment);
+      const setClauses: string[] = [];
+      const values: unknown[] = [];
+      let idx = 1;
+      if (input.name !== undefined) {
+        setClauses.push(`name = $${idx++}`);
+        values.push(input.name);
+      }
+      setClauses.push(`segment = $${idx++}::"Segment"`);
+      values.push(input.segment);
+      if (input.imageUrl !== undefined) {
+        setClauses.push(`"imageUrl" = $${idx++}`);
+        values.push(input.imageUrl);
+      }
+      if (input.galleryUrls !== undefined) {
+        setClauses.push(`"galleryUrls" = $${idx++}::text[]`);
+        values.push(input.galleryUrls);
+      }
+      values.push(id);
+      const rows = await this.prisma.$queryRawUnsafe<Array<{
+        id: string;
+        brandId: string;
+        name: string;
+        segment: string;
+        imageUrl: string | null;
+        galleryUrls: string[];
+        deletedAt: Date | null;
+        createdAt: Date;
+      }>>(
+        `UPDATE "Model" SET ${setClauses.join(", ")} WHERE id = $${idx} AND "deletedAt" IS NULL
+         RETURNING id, "brandId", name, segment, "imageUrl", "galleryUrls", "deletedAt", "createdAt"`,
+        ...values,
+      );
+      if (rows.length === 0) throw notFound("Modelo no encontrado");
+      return rows[0]!;
+    }
+
     const data = Object.fromEntries(
       Object.entries(input).filter(([, v]) => v !== undefined),
     ) as Prisma.ModelUpdateInput;

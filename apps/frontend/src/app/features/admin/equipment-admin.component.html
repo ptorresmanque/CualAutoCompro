@@ -8,12 +8,10 @@
     >+ Nuevo</button>
   </header>
 
-  <input
-    type="text"
+  <app-search-input
     placeholder="Buscar equipamiento o categoría…"
-    class="w-full mb-4 rounded border border-border px-3 py-2 text-sm"
     [value]="search()"
-    (input)="onSearch($any($event.target).value)"
+    (changed)="onSearch($event)"
   />
 
   @if (error(); as err) {

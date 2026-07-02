@@ -1,4 +1,6 @@
 import express from "express";
+import path from "node:path";
+import multer from "multer";
 import cookieParser from "cookie-parser";
 import { env } from "./config/env.js";
 import { ok } from "./shared/response.js";
@@ -12,6 +14,7 @@ import { meFavoritesRouter } from "./modules/favorites/favorites.routes.js";
 import { equipmentAdminRouter, equipmentRouter } from "./modules/equipment/equipment.routes.js";
 import { maintenanceAdminRouter, maintenanceRouter } from "./modules/maintenance/maintenance.routes.js";
 import { adminRouter } from "./modules/admin/admin.routes.js";
+import { uploadsAdminRouter } from "./modules/uploads/uploads.routes.js";
 
 export const createApp = () => {
   const app = express();
@@ -55,9 +58,18 @@ export const createApp = () => {
   app.use("/api/v1/maintenance", maintenanceRouter);
   app.use("/api/v1/admin/maintenance", maintenanceAdminRouter);
   app.use("/api/v1/admin", adminRouter);
+  app.use("/api/v1/admin/uploads", uploadsAdminRouter);
+  app.use("/uploads", express.static(path.resolve(process.cwd(), "public", "uploads")));
   app.use((_req, res) => res.status(404).json({ data: null, error: { code: "NOT_FOUND", message: "Ruta no encontrada" } }));
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    if (err instanceof multer.MulterError) {
+      const status = err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
+      return res.status(status).json({
+        data: null,
+        error: { code: err.code, message: err.message },
+      });
+    }
     if (err && typeof err === "object" && "code" in err && "message" in err) {
       const e = err as { code: string; message: string; status?: number; details?: Record<string, unknown> };
       return res.status(e.status ?? 500).json({

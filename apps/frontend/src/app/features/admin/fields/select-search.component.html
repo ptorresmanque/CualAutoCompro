@@ -1,0 +1,40 @@
+<div class="relative w-full">
+  <input
+    #input
+    type="text"
+    role="combobox"
+    [attr.aria-expanded]="open()"
+    [attr.aria-activedescendant]="open() && filtered().length > 0 ? 'option-' + activeIndex() : null"
+    aria-autocomplete="list"
+    [value]="query()"
+    (input)="onInput($any($event.target).value)"
+    (focus)="open.set(true)"
+    (keydown.escape)="open.set(false)"
+    (keydown.arrowdown)="onArrowDown($event)"
+    (keydown.arrowup)="onArrowUp($event)"
+    (keydown.enter)="onEnter($event)"
+    class="w-full rounded border border-border px-2 py-1.5 text-sm bg-surface"
+  />
+  @if (open() && filtered().length > 0) {
+    <ul role="listbox" class="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded border border-border bg-surface shadow-e2">
+      @for (item of filtered(); track item.label; let i = $index) {
+        <li
+          [attr.id]="'option-' + i"
+          role="option"
+          [attr.aria-selected]="activeIndex() === i"
+          class="px-3 py-1.5 text-sm cursor-pointer hover:bg-brand-50"
+          [class.bg-brand-50]="activeIndex() === i"
+          [class.font-bold]="item.isOther"
+          [attr.data-testid]="'select-option-' + i"
+          (click)="pick(item)"
+        >
+          @if (item.isOther) {
+            <button type="button" data-testid="select-other" class="w-full text-left">{{ item.label }}</button>
+          } @else {
+            {{ item.label }}
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

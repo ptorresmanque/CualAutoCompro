@@ -66,3 +66,66 @@ export const entitySchemaByKey: Record<EntityKey, z.ZodTypeAny> = {
   equipment: equipmentSchema,
   maintenance: maintenanceSchema,
 };
+
+export type FieldKind =
+  | 'text'
+  | 'number'
+  | 'boolean'
+  | 'foreignKey'
+  | 'enumWithOther'
+  | 'imageUrl'
+  | 'array';
+
+export interface FieldMeta {
+  field: string;
+  label: string;
+  kind: FieldKind;
+  options?: string[];
+  optionsApi?: string;
+  optionLabel?: string;
+}
+
+export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
+  brand: [
+    { field: 'name', label: 'Nombre', kind: 'text' },
+    { field: 'logoUrl', label: 'Logo', kind: 'imageUrl' },
+  ],
+  model: [
+    { field: 'brandId', label: 'Marca', kind: 'foreignKey', optionsApi: '/brands', optionLabel: 'name' },
+    { field: 'name', label: 'Nombre', kind: 'text' },
+    { field: 'segment', label: 'Segmento', kind: 'enumWithOther', options: [...SEGMENTS] },
+    { field: 'imageUrl', label: 'Imagen principal', kind: 'imageUrl' },
+    { field: 'galleryUrls', label: 'Galería', kind: 'array' },
+  ],
+  version: [
+    { field: 'modelId', label: 'Modelo', kind: 'foreignKey', optionsApi: '/models', optionLabel: 'name' },
+    { field: 'name', label: 'Nombre', kind: 'text' },
+    { field: 'year', label: 'Año', kind: 'number' },
+    { field: 'priceClp', label: 'Precio CLP', kind: 'number' },
+    { field: 'transmission', label: 'Transmisión', kind: 'enumWithOther', options: [...TRANSMISSIONS] },
+    { field: 'fuel', label: 'Combustible', kind: 'enumWithOther', options: [...FUELS] },
+    { field: 'engineDisplacementCc', label: 'Cilindrada cc', kind: 'number' },
+    { field: 'powerHp', label: 'Potencia hp', kind: 'number' },
+    { field: 'torqueNm', label: 'Torque Nm', kind: 'number' },
+    { field: 'consumptionCityKmL', label: 'Consumo ciudad km/L', kind: 'number' },
+    { field: 'consumptionHighwayKmL', label: 'Consumo carretera km/L', kind: 'number' },
+    { field: 'lengthMm', label: 'Largo mm', kind: 'number' },
+    { field: 'widthMm', label: 'Ancho mm', kind: 'number' },
+    { field: 'heightMm', label: 'Alto mm', kind: 'number' },
+    { field: 'weightKg', label: 'Peso kg', kind: 'number' },
+    { field: 'trunkLiters', label: 'Maleta L', kind: 'number' },
+    { field: 'airbagCount', label: 'Airbags', kind: 'number' },
+    { field: 'hasAbs', label: 'Frenos ABS', kind: 'boolean' },
+    { field: 'hasEsp', label: 'Control de estabilidad', kind: 'boolean' },
+    { field: 'hasCruiseControl', label: 'Control de crucero', kind: 'boolean' },
+  ],
+  equipment: [
+    { field: 'name', label: 'Nombre', kind: 'text' },
+    { field: 'category', label: 'Categoría', kind: 'text' },
+  ],
+  maintenance: [
+    { field: 'versionId', label: 'Versión', kind: 'foreignKey', optionsApi: '/versions', optionLabel: 'name' },
+    { field: 'mileageTag', label: 'Kilometraje', kind: 'number' },
+    { field: 'costClp', label: 'Costo CLP', kind: 'number' },
+  ],
+};

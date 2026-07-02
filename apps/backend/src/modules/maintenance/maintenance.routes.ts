@@ -4,6 +4,7 @@ import { requireRole } from "../auth/role.middleware.js";
 import { maintenanceController } from "./maintenance.controller.js";
 
 export const maintenanceRouter = Router();
+maintenanceRouter.get("/", maintenanceController.listAllPublic);
 maintenanceRouter.get("/version/:versionId", maintenanceController.listByVersion);
 
 export const maintenanceAdminRouter = Router();
