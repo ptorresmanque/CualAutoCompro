@@ -5,47 +5,24 @@ import { provideRouter } from '@angular/router';
 import { AdminDashboardComponent } from './admin-dashboard.component';
 
 describe('AdminDashboardComponent', () => {
-  it('carga conteos desde los endpoints públicos', async () => {
+  it('carga las 5 cards y la de Mantención llama a /admin/maintenance', async () => {
     TestBed.configureTestingModule({
       imports: [AdminDashboardComponent],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
-    });
-    const fixture = TestBed.createComponent(AdminDashboardComponent);
-    fixture.detectChanges();
-    const http = TestBed.inject(HttpTestingController);
-    const requests = http.match(() => true);
-    expect(requests.length).toBeGreaterThan(0);
-    for (const r of requests) r.flush({ data: [] });
-    fixture.detectChanges();
-  });
-
-  it('llama a los 5 endpoints correctos', async () => {
-    TestBed.configureTestingModule({
-      imports: [AdminDashboardComponent],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     const fixture = TestBed.createComponent(AdminDashboardComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
 
-    http
-      .expectOne((r) => r.url.includes('/api/v1/brands'))
-      .flush({ data: [{ id: 'b1', name: 'Toyota' }] });
-    http
-      .expectOne((r) => r.url.includes('/api/v1/models?pageSize=1'))
-      .flush({ data: { total: 0, items: [], page: 1, pageSize: 1 } });
-    http
-      .expectOne((r) => r.url.includes('/api/v1/versions?pageSize=1'))
-      .flush({ data: { total: 0, items: [], page: 1, pageSize: 1 } });
-    http
-      .expectOne((r) => r.url.includes('/api/v1/equipment'))
-      .flush({ data: [{ id: 'e1', name: 'Climatizador' }] });
-    http
-      .expectOne((r) => r.url.includes('/api/v1/maintenance/version/__none__'))
-      .flush({ data: [] });
+    const maintReq = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance'));
+    maintReq.flush({ data: [{ id: 'm1' }, { id: 'm2' }, { id: 'm3' }] });
+
+    for (const r of http.match(() => true)) r.flush({ data: [] });
 
     await fixture.whenStable();
-    fixture.detectChanges();
-    http.verify();
+    await new Promise((r) => setTimeout(r, 0));
+    const cards = fixture.componentInstance.cards();
+    const maint = cards.find((c) => c.path === '/admin/maintenance');
+    expect(maint?.count).toBe(3);
   });
 });

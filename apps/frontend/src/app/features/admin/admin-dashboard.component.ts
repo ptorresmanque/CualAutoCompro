@@ -37,7 +37,7 @@ export class AdminDashboardComponent {
       this.load('Modelos',      '/models?pageSize=1',     1),
       this.load('Versiones',    '/versions?pageSize=1',   2),
       this.load('Equipamiento', '/equipment',             3),
-      this.load('Mantención',   '/maintenance/version/__none__', 4).catch(() => undefined),
+      this.load('Mantención',   '/admin/maintenance', 4),
     ]);
   }
 
