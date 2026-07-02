@@ -60,6 +60,34 @@ describe("FavoritesService", () => {
     expect(cards[0]?.versions).toHaveLength(2);
   });
 
+  it("listModels expone imageUrl con prioridad sobre galleryUrls[0] (regression: cards mostraban galería)", async () => {
+    const svc = new FavoritesService(prisma);
+    const { u, m, v1 } = await seedUserAndModelAndVersion();
+    // Set both fields with distinct values.
+    await prisma.model.update({
+      where: { id: m.id },
+      data: {
+        imageUrl: "/uploads/2026-07/primary.png",
+        galleryUrls: ["/uploads/2026-07/gallery-first.jpg", "/uploads/2026-07/gallery-second.jpg"],
+      },
+    });
+    await svc.add(u.id, { modelId: m.id, versionId: v1.id });
+    const cards = await svc.listModels(u.id);
+    expect(cards[0]?.imageUrl).toBe("/uploads/2026-07/primary.png");
+  });
+
+  it("listModels cae a galleryUrls[0] cuando imageUrl es null", async () => {
+    const svc = new FavoritesService(prisma);
+    const { u, m, v1 } = await seedUserAndModelAndVersion();
+    await prisma.model.update({
+      where: { id: m.id },
+      data: { imageUrl: null, galleryUrls: ["/uploads/2026-07/fallback.jpg"] },
+    });
+    await svc.add(u.id, { modelId: m.id, versionId: v1.id });
+    const cards = await svc.listModels(u.id);
+    expect(cards[0]?.imageUrl).toBe("/uploads/2026-07/fallback.jpg");
+  });
+
   it("add con versionId inexistente lanza NOT_FOUND", async () => {
     const svc = new FavoritesService(prisma);
     const u = await prisma.user.create({

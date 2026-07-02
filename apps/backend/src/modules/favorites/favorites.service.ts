@@ -141,7 +141,10 @@ export class FavoritesService {
       name: m.name,
       segment: m.segment,
       brand: { id: m.brand.id, name: m.brand.name },
-      imageUrl: m.galleryUrls[0] ?? m.imageUrl ?? null,
+      // imageUrl is the explicitly-set primary image. The first gallery
+      // image is only a fallback for models where the admin didn't set
+      // a primary image. Same rule as ModelsService.list().
+      imageUrl: m.imageUrl ?? m.galleryUrls[0] ?? null,
       minPrice,
       versionId,
       versions: m.versions.map((v) => ({
