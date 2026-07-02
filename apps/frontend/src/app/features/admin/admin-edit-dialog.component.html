@@ -44,13 +44,14 @@
                 {{ meta.label }} <span class="font-normal text-ink-muted">({{ meta.field }})</span>
               </span>
               @switch (meta.kind) {
-                @case ('text')       { <app-text-field         [control]="$any(controlFor(meta.field))" /> }
-                @case ('number')     { <app-number-field       [control]="$any(controlFor(meta.field))" /> }
-                @case ('boolean')    { <app-toggle-field       [control]="$any(controlFor(meta.field))" /> }
-                @case ('foreignKey') { <app-select-search      [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi!" [optionLabel]="meta.optionLabel!" /> }
-                @case ('enumWithOther') { <app-select-search   [control]="$any(controlFor(meta.field))" [options]="meta.options!" [allowOther]="true" /> }
-                @case ('imageUrl')   { <app-image-upload-field [control]="$any(controlFor(meta.field))" /> }
-                @case ('array')      { <app-text-field         [control]="$any(controlFor(meta.field))" [multiline]="true" /> }
+                @case ('text')          { <app-text-field          [control]="$any(controlFor(meta.field))" /> }
+                @case ('number')        { <app-number-field        [control]="$any(controlFor(meta.field))" /> }
+                @case ('boolean')       { <app-toggle-field        [control]="$any(controlFor(meta.field))" /> }
+                @case ('foreignKey')    { <app-select-search       [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi!" [optionLabel]="meta.optionLabel!" /> }
+                @case ('enumWithOther') { <app-select-search       [control]="$any(controlFor(meta.field))" [options]="meta.options!" [allowOther]="true" /> }
+                @case ('imageUrl')      { <app-image-upload-field  [control]="$any(controlFor(meta.field))" /> }
+                @case ('gallery')       { <app-gallery-upload-field [control]="$any(controlFor(meta.field))" /> }
+                @case ('array')         { <app-text-field          [control]="$any(controlFor(meta.field))" [multiline]="true" /> }
               }
             </label>
           }

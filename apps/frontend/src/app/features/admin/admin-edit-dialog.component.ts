@@ -32,6 +32,7 @@ import { NumberFieldComponent } from './fields/number-field.component';
 import { ToggleFieldComponent } from './fields/toggle-field.component';
 import { SelectSearchComponent } from './fields/select-search.component';
 import { ImageUploadFieldComponent } from './fields/image-upload-field.component';
+import { GalleryUploadFieldComponent } from './fields/gallery-upload-field.component';
 
 type Tab = 'form' | 'json';
 const HIDDEN_KEYS = new Set(['id', 'createdAt', 'updatedAt', 'deletedAt']);
@@ -55,6 +56,7 @@ function sanitize(value: Record<string, unknown> | null): Record<string, unknown
     ToggleFieldComponent,
     SelectSearchComponent,
     ImageUploadFieldComponent,
+    GalleryUploadFieldComponent,
   ],
   templateUrl: './admin-edit-dialog.component.html',
   styleUrl: './admin-edit-dialog.component.css',
@@ -162,8 +164,16 @@ export class AdminEditDialogComponent {
     const metas = FIELD_METAS[key] ?? [];
     const controls: Record<string, FormControl> = {};
     for (const meta of metas) {
-      const ctrl = new FormControl(null);
-      if (meta.kind !== 'foreignKey' && meta.kind !== 'imageUrl' && meta.kind !== 'array') {
+      // Gallery fields start as an empty array (not null) so the upload
+      // component can push new URLs without first coercing null → [].
+      const initial = meta.kind === 'gallery' ? [] : null;
+      const ctrl = new FormControl(initial);
+      if (
+        meta.kind !== 'foreignKey' &&
+        meta.kind !== 'imageUrl' &&
+        meta.kind !== 'array' &&
+        meta.kind !== 'gallery'
+      ) {
         ctrl.addValidators([Validators.required]);
       }
       controls[meta.field] = ctrl;

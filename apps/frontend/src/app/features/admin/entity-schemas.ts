@@ -80,6 +80,7 @@ export type FieldKind =
   | 'foreignKey'
   | 'enumWithOther'
   | 'imageUrl'
+  | 'gallery'
   | 'array';
 
 export interface FieldMeta {
@@ -101,7 +102,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'name', label: 'Nombre', kind: 'text' },
     { field: 'segment', label: 'Segmento', kind: 'enumWithOther', options: [...SEGMENTS] },
     { field: 'imageUrl', label: 'Imagen principal', kind: 'imageUrl' },
-    { field: 'galleryUrls', label: 'Galería', kind: 'array' },
+    { field: 'galleryUrls', label: 'Galería', kind: 'gallery' },
   ],
   version: [
     { field: 'modelId', label: 'Modelo', kind: 'foreignKey', optionsApi: '/models', optionLabel: 'name' },
