@@ -11,6 +11,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { CompareStore } from '../../core/compare-store.service';
+import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { VehicleCardInput } from '../../shared/ui/vehicle-card.component';
 
 interface ModelLite {
@@ -513,7 +514,8 @@ export class CompareComponent {
   }
 
   thumbStyle(url: string | null | undefined): string {
-    return url ? `url("${url}")` : 'none';
+    const resolved = toAbsoluteUploadUrl(url);
+    return resolved ? `url("${resolved}")` : 'none';
   }
 
   toggleCarouselFor(modelId: string, buttonEl?: EventTarget | null): void {

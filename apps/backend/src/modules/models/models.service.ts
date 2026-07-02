@@ -89,7 +89,10 @@ export class ModelsService {
       }));
       return {
         id: m.id, brandId: m.brandId, name: m.name, segment: m.segment,
-        imageUrl: m.galleryUrls[0] ?? m.imageUrl ?? null,
+        // imageUrl is the explicitly-set primary image. The first gallery
+        // image is only a fallback for models where the admin didn't set
+        // a primary image.
+        imageUrl: m.imageUrl ?? m.galleryUrls[0] ?? null,
         galleryUrls: m.galleryUrls, brand: m.brand,
         minPrice, minConsumption, maxPrice, versionCount: m.versions.length,
         defaultVersion,

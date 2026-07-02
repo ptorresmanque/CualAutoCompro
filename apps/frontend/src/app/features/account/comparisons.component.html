@@ -58,7 +58,7 @@
               @for (item of c.items.slice(0, 3); track item.position) {
                 <div
                   class="aspect-video rounded-lg bg-cover bg-center overflow-hidden border border-border bg-surface-muted"
-                  [style.background-image]="thumbStyle(item.version.model.galleryUrls?.[0] ?? item.version.model.imageUrl)"
+                  [style.background-image]="thumbStyle(item.version.model.imageUrl ?? item.version.model.galleryUrls?.[0])"
                   aria-hidden="true"
                 ></div>
               }

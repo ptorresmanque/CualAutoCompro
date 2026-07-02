@@ -58,4 +58,92 @@ describe("ModelsService + extendEnum", () => {
     const updated = await svc.update(created.id, { segment: newSegment });
     expect(updated.segment).toBe(newSegment);
   });
+
+  it("list() expone imageUrl con prioridad sobre galleryUrls[0] (regression: cards mostraban galería)", async () => {
+    const svc = new ModelsService(prisma);
+    const brand = await prisma.brand.findFirstOrThrow({ where: { name: "Toyota" } });
+    const name = `Modelo Image ${Date.now()}`;
+    await svc.create({
+      brandId: brand.id,
+      name,
+      segment: "SEDAN",
+      imageUrl: "/uploads/2026-07/primary.png",
+      galleryUrls: ["/uploads/2026-07/one.png", "/uploads/2026-07/two.png"],
+    });
+
+    // Inject a version so the enriched response has minPrice etc.
+    const model = await prisma.model.findFirstOrThrow({ where: { name } });
+    await prisma.version.create({
+      data: {
+        modelId: model.id,
+        name: "1.6",
+        year: 2026,
+        priceClp: 1000000,
+        transmission: "MANUAL",
+        fuel: "BENCINA",
+        engineDisplacementCc: 0,
+        powerHp: 0,
+        torqueNm: 0,
+        consumptionCityKmL: 0,
+        consumptionHighwayKmL: 0,
+        lengthMm: 0,
+        widthMm: 0,
+        heightMm: 0,
+        weightKg: 0,
+        trunkLiters: 0,
+        airbagCount: 0,
+        hasAbs: false,
+        hasEsp: false,
+        hasCruiseControl: false,
+      },
+    });
+
+    const res = await svc.list({ page: 1, pageSize: 50 });
+    const found = res.items.find((m) => m.name === name)!;
+    // Regression: previously returned galleryUrls[0] when imageUrl was set.
+    expect(found.imageUrl).toBe("/uploads/2026-07/primary.png");
+  });
+
+  it("list() cae a galleryUrls[0] cuando imageUrl es null", async () => {
+    const svc = new ModelsService(prisma);
+    const brand = await prisma.brand.findFirstOrThrow({ where: { name: "Toyota" } });
+    const name = `Modelo Fallback ${Date.now()}`;
+    await svc.create({
+      brandId: brand.id,
+      name,
+      segment: "SEDAN",
+      imageUrl: null,
+      galleryUrls: ["/uploads/2026-07/fallback.png"],
+    });
+
+    const model = await prisma.model.findFirstOrThrow({ where: { name } });
+    await prisma.version.create({
+      data: {
+        modelId: model.id,
+        name: "1.6",
+        year: 2026,
+        priceClp: 0,
+        transmission: "MANUAL",
+        fuel: "BENCINA",
+        engineDisplacementCc: 0,
+        powerHp: 0,
+        torqueNm: 0,
+        consumptionCityKmL: 0,
+        consumptionHighwayKmL: 0,
+        lengthMm: 0,
+        widthMm: 0,
+        heightMm: 0,
+        weightKg: 0,
+        trunkLiters: 0,
+        airbagCount: 0,
+        hasAbs: false,
+        hasEsp: false,
+        hasCruiseControl: false,
+      },
+    });
+
+    const res = await svc.list({ page: 1, pageSize: 50 });
+    const found = res.items.find((m) => m.name === name)!;
+    expect(found.imageUrl).toBe("/uploads/2026-07/fallback.png");
+  });
 });

@@ -8,6 +8,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
+import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { DisclaimerComponent } from '../../shared/ui/disclaimer.component';
 
 interface ComparisonVersion {
@@ -151,6 +152,7 @@ export class ComparisonsComponent {
   }
 
   thumbStyle(url: string | null | undefined): string {
-    return url ? `url("${url}")` : 'none';
+    const resolved = toAbsoluteUploadUrl(url);
+    return resolved ? `url("${resolved}")` : 'none';
   }
 }
