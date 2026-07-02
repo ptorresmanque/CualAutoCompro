@@ -111,6 +111,12 @@ export class VersionsService {
     }
 
     const id = `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+    // SCHEMA-DRIFT NOTE: raw SQL is required because Prisma 5's query engine
+    // validates enums against the codegen-time schema and rejects new values
+    // even after ALTER TYPE ADD VALUE succeeds on the live DB. The column list
+    // below mirrors `Version` in prisma/schema.prisma — if a column is added,
+    // removed, or renamed, this query (and VERSION_RETURNING) MUST be updated
+    // in lockstep. There is no compile-time check for this drift.
     const rows = await this.prisma.$queryRawUnsafe<VersionRow[]>(
       `INSERT INTO "Version" (
          id, "modelId", name, year, "priceClp", transmission, fuel,
@@ -251,6 +257,7 @@ export class VersionsService {
         values.push(input.hasCruiseControl);
       }
       values.push(id);
+      // SCHEMA-DRIFT NOTE: see the comment in create() above.
       const rows = await this.prisma.$queryRawUnsafe<VersionRow[]>(
         `UPDATE "Version" SET ${setClauses.join(", ")} WHERE id = $${idx} AND "deletedAt" IS NULL
          RETURNING ${VERSION_RETURNING}`,

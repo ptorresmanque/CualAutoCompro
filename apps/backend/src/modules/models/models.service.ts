@@ -147,6 +147,12 @@ export class ModelsService {
 
     await extendEnum(this.prisma, "Segment", input.segment);
     const id = `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+    // SCHEMA-DRIFT NOTE: raw SQL is required because Prisma 5's query engine
+    // validates enums against the codegen-time schema and rejects new values
+    // even after ALTER TYPE ADD VALUE succeeds on the live DB. The column list
+    // below mirrors `Model` in prisma/schema.prisma — if a column is added,
+    // removed, or renamed, this query MUST be updated in lockstep. There is
+    // no compile-time check for this drift.
     const rows = await this.prisma.$queryRawUnsafe<Array<{
       id: string;
       brandId: string;
@@ -194,6 +200,8 @@ export class ModelsService {
         values.push(input.galleryUrls);
       }
       values.push(id);
+      // SCHEMA-DRIFT NOTE: see the comment in create() above. The RETURNING
+      // tuple must mirror `Model` in prisma/schema.prisma.
       const rows = await this.prisma.$queryRawUnsafe<Array<{
         id: string;
         brandId: string;
