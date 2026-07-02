@@ -48,4 +48,16 @@ export class ApiService {
       }),
     );
   }
+
+  async upload(
+    file: File,
+  ): Promise<{ data: { url: string; filename: string; size: number; mime: string } }> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return firstValueFrom(
+      this.http.post<{
+        data: { url: string; filename: string; size: number; mime: string };
+      }>(`${ENV.apiBase}/admin/uploads`, fd, { withCredentials: true }),
+    );
+  }
 }
