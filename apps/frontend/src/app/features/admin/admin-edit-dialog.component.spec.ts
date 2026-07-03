@@ -79,4 +79,24 @@ describe('AdminEditDialogComponent', () => {
     const toggles = fixture.nativeElement.querySelectorAll('app-toggle-field');
     expect(toggles.length).toBe(3);
   });
+
+  it('version con equipment renderiza app-multi-select-field', async () => {
+    const { fixture, http } = setup('version');
+    const req = http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version'));
+    req.flush({
+      data: {
+        modelId: '', name: '', year: 2026, priceClp: 0,
+        transmission: 'MANUAL', fuel: 'BENCINA',
+        engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
+        consumptionCityKmL: 0, consumptionHighwayKmL: 0,
+        lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
+        trunkLiters: 0, airbagCount: 0,
+        hasAbs: false, hasEsp: false, hasCruiseControl: false,
+      },
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const ms = fixture.nativeElement.querySelector('app-multi-select-field');
+    expect(ms).toBeTruthy();
+  });
 });

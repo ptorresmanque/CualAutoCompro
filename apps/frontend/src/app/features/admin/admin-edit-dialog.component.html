@@ -51,6 +51,7 @@
                 @case ('enumWithOther') { <app-select-search       [control]="$any(controlFor(meta.field))" [options]="meta.options!" [allowOther]="true" /> }
                 @case ('imageUrl')      { <app-image-upload-field  [control]="$any(controlFor(meta.field))" /> }
                 @case ('gallery')       { <app-gallery-upload-field [control]="$any(controlFor(meta.field))" /> }
+                @case ('multiSelect')   { <app-multi-select-field  [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi!" [optionLabel]="meta.optionLabel!" [placeholder]="'Buscar equipamiento…'" /> }
                 @case ('array')         { <app-text-field          [control]="$any(controlFor(meta.field))" [multiline]="true" /> }
               }
             </label>

@@ -100,6 +100,7 @@ export type FieldKind =
   | 'enumWithOther'
   | 'imageUrl'
   | 'gallery'
+  | 'multiSelect'
   | 'array';
 
 export interface FieldMeta {
@@ -144,6 +145,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'hasAbs', label: 'Frenos ABS', kind: 'boolean' },
     { field: 'hasEsp', label: 'Control de estabilidad', kind: 'boolean' },
     { field: 'hasCruiseControl', label: 'Control de crucero', kind: 'boolean' },
+    { field: 'equipment', label: 'Equipamiento', kind: 'multiSelect', optionsApi: '/admin/equipment', optionLabel: 'name' },
   ],
   equipment: [
     { field: 'name', label: 'Nombre', kind: 'text' },
