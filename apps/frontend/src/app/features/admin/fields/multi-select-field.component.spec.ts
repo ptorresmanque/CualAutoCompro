@@ -26,6 +26,17 @@ describe('MultiSelectFieldComponent', () => {
     expect(chips[0].textContent).toContain('e1');
   });
 
+  it('renderiza TODOS los chips cuando hay muchos items (no se trunca)', () => {
+    // 20 items para garantizar que el componente no tiene un límite
+    // implícito (e.g., un array.slice(0, 2) oculto en algún lugar).
+    const ids = Array.from({ length: 20 }, (_, i) => `e${i + 1}`);
+    const { fixture } = setup(ids);
+    const chips = fixture.nativeElement.querySelectorAll('[data-testid="ms-chip"]');
+    expect(chips.length).toBe(20);
+    expect(chips[0].textContent).toContain('e1');
+    expect(chips[19].textContent).toContain('e20');
+  });
+
   it('carga opciones via optionsApi y las filtra al tipear', async () => {
     const { fixture, http } = setup();
     const req = http.expectOne((r) => r.url.includes('/api/v1/admin/equipment'));
