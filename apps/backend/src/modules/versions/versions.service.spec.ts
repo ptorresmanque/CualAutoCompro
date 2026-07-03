@@ -15,8 +15,69 @@ describe("VersionsService + extendEnum", () => {
   });
 
   afterEach(async () => {
-    // Reset version table only; enum extensions persist across tests (harmless).
+    await prisma.versionEquipment.deleteMany();
+    await prisma.equipmentItem.deleteMany();
     await prisma.version.deleteMany();
+  });
+
+  it("listAll incluye equipmentItems con equipmentItem.{id,name,category}", async () => {
+    const brand = await prisma.brand.create({ data: { name: `B-listAll-with-${Date.now()}` } });
+    const model = await prisma.model.create({
+      data: { brandId: brand.id, name: `M-with-${Date.now()}`, segment: "SEDAN" },
+    });
+    const v = await prisma.version.create({
+      data: {
+        modelId: model.id,
+        name: "v1",
+        year: 2026,
+        priceClp: 100,
+        transmission: "MANUAL",
+        fuel: "BENCINA",
+        engineDisplacementCc: 1, powerHp: 1, torqueNm: 1,
+        consumptionCityKmL: 1, consumptionHighwayKmL: 1,
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1,
+        trunkLiters: 1, airbagCount: 1,
+        hasAbs: true, hasEsp: true, hasCruiseControl: true,
+      },
+    });
+    const item = await prisma.equipmentItem.create({
+      data: { name: `Aire acondicionado ${Date.now()}`, category: "Confort" },
+    });
+    await prisma.versionEquipment.create({
+      data: { versionId: v.id, equipmentItemId: item.id },
+    });
+
+    const svc = new VersionsService(prisma);
+    const all = await svc.listAll();
+    expect(all).toHaveLength(1);
+    expect(all[0]?.equipmentItems).toHaveLength(1);
+    expect(all[0]?.equipmentItems?.[0]?.equipmentItem).toEqual({
+      id: item.id,
+      name: item.name,
+      category: "Confort",
+    });
+  });
+
+  it("listAll retorna equipmentItems: [] para versiones sin items", async () => {
+    const brand = await prisma.brand.create({ data: { name: `B-listAll-empty-${Date.now()}` } });
+    const model = await prisma.model.create({
+      data: { brandId: brand.id, name: `M-empty-${Date.now()}`, segment: "SEDAN" },
+    });
+    await prisma.version.create({
+      data: {
+        modelId: model.id, name: "v1", year: 2026, priceClp: 0,
+        transmission: "MANUAL", fuel: "BENCINA",
+        engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
+        consumptionCityKmL: 0, consumptionHighwayKmL: 0,
+        lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
+        trunkLiters: 0, airbagCount: 0,
+        hasAbs: false, hasEsp: false, hasCruiseControl: false,
+      },
+    });
+
+    const svc = new VersionsService(prisma);
+    const all = await svc.listAll();
+    expect(all[0]?.equipmentItems).toEqual([]);
   });
 
   it("create() crea una versión con fuel y transmission nuevos (extiende enum)", async () => {

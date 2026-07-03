@@ -67,7 +67,14 @@ export class VersionsService {
         model: { deletedAt: null, brand: { deletedAt: null } },
       },
       orderBy: { createdAt: "desc" },
-      include: { model: { select: { id: true, name: true } } },
+      include: {
+        model: { select: { id: true, name: true } },
+        equipmentItems: {
+          include: {
+            equipmentItem: { select: { id: true, name: true, category: true } },
+          },
+        },
+      },
     });
   }
 
