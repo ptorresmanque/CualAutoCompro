@@ -98,7 +98,7 @@ describe("ModelsService + extendEnum", () => {
       },
     });
 
-    const res = await svc.list({ page: 1, pageSize: 50 });
+    const res = await svc.list({ page: 1, pageSize: 50, sort: "name", order: "asc" });
     const found = res.items.find((m) => m.name === name)!;
     // Regression: previously returned galleryUrls[0] when imageUrl was set.
     expect(found.imageUrl).toBe("/uploads/2026-07/primary.png");
@@ -142,7 +142,7 @@ describe("ModelsService + extendEnum", () => {
       },
     });
 
-    const res = await svc.list({ page: 1, pageSize: 50 });
+    const res = await svc.list({ page: 1, pageSize: 50, sort: "name", order: "asc" });
     const found = res.items.find((m) => m.name === name)!;
     expect(found.imageUrl).toBe("/uploads/2026-07/fallback.png");
   });
