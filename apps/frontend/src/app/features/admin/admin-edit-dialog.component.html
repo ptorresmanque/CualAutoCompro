@@ -1,47 +1,44 @@
 <div
-  class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+  class="dialog-overlay"
   role="dialog"
   aria-modal="true"
 >
-  <div class="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-xl bg-surface shadow-e2 overflow-hidden">
-    <header class="flex items-center justify-between border-b border-border px-4 py-3">
-      <div class="flex gap-2">
-        <button
-          type="button"
-          class="px-3 py-1.5 rounded-full text-sm font-bold"
-          [class.bg-brand-600]="tab() === 'form'"
-          [class.text-white]="tab() === 'form'"
-          [class.text-ink]="tab() !== 'form'"
-          (click)="switchTab('form')"
-        >Formulario</button>
-        <button
-          type="button"
-          class="px-3 py-1.5 rounded-full text-sm font-bold"
-          [class.bg-brand-600]="tab() === 'json'"
-          [class.text-white]="tab() === 'json'"
-          [class.text-ink]="tab() !== 'json'"
-          (click)="switchTab('json')"
-        >JSON</button>
-      </div>
-      <button type="button" class="text-ink-muted" (click)="onCancel()" aria-label="Cerrar">
-        <span class="material-symbols-outlined">close</span>
+  <mat-card class="dialog-card">
+    <mat-toolbar class="dialog-toolbar" color="primary">
+      <mat-button-toggle-group
+        [value]="tab()"
+        (change)="switchTab($event.value)"
+        data-testid="dialog-tab-group"
+        class="dialog-tabs"
+        hideSingleSelectionIndicator
+      >
+        <mat-button-toggle value="form">Formulario</mat-button-toggle>
+        <mat-button-toggle value="json">JSON</mat-button-toggle>
+      </mat-button-toggle-group>
+      <button
+        mat-icon-button
+        type="button"
+        (click)="onCancel()"
+        aria-label="Cerrar"
+      >
+        <mat-icon>close</mat-icon>
       </button>
-    </header>
+    </mat-toolbar>
 
-    <div class="flex-1 overflow-y-auto px-4 py-4">
+    <div class="dialog-body">
       @if (loadError(); as err) {
-        <div class="rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark mb-3">
+        <div class="dialog-error">
           {{ err }}
         </div>
       }
       @if (loading()) {
         <p class="text-sm text-ink-muted">Cargando plantilla…</p>
       } @else if (tab() === 'form') {
-        <form [formGroup]="form()" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <form [formGroup]="form()" class="dialog-grid">
           @for (meta of fieldMetas(); track meta.field) {
-            <label class="flex flex-col text-xs">
-              <span class="font-bold mb-1">
-                {{ meta.label }} <span class="font-normal text-ink-muted">({{ meta.field }})</span>
+            <div class="dialog-field">
+              <span class="dialog-field-label">
+                {{ meta.label }} <span class="field-name">({{ meta.field }})</span>
               </span>
               @switch (meta.kind) {
                 @case ('text')          { <app-text-field          [control]="$any(controlFor(meta.field))" /> }
@@ -54,13 +51,13 @@
                 @case ('multiSelect')   { <app-multi-select-field  [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi!" [optionLabel]="meta.optionLabel!" [placeholder]="'Buscar equipamiento…'" /> }
                 @case ('array')         { <app-text-field          [control]="$any(controlFor(meta.field))" [multiline]="true" /> }
               }
-            </label>
+            </div>
           }
         </form>
       } @else {
         <div class="flex flex-col gap-2">
           <textarea
-            class="w-full h-96 font-mono text-xs rounded border border-border px-3 py-2"
+            class="json-editor"
             [value]="jsonText()"
             (input)="jsonText.set($any($event.target).value)"
           ></textarea>
@@ -68,26 +65,31 @@
             <p class="text-warn-dark text-xs">{{ err }}</p>
           }
           <button
+            mat-flat-button
+            color="primary"
             type="button"
-            class="self-start rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700"
+            class="self-start"
             (click)="loadJson()"
+            data-testid="dialog-load-json"
           >Cargar</button>
         </div>
       }
     </div>
 
-    <footer class="flex justify-end gap-2 border-t border-border px-4 py-3">
+    <mat-card-actions class="dialog-actions" align="end">
       <button
+        mat-stroked-button
         type="button"
-        class="rounded-full bg-surface border border-border px-4 py-1.5 text-sm font-bold"
         (click)="onCancel()"
       >Cancelar</button>
       <button
+        mat-flat-button
+        color="primary"
         type="button"
-        class="rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
         [disabled]="loading()"
         (click)="onSubmit()"
+        data-testid="dialog-save"
       >Guardar</button>
-    </footer>
-  </div>
+    </mat-card-actions>
+  </mat-card>
 </div>

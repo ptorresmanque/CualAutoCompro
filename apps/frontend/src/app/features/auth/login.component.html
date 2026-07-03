@@ -12,67 +12,69 @@
     </p>
   </header>
 
-  <form
-    [formGroup]="form"
-    (ngSubmit)="submit()"
-    class="space-y-4 rounded-xl border border-border bg-surface p-6 shadow-sm"
-    novalidate
-  >
-    <label class="block text-sm text-ink">
-      <span class="text-xs font-bold uppercase tracking-wider text-ink-muted">
-        Email
-      </span>
-      <input
-        type="email"
-        autocomplete="email"
-        formControlName="email"
-        class="mt-1 w-full rounded border border-border bg-surface px-3 py-2 text-ink outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600"
-        data-testid="email"
-      />
-      @if (form.controls.email.touched && form.controls.email.invalid) {
-        <span class="mt-1 block text-xs text-warn-dark">
-          Ingresa un email válido.
-        </span>
-      }
-    </label>
-
-    <label class="block text-sm text-ink">
-      <span class="text-xs font-bold uppercase tracking-wider text-ink-muted">
-        Contraseña
-      </span>
-      <input
-        type="password"
-        autocomplete="current-password"
-        formControlName="password"
-        class="mt-1 w-full rounded border border-border bg-surface px-3 py-2 text-ink outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600"
-        data-testid="password"
-      />
-      @if (form.controls.password.touched && form.controls.password.invalid) {
-        <span class="mt-1 block text-xs text-warn-dark">
-          Mínimo 6 caracteres.
-        </span>
-      }
-    </label>
-
-    @if (error(); as msg) {
-      <p
-        class="rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark"
-        role="alert"
-        data-testid="error"
+  <mat-card class="auth-card">
+    <mat-card-content>
+      <form
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+        class="flex flex-col gap-4"
+        novalidate
       >
-        {{ msg }}
-      </p>
-    }
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Email</mat-label>
+          <input
+            matInput
+            type="email"
+            autocomplete="email"
+            formControlName="email"
+            data-testid="email"
+          />
+          @if (form.controls.email.touched && form.controls.email.invalid) {
+            <mat-error>
+              Ingresa un email válido.
+            </mat-error>
+          }
+        </mat-form-field>
 
-    <button
-      type="submit"
-      [disabled]="submitting()"
-      class="w-full rounded-full bg-brand-600 px-4 py-2.5 font-bold text-white hover:bg-brand-700 transition-colors disabled:opacity-60 shadow-md"
-      data-testid="submit"
-    >
-      {{ submitting() ? 'Ingresando…' : 'Iniciar sesión' }}
-    </button>
-  </form>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Contraseña</mat-label>
+          <input
+            matInput
+            type="password"
+            autocomplete="current-password"
+            formControlName="password"
+            data-testid="password"
+          />
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <mat-error>
+              Mínimo 6 caracteres.
+            </mat-error>
+          }
+        </mat-form-field>
+
+        @if (error(); as msg) {
+          <div
+            class="rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark"
+            role="alert"
+            data-testid="error"
+          >
+            {{ msg }}
+          </div>
+        }
+
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="submitting()"
+          class="w-full"
+          data-testid="submit"
+        >
+          {{ submitting() ? 'Ingresando…' : 'Iniciar sesión' }}
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
 
   <div class="mt-6 flex items-center gap-3 text-xs uppercase tracking-wider text-ink-muted">
     <span class="flex-1 h-px bg-border"></span>
@@ -85,14 +87,14 @@
       routerLink="/"
       class="w-full inline-flex items-center justify-center gap-2 rounded-full border border-brand-600 text-brand-700 font-bold py-2.5 px-4 text-sm hover:bg-brand-50 transition-colors"
     >
-      <span class="material-symbols-outlined text-base">directions_car</span>
+      <mat-icon class="text-base">directions_car</mat-icon>
       Explorar catálogo
     </a>
     <a
       routerLink="/compare"
       class="w-full inline-flex items-center justify-center gap-2 rounded-full border border-brand-600 text-brand-700 font-bold py-2.5 px-4 text-sm hover:bg-brand-50 transition-colors"
     >
-      <span class="material-symbols-outlined text-base">compare_arrows</span>
+      <mat-icon class="text-base">compare_arrows</mat-icon>
       Comparar autos
     </a>
   </div>

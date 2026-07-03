@@ -20,6 +20,12 @@ import {
 } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { ENV } from '../../core/env';
 import {
   entitySchemaByKey,
@@ -52,6 +58,12 @@ function sanitize(value: Record<string, unknown> | null): Record<string, unknown
   selector: 'app-admin-edit-dialog',
   imports: [
     ReactiveFormsModule,
+    MatButtonModule,
+    MatButtonToggleModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatToolbarModule,
     TextFieldComponent,
     NumberFieldComponent,
     ToggleFieldComponent,
@@ -157,11 +169,6 @@ export class AdminEditDialogComponent {
           if (HIDDEN_KEYS.has(k)) continue;
           const ctrl = form.get(k);
           if (!ctrl) continue;
-          // For array-valued controls (e.g. equipment multiSelect), merge the
-          // entity's value with the form's current value instead of
-          // replacing it. This prevents a race where the user picks an
-          // option before the template response arrives and the preload
-          // (running after) overwrites the user's pick.
           if (
             Array.isArray(v) &&
             Array.isArray(ctrl.value) &&
@@ -184,9 +191,6 @@ export class AdminEditDialogComponent {
     const metas = FIELD_METAS[key] ?? [];
     const controls: Record<string, FormControl> = {};
     for (const meta of metas) {
-      // Gallery and multiSelect fields start as an empty array (not null)
-      // so the child component can push values without first coercing
-      // null → [].
       const initial = meta.kind === 'gallery' || meta.kind === 'multiSelect' ? [] : null;
       const ctrl = new FormControl(initial);
       if (

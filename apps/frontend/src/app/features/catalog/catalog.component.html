@@ -17,147 +17,167 @@
 
   <div class="mx-auto max-w-7xl px-4 py-6 md:py-8 flex flex-col md:flex-row gap-6">
     <aside class="w-full md:w-72 flex-shrink-0">
-      <div class="md:sticky md:top-24 bg-surface border border-border rounded-xl shadow-sm p-5 space-y-5">
-        <header class="flex items-center justify-between">
-          <h2 class="font-bold text-ink flex items-center gap-2 text-lg">
-            <span class="material-symbols-outlined">filter_list</span>
-            Filtros
-          </h2>
-          <button
-            type="button"
-            class="text-xs font-semibold text-ink-muted underline hover:text-brand-700"
-            (click)="clearFilters()"
-            data-testid="filters-clear"
-          >Limpiar</button>
-        </header>
+      <mat-card class="filters-card md:sticky md:top-24">
+        <mat-card-content class="space-y-5 !p-5">
+          <header class="flex items-center justify-between">
+            <h2 class="font-bold text-ink flex items-center gap-2 text-lg">
+              <mat-icon>filter_list</mat-icon>
+              Filtros
+            </h2>
+            <button
+              mat-button
+              type="button"
+              color="primary"
+              (click)="clearFilters()"
+              data-testid="filters-clear"
+            >Limpiar</button>
+          </header>
 
-        <div>
-          <label class="block text-sm font-semibold text-ink-muted mb-2">Segmento</label>
-          <div class="space-y-2">
-            <label class="flex items-center gap-2 text-sm cursor-pointer text-ink">
-              <input type="radio" name="segment" class="rounded text-brand-600 focus:ring-brand-500 border-border"
-                [checked]="!filters().segment"
-                (change)="updateFilter({ segment: undefined })" />
-              Cualquiera
-            </label>
-            @for (s of segments; track s.value) {
-              <label class="flex items-center gap-2 text-sm cursor-pointer text-ink">
-                <input type="radio" name="segment" class="rounded text-brand-600 focus:ring-brand-500 border-border"
-                  [checked]="filters().segment === s.value"
-                  (change)="updateFilter({ segment: s.value })" />
-                {{ s.label }}
-              </label>
-            }
+          <div>
+            <span class="filter-label">Segmento</span>
+            <mat-radio-group
+              aria-label="Segmento"
+              class="flex flex-col gap-2"
+              [value]="filters().segment ?? null"
+              (change)="updateFilter({ segment: $any($event).value || undefined })"
+            >
+              <mat-radio-button [value]="null">Cualquiera</mat-radio-button>
+              @for (s of segments; track s.value) {
+                <mat-radio-button [value]="s.value">{{ s.label }}</mat-radio-button>
+              }
+            </mat-radio-group>
           </div>
-        </div>
 
-        <div>
-          <label class="block text-sm font-semibold text-ink-muted mb-2" for="filter-brand">Marca</label>
-          <select id="filter-brand"
-            class="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
-            [value]="filters().brand ?? ''"
-            (change)="updateFilter({ brand: $any($event.target).value || undefined })"
-            data-testid="filter-brand">
-            <option value="">Cualquiera</option>
-            @for (b of brands(); track b.id) {
-              <option [value]="b.id">{{ b.name }}</option>
-            }
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold text-ink-muted mb-2">Transmisión</label>
-          <div class="space-y-2">
-            <label class="flex items-center gap-2 text-sm cursor-pointer text-ink">
-              <input type="radio" name="transmission" class="rounded text-brand-600 focus:ring-brand-500 border-border"
-                [checked]="!filters().transmission"
-                (change)="updateFilter({ transmission: undefined })" />
-              Cualquiera
-            </label>
-            @for (t of transmissions; track t.value) {
-              <label class="flex items-center gap-2 text-sm cursor-pointer text-ink">
-                <input type="radio" name="transmission" class="rounded text-brand-600 focus:ring-brand-500 border-border"
-                  [checked]="filters().transmission === t.value"
-                  (change)="updateFilter({ transmission: t.value })" />
-                {{ t.label }}
-              </label>
-            }
+          <div>
+            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+              <mat-label>Marca</mat-label>
+              <mat-select
+                [value]="filters().brand ?? null"
+                (selectionChange)="updateFilter({ brand: $any($event).value || undefined })"
+                data-testid="filter-brand"
+              >
+                <mat-option [value]="null">Cualquiera</mat-option>
+                @for (b of brands(); track b.id) {
+                  <mat-option [value]="b.id">{{ b.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
           </div>
-        </div>
 
-        <div>
-          <label class="block text-sm font-semibold text-ink-muted mb-2">Combustible</label>
-          <div class="space-y-2">
-            <label class="flex items-center gap-2 text-sm cursor-pointer text-ink">
-              <input type="radio" name="fuel" class="rounded text-brand-600 focus:ring-brand-500 border-border"
-                [checked]="!filters().fuel"
-                (change)="updateFilter({ fuel: undefined })" />
-              Cualquiera
-            </label>
-            @for (f of fuels; track f.value) {
-              <label class="flex items-center gap-2 text-sm cursor-pointer text-ink">
-                <input type="radio" name="fuel" class="rounded text-brand-600 focus:ring-brand-500 border-border"
-                  [checked]="filters().fuel === f.value"
-                  (change)="updateFilter({ fuel: f.value })" />
-                {{ f.label }}
-              </label>
-            }
+          <div>
+            <span class="filter-label">Transmisión</span>
+            <mat-radio-group
+              aria-label="Transmisión"
+              class="flex flex-col gap-2"
+              [value]="filters().transmission ?? null"
+              (change)="updateFilter({ transmission: $any($event).value || undefined })"
+            >
+              <mat-radio-button [value]="null">Cualquiera</mat-radio-button>
+              @for (t of transmissions; track t.value) {
+                <mat-radio-button [value]="t.value">{{ t.label }}</mat-radio-button>
+              }
+            </mat-radio-group>
           </div>
-        </div>
 
-        <div>
-          <label class="block text-sm font-semibold text-ink-muted mb-2" for="filter-year">Año</label>
-          <select id="filter-year"
-            class="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
-            [value]="filters().year ?? ''"
-            (change)="updateFilter({ year: +$any($event.target).value || undefined })"
-            data-testid="filter-year">
-            <option value="">Cualquiera</option>
-            @for (y of years; track y) {
-              <option [value]="y">{{ y }}</option>
-            }
-          </select>
-        </div>
+          <div>
+            <span class="filter-label">Combustible</span>
+            <mat-radio-group
+              aria-label="Combustible"
+              class="flex flex-col gap-2"
+              [value]="filters().fuel ?? null"
+              (change)="updateFilter({ fuel: $any($event).value || undefined })"
+            >
+              <mat-radio-button [value]="null">Cualquiera</mat-radio-button>
+              @for (f of fuels; track f.value) {
+                <mat-radio-button [value]="f.value">{{ f.label }}</mat-radio-button>
+              }
+            </mat-radio-group>
+          </div>
 
-        <div>
-          <label class="block text-sm font-semibold text-ink-muted mb-2" for="filter-priceMin">Precio mínimo (CLP)</label>
-          <input id="filter-priceMin" type="number" min="0" step="100000" placeholder="0"
-            class="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
-            (change)="updateFilter({ priceMin: +$any($event.target).value || undefined })"
-            [value]="filters().priceMin ?? ''" />
-        </div>
+          <div>
+            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+              <mat-label>Año</mat-label>
+              <mat-select
+                [value]="filters().year ?? null"
+                (selectionChange)="updateFilter({ year: $any($event).value || undefined })"
+                data-testid="filter-year"
+              >
+                <mat-option [value]="null">Cualquiera</mat-option>
+                @for (y of years; track y) {
+                  <mat-option [value]="y">{{ y }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
 
-        <div>
-          <label class="block text-sm font-semibold text-ink-muted mb-2" for="filter-priceMax">Precio máximo (CLP)</label>
-          <input id="filter-priceMax" type="number" min="0" step="100000" placeholder="30.000.000"
-            class="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
-            (change)="updateFilter({ priceMax: +$any($event.target).value || undefined })"
-            [value]="filters().priceMax ?? ''" />
-        </div>
+          <div>
+            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+              <mat-label>Precio mínimo (CLP)</mat-label>
+              <input
+                matInput
+                type="number"
+                min="0"
+                step="100000"
+                placeholder="0"
+                [value]="filters().priceMin ?? null"
+                (change)="updateFilter({ priceMin: +$any($event.target).value || undefined })"
+              />
+            </mat-form-field>
+          </div>
 
-        <div>
-          <label class="block text-sm font-semibold text-ink-muted mb-2" for="filter-powerMin">Potencia mínima (hp)</label>
-          <input id="filter-powerMin" type="number" min="0" step="10" placeholder="80"
-            class="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
-            (change)="updateFilter({ powerMin: +$any($event.target).value || undefined })"
-            [value]="filters().powerMin ?? ''"
-            data-testid="filter-powerMin" />
-        </div>
+          <div>
+            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+              <mat-label>Precio máximo (CLP)</mat-label>
+              <input
+                matInput
+                type="number"
+                min="0"
+                step="100000"
+                placeholder="30.000.000"
+                [value]="filters().priceMax ?? null"
+                (change)="updateFilter({ priceMax: +$any($event.target).value || undefined })"
+              />
+            </mat-form-field>
+          </div>
 
-        <div>
-          <label class="block text-sm font-semibold text-ink-muted mb-2" for="filter-consumptionMax">Consumo máx. ciudad (km/L)</label>
-          <input id="filter-consumptionMax" type="number" min="0" step="0.5" placeholder="20"
-            class="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
-            (change)="updateFilter({ consumptionMax: +$any($event.target).value || undefined })"
-            [value]="filters().consumptionMax ?? ''"
-            data-testid="filter-consumptionMax" />
-        </div>
+          <div>
+            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+              <mat-label>Potencia mínima (hp)</mat-label>
+              <input
+                matInput
+                type="number"
+                min="0"
+                step="10"
+                placeholder="80"
+                [value]="filters().powerMin ?? null"
+                (change)="updateFilter({ powerMin: +$any($event.target).value || undefined })"
+                data-testid="filter-powerMin"
+              />
+            </mat-form-field>
+          </div>
 
-        <p class="text-xs text-ink-muted">
-          <span class="font-bold text-ink" data-testid="catalog-total">{{ total() }}</span>
-          modelos disponibles
-        </p>
-      </div>
+          <div>
+            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+              <mat-label>Consumo máx. ciudad (km/L)</mat-label>
+              <input
+                matInput
+                type="number"
+                min="0"
+                step="0.5"
+                placeholder="20"
+                [value]="filters().consumptionMax ?? null"
+                (change)="updateFilter({ consumptionMax: +$any($event.target).value || undefined })"
+                data-testid="filter-consumptionMax"
+              />
+            </mat-form-field>
+          </div>
+
+          <p class="text-xs text-ink-muted">
+            <span class="font-bold text-ink" data-testid="catalog-total">{{ total() }}</span>
+            modelos disponibles
+          </p>
+        </mat-card-content>
+      </mat-card>
     </aside>
 
     <main class="flex-1">
@@ -183,7 +203,7 @@
             class="grid place-items-center w-8 h-8 hover:bg-surface-muted"
             data-testid="sort-asc"
             aria-label="Ascendente">
-            <span class="material-symbols-outlined text-base">arrow_upward</span>
+            <mat-icon class="text-base">arrow_upward</mat-icon>
           </button>
           <button type="button"
             (click)="updateFilter({ order: 'desc' })"
@@ -194,7 +214,7 @@
             class="grid place-items-center w-8 h-8 hover:bg-surface-muted"
             data-testid="sort-desc"
             aria-label="Descendente">
-            <span class="material-symbols-outlined text-base">arrow_downward</span>
+            <mat-icon class="text-base">arrow_downward</mat-icon>
           </button>
         </div>
       </div>
@@ -247,13 +267,13 @@
               [attr.aria-label]="'Limpiar selección de ' + selectionCount() + ' versiones'"
               data-testid="selection-bar-clear"
               class="rounded-full bg-ink text-surface border border-surface-muted hover:bg-surface-muted text-xs font-bold px-3 py-2 transition-colors flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-base">delete_sweep</span>
+              <mat-icon class="text-base">delete_sweep</mat-icon>
               Limpiar
             </button>
             <a routerLink="/compare"
               class="rounded-full bg-brand-600 text-white text-sm font-bold px-5 py-2 hover:bg-brand-700 transition-colors flex items-center gap-2"
               data-testid="selection-bar-compare">
-              <span class="material-symbols-outlined text-base">compare_arrows</span>
+              <mat-icon class="text-base">compare_arrows</mat-icon>
               Ver comparación
             </a>
           </div>

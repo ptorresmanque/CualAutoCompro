@@ -3,21 +3,33 @@
     <div class="relative w-full h-32 rounded border border-border overflow-hidden bg-surface">
       <img data-testid="preview" [src]="url" alt="Preview" class="w-full h-full object-contain" />
       <button
+        mat-icon-button
         type="button"
         data-testid="clear"
         (click)="clear()"
-        class="absolute top-1 right-1 rounded-full bg-surface/90 p-1 text-ink-muted hover:text-warn-dark"
+        class="!absolute top-1 right-1"
         aria-label="Quitar imagen"
       >
-        <span class="material-symbols-outlined text-base">close</span>
+        <mat-icon>close</mat-icon>
       </button>
     </div>
   }
-  <label class="inline-flex items-center gap-2 rounded border border-border px-3 py-1.5 text-sm cursor-pointer hover:bg-surface w-fit">
-    <span class="material-symbols-outlined text-base">upload</span>
+  <button
+    mat-stroked-button
+    type="button"
+    (click)="fileInput.click()"
+    [disabled]="uploading()"
+  >
+    <mat-icon>upload</mat-icon>
     <span>{{ uploading() ? 'Subiendo…' : 'Subir imagen' }}</span>
-    <input type="file" accept="image/*" class="hidden" (change)="onFileChange($event)" />
-  </label>
+  </button>
+  <input
+    #fileInput
+    type="file"
+    accept="image/*"
+    class="hidden"
+    (change)="onFileChange($event)"
+  />
   @if (error(); as err) {
     <p class="text-warn-dark text-xs">{{ err }}</p>
   }

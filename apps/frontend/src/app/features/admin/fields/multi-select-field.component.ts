@@ -2,8 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  ElementRef,
-  HostListener,
   inject,
   input,
   OnInit,
@@ -11,20 +9,29 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { ApiService } from '../../../core/api.service';
 
 interface OptionItem { id: string; [k: string]: unknown; }
 
 @Component({
   selector: 'app-multi-select-field',
-  imports: [ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    MatChipsModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+  ],
   templateUrl: './multi-select-field.component.html',
   styleUrl: './multi-select-field.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MultiSelectFieldComponent implements OnInit {
   private api = inject(ApiService);
-  private el = inject(ElementRef<HTMLElement>);
   private destroyRef = inject(DestroyRef);
 
   readonly control = input.required<FormControl<string[] | null>>();
@@ -38,14 +45,6 @@ export class MultiSelectFieldComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly remoteOptions = signal<OptionItem[]>([]);
 
-  // Internal writable signal that mirrors control.value. We can't use a
-  // computed because FormControl.value is NOT a signal — `this.control()`
-  // returns the same FormControl instance across writes, so a computed
-  // depending on it would never invalidate when setValue is called
-  // externally (e.g., the dialog's effect 3 preloading the form).
-  // We subscribe to valueChanges (auto-cleaned via takeUntilDestroyed)
-  // and write the latest value to this signal so the template re-renders
-  // on every change.
   private readonly _ids = signal<string[]>([]);
   readonly selectedIds = this._ids.asReadonly();
 
@@ -62,11 +61,8 @@ export class MultiSelectFieldComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Initial sync: the control may already have a value (e.g., when the
-    // dialog preloads the form from the entity being edited).
     this._ids.set(this.readIds());
 
-    // React to value changes (e.g., dialog's effect 3 setting the form).
     this.control()
       .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((v) => {
@@ -115,10 +111,5 @@ export class MultiSelectFieldComponent implements OnInit {
     const next = this._ids().filter((x) => x !== id);
     this.control().setValue(next);
     this.control().markAsDirty();
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocClick(e: MouseEvent): void {
-    if (!this.el.nativeElement.contains(e.target as Node)) this.open.set(false);
   }
 }

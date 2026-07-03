@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../../core/api.service';
 import { toAbsoluteUploadUrl } from '../../../core/upload-url';
 
 @Component({
   selector: 'app-gallery-upload-field',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, MatButtonModule, MatIconModule],
   templateUrl: './gallery-upload-field.component.html',
   styleUrl: './gallery-upload-field.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -17,12 +19,6 @@ export class GalleryUploadFieldComponent {
   readonly uploading = signal(false);
   readonly error = signal<string | null>(null);
 
-  // Intentionally a method (not a computed signal): FormControl.value is not
-  // a signal, so a computed that reads `this.control()` would never invalidate
-  // when setValue is called (the input signal returns the same FormControl
-  // reference). The click event triggers OnPush CD, which re-evaluates the
-  // template and re-reads this method, picking up the new value. The list is
-  // small so per-CD invocation is fine.
   urls(): string[] {
     const v = this.control().value;
     return Array.isArray(v) ? v : [];

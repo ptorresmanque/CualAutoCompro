@@ -1,5 +1,7 @@
-<input
-  type="number"
-  class="rounded border border-border px-2 py-1.5 text-sm bg-surface w-full"
-  [formControl]="$any(control())"
-/>
+<mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+  <input
+    matInput
+    type="number"
+    [formControl]="$any(control())"
+  />
+</mat-form-field>

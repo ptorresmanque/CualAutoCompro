@@ -4,8 +4,10 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MultiSelectFieldComponent } from './multi-select-field.component';
 
+interface EqFixture { fixture: ComponentFixture<MultiSelectFieldComponent>; ctrl: FormControl<string[] | null>; http: HttpTestingController; }
+
 describe('MultiSelectFieldComponent', () => {
-  function setup(initial: string[] | null = null) {
+  function setup(initial: string[] | null = null): EqFixture {
     TestBed.configureTestingModule({
       imports: [MultiSelectFieldComponent, ReactiveFormsModule],
       providers: [provideHttpClient(), provideHttpClientTesting()],
@@ -19,26 +21,7 @@ describe('MultiSelectFieldComponent', () => {
     return { fixture, ctrl, http: TestBed.inject(HttpTestingController) };
   }
 
-  it('renderiza un chip por cada id seleccionado', () => {
-    const { fixture } = setup(['e1', 'e2']);
-    const chips = fixture.nativeElement.querySelectorAll('[data-testid="ms-chip"]');
-    expect(chips.length).toBe(2);
-    expect(chips[0].textContent).toContain('e1');
-  });
-
-  it('renderiza TODOS los chips cuando hay muchos items (no se trunca)', () => {
-    // 20 items para garantizar que el componente no tiene un límite
-    // implícito (e.g., un array.slice(0, 2) oculto en algún lugar).
-    const ids = Array.from({ length: 20 }, (_, i) => `e${i + 1}`);
-    const { fixture } = setup(ids);
-    const chips = fixture.nativeElement.querySelectorAll('[data-testid="ms-chip"]');
-    expect(chips.length).toBe(20);
-    expect(chips[0].textContent).toContain('e1');
-    expect(chips[19].textContent).toContain('e20');
-  });
-
-  it('carga opciones via optionsApi y las filtra al tipear', async () => {
-    const { fixture, http } = setup();
+  async function settle(http: HttpTestingController, fixture: ComponentFixture<MultiSelectFieldComponent>) {
     const req = http.expectOne((r) => r.url.includes('/api/v1/admin/equipment'));
     req.flush({
       data: [
@@ -48,7 +31,38 @@ describe('MultiSelectFieldComponent', () => {
     });
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
+    await fixture.whenStable();
     fixture.detectChanges();
+  }
+
+  it('renderiza un chip por cada id seleccionado', async () => {
+    const { fixture, http } = setup(['e1', 'e2']);
+    await settle(http, fixture);
+
+    const chips = fixture.nativeElement.querySelectorAll('[data-testid="ms-chip"]');
+    expect(chips.length).toBe(2);
+    expect(chips[0].textContent).toContain('Aire acondicionado');
+  });
+
+  it('renderiza TODOS los chips cuando hay muchos items (no se trunca)', async () => {
+    const ids = Array.from({ length: 20 }, (_, i) => `e${i + 1}`);
+    const { fixture, http } = setup(ids);
+    const req = http.expectOne((r) => r.url.includes('/api/v1/admin/equipment'));
+    req.flush({ data: ids.map((id) => ({ id, name: id })) });
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const chips = fixture.nativeElement.querySelectorAll('[data-testid="ms-chip"]');
+    expect(chips.length).toBe(20);
+    expect(chips[0].textContent).toContain('e1');
+    expect(chips[19].textContent).toContain('e20');
+  });
+
+  it('carga opciones via optionsApi y filtra al tipear', async () => {
+    const { fixture, http } = setup();
+    await settle(http, fixture);
 
     const input: HTMLInputElement = fixture.nativeElement.querySelector(
       '[data-testid="ms-input"]',
@@ -64,11 +78,7 @@ describe('MultiSelectFieldComponent', () => {
 
   it('click en opción agrega al control y marca dirty', async () => {
     const { fixture, ctrl, http } = setup();
-    const req = http.expectOne((r) => r.url.includes('/api/v1/admin/equipment'));
-    req.flush({ data: [{ id: 'e1', name: 'Aire' }, { id: 'e2', name: 'Bluetooth' }] });
-    await fixture.whenStable();
-    await new Promise((r) => setTimeout(r, 0));
-    fixture.detectChanges();
+    await settle(http, fixture);
 
     const input: HTMLInputElement = fixture.nativeElement.querySelector(
       '[data-testid="ms-input"]',
@@ -77,17 +87,21 @@ describe('MultiSelectFieldComponent', () => {
     fixture.detectChanges();
 
     const items = fixture.nativeElement.querySelectorAll('[data-testid="ms-option"]');
+    expect(items.length).toBe(2);
     (items[0] as HTMLElement).click();
     fixture.detectChanges();
     expect(ctrl.value).toEqual(['e1']);
     expect(ctrl.dirty).toBe(true);
   });
 
-  it('click en X de chip quita del control', () => {
-    const { fixture, ctrl } = setup(['e1', 'e2']);
+  it('click en X de chip quita del control', async () => {
+    const { fixture, ctrl, http } = setup(['e1', 'e2']);
+    await settle(http, fixture);
+
     const removeButtons = fixture.nativeElement.querySelectorAll(
       '[data-testid="ms-chip-remove"]',
     );
+    expect(removeButtons.length).toBe(2);
     (removeButtons[0] as HTMLElement).click();
     fixture.detectChanges();
     expect(ctrl.value).toEqual(['e2']);
@@ -96,11 +110,7 @@ describe('MultiSelectFieldComponent', () => {
 
   it('excluye opciones ya seleccionadas del dropdown', async () => {
     const { fixture, http } = setup(['e1']);
-    const req = http.expectOne((r) => r.url.includes('/api/v1/admin/equipment'));
-    req.flush({ data: [{ id: 'e1', name: 'Aire' }, { id: 'e2', name: 'Bluetooth' }] });
-    await fixture.whenStable();
-    await new Promise((r) => setTimeout(r, 0));
-    fixture.detectChanges();
+    await settle(http, fixture);
 
     const input: HTMLInputElement = fixture.nativeElement.querySelector(
       '[data-testid="ms-input"]',

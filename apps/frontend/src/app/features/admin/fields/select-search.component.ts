@@ -11,13 +11,15 @@ import {
   signal,
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { ApiService } from '../../../core/api.service';
 
 interface OptionItem { id?: string; value?: string; label: string; isOther?: boolean; }
 
 @Component({
   selector: 'app-select-search',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule],
   templateUrl: './select-search.component.html',
   styleUrl: './select-search.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -88,6 +90,10 @@ export class SelectSearchComponent implements OnInit {
       this.control().setValue(item.value ?? item.label);
     }
     this.open.set(false);
+  }
+
+  onPick(value: string): void {
+    this.control().setValue(value);
   }
 
   onArrowDown(e: Event): void {

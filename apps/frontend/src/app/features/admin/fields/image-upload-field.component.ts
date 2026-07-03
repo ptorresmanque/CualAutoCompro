@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../../core/api.service';
 import { toAbsoluteUploadUrl } from '../../../core/upload-url';
 
 @Component({
   selector: 'app-image-upload-field',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, MatButtonModule, MatIconModule],
   templateUrl: './image-upload-field.component.html',
   styleUrl: './image-upload-field.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

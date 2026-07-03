@@ -1,13 +1,17 @@
 @if (multiline()) {
-  <textarea
-    rows="2"
-    class="rounded border border-border px-2 py-1.5 text-sm bg-surface"
-    [formControl]="$any(control())"
-  ></textarea>
+  <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+    <textarea
+      matInput
+      rows="2"
+      [formControl]="$any(control())"
+    ></textarea>
+  </mat-form-field>
 } @else {
-  <input
-    type="text"
-    class="rounded border border-border px-2 py-1.5 text-sm bg-surface w-full"
-    [formControl]="$any(control())"
-  />
+  <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+    <input
+      matInput
+      type="text"
+      [formControl]="$any(control())"
+    />
+  </mat-form-field>
 }

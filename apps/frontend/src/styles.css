@@ -1,34 +1,87 @@
+@import '@angular/material/prebuilt-themes/azure-blue.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Tokens Material 3 — "Transparencia Automotriz" */
+/* ============================================================
+ * Tokens Material 3 — "Transparencia Automotriz" (override teal)
+ * ============================================================ */
 :root {
-  /* Primary */
-  --color-brand-600: #008080;      /* primary:           "Transparencia Automotriz" */
-  --color-brand-700: #006565;      /* primary oscuro */
+  /* Tokens M3 base (azul) → teal */
+  --mat-sys-primary: #008080;
+  --mat-sys-surface-tint: #006a6a;
+  --mat-sys-on-primary: #ffffff;
+  --mat-sys-on-primary-container: #e3fffe;
+  --mat-sys-primary-container: #c6e9e9;
+  --mat-sys-secondary-container: #c6e9e9;
+  --mat-sys-tertiary-container: #657676;
+  --mat-sys-primary-fixed: #93f2f2;
+  --mat-sys-primary-fixed-dim: #76d6d5;
+
+  /* Surfaces (alineados al sistema Stitch) */
+  --mat-sys-background: #f8fafa;
+  --mat-sys-surface: #ffffff;
+  --mat-sys-surface-container-lowest: #ffffff;
+  --mat-sys-surface-container-low: #f2f4f4;
+  --mat-sys-surface-container: #eceeee;
+  --mat-sys-surface-container-high: #e6e8e9;
+  --mat-sys-surface-container-highest: #e3e2e6;
+  --mat-sys-surface-dim: #eceeee;
+  --mat-sys-surface-bright: #ffffff;
+
+  /* Texto */
+  --mat-sys-on-surface: #191c1d;
+  --mat-sys-on-surface-variant: #3e4949;
+  --mat-sys-on-background: #191c1d;
+
+  /* Outline / divider */
+  --mat-sys-outline: #6e7979;
+  --mat-sys-outline-variant: #bdc9c8;
+
+  /* Otros */
+  --mat-sys-inverse-primary: #4ab9b9;
+
+  /* Tokens de la app (compatibilidad con CSS existente) */
+  --color-brand-600: #008080;
+  --color-brand-700: #006565;
   --color-brand-500: #008080;
-  /* On-primary surfaces */
-  --color-on-primary:   #ffffff;
+  --color-on-primary: #ffffff;
   --color-on-primary-container: #e3fffe;
-  /* Secondary / tertiary */
   --color-secondary-container: #c6e9e9;
   --color-tertiary-container: #657676;
-  /* Surfaces */
-  --color-bg:         #f8fafa;       /* background */
-  --color-surface:    #ffffff;       /* surface-container-lowest */
-  --color-surface-container:       #eceeee;
-  --color-surface-container-low:  #f2f4f4;
+  --color-bg: #f8fafa;
+  --color-surface: #ffffff;
+  --color-surface-container: #eceeee;
+  --color-surface-container-low: #f2f4f4;
   --color-surface-container-high: #e6e8e9;
-  --color-fg:         #191c1d;       /* on-surface */
-  --color-muted:      #3e4949;       /* on-surface-variant */
-  --color-subtle:     #6e7979;       /* outline */
-  --color-accent:     #008080;
-  --color-warn-bg:    #fef3c7;
-  --color-warn-fg:    #92400e;
-  --color-border:     #bdc9c8;       /* outline-variant */
-  /* Radii */
-  --radius: 8px;                    /* ROUND_EIGHT */
+  --color-fg: #191c1d;
+  --color-muted: #3e4949;
+  --color-subtle: #6e7979;
+  --color-accent: #008080;
+  --color-warn-bg: #fef3c7;
+  --color-warn-fg: #92400e;
+  --color-border: #bdc9c8;
+  --radius: 8px;
+
+  /* Tipografía Hanken Grotesk (Material hereda los tokens --mat-sys-*-font
+   * leyendo la primera palabra del font shorthand). Para M3 todos los roles
+   * usan Roboto por defecto, pero como Hanken Grotesk ya está precargado,
+   * la forma más simple es sobreescribir las variantes de body/title. */
+  --mat-sys-body-large-font: 'Hanken Grotesk', system-ui, sans-serif;
+  --mat-sys-body-medium-font: 'Hanken Grotesk', system-ui, sans-serif;
+  --mat-sys-body-small-font: 'Hanken Grotesk', system-ui, sans-serif;
+  --mat-sys-title-large-font: 'Hanken Grotesk', system-ui, sans-serif;
+  --mat-sys-title-medium-font: 'Hanken Grotesk', system-ui, sans-serif;
+  --mat-sys-title-small-font: 'Hanken Grotesk', system-ui, sans-serif;
+  --mat-sys-label-large-font: 'Hanken Grotesk', system-ui, sans-serif;
+  --mat-sys-label-medium-font: 'Hanken Grotesk', system-ui, sans-serif;
+  --mat-sys-label-small-font: 'Hanken Grotesk', system-ui, sans-serif;
+  --mat-sys-display-large-font: 'Hanken Grotesk', system-ui, sans-serif;
+  --mat-sys-display-medium-font: 'Hanken Grotesk', system-ui, sans-serif;
+  --mat-sys-display-small-font: 'Hanken Grotesk', system-ui, sans-serif;
+  --mat-sys-headline-large-font: 'Hanken Grotesk', system-ui, sans-serif;
+  --mat-sys-headline-medium-font: 'Hanken Grotesk', system-ui, sans-serif;
+  --mat-sys-headline-small-font: 'Hanken Grotesk', system-ui, sans-serif;
 }
 
 html, body {
@@ -48,7 +101,8 @@ h1, h2, h3, .display {
   letter-spacing: -0.01em;
 }
 
-/* Material Symbols — fuente de iconos del sistema Stitch */
+/* Material Symbols — fuente de iconos (legacy icons también siguen funcionando
+ * a través de las clases `material-symbols-outlined` y `mat-icon`). */
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';
   font-weight: normal;
@@ -67,4 +121,10 @@ h1, h2, h3, .display {
 
 .material-symbols-outlined.filled {
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Forzar a mat-icon a usar material-icons (icons nativos de Material) por
+ * defecto. Es posible sobreescribir por uso con fontSet="material-symbols-outlined". */
+.mat-icon, mat-icon {
+  font-family: 'Material Icons' !important;
 }

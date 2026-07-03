@@ -1,1 +1,51 @@
 :host { display: block; width: 100%; }
+
+.select-search-field {
+  position: relative;
+}
+
+.select-search-list {
+  position: absolute;
+  z-index: 1000;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  max-height: 15rem;
+  overflow-y: auto;
+  background: var(--mat-sys-surface);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 128, 128, 0.08);
+}
+
+.select-search-list li {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  color: var(--mat-sys-on-surface);
+}
+
+.select-search-list li:hover,
+.select-search-list li.active {
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-surface);
+}
+
+.select-search-list li.is-other {
+  font-weight: 700;
+}
+
+.select-other-btn {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
