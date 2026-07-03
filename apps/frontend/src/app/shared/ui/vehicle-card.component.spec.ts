@@ -157,7 +157,7 @@ describe('VehicleCardComponent', () => {
       '[data-testid="vehicle-card-m1"]',
     ) as HTMLElement;
     expect(article.getAttribute('data-added')).toBe('true');
-    expect(article.className).toContain('border-brand-600');
+    expect(article.className).toContain('vehicle-card-added');
   });
 
   it('muestra "Máximo 3" cuando maxReached=true y no está agregado', () => {

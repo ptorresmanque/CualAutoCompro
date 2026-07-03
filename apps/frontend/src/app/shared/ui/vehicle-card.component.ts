@@ -9,6 +9,9 @@ import {
 } from '@angular/core';
 import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { VehicleVersion } from '../../core/types/vehicle';
 import { AuthService } from '../../core/auth.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
@@ -26,7 +29,7 @@ export interface VehicleCardInput {
 
 @Component({
   selector: 'app-vehicle-card',
-  imports: [NgStyle, RouterLink],
+  imports: [NgStyle, RouterLink, MatButtonModule, MatCardModule, MatIconModule],
   templateUrl: './vehicle-card.component.html',
   styleUrl: './vehicle-card.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,8 +51,8 @@ export class VehicleCardComponent {
 
   readonly canFavorite = computed(() => this.auth.currentUser() !== null);
 
-  readonly favoriteIconVariation = computed(() =>
-    this.isFavorite() ? "'FILL' 1" : "'FILL' 0",
+  readonly favoriteIcon = computed(() =>
+    this.isFavorite() ? 'favorite' : 'favorite_border',
   );
 
   private readonly _hovered = signal(false);
