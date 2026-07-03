@@ -1,5 +1,7 @@
-<app-top-nav-bar />
-<main class="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-10">
-  <router-outlet />
-</main>
-<app-footer />
+<div class="app-shell">
+  <app-top-nav-bar></app-top-nav-bar>
+  <main class="app-main" id="main">
+    <router-outlet></router-outlet>
+  </main>
+  <app-footer></app-footer>
+</div>

@@ -1,13 +1,10 @@
 <section class="mx-auto max-w-md px-4 py-12 font-sans">
   <header class="mb-6 text-center">
-    <span
-      class="mx-auto grid h-12 w-12 place-items-center rounded-full bg-brand-600 text-white font-bold mb-3"
-      aria-hidden="true"
-    >
-      c
-    </span>
-    <h1 class="font-bold text-2xl text-ink">Crear cuenta</h1>
-    <p class="mt-1 text-sm text-ink-muted">
+    <p class="stamp-label mb-3">N° sesión · crear</p>
+    <h1 class="font-display text-4xl text-ink leading-tight">
+      Crear cuenta
+    </h1>
+    <p class="mt-2 text-sm text-ink-muted">
       Guardá tus comparaciones y accedé desde cualquier dispositivo.
     </p>
   </header>
@@ -70,20 +67,18 @@
 
         @if (error(); as msg) {
           <div
-            class="rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark"
+            class="border border-engine bg-engine-50 px-4 py-3 text-sm text-engine-dark"
             role="alert"
             data-testid="error"
           >
-            {{ msg }}
+            <span class="stamp-label mr-2">Error</span>{{ msg }}
           </div>
         }
 
         <button
-          mat-flat-button
-          color="primary"
           type="submit"
           [disabled]="submitting()"
-          class="w-full"
+          class="auth-submit w-full"
           data-testid="submit"
         >
           {{ submitting() ? 'Creando…' : 'Crear cuenta' }}
@@ -92,23 +87,21 @@
     </mat-card-content>
   </mat-card>
 
-  <div class="mt-6 flex items-center gap-3 text-xs uppercase tracking-wider text-ink-muted">
-    <span class="flex-1 h-px bg-border"></span>
+  <div class="auth-divider">
     <span>o continúa sin cuenta</span>
-    <span class="flex-1 h-px bg-border"></span>
   </div>
 
-  <div class="mt-6 space-y-2">
+  <div class="mt-4 space-y-2">
     <a
       routerLink="/"
-      class="w-full inline-flex items-center justify-center gap-2 rounded-full border border-brand-600 text-brand-700 font-bold py-2.5 px-4 text-sm hover:bg-brand-50 transition-colors"
+      class="auth-button w-full"
     >
       <mat-icon class="text-base">directions_car</mat-icon>
       Explorar catálogo
     </a>
     <a
       routerLink="/compare"
-      class="w-full inline-flex items-center justify-center gap-2 rounded-full border border-brand-600 text-brand-700 font-bold py-2.5 px-4 text-sm hover:bg-brand-50 transition-colors"
+      class="auth-button w-full"
     >
       <mat-icon class="text-base">compare_arrows</mat-icon>
       Comparar autos
@@ -117,12 +110,12 @@
 
   <p class="mt-6 text-center text-sm text-ink-muted">
     ¿Ya tenés cuenta?
-    <a routerLink="/login" class="text-brand-700 font-bold hover:underline">
+    <a routerLink="/login" class="text-engine font-semibold hover:underline">
       Iniciar sesión
     </a>
   </p>
 
-  <p class="mt-6 text-center text-[11px] text-ink-subtle">
-    Al crear cuenta aceptás nuestros términos de uso y política de privacidad.
+  <p class="mt-6 text-center font-mono text-[11px] uppercase tracking-stamp text-ink-muted">
+    Al crear cuenta aceptás nuestros términos y política de privacidad.
   </p>
 </section>

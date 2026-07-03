@@ -5,11 +5,12 @@
       class="brand"
       aria-label="cualautocompro.cl — ir al inicio"
     >
-      <span class="brand-avatar" aria-hidden="true">c</span>
+      <span class="brand-mark" aria-hidden="true">c.</span>
       <span class="brand-text">cualautocompro</span>
+      <span class="brand-meta">·CL</span>
     </a>
 
-    <nav class="hidden md:flex items-center gap-6">
+    <nav class="hidden md:flex items-center gap-7">
       @for (link of navLinks(); track link.path) {
         <a
           [routerLink]="link.path"
@@ -64,7 +65,7 @@
       @if (user(); as u) {
         <a
           routerLink="/account/comparisons"
-          class="hidden md:block text-sm text-brand-700 font-semibold hover:underline"
+          class="hidden md:block text-xs uppercase tracking-stamp text-ink hover:text-engine transition-colors"
         >
           {{ u.name.split(' ')[0] }}
         </a>
@@ -102,7 +103,7 @@
           mat-stroked-button
           color="primary"
           routerLink="/login"
-          class="!hidden sm:!inline-flex"
+          class="nav-login-btn"
         >
           Iniciar sesión
         </a>
@@ -110,6 +111,7 @@
           mat-flat-button
           color="primary"
           routerLink="/register"
+          class="nav-register-btn"
         >
           Crear cuenta
         </a>

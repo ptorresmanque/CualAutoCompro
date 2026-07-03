@@ -1,15 +1,13 @@
 /**
  * cualautocompro — design tokens.
  *
- * Source of truth: Stitch project "Transparencia Automotriz" (Hanken Grotesk,
- * teal #008080 primary, ROUND_EIGHT / 8px corners, Material 3 surfaces,
- * FIDELITY color variant, LIGHT mode only).
+ * Sistema "Ficha Técnica" / Plano de taller.
+ * Asimétrico, papel cálido, tinta casi-negra, engine-red como acento,
+ * IBM Plex (Sans + Mono) para texto, Archivo Black para display.
  *
- * El mapeo a la escala `brand-50`…`brand-900` está ajustado para mantener
- * vivas las clases existentes en los templates (no se renombra nada).
- *
- * Si necesitas tokens Material 3 crudos, añádelos a `theme.extend.colors` con
- * nombres planos: `primary: '#008080'`, `surfaceContainer: '#eceeee'`, etc.
+ * Las clases `engine-*` reemplazan a `brand-*` (la paleta teal anterior).
+ * Los nombres de las escalas se preservaron para que un find/replace o
+ * un componente suelto siga funcionando con la nueva paleta.
  */
 
 /** @type {import('tailwindcss').Config} */
@@ -18,68 +16,96 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Paleta teal mapeada a escala Tailwind. Centered on Stitch primary #008080.
-        brand: {
-          50:  '#e0f2f2',  // tertiary-container muy claro
-          100: '#c6e9e9',  // secondary-container
-          200: '#93f2f2',  // primary-fixed (claro)
-          300: '#76d6d5',  // primary-fixed-dim
-          400: '#4ab9b9',  // step más claro antes del primario
-          500: '#008080',  // = primary (M3)
-          600: '#006a6a',  // = surface-tint
-          700: '#006565',  // = primary (M3 oscuro)
-          800: '#004f4f',  // = on-primary-fixed-variant
-          900: '#002020',  // = on-primary-fixed
+        paper: {
+          DEFAULT: '#F2EEE3',
+          warm:    '#EBE5D6',
+          cool:    '#FAFAF7',
         },
-        // M3 neutrals mapeados a "ink". Para añadir más: 'on-surface'=#191c1d,
-        // 'surface-variant'=#e1e3e3, 'outline'=#6e7979, etc.
         ink: {
-          DEFAULT: '#191c1d', // on-surface
-          muted: '#3e4949',   // on-surface-variant
-          subtle: '#6e7979',  // outline
+          DEFAULT: '#0E1116',
+          muted:   '#3F4A52',
+          subtle:  '#6E7984',
         },
-        // Semantic colors — desaturados según el brief del sistema de Stitch.
-        // warn-light, DEFAULT, warn-dark se mantienen por retrocompatibilidad.
+        graphite: '#6E7984',
+        rule:     '#D9D2BF',
+        engine: {
+          DEFAULT: '#C8341B',
+          50:  '#FBE9E5',
+          100: '#F4D1CA',
+          200: '#E69E91',
+          300: '#D86E5D',
+          400: '#D04E3A',
+          500: '#C8341B',
+          600: '#A62713',
+          700: '#7A1A0B',
+          800: '#4D0E05',
+          900: '#260500',
+        },
+        blueprint: {
+          DEFAULT: '#1B4F72',
+          light:   '#D4E1EB',
+        },
+        caution: {
+          DEFAULT: '#F2C12E',
+          light:   '#FBE9B0',
+          dark:    '#7A5B0B',
+        },
         warn: {
-          light: '#fef3c7',
-          DEFAULT: '#f59e0b',
-          dark: '#92400e',
+          light: '#FBE9B0',
+          DEFAULT: '#F2C12E',
+          dark: '#7A5B0B',
         },
         border: {
-          DEFAULT: '#bdc9c8', // outline-variant
-          strong: '#6e7979',  // outline
+          DEFAULT: '#D9D2BF',
+          strong: '#0E1116',
         },
         surface: {
-          DEFAULT: '#ffffff',         // surface-container-lowest
-          muted: '#f8fafa',            // background
-          container: '#eceeee',       // surface-container
-          'container-low': '#f2f4f4', // surface-container-low
-          'container-high': '#e6e8e9',
+          DEFAULT: '#FFFFFF',
+          muted:   '#F2EEE3',
+          container:   '#EBE5D6',
+          'container-low': '#F2EEE3',
+          'container-high': '#E4DCC8',
         },
       },
       fontFamily: {
-        // Stitch usa Hanken Grotesk como tipografía única para todo. Mapear
-        // tanto 'sans' como 'display' a la misma fuente preserva las clases
-        // existentes en los templates.
-        sans: ['"Hanken Grotesk"', 'system-ui', 'sans-serif'],
-        display: ['"Hanken Grotesk"', 'system-ui', 'sans-serif'],
+        sans:    ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+        display: ['"Archivo Black"', '"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+        mono:    ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
-      // ROUND_EIGHT = 8px base. Cards de vehículos usan radius más generoso
-      // (12px) según designMd del sistema: "12px (0.75rem) corner radius".
       borderRadius: {
-        DEFAULT: '0.5rem',  // 8px (ROUND_EIGHT)
-        sm: '0.25rem',      // 4px
-        md: '0.5rem',       // 8px
-        lg: '0.75rem',      // 12px (vehicle cards)
-        xl: '1rem',         // 16px
-        '2xl': '1.5rem',    // 24px
+        none: '0',
+        sm:   '0.125rem',
+        DEFAULT: '0.25rem',
+        md:   '0.25rem',
+        lg:   '0.375rem',
+        xl:   '0.5rem',
+        '2xl':'0.75rem',
         full: '9999px',
       },
-      // Sombras alineadas con "Level 2 (Active/Hover)" del sistema:
+      letterSpacing: {
+        stamp: '0.08em',
+      },
       boxShadow: {
-        e1: '0 1px 2px rgba(0, 0, 0, 0.06)',
-        e2: '0 4px 12px rgba(0, 128, 128, 0.08)',
-        e3: '0 12px 32px rgba(0, 0, 0, 0.10)',
+        stamp:   '0 1px 0 rgba(14, 17, 22, 0.18), 0 0 0 3px rgba(200, 52, 27, 0.10)',
+        'card-lift': '0 2px 0 rgba(14, 17, 22, 0.08)',
+        e1: '0 1px 0 rgba(14, 17, 22, 0.08)',
+        e2: '0 2px 0 rgba(14, 17, 22, 0.12)',
+        e3: '0 8px 24px rgba(14, 17, 22, 0.10)',
+      },
+      keyframes: {
+        stampIn: {
+          '0%':   { transform: 'scale(0.7) rotate(-4deg)', opacity: '0' },
+          '60%':  { transform: 'scale(1.08) rotate(3deg)',  opacity: '1' },
+          '100%': { transform: 'scale(1) rotate(4deg)',     opacity: '1' },
+        },
+        riseIn: {
+          '0%':   { transform: 'translateY(8px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)',   opacity: '1' },
+        },
+      },
+      animation: {
+        'stamp-in': 'stampIn 260ms cubic-bezier(.2,.8,.3,1.2) both',
+        'rise-in':  'riseIn 360ms cubic-bezier(.2,.8,.3,1) both',
       },
     },
   },

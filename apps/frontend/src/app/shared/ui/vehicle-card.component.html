@@ -1,74 +1,97 @@
-<mat-card
-  class="vehicle-card"
-  [class.vehicle-card-added]="added()"
-  appearance="outlined"
+<article
+  class="ficha"
+  [class.ficha-added]="added()"
   (mouseenter)="onMouseEnter()"
   (mouseleave)="onMouseLeave()"
   [attr.data-testid]="'vehicle-card-' + model().id"
   [attr.data-added]="added() ? 'true' : 'false'"
 >
-  <button
-    mat-icon-button
-    type="button"
-    (click)="onFavorite($event)"
-    [attr.aria-label]="(isFavorite() ? 'Quitar ' : 'Marcar ') + model().brand.name + ' ' + model().name + ' como favorito'"
-    [attr.aria-pressed]="isFavorite() ? 'true' : 'false'"
-    [attr.data-testid]="'favorite-' + model().id"
-    [attr.data-favorite]="isFavorite() ? 'true' : 'false'"
-    [disabled]="!canFavorite()"
-    [attr.title]="canFavorite() ? null : 'Inicia sesión para guardar favoritos'"
-    class="vehicle-card-fav"
-  >
-    <mat-icon
-      [color]="isFavorite() ? 'warn' : undefined"
-    >{{ favoriteIcon() }}</mat-icon>
-  </button>
+  <!-- Header mono:  marca -->
+  <header class="ficha-head">
+    <span class="ficha-brand">{{ model().brand.name }}</span>
+    @if (featured()) {
+      <span class="ficha-stamp" data-testid="featured-pill">
+        POPULAR
+      </span>
+    }
+  </header>
 
-  @if (featured()) {
-    <span class="vehicle-card-featured" data-testid="featured-pill">
-      <mat-icon class="text-[12px]">stars</mat-icon>
-      MÁS VENDIDO
-    </span>
-  }
-
+  <!-- Imagen -->
   <a
     [routerLink]="detailUrl()"
     [attr.aria-label]="'Ver detalle de ' + model().brand.name + ' ' + model().name"
     data-testid="card-image-link"
-    class="vehicle-card-image"
+    class="ficha-image"
     [ngStyle]="imageStyle()"
   >
     @if (!model().imageUrl) {
-      <div class="vehicle-card-image-fallback">
+      <div class="ficha-image-fallback">
         <mat-icon class="text-5xl">directions_car</mat-icon>
       </div>
     }
   </a>
 
-  <mat-card-content class="vehicle-card-body">
-    <div class="vehicle-card-meta">
-      <span class="vehicle-card-brand">
-        {{ model().brand.name }}
-      </span>
-      <span class="vehicle-card-segment">
-        {{ segmentLabel() }}
-      </span>
+  <!-- Cuerpo -->
+  <div class="ficha-body">
+    <button
+      mat-icon-button
+      type="button"
+      (click)="onFavorite($event)"
+      [attr.aria-label]="(isFavorite() ? 'Quitar ' : 'Marcar ') + model().brand.name + ' ' + model().name + ' como favorito'"
+      [attr.aria-pressed]="isFavorite() ? 'true' : 'false'"
+      [attr.data-testid]="'favorite-' + model().id"
+      [attr.data-favorite]="isFavorite() ? 'true' : 'false'"
+      [disabled]="!canFavorite()"
+      [attr.title]="canFavorite() ? null : 'Inicia sesión para guardar favoritos'"
+      class="ficha-fav"
+    >
+      <mat-icon
+        [color]="isFavorite() ? 'warn' : undefined"
+      >{{ favoriteIcon() }}</mat-icon>
+    </button>
+
+    <div class="ficha-name-row">
+      <h3 class="ficha-name">{{ model().name }}</h3>
+      <span class="ficha-segment">{{ segmentLabel() }}</span>
     </div>
 
-    <h3 class="vehicle-card-name">{{ model().name }}</h3>
+    <hr class="ficha-rule" />
 
-    @if (priceFormatted()) {
-      <p class="vehicle-card-price">
-        $ {{ priceFormatted() }}
-        <span class="text-[10px] font-normal text-ink-muted">CLP</span>
-      </p>
-    } @else {
-      <p class="vehicle-card-price-empty">Sin precio publicado</p>
-    }
+    <!-- Datos tabulares -->
+    <dl class="ficha-data">
+      <div class="ficha-row">
+        <dt>Precio</dt>
+        <dd class="ficha-row-value">
+          @if (priceFormatted()) {
+            <span class="ficha-price">
+              <span class="ficha-price-symbol">$</span>
+              {{ priceFormatted() }}
+            </span>
+            <span class="ficha-unit">CLP</span>
+          } @else {
+            <span class="ficha-empty">Sin precio publicado</span>
+          }
+        </dd>
+      </div>
+      @if (selectedVersion(); as v) {
+        <div class="ficha-row">
+          <dt>Año</dt>
+          <dd class="ficha-row-value">{{ v.year }}</dd>
+        </div>
+        <div class="ficha-row">
+          <dt>Combustible</dt>
+          <dd class="ficha-row-value">{{ v.fuel || '—' }}</dd>
+        </div>
+        <div class="ficha-row">
+          <dt>Transmisión</dt>
+          <dd class="ficha-row-value">{{ v.transmission || '—' }}</dd>
+        </div>
+      }
+    </dl>
 
     @if (hasMultipleVersions() && (!added() || forceShowChips())) {
       <div
-        class="vehicle-card-versions"
+        class="ficha-versions"
         role="radiogroup"
         aria-label="Seleccionar versión a comparar"
         data-testid="version-chips"
@@ -82,12 +105,9 @@
             [attr.data-selected]="v.id === selectedVersionId() ? 'true' : 'false'"
             (click)="onSelectVersion($event, v)"
             [disabled]="added()"
-            class="vehicle-card-version"
-            [class.vehicle-card-version-selected]="v.id === selectedVersionId()"
+            class="ficha-version"
+            [class.ficha-version-selected]="v.id === selectedVersionId()"
           >
-            @if (v.id === selectedVersionId()) {
-              <mat-icon class="text-xs">check</mat-icon>
-            }
             {{ v.name }} {{ v.year }}
           </button>
         }
@@ -95,8 +115,6 @@
     }
 
     <button
-      mat-flat-button
-      color="primary"
       type="button"
       (click)="onCompare($event)"
       [disabled]="!hasDefaultVersion() || (!added() && maxReached())"
@@ -105,10 +123,11 @@
       [attr.data-testid]="'compare-' + model().id"
       [attr.data-state]="added() ? 'added' : 'available'"
       [attr.data-selected-version]="selectedVersion()?.id ?? ''"
-      class="vehicle-card-compare"
+      class="ficha-compare"
+      [class.ficha-compare-added]="added()"
     >
       @if (added()) {
-        <mat-icon>check_circle</mat-icon>
+        <mat-icon>check</mat-icon>
         <span>En comparación</span>
       } @else if (maxReached()) {
         <span>Máximo 3</span>
@@ -116,5 +135,5 @@
         <span>{{ compareLabel() }}</span>
       }
     </button>
-  </mat-card-content>
-</mat-card>
+  </div>
+</article>

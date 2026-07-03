@@ -12,7 +12,7 @@
       <a
         routerLink="/"
         data-testid="back-home"
-        class="mt-4 inline-block rounded-full bg-brand-600 px-5 py-2 text-sm font-bold text-white hover:bg-brand-700 transition-colors"
+        class="mt-4 inline-block rounded-full bg-engine px-5 py-2 text-sm font-bold text-white hover:bg-engine-dark transition-colors"
       >
         Volver al catálogo
       </a>
@@ -30,7 +30,7 @@
       </p>
       <a
         routerLink="/"
-        class="mt-4 inline-block rounded-full bg-brand-600 px-5 py-2 text-sm font-bold text-white hover:bg-brand-700 transition-colors"
+        class="mt-4 inline-block rounded-full bg-engine px-5 py-2 text-sm font-bold text-white hover:bg-engine-dark transition-colors"
       >
         Ir al catálogo
       </a>
@@ -59,7 +59,7 @@
                 ></div>
                 <p class="text-xs text-ink-muted">{{ m.brand.name }}</p>
                 <h3 class="font-bold text-sm">{{ m.name }}</h3>
-                <p class="text-xs text-brand-700 mt-1">
+                <p class="text-xs text-engine mt-1">
                   @if (m.minPrice != null) {
                     $ {{ formatPricePlain(m.minPrice) }}
                   } @else {
@@ -71,7 +71,7 @@
                   (click)="toggleCarouselFor(m.id, $event.currentTarget); $event.stopPropagation()"
                   [attr.aria-expanded]="carouselOpenFor() === m.id"
                   [attr.data-testid]="'favorite-carousel-btn-' + m.id"
-                  class="mt-2 w-full text-xs font-bold bg-brand-600 text-white rounded-full py-1.5 hover:bg-brand-700"
+                  class="mt-2 w-full text-xs font-bold bg-engine text-white rounded-full py-1.5 hover:bg-engine-dark"
                 >
                   Agregar versión
                 </button>
@@ -91,7 +91,7 @@
                           role="option"
                           (click)="addFavoriteVersionToCompare(m.id, v.id)"
                           [attr.data-testid]="'favorite-carousel-opt-' + v.id"
-                          class="block w-full text-left text-xs px-2 py-1.5 rounded hover:bg-surface-muted"
+                          class="block w-full text-left text-xs px-2 py-1.5 hover:bg-paper-warm"
                         >
                           <span class="font-semibold">{{ v.name }} {{ v.year }}</span>
                           @if (v.priceClp != null) {
@@ -110,20 +110,23 @@
       </section>
     }
 
-    <header class="mb-8">
-      <h1 class="text-3xl md:text-4xl font-bold text-ink tracking-tight">
-        Comparativa de Modelos
+    <header class="mb-8 mt-6">
+      <p class="stamp-label mb-2">N° 005 · Comparativa</p>
+      <h1 class="font-display text-3xl md:text-5xl text-ink leading-[1.05]">
+        Comparativa de modelos
       </h1>
-      <p class="mt-1 text-sm text-ink-muted">
+      <p class="mt-2 text-sm text-ink-muted max-w-2xl">
         Analizá cada detalle técnico y comercial de tus opciones favoritas.
+        Las celdas donde difieren se resaltan en engine-red.
       </p>
     </header>
 
     @if (sharedMeta(); as meta) {
       <div
-        class="mb-6 rounded-md border border-brand-200 bg-brand-50 px-3 py-2 text-sm text-brand-900"
+        class="mb-6 border border-engine bg-engine-50 px-4 py-3 text-sm text-engine-dark"
         data-testid="shared-banner"
       >
+        <span class="stamp-label mr-2">Guardada</span>
         Estás viendo una comparación guardada · Creada el
         {{ formatSharedDate(meta.createdAt) }}
       </div>
@@ -131,7 +134,7 @@
 
     @if (duplicateSlug() || !user()) {
     <div
-        class="mb-6 rounded-md border border-brand-200 bg-brand-50 px-3 py-2 text-sm text-brand-900"
+        class="mb-6 border border-engine bg-engine-50 px-4 py-3 text-sm text-engine-dark"
       >
         @if (!user()) {
           <span>Crea una cuenta para guardar esta comparación.</span>
@@ -144,7 +147,7 @@
             <a
               [routerLink]="['/compare']"
               [queryParams]="{ slug: savedSlug() }"
-              class="text-brand-700 underline"
+              class="text-engine underline"
             >
               Ver enlace público
             </a>
@@ -154,50 +157,55 @@
     }
 
     @if (loading()) {
-      <p class="text-sm text-brand-600" data-testid="loading">Cargando…</p>
+      <p class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted" data-testid="loading">Cargando…</p>
     }
 
 
   @if (versions().length > 0) {
 
-    <!-- Cards -->
+    <!-- Cards (fichas) -->
     <div
       class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10"
       data-testid="cards"
     >
       @for (v of versions(); track v.id) {
         <article
-          class="relative bg-surface border border-border rounded-xl shadow-sm hover:shadow-e2 transition-shadow p-4 overflow-visible group"
+          class="relative bg-paper-cool border border-ink p-4 overflow-visible group transition-transform hover:-translate-y-0.5"
           data-testid="card"
           [attr.data-version-id]="v.id"
         >
+          <header class="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-rule">
+            <span class="font-mono text-[10px] uppercase tracking-stamp text-graphite">Modelo</span>
             <button
               mat-icon-button
               type="button"
               (click)="removeFromCompare(v.id)"
               [attr.aria-label]="'Quitar ' + fullName(v)"
-              class="!absolute top-2 right-2"
+              class="!absolute top-1.5 right-1.5 !w-7 !h-7 !min-w-0"
             >
-              <mat-icon>close</mat-icon>
+              <mat-icon class="text-base">close</mat-icon>
             </button>
+          </header>
+
           <div class="flex items-center gap-2 mb-1">
             <span
-              class="grid h-6 w-6 place-items-center rounded-full bg-brand-100 text-brand-900 text-[10px] font-bold"
+              class="grid h-6 w-6 place-items-center bg-engine-100 text-engine-900 font-mono text-[11px] font-bold"
               aria-hidden="true"
             >
               {{ (v.model?.brand?.name ?? '?').charAt(0) }}
             </span>
             <span
-              class="text-[10px] font-bold uppercase tracking-wider text-ink-muted"
+              class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted"
             >
               {{ v.model?.brand?.name }}
             </span>
           </div>
-          <h3 class="font-bold text-lg leading-tight text-ink mb-1 pr-8">
+          <h3 class="font-semibold text-lg leading-tight text-ink mb-2 pr-8">
             {{ v.model?.name }} {{ v.name }}
           </h3>
-          <p class="font-extrabold text-xl text-brand-700 mb-3">
-            {{ formatPrice(v.priceClp) }} <span class="text-xs font-normal text-ink-muted">CLP</span>
+          <p class="font-display text-2xl text-engine mb-3 leading-none">
+            {{ formatPrice(v.priceClp) }}
+            <span class="font-sans text-[10px] font-normal text-ink-muted ml-1">CLP</span>
           </p>
 
           @if (availableVersionsFor(v).length > 1) {
@@ -208,7 +216,7 @@
                 [attr.aria-expanded]="swappingFor() === v.id"
                 [attr.aria-haspopup]="'listbox'"
                 [attr.data-testid]="'swap-button-' + v.id"
-                class="text-xs text-brand-700 font-bold hover:underline flex items-center gap-1 mb-1"
+                class="font-mono text-[11px] uppercase tracking-stamp text-engine hover:underline flex items-center gap-1 mb-1"
               >
                 <mat-icon class="text-base">swap_horiz</mat-icon>
                 Cambiar versión
@@ -216,7 +224,7 @@
 
               @if (swappingFor() === v.id) {
                 <ul
-                  class="absolute z-20 right-0 top-full mt-1 bg-surface border border-border rounded-lg shadow-e2 p-1 w-60"
+                  class="absolute z-20 right-0 top-full mt-1 bg-paper-cool border border-ink p-1 w-60"
                   role="listbox"
                   [attr.data-testid]="'swap-popover-' + v.id"
                 >
@@ -229,7 +237,7 @@
                           [attr.aria-selected]="false"
                           (click)="swapVersion(v.id, alt.id)"
                           [attr.data-testid]="'swap-option-' + alt.id"
-                          class="block w-full text-left text-xs px-2 py-1.5 rounded hover:bg-surface-muted"
+                          class="block w-full text-left text-xs px-2 py-1.5 hover:bg-paper-warm"
                         >
                           <span class="font-semibold">{{ alt.name }} {{ alt.year }}</span>
                           <span class="text-ink-muted"> · ${{ formatPricePlain(alt.priceClp) }}</span>
@@ -245,7 +253,7 @@
             <div
               class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
             >
-              <mat-icon class="text-brand-700 text-base">
+              <mat-icon class="text-engine text-base">
                 settings
               </mat-icon>
               <span class="text-xs font-semibold">{{ v.engineDisplacementCc ? (v.engineDisplacementCc / 1000).toFixed(1) + 'L' : '—' }}</span>
@@ -253,7 +261,7 @@
             <div
               class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
             >
-              <mat-icon class="text-brand-700 text-base">
+              <mat-icon class="text-engine text-base">
                 account_tree
               </mat-icon>
               <span class="text-xs font-semibold">{{ v.transmission ?? '—' }}</span>
@@ -261,7 +269,7 @@
             <div
               class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
             >
-              <mat-icon class="text-brand-700 text-base">
+              <mat-icon class="text-engine text-base">
                 local_gas_station
               </mat-icon>
               <span class="text-xs font-semibold">{{ v.fuel ?? '—' }}</span>
@@ -269,7 +277,7 @@
             <div
               class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
             >
-              <mat-icon class="text-brand-700 text-base">
+              <mat-icon class="text-engine text-base">
                 speed
               </mat-icon>
               <span class="text-xs font-semibold">{{ v.consumptionCityKmL ? v.consumptionCityKmL + ' km/l' : '—' }}</span>
@@ -291,7 +299,7 @@
         >
           <mat-expansion-panel-header>
             <mat-panel-title class="!flex items-center gap-3">
-              <mat-icon class="text-brand-700">{{ sectionIcon(s.name) }}</mat-icon>
+              <mat-icon class="text-engine">{{ sectionIcon(s.name) }}</mat-icon>
               <h2 class="font-bold text-base !m-0">{{ s.label }}</h2>
             </mat-panel-title>
             <mat-panel-description>

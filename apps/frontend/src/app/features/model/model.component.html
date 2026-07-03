@@ -4,10 +4,10 @@
     aria-label="Ruta"
     class="flex items-center gap-1 text-xs uppercase tracking-wider text-ink-muted mb-4"
   >
-    <a routerLink="/" class="hover:text-brand-700">Marcas</a>
+    <a routerLink="/" class="hover:text-engine">Marcas</a>
     <mat-icon class="crumb-icon">chevron_right</mat-icon>
     @if (brand(); as b) {
-      <a routerLink="/" class="hover:text-brand-700">{{ b.name }}</a>
+      <a routerLink="/" class="hover:text-engine">{{ b.name }}</a>
       <mat-icon class="crumb-icon">chevron_right</mat-icon>
       <span class="font-bold text-ink">{{ model()?.name }}</span>
     } @else {
@@ -16,33 +16,34 @@
   </nav>
 
   @if (loading()) {
-    <p class="text-sm text-brand-600" data-testid="loading">Cargando…</p>
+    <p class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted" data-testid="loading">Cargando…</p>
   }
 
   @if (error(); as msg) {
     <div
-      class="rounded-md border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark"
+      class="border border-engine bg-engine-50 px-4 py-3 text-sm text-engine-dark"
       role="alert"
       data-testid="error"
     >
-      {{ msg }}
+      <span class="stamp-label mr-2">Error</span>{{ msg }}
     </div>
   }
 
   @if (model(); as m) {
-    <header class="mb-4">
-      <h1 class="text-3xl md:text-4xl font-bold text-ink">
-        {{ m.brand.name }} {{ m.name }}
+    <header class="mb-6 mt-2">
+      <p class="stamp-label mb-3">N° {{ m.id.slice(-4).toUpperCase() }} · {{ m.brand.name }}</p>
+      <h1 class="font-display text-3xl md:text-5xl text-ink leading-[1.05]">
+        {{ m.name }}
       </h1>
-      <p class="text-sm text-ink-muted uppercase tracking-wider mt-1">
-        {{ segmentLabel() }} · {{ m.versions.length }} versiones
+      <p class="mt-3 font-mono text-[11px] uppercase tracking-stamp text-ink-muted">
+        {{ segmentLabel() }} · {{ m.versions.length }} versiones publicadas
       </p>
     </header>
 
     <!-- Carousel -->
-    <section class="mb-6" data-testid="carousel">
+    <section class="mb-8" data-testid="carousel">
       <div
-        class="relative h-[300px] md:h-[500px] rounded-xl overflow-hidden border border-border shadow-sm bg-surface-muted group"
+        class="relative h-[320px] md:h-[520px] overflow-hidden border border-ink bg-paper-warm group"
         (mouseenter)="onCarouselHover(true)"
         (mouseleave)="onCarouselHover(false)"
       >
@@ -111,10 +112,10 @@
               (click)="goTo($index)"
               [attr.aria-label]="'Ir a imagen ' + ($index + 1)"
               [attr.aria-current]="$index === currentIndex() ? 'true' : null"
-              [class.bg-brand-600]="$index === currentIndex()"
-              [class.bg-border]="$index !== currentIndex()"
+              [class.bg-engine]="$index === currentIndex()"
+              [class.bg-rule]="$index !== currentIndex()"
               [attr.data-testid]="'carousel-dot-' + $index"
-              class="h-2 w-2 rounded-full transition-colors"
+              class="h-1.5 w-6 transition-colors"
             ></button>
           }
         </div>
@@ -137,24 +138,24 @@
             <div class="space-y-6 pt-2">
               @for (group of specGroups(); track group.title) {
                 <article
-                  class="bg-surface border border-border rounded-xl overflow-hidden"
+                  class="bg-paper-cool border border-ink overflow-hidden"
                   [attr.data-testid]="'spec-group-' + group.title"
                 >
                   <header
-                    class="bg-surface-muted px-4 py-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink"
+                    class="bg-paper-warm px-4 py-3 flex items-center gap-2 font-mono text-[11px] uppercase tracking-stamp text-ink border-b border-rule"
                   >
-                    <mat-icon class="spec-group-icon">{{ group.icon }}</mat-icon>
+                    <mat-icon class="spec-group-icon text-engine">{{ group.icon }}</mat-icon>
                     {{ group.title }}
                   </header>
-                  <dl class="divide-y divide-border text-sm">
+                  <dl class="divide-y divide-rule text-sm">
                     @for (row of group.rows; track row.label) {
                       <div
                         class="flex justify-between items-center px-4 py-2.5"
-                        [class.bg-brand-50]="row.zebra"
+                        [class.bg-engine-50]="row.zebra"
                         [attr.data-testid]="'spec-row-' + group.title + '-' + row.label"
                       >
-                        <dt class="text-ink-muted">{{ row.label }}</dt>
-                        <dd class="font-semibold text-ink">{{ row.value }}</dd>
+                        <dt class="font-mono text-[11px] uppercase tracking-stamp text-graphite">{{ row.label }}</dt>
+                        <dd class="font-semibold text-ink font-sans">{{ row.value }}</dd>
                       </div>
                     }
                   </dl>
@@ -170,14 +171,14 @@
             <div class="pt-2">
               @if (equipmentNames().length > 0) {
                 <article
-                  class="bg-surface border border-border rounded-xl p-6"
+                  class="bg-paper-cool border border-ink p-6"
                   data-testid="equipment-list"
                 >
-                  <h2 class="font-bold text-lg mb-4 text-ink">Equipamiento disponible</h2>
+                  <h2 class="font-semibold text-lg mb-4 text-ink">Equipamiento disponible</h2>
                   <ul class="flex flex-wrap gap-2">
                     @for (eq of equipmentNames(); track eq) {
                       <li
-                        class="rounded-full bg-brand-100 text-brand-900 px-3 py-1 text-xs font-semibold"
+                        class="font-mono text-[10px] uppercase tracking-stamp bg-engine-50 text-engine-dark px-3 py-1 border border-engine-200 font-semibold"
                       >
                         {{ eq }}
                       </li>
@@ -193,35 +194,35 @@
       </div>
 
       <aside class="space-y-3" data-testid="versions">
-        <h3 class="font-bold text-lg text-ink">Versiones</h3>
+        <h3 class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted">Versiones</h3>
         @for (v of versions(); track v.id) {
           <article
-            class="bg-surface border border-border rounded-xl shadow-sm hover:shadow-e2 transition-shadow p-4"
+            class="bg-paper-cool border border-ink p-4 transition-transform hover:-translate-y-0.5"
             [attr.data-testid]="'version-' + v.id"
           >
             <div class="flex justify-between items-start mb-1 gap-2">
               <div class="min-w-0">
                 <p
-                  class="text-[10px] font-bold uppercase tracking-wider text-ink-muted"
+                  class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted"
                 >
                   {{ model()?.brand?.name }} {{ model()?.name }}
                 </p>
-                <p class="font-bold text-lg text-brand-700 truncate">
+                <p class="font-semibold text-lg text-ink truncate">
                   {{ v.name }}
                 </p>
               </div>
               @if (v.transmission) {
                 <span
-                  class="flex-shrink-0 rounded bg-brand-100 text-brand-900 px-2 py-0.5 text-[10px] font-bold uppercase"
+                  class="flex-shrink-0 bg-engine-100 text-engine-dark px-2 py-0.5 font-mono text-[10px] uppercase tracking-stamp font-bold"
                 >
                   {{ v.transmission }}
                 </span>
               }
             </div>
             @if (v.fuel) {
-              <p class="text-xs text-ink-muted">{{ v.fuel }} · {{ v.powerHp ?? '—' }} HP</p>
+              <p class="font-mono text-[11px] text-ink-muted uppercase tracking-stamp">{{ v.fuel }} · {{ v.powerHp ?? '—' }} HP</p>
             }
-            <p class="mt-2 font-extrabold text-2xl text-ink">
+            <p class="mt-2 font-display text-3xl text-ink leading-none">
               {{ formatPrice(v.priceClp) }}
             </p>
             <mat-checkbox
@@ -236,7 +237,7 @@
           </article>
         }
         @if (maxSelected()) {
-          <p class="text-xs text-ink-muted px-1">
+          <p class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted px-1">
             Máximo 3 versiones en la comparación.
           </p>
         }
