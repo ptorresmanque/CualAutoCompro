@@ -38,8 +38,28 @@
   --mat-sys-outline: #6e7979;
   --mat-sys-outline-variant: #bdc9c8;
 
+  /* Error (destructivo). El prebuilt azure-blue ya define --mat-sys-error
+   * (#ba1a1a) pero el SCSS M3 de mat-button no mapea `color="error"` a
+   * tokens de botón; sólo primary/secondary/tertiary tienen estilo. Por
+   * eso forzamos aquí tanto el token M3 como las CSS variables internas
+   * que mat-stroked-button consume para que `color="error"` se pinte
+   * rojo destructivo. */
+  --mat-sys-error: #b3261e;
+  --mat-sys-on-error: #ffffff;
+  --mat-sys-error-container: #fdecea;
+  --mat-sys-on-error-container: #410002;
+
   /* Otros */
   --mat-sys-inverse-primary: #4ab9b9;
+
+  /* Tokens de botón M3 que mat-stroked-button lee. Los sobreescribimos
+   * para que la combinación `mat-stroked-button` con [matButton] en
+   * componente admin renderice texto + outline + hover-state-layer en
+   * color destructivo cuando el botón usa `.action-danger`. */
+  --mdc-outlined-button-label-text-color: var(--color-fg);
+  --mdc-outlined-button-outline-color: var(--mat-sys-outline);
+  --mdc-outlined-button-hover-label-text-color: var(--mat-sys-primary);
+  --mdc-outlined-button-focus-label-text-color: var(--mat-sys-primary);
 
   /* Tokens de la app (compatibilidad con CSS existente) */
   --color-brand-600: #008080;
@@ -129,4 +149,54 @@ h1, h2, h3, .display {
 .mat-mdc-snack-bar-container.snack-warn .mat-mdc-snack-bar-action,
 .mat-mdc-snack-bar-container.snack-error .mat-mdc-snack-bar-action {
   color: inherit;
+}
+
+/* ----------------------------------------------------------------------
+ * Botones de acción destructivos (Eliminar en admin tables).
+ *
+ * mat-stroked-button con `color="error"` no toma estilos en M3 porque el
+ * SCSS interno de @angular/material/button sólo define mappings para
+ * primary / secondary / tertiary. Por eso añadimos una variante visual
+ * explícita via clase `.action-danger` que:
+ *   - Fija texto + icon-color en `var(--mat-sys-error)` (rojo destructivo)
+ *   - Pinta el outline del stroked button en error
+ *   - Mantiene el hover state coherente
+ *   - Conserva el estado disabled atenuado que el botón nativo provee
+ *
+ * NOTA: Angular Material anota `color="error"` como atributo no-op en
+ * M3 (no genera CSS). Por eso la aplicación de estilos se hace aquí. */
+.mat-mdc-outlined-button.action-danger,
+.mat-mdc-button.action-danger {
+  --mdc-outlined-button-label-text-color: var(--mat-sys-error);
+  --mdc-outlined-button-outline-color: var(--mat-sys-error);
+  --mdc-outlined-button-hover-label-text-color: var(--mat-sys-error);
+  --mdc-outlined-button-pressed-label-text-color: var(--mat-sys-error);
+  --mdc-outlined-button-focus-label-text-color: var(--mat-sys-error);
+  --mdc-protected-button-label-text-color: var(--mat-sys-error);
+  --mdc-protected-button-container-color: var(--mat-sys-error-container);
+  --mat-button-outlined-label-text-color: var(--mat-sys-error);
+  --mat-button-outlined-outline-color: var(--mat-sys-error);
+  --mat-button-protected-label-text-color: var(--mat-sys-error);
+  --mat-button-protected-container-color: var(--mat-sys-error-container);
+  color: var(--mat-sys-error);
+}
+
+.mat-mdc-outlined-button.action-danger mat-icon,
+.mat-mdc-button.action-danger mat-icon,
+button.action-danger mat-icon {
+  color: var(--mat-sys-error);
+}
+
+.mat-mdc-outlined-button.action-danger:disabled,
+.mat-mdc-button.action-danger:disabled {
+  color: var(--mat-sys-on-surface-variant);
+  --mdc-outlined-button-outline-color: var(--mat-sys-outline-variant);
+}
+
+.mat-mdc-flat-button.action-danger {
+  --mdc-filled-button-container-color: var(--mat-sys-error);
+  --mdc-filled-button-label-text-color: var(--mat-sys-on-error);
+  --mdc-filled-button-icon-color: var(--mat-sys-on-error);
+  color: var(--mat-sys-on-error);
+  background-color: var(--mat-sys-error);
 }
