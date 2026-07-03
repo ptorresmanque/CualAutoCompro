@@ -1,14 +1,11 @@
 <section class="mx-auto max-w-7xl px-4 md:px-8 py-6">
   <h1 class="text-2xl font-bold text-ink mb-4">Panel de administración</h1>
-  <nav class="flex gap-2 border-b border-border mb-6 overflow-x-auto" role="tablist">
+  <nav mat-tab-nav-bar mat-stretch-tabs="false" class="admin-shell-tabs" [tabPanel]="panel">
     @for (l of subLinks; track l.path) {
-      <a
-        [routerLink]="l.path"
-        routerLinkActive="border-b-2 border-brand-600 text-brand-700 font-bold"
-        [routerLinkActiveOptions]="{ exact: l.path === '/admin' }"
-        class="px-3 py-2 text-sm whitespace-nowrap"
-      >{{ l.label }}</a>
+      <a mat-tab-link [routerLink]="l.path" [routerLinkActiveOptions]="{ exact: l.path === '/admin' }" [active]="isActive(l.path)">{{ l.label }}</a>
     }
   </nav>
-  <router-outlet />
+  <mat-tab-nav-panel #panel>
+    <router-outlet />
+  </mat-tab-nav-panel>
 </section>

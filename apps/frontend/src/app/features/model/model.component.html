@@ -121,95 +121,75 @@
       }
     </section>
 
-    <!-- Tabs (mobile-friendly) -->
-    <div
-      class="flex border-b border-border mb-6 overflow-x-auto"
-      role="tablist"
-      aria-label="Secciones"
-    >
-      <button
-        type="button"
-        role="tab"
-        [attr.aria-selected]="tab() === 'specs'"
-        [attr.data-testid]="'tab-specs'"
-        (click)="setTab('specs')"
-        class="px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent"
-        [class.text-brand-700]="tab() === 'specs'"
-        [class.border-brand-600]="tab() === 'specs'"
-        [class.text-ink-muted]="tab() !== 'specs'"
-      >
-        Especificaciones
-      </button>
-      <button
-        type="button"
-        role="tab"
-        [attr.aria-selected]="tab() === 'equipment'"
-        [attr.data-testid]="'tab-equipment'"
-        (click)="setTab('equipment')"
-        class="px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent"
-        [class.text-brand-700]="tab() === 'equipment'"
-        [class.border-brand-600]="tab() === 'equipment'"
-        [class.text-ink-muted]="tab() !== 'equipment'"
-      >
-        Equipamiento
-      </button>
-    </div>
-
-    <!-- Content grid: specs (or equipment) + versiones sidebar -->
+    <!-- Content grid: tabs (specs/equipment) + versiones sidebar -->
     <div
       class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"
     >
-      <div class="lg:col-span-2 space-y-6">
-        @if (tab() === 'specs') {
-          @for (group of specGroups(); track group.title) {
-            <article
-              class="bg-surface border border-border rounded-xl overflow-hidden"
-              [attr.data-testid]="'spec-group-' + group.title"
-            >
-              <header
-                class="bg-surface-muted px-4 py-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink"
-              >
-                <mat-icon class="spec-group-icon">{{ group.icon }}</mat-icon>
-                {{ group.title }}
-              </header>
-              <dl class="divide-y divide-border text-sm">
-                @for (row of group.rows; track row.label) {
-                  <div
-                    class="flex justify-between items-center px-4 py-2.5"
-                    [class.bg-brand-50]="row.zebra"
-                    [attr.data-testid]="'spec-row-' + group.title + '-' + row.label"
+      <div class="lg:col-span-2">
+        <mat-tab-group
+          [selectedIndex]="tab() === 'specs' ? 0 : 1"
+          (selectedIndexChange)="setTab($event === 0 ? 'specs' : 'equipment')"
+          mat-stretch-tabs="false"
+          class="!mb-6"
+        >
+          <mat-tab data-testid="tab-specs">
+            <ng-template mat-tab-label>Especificaciones</ng-template>
+            <div class="space-y-6 pt-2">
+              @for (group of specGroups(); track group.title) {
+                <article
+                  class="bg-surface border border-border rounded-xl overflow-hidden"
+                  [attr.data-testid]="'spec-group-' + group.title"
+                >
+                  <header
+                    class="bg-surface-muted px-4 py-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink"
                   >
-                    <dt class="text-ink-muted">{{ row.label }}</dt>
-                    <dd class="font-semibold text-ink">{{ row.value }}</dd>
-                  </div>
-                }
-              </dl>
-            </article>
-          }
-          @if (specGroups().length === 0) {
-            <p class="text-sm text-ink-muted">Sin datos de especificación.</p>
-          }
-        } @else {
-          @if (equipmentNames().length > 0) {
-            <article
-              class="bg-surface border border-border rounded-xl p-6"
-              data-testid="equipment-list"
-            >
-              <h2 class="font-bold text-lg mb-4 text-ink">Equipamiento disponible</h2>
-              <ul class="flex flex-wrap gap-2">
-                @for (eq of equipmentNames(); track eq) {
-                  <li
-                    class="rounded-full bg-brand-100 text-brand-900 px-3 py-1 text-xs font-semibold"
-                  >
-                    {{ eq }}
-                  </li>
-                }
-              </ul>
-            </article>
-          } @else {
-            <p class="text-sm text-ink-muted">Sin equipamiento registrado.</p>
-          }
-        }
+                    <mat-icon class="spec-group-icon">{{ group.icon }}</mat-icon>
+                    {{ group.title }}
+                  </header>
+                  <dl class="divide-y divide-border text-sm">
+                    @for (row of group.rows; track row.label) {
+                      <div
+                        class="flex justify-between items-center px-4 py-2.5"
+                        [class.bg-brand-50]="row.zebra"
+                        [attr.data-testid]="'spec-row-' + group.title + '-' + row.label"
+                      >
+                        <dt class="text-ink-muted">{{ row.label }}</dt>
+                        <dd class="font-semibold text-ink">{{ row.value }}</dd>
+                      </div>
+                    }
+                  </dl>
+                </article>
+              }
+              @if (specGroups().length === 0) {
+                <p class="text-sm text-ink-muted">Sin datos de especificación.</p>
+              }
+            </div>
+          </mat-tab>
+          <mat-tab data-testid="tab-equipment">
+            <ng-template mat-tab-label>Equipamiento</ng-template>
+            <div class="pt-2">
+              @if (equipmentNames().length > 0) {
+                <article
+                  class="bg-surface border border-border rounded-xl p-6"
+                  data-testid="equipment-list"
+                >
+                  <h2 class="font-bold text-lg mb-4 text-ink">Equipamiento disponible</h2>
+                  <ul class="flex flex-wrap gap-2">
+                    @for (eq of equipmentNames(); track eq) {
+                      <li
+                        class="rounded-full bg-brand-100 text-brand-900 px-3 py-1 text-xs font-semibold"
+                      >
+                        {{ eq }}
+                      </li>
+                    }
+                  </ul>
+                </article>
+              } @else {
+                <p class="text-sm text-ink-muted">Sin equipamiento registrado.</p>
+              }
+            </div>
+          </mat-tab>
+        </mat-tab-group>
       </div>
 
       <aside class="space-y-3" data-testid="versions">

@@ -293,33 +293,27 @@
     <!-- Collapsible sections -->
     <div class="space-y-3">
       @for (s of sections; track s.name) {
-        <details
-          class="group bg-surface border border-border rounded-xl overflow-hidden"
-          [open]="s.name === 'specs'"
+        <mat-expansion-panel
+          class="compare-section"
+          [expanded]="s.name === 'specs'"
           [attr.data-testid]="'section-' + s.name"
         >
-          <summary
-            class="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-surface-muted transition-colors list-none"
-          >
-            <div class="flex items-center gap-3">
-              <mat-icon class="text-brand-700">
-                {{ sectionIcon(s.name) }}
-              </mat-icon>
-              <h2 class="font-bold text-base">{{ s.label }}</h2>
+          <mat-expansion-panel-header>
+            <mat-panel-title class="!flex items-center gap-3">
+              <mat-icon class="text-brand-700">{{ sectionIcon(s.name) }}</mat-icon>
+              <h2 class="font-bold text-base !m-0">{{ s.label }}</h2>
+            </mat-panel-title>
+            <mat-panel-description>
               <mat-icon
                 class="text-ink-muted cursor-help text-base"
-                [attr.title]="disclaimerText"
+                [matTooltip]="disclaimerText"
+                matTooltipPosition="above"
                 tabindex="0"
                 [attr.aria-label]="disclaimerText"
                 data-testid="info-icon"
               >info</mat-icon>
-            </div>
-            <mat-icon
-              class="group-open:rotate-180 transition-transform"
-            >
-              expand_more
-            </mat-icon>
-          </summary>
+            </mat-panel-description>
+          </mat-expansion-panel-header>
           <div class="border-t border-border overflow-x-auto">
             <table class="w-full text-sm">
               <thead>
@@ -356,7 +350,7 @@
               </tbody>
             </table>
           </div>
-        </details>
+        </mat-expansion-panel>
       }
     </div>
   }

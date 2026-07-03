@@ -10,7 +10,9 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { CompareStore } from '../../core/compare-store.service';
@@ -110,7 +112,14 @@ interface ComparisonBySlugResponse {
   selector: 'app-compare',
   templateUrl: './compare.component.html',
   styleUrl: './compare.component.css',
-  imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule],
+  imports: [
+    RouterLink,
+    MatButtonModule,
+    MatCardModule,
+    MatExpansionModule,
+    MatIconModule,
+    MatTooltipModule,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CompareComponent {

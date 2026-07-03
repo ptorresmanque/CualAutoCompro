@@ -1,1 +1,15 @@
 :host { display: block; }
+
+.admin-stat-card.mat-mdc-card {
+  transition: border-color 0.2s;
+}
+
+.admin-stat-card:hover {
+  border-color: var(--mat-sys-primary) !important;
+}
+
+.admin-stat-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}

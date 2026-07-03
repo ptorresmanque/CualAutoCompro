@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
 import { ApiService } from '../../core/api.service';
 
 interface Card {
@@ -11,7 +12,7 @@ interface Card {
 
 @Component({
   selector: 'app-admin-dashboard',
-  imports: [RouterLink],
+  imports: [RouterLink, MatCardModule],
   templateUrl: './admin-dashboard.component.html',
   styleUrl: './admin-dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,15 +34,15 @@ export class AdminDashboardComponent {
 
   private async loadCounts(): Promise<void> {
     await Promise.all([
-      this.load('Marcas',       '/brands',                0),
-      this.load('Modelos',      '/models?pageSize=1',     1),
-      this.load('Versiones',    '/versions?pageSize=1',   2),
-      this.load('Equipamiento', '/equipment',             3),
-      this.load('Mantención',   '/admin/maintenance', 4),
+      this.load('/brands',                0),
+      this.load('/models?pageSize=1',     1),
+      this.load('/versions?pageSize=1',   2),
+      this.load('/equipment',             3),
+      this.load('/admin/maintenance', 4),
     ]);
   }
 
-  private async load(_label: string, path: string, idx: number): Promise<void> {
+  private async load(path: string, idx: number): Promise<void> {
     try {
       const res = await this.api.get<{ data: unknown } | { data: { total?: number; items?: unknown[] } }>(path);
       const data = (res as { data: unknown }).data;

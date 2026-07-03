@@ -11,6 +11,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTabsModule } from '@angular/material/tabs';
 import { ApiService } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
@@ -85,6 +86,7 @@ type TabKey = 'specs' | 'equipment';
     MatButtonModule,
     MatCheckboxModule,
     MatIconModule,
+    MatTabsModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
