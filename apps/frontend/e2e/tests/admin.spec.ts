@@ -46,8 +46,8 @@ test.describe('admin flow', () => {
     await page.getByRole('button', { name: /nueva/i }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
 
-    await page.getByRole('button', { name: /formulario/i }).click();
-    await page.locator('input[formControlName="name"]').fill(brandName);
+    await page.locator('app-admin-edit-dialog mat-button-toggle', { hasText: /formulario/i }).click();
+    await page.locator('app-admin-edit-dialog input[type="text"]').first().fill(brandName);
     await page.getByRole('button', { name: /guardar/i }).click();
 
     await expect(page.getByRole('dialog')).toBeHidden();
@@ -56,7 +56,7 @@ test.describe('admin flow', () => {
 
     await brandRow.getByRole('button', { name: /editar/i }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
-    await page.locator('input[formControlName="name"]').fill(renamedName);
+    await page.locator('app-admin-edit-dialog input[type="text"]').first().fill(renamedName);
     await page.getByRole('button', { name: /guardar/i }).click();
 
     await expect(page.getByRole('dialog')).toBeHidden();
