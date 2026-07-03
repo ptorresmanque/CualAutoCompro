@@ -107,7 +107,10 @@ h1, h2, h3, .display {
  * rompa los iconos. */
 .mat-icon, mat-icon {
   font-family: 'Material Icons' !important;
-  vertical-align: middle;
+  font-size: inherit;
+  height: 1em !important;
+  width: 1em !important;
+  line-height: 1em !important;
 }
 
 /* Snackbars personalizados — usamos panelClass="snack-warn|error"
