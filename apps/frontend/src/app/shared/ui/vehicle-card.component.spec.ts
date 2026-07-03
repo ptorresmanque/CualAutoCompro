@@ -90,7 +90,7 @@ describe('VehicleCardComponent', () => {
     expect(btn.getAttribute('data-selected-version')).toBe('v1');
   });
 
-  it('muestra el pill "MÁS VENDIDO" cuando featured=true', () => {
+  it('muestra el sello POPULAR cuando featured=true', () => {
     const f = TestBed.createComponent(TestHostComponent);
     f.componentInstance.car.set(carFixture());
     f.componentInstance.featured.set(true);
@@ -99,7 +99,7 @@ describe('VehicleCardComponent', () => {
     expect(
       f.nativeElement.querySelector('[data-testid="featured-pill"]'),
     ).not.toBeNull();
-    expect(f.nativeElement.textContent).toContain('MÁS VENDIDO');
+    expect(f.nativeElement.textContent).toContain('POPULAR');
   });
 
   it('oculta el pill cuando featured=false', () => {
@@ -141,7 +141,7 @@ describe('VehicleCardComponent', () => {
     expect(btn.disabled).toBe(true);
   });
 
-  it('muestra "En comparación" con bg-brand-50 cuando added=true', () => {
+  it('muestra "En comparación" y marca la ficha como agregada cuando added=true', () => {
     const f = TestBed.createComponent(TestHostComponent);
     f.componentInstance.car.set(carFixture());
     f.detectChanges();
@@ -157,7 +157,7 @@ describe('VehicleCardComponent', () => {
       '[data-testid="vehicle-card-m1"]',
     ) as HTMLElement;
     expect(article.getAttribute('data-added')).toBe('true');
-    expect(article.className).toContain('vehicle-card-added');
+    expect(article.className).toContain('ficha-added');
   });
 
   it('muestra "Máximo 3" cuando maxReached=true y no está agregado', () => {

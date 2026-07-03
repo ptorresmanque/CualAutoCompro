@@ -1,128 +1,167 @@
-<section>
-  <!-- Hero -->
-  <div class="border-b border-border bg-surface-muted">
-    <div class="mx-auto max-w-7xl px-4 py-16 md:py-24 text-center">
-      <p class="text-xs uppercase tracking-wider text-brand-700 font-bold mb-3">
-        cualautocompro.cl
+<section class="animate-rise-in">
+
+  <!-- ============================================ HERO -->
+  <div class="border-b border-rule bg-paper">
+    <div class="mx-auto max-w-7xl px-4 md:px-8 pt-10 pb-16 md:pt-16 md:pb-24">
+      <p class="stamp-label mb-6">
+        <span class="inline-block mr-2">N° 001</span>· ficha destacada
       </p>
-      <h1
-        class="text-4xl md:text-5xl lg:text-6xl font-bold text-ink mb-4 tracking-tight"
-      >
-        Compara autos en Chile
-      </h1>
-      <p
-        class="text-base md:text-lg text-ink-muted max-w-2xl mx-auto mb-8"
-      >
-        Ficha técnica, precios CLP y equipamiento en un solo lugar. Toma una
-        decisión informada.
-      </p>
-      <div class="flex flex-col sm:flex-row gap-3 justify-center">
-        <a
-          routerLink="/catalogo"
-          class="bg-brand-600 text-white font-bold h-12 px-8 rounded-full hover:bg-brand-700 transition-colors shadow-md flex items-center justify-center"
-          data-testid="hero-explore"
-        >
-          Explorar catálogo
-        </a>
-        <a
-          routerLink="/compare"
-          class="border border-brand-600 text-brand-700 font-bold h-12 px-8 rounded-full hover:bg-brand-50 transition-colors flex items-center justify-center gap-2"
-          data-testid="hero-compare"
-        >
-          Ver comparación
-          <mat-icon>compare_arrows</mat-icon>
-        </a>
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-12 items-start">
+        <div class="md:col-span-7">
+          <h1 class="font-display text-[40px] md:text-[56px] lg:text-[72px] leading-[1.02] text-ink mb-6">
+            Compara autos en Chile.
+          </h1>
+          <p class="text-base md:text-lg text-ink-muted max-w-xl mb-8 leading-relaxed">
+            Ficha técnica, precios CLP y equipamiento en un solo lugar.
+            Tomá una decisión informada antes de pisar el concesionario.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <a
+              routerLink="/catalogo"
+              class="inline-flex items-center justify-center h-12 px-6 bg-ink text-paper font-semibold text-sm uppercase tracking-stamp hover:bg-engine transition-colors"
+              data-testid="hero-explore"
+            >
+              Explorar catálogo
+            </a>
+            <a
+              routerLink="/compare"
+              class="inline-flex items-center justify-center gap-2 h-12 px-6 border border-ink text-ink font-semibold text-sm uppercase tracking-stamp hover:bg-paper-warm transition-colors"
+              data-testid="hero-compare"
+            >
+              <mat-icon>compare_arrows</mat-icon>
+              Ver comparación
+            </a>
+          </div>
+        </div>
+
+        <!-- Preview ficha comparativa -->
+        <aside class="md:col-span-5" aria-label="Vista previa de comparación">
+          <div class="bg-paper-cool border border-ink p-5 relative">
+            <span class="absolute -top-3 left-4 px-2 bg-paper stamp-label">Comparación en vivo</span>
+            <header class="flex items-center justify-between mb-4 pb-3 border-b border-rule">
+              <span class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted">2 modelos · CLP</span>
+              <span class="stamp-label font-display">VS</span>
+            </header>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted">Modelo A</p>
+                <p class="font-semibold text-ink leading-tight">Toyota Corolla</p>
+                <p class="font-display text-2xl text-ink mt-2">$ 18.490.000</p>
+                <ul class="mt-3 space-y-1 font-mono text-[11px] text-ink-muted">
+                  <li>1.8 Híbrido · 122 CV</li>
+                  <li>Aut · 5.4 L/100km</li>
+                  <li>Garantía 5 años</li>
+                </ul>
+              </div>
+              <div class="border-l border-rule pl-4">
+                <p class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted">Modelo B</p>
+                <p class="font-semibold text-ink leading-tight">Mazda CX-5</p>
+                <p class="font-display text-2xl text-engine mt-2">$ 22.990.000</p>
+                <ul class="mt-3 space-y-1 font-mono text-[11px] text-ink-muted">
+                  <li>2.5 SKYACTIV-G · 187 CV</li>
+                  <li>Aut · 7.2 L/100km</li>
+                  <li>Garantía 3 años</li>
+                </ul>
+              </div>
+            </div>
+            <footer class="mt-4 pt-3 border-t border-rule flex items-center justify-between">
+              <span class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted">Δ precio</span>
+              <span class="font-display text-engine text-lg">+ $ 4.500.000</span>
+            </footer>
+          </div>
+          <p class="mt-2 font-mono text-[10px] uppercase tracking-stamp text-ink-muted text-right">
+            Datos del mercado chileno 2026
+          </p>
+        </aside>
       </div>
     </div>
   </div>
 
-  <!-- Value props -->
-  <div
-    class="mx-auto max-w-7xl px-4 py-12 md:py-16"
-  >
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-      <article
-        class="bg-surface border border-border rounded-xl p-6 shadow-sm"
-        data-testid="value-card-1"
-      >
-        <span
-          class="grid h-10 w-10 place-items-center rounded-full bg-brand-100 text-brand-700 mb-3"
-        >
-          <mat-icon class="value-icon">compare_arrows</mat-icon>
-        </span>
-        <h3 class="font-bold text-lg text-ink mb-1">Compara hasta 3 modelos</h3>
-        <p class="text-sm text-ink-muted">
-          Versiones lado a lado con diffs resaltados donde difieren.
+  <!-- ============================================ VALUE PROPS -->
+  <div class="mx-auto max-w-7xl px-4 md:px-8 py-14 md:py-20">
+    <p class="stamp-label mb-8">N° 002 · por qué acá</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border-t border-rule">
+      <article class="p-6 md:p-8 border-b md:border-b-0 md:border-r border-rule" data-testid="value-card-1">
+        <header class="flex items-center gap-3 mb-3">
+          <span class="grid h-9 w-9 place-items-center bg-engine-50 text-engine">
+            <mat-icon class="text-[18px]">compare_arrows</mat-icon>
+          </span>
+          <span class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted">01</span>
+        </header>
+        <h3 class="font-semibold text-lg text-ink mb-2">Hasta 3 modelos lado a lado</h3>
+        <p class="text-sm text-ink-muted leading-relaxed">
+          Versiones alineadas en una grilla. Los campos donde difieren quedan
+          marcados en engine-red para que se vean a primera vista.
         </p>
       </article>
-      <article
-        class="bg-surface border border-border rounded-xl p-6 shadow-sm"
-        data-testid="value-card-2"
-      >
-        <span
-          class="grid h-10 w-10 place-items-center rounded-full bg-brand-100 text-brand-700 mb-3"
-        >
-          <mat-icon class="value-icon">flag</mat-icon>
-        </span>
-        <h3 class="font-bold text-lg text-ink mb-1">Mercado chileno 2026</h3>
-        <p class="text-sm text-ink-muted">
-          Datos del mercado automotriz local — no comparás contra el mercado
-          gringo.
+
+      <article class="p-6 md:p-8 border-b md:border-b-0 md:border-r border-rule" data-testid="value-card-2">
+        <header class="flex items-center gap-3 mb-3">
+          <span class="grid h-9 w-9 place-items-center bg-blueprint-light text-blueprint">
+            <mat-icon class="text-[18px]">flag</mat-icon>
+          </span>
+          <span class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted">02</span>
+        </header>
+        <h3 class="font-semibold text-lg text-ink mb-2">Mercado chileno 2026</h3>
+        <p class="text-sm text-ink-muted leading-relaxed">
+          Precios en CLP, combustibles locales (gasolina, diésel, GLP,
+          eléctrico). Comparás contra el mercado real, no el catálogo gringo.
         </p>
       </article>
-      <article
-        class="bg-surface border border-border rounded-xl p-6 shadow-sm"
-        data-testid="value-card-3"
-      >
-        <span
-          class="grid h-10 w-10 place-items-center rounded-full bg-brand-100 text-brand-700 mb-3"
-        >
-          <mat-icon class="value-icon">share</mat-icon>
-        </span>
-        <h3 class="font-bold text-lg text-ink mb-1">Comparte con quien quieras</h3>
-        <p class="text-sm text-ink-muted">
-          Cada comparación tiene un link público único de 8 caracteres.
+
+      <article class="p-6 md:p-8" data-testid="value-card-3">
+        <header class="flex items-center gap-3 mb-3">
+          <span class="grid h-9 w-9 place-items-center bg-caution-light text-caution-dark">
+            <mat-icon class="text-[18px]">link</mat-icon>
+          </span>
+          <span class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted">03</span>
+        </header>
+        <h3 class="font-semibold text-lg text-ink mb-2">Link compartible de 8 caracteres</h3>
+        <p class="text-sm text-ink-muted leading-relaxed">
+          Cada comparación se guarda con un código corto. Mandala por WhatsApp
+          y la otra persona ve exactamente lo mismo que vos.
         </p>
       </article>
     </div>
   </div>
 
-  <!-- Featured -->
-  <div class="mx-auto max-w-7xl px-4 py-12 md:py-16">
-    <header class="flex items-end justify-between mb-6">
+  <!-- ============================================ FEATURED -->
+  <div class="mx-auto max-w-7xl px-4 md:px-8 py-14 md:py-20">
+    <header class="flex items-end justify-between mb-8 gap-4">
       <div>
-        <h2 class="text-2xl md:text-3xl font-bold text-ink tracking-tight">
-          Más vendidos
+        <p class="stamp-label mb-2">N° 003 · más comparados</p>
+        <h2 class="font-display text-3xl md:text-4xl text-ink">
+          Fichas del mes
         </h2>
-        <p class="mt-1 text-sm text-ink-muted">
-          Los modelos que más comparan los chilenos.
+        <p class="mt-2 text-sm text-ink-muted max-w-md">
+          Los modelos que están mirando los chilenos esta semana.
         </p>
       </div>
       <a
         routerLink="/catalogo"
-        class="hidden md:inline-flex text-sm text-brand-700 font-bold hover:underline"
+        class="hidden md:inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-stamp text-ink hover:text-engine transition-colors"
       >
-        Ver todos →
+        Ver todos <mat-icon class="text-[14px]">arrow_forward</mat-icon>
       </a>
     </header>
 
     @if (loading()) {
-      <p class="text-sm text-brand-600" data-testid="loading">Cargando…</p>
+      <p class="text-sm text-ink-muted font-mono" data-testid="loading">Cargando fichas…</p>
     }
 
     @if (loadError(); as msg) {
       <p
-        class="rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark"
+        class="border border-engine bg-engine-50 px-4 py-3 text-sm text-engine-dark"
         role="alert"
         data-testid="error"
       >
-        {{ msg }}
+        <span class="stamp-label mr-2">Error</span>{{ msg }}
       </p>
     }
 
     @if (!loading() && featured().length > 0) {
       <ul
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
         data-testid="featured-grid"
       >
         @for (m of featured(); track m.id) {
@@ -140,72 +179,56 @@
     }
   </div>
 
-  <!-- Stats strip -->
+  <!-- ============================================ STATS -->
   @if (stats(); as s) {
-    <div
-      class="border-y border-border bg-surface-muted"
-      data-testid="stats-strip"
-    >
-      <div
-        class="mx-auto max-w-7xl px-4 py-8 grid grid-cols-3 gap-4 text-center"
-      >
-        <div>
-          <p
-            class="text-3xl md:text-4xl font-extrabold text-brand-700"
-            data-testid="stat-models"
-          >
+    <div class="border-y border-ink bg-paper-warm" data-testid="stats-strip">
+      <div class="mx-auto max-w-7xl px-4 md:px-8 py-10 md:py-14 grid grid-cols-3 gap-4">
+        <div class="border-r border-rule last:border-r-0 px-2">
+          <p class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted mb-2">Modelos</p>
+          <p class="font-display text-4xl md:text-6xl text-ink" data-testid="stat-models">
             {{ s.total }}
           </p>
-          <p class="text-xs uppercase tracking-wider text-ink-muted mt-1">
-            modelos
-          </p>
         </div>
-        <div>
-          <p
-            class="text-3xl md:text-4xl font-extrabold text-brand-700"
-            data-testid="stat-brands"
-          >
+        <div class="border-r border-rule last:border-r-0 px-2">
+          <p class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted mb-2">Marcas</p>
+          <p class="font-display text-4xl md:text-6xl text-ink" data-testid="stat-brands">
             {{ s.brands }}
           </p>
-          <p class="text-xs uppercase tracking-wider text-ink-muted mt-1">
-            marcas
-          </p>
         </div>
-        <div>
-          <p
-            class="text-3xl md:text-4xl font-extrabold text-brand-700"
-            data-testid="stat-versions"
-          >
+        <div class="px-2">
+          <p class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted mb-2">Versiones</p>
+          <p class="font-display text-4xl md:text-6xl text-engine" data-testid="stat-versions">
             {{ s.versions }}
-          </p>
-          <p class="text-xs uppercase tracking-wider text-ink-muted mt-1">
-            versiones
           </p>
         </div>
       </div>
     </div>
   }
 
-  <!-- Final CTA + disclaimer -->
-  <div class="mx-auto max-w-7xl px-4 py-12 md:py-16 text-center">
-    <h2 class="text-2xl md:text-3xl font-bold text-ink mb-3 tracking-tight">
-      ¿Listo para comparar?
-    </h2>
-    <p class="text-ink-muted max-w-xl mx-auto mb-6">
-      Crea una cuenta gratuita para guardar tus comparaciones y acceder
-      desde cualquier dispositivo.
-    </p>
-    <a
-      routerLink="/register"
-      class="inline-flex rounded-full bg-brand-600 text-white font-bold h-12 px-8 hover:bg-brand-700 transition-colors shadow-md items-center justify-center"
-      data-testid="final-cta-register"
-    >
-      Crear cuenta gratis
-    </a>
+  <!-- ============================================ FINAL CTA -->
+  <div class="mx-auto max-w-7xl px-4 md:px-8 py-16 md:py-24">
+    <div class="max-w-3xl">
+      <p class="stamp-label mb-4">N° 004 · siguiente paso</p>
+      <h2 class="font-display text-3xl md:text-5xl text-ink mb-5 leading-tight">
+        Tu próxima ficha<br />empieza acá.
+      </h2>
+      <p class="text-ink-muted max-w-xl mb-7 leading-relaxed">
+        Creá una cuenta gratis para guardar comparaciones, retomar donde las
+        dejaste y acceder desde cualquier dispositivo.
+      </p>
+      <a
+        routerLink="/register"
+        class="inline-flex items-center justify-center h-12 px-6 bg-engine text-paper font-semibold text-sm uppercase tracking-stamp hover:bg-engine-dark transition-colors"
+        data-testid="final-cta-register"
+      >
+        Crear cuenta gratis
+      </a>
+    </div>
   </div>
 
-  <div class="mx-auto max-w-7xl px-4 pb-12">
-    <p class="text-xs text-ink-muted text-center">
+  <div class="mx-auto max-w-7xl px-4 md:px-8 pb-12">
+    <hr class="hairline mb-6" />
+    <p class="text-xs text-ink-muted leading-relaxed">
       Los datos de este sitio son de carácter informativo y no reemplazan la
       información oficial de los fabricantes. Los precios y equipamiento
       pueden variar según versión, año y región.

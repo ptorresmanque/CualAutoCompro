@@ -4,127 +4,182 @@
 @tailwind utilities;
 
 /* ============================================================
- * Tokens Material 3 — "Transparencia Automotriz" (override teal)
+ * Tokens "Ficha Técnica" / Plano de taller
+ *
+ * El sistema trata el sitio como una pila de fichas técnicas
+ * sobre el escritorio de un mecánico: papel cálido, tinta casi
+ * negra, engine-red como acento, IBM Plex para texto y Archivo
+ * Black para display. Material 3 recibe overrides completos para
+ * que ningún color azul del prebuilt theme se filtre.
  * ============================================================ */
 :root {
-  /* Tokens M3 base (azul) → teal */
-  --mat-sys-primary: #008080;
-  --mat-sys-surface-tint: #006a6a;
-  --mat-sys-on-primary: #ffffff;
-  --mat-sys-on-primary-container: #e3fffe;
-  --mat-sys-primary-container: #c6e9e9;
-  --mat-sys-secondary-container: #c6e9e9;
-  --mat-sys-tertiary-container: #657676;
-  --mat-sys-primary-fixed: #93f2f2;
-  --mat-sys-primary-fixed-dim: #76d6d5;
+  /* Paleta base — ficha técnica */
+  --paper:        #F2EEE3;
+  --paper-warm:   #EBE5D6;
+  --paper-cool:   #FAFAF7;
+  --ink:          #0E1116;
+  --ink-muted:    #3F4A52;
+  --graphite:     #6E7984;
+  --rule:         #D9D2BF;
+  --engine:       #C8341B;
+  --engine-dark:  #7A1A0B;
+  --blueprint:    #1B4F72;
+  --blueprint-light: #D4E1EB;
+  --caution:      #F2C12E;
+  --caution-light:#FBE9B0;
+  --caution-dark: #7A5B0B;
 
-  /* Surfaces (alineados al sistema Stitch) */
-  --mat-sys-background: #f8fafa;
-  --mat-sys-surface: #ffffff;
-  --mat-sys-surface-container-lowest: #ffffff;
-  --mat-sys-surface-container-low: #f2f4f4;
-  --mat-sys-surface-container: #eceeee;
-  --mat-sys-surface-container-high: #e6e8e9;
-  --mat-sys-surface-container-highest: #e3e2e6;
-  --mat-sys-surface-dim: #eceeee;
-  --mat-sys-surface-bright: #ffffff;
+  /* ---- Override M3 — todos los tokens visibles apuntan al nuevo sistema ---- */
+
+  /* Primary (engine-red) */
+  --mat-sys-primary:                   #C8341B;
+  --mat-sys-surface-tint:              #7A1A0B;
+  --mat-sys-on-primary:                #F2EEE3;
+  --mat-sys-on-primary-container:      #260500;
+  --mat-sys-primary-container:         #F4D1CA;
+  --mat-sys-secondary-container:       #F4D1CA;
+  --mat-sys-tertiary-container:        #D4E1EB;
+  --mat-sys-primary-fixed:             #F4D1CA;
+  --mat-sys-primary-fixed-dim:         #E69E91;
+
+  /* Surfaces (papel) */
+  --mat-sys-background:                #F2EEE3;
+  --mat-sys-surface:                   #FAFAF7;
+  --mat-sys-surface-container-lowest:  #FAFAF7;
+  --mat-sys-surface-container-low:     #F2EEE3;
+  --mat-sys-surface-container:         #EBE5D6;
+  --mat-sys-surface-container-high:    #E4DCC8;
+  --mat-sys-surface-container-highest: #D9D2BF;
+  --mat-sys-surface-dim:               #EBE5D6;
+  --mat-sys-surface-bright:            #FAFAF7;
 
   /* Texto */
-  --mat-sys-on-surface: #191c1d;
-  --mat-sys-on-surface-variant: #3e4949;
-  --mat-sys-on-background: #191c1d;
+  --mat-sys-on-surface:                #0E1116;
+  --mat-sys-on-surface-variant:        #3F4A52;
+  --mat-sys-on-background:             #0E1116;
 
-  /* Outline / divider */
-  --mat-sys-outline: #6e7979;
-  --mat-sys-outline-variant: #bdc9c8;
+  /* Outline / divider (hairlines) */
+  --mat-sys-outline:                   #6E7984;
+  --mat-sys-outline-variant:           #D9D2BF;
 
-  /* Error (destructivo). El prebuilt azure-blue ya define --mat-sys-error
-   * (#ba1a1a) pero el SCSS M3 de mat-button no mapea `color="error"` a
-   * tokens de botón; sólo primary/secondary/tertiary tienen estilo. Por
-   * eso forzamos aquí tanto el token M3 como las CSS variables internas
-   * que mat-stroked-button consume para que `color="error"` se pinte
-   * rojo destructivo. */
-  --mat-sys-error: #b3261e;
-  --mat-sys-on-error: #ffffff;
-  --mat-sys-error-container: #fdecea;
-  --mat-sys-on-error-container: #410002;
+  /* Error (destructivo: lo dejamos distinguible pero en engine) */
+  --mat-sys-error:                     #7A1A0B;
+  --mat-sys-on-error:                  #F2EEE3;
+  --mat-sys-error-container:           #F4D1CA;
+  --mat-sys-on-error-container:        #260500;
 
-  /* Otros */
-  --mat-sys-inverse-primary: #4ab9b9;
+  /* Inversos */
+  --mat-sys-inverse-primary:           #D86E5D;
 
-  /* Tokens de botón M3 que mat-stroked-button lee. Los sobreescribimos
-   * para que la combinación `mat-stroked-button` con [matButton] en
-   * componente admin renderice texto + outline + hover-state-layer en
-   * color destructivo cuando el botón usa `.action-danger`. */
-  --mdc-outlined-button-label-text-color: var(--color-fg);
-  --mdc-outlined-button-outline-color: var(--mat-sys-outline);
-  --mdc-outlined-button-hover-label-text-color: var(--mat-sys-primary);
-  --mdc-outlined-button-focus-label-text-color: var(--mat-sys-primary);
+  /* ---- Tokens de botón M3 → engine + paper ---- */
+  --mdc-outlined-button-label-text-color:        var(--ink);
+  --mdc-outlined-button-outline-color:           var(--rule);
+  --mdc-outlined-button-hover-label-text-color:  var(--engine);
+  --mdc-outlined-button-focus-label-text-color:  var(--engine);
 
-  /* Tokens de la app (compatibilidad con CSS existente) */
-  --color-brand-600: #008080;
-  --color-brand-700: #006565;
-  --color-brand-500: #008080;
-  --color-on-primary: #ffffff;
-  --color-on-primary-container: #e3fffe;
-  --color-secondary-container: #c6e9e9;
-  --color-tertiary-container: #657676;
-  --color-bg: #f8fafa;
-  --color-surface: #ffffff;
-  --color-surface-container: #eceeee;
-  --color-surface-container-low: #f2f4f4;
-  --color-surface-container-high: #e6e8e9;
-  --color-fg: #191c1d;
-  --color-muted: #3e4949;
-  --color-subtle: #6e7979;
-  --color-accent: #008080;
-  --color-warn-bg: #fef3c7;
-  --color-warn-fg: #92400e;
-  --color-border: #bdc9c8;
-  --radius: 8px;
+  --mdc-filled-button-container-color:           var(--ink);
+  --mdc-filled-button-label-text-color:          var(--paper);
+  --mdc-text-button-label-text-color:            var(--ink);
 
-  /* Tipografía Hanken Grotesk (Material hereda los tokens --mat-sys-*-font
-   * leyendo la primera palabra del font shorthand). Para M3 todos los roles
-   * usan Roboto por defecto, pero como Hanken Grotesk ya está precargado,
-   * la forma más simple es sobreescribir las variantes de body/title. */
-  --mat-sys-body-large-font: 'Hanken Grotesk', system-ui, sans-serif;
-  --mat-sys-body-medium-font: 'Hanken Grotesk', system-ui, sans-serif;
-  --mat-sys-body-small-font: 'Hanken Grotesk', system-ui, sans-serif;
-  --mat-sys-title-large-font: 'Hanken Grotesk', system-ui, sans-serif;
-  --mat-sys-title-medium-font: 'Hanken Grotesk', system-ui, sans-serif;
-  --mat-sys-title-small-font: 'Hanken Grotesk', system-ui, sans-serif;
-  --mat-sys-label-large-font: 'Hanken Grotesk', system-ui, sans-serif;
-  --mat-sys-label-medium-font: 'Hanken Grotesk', system-ui, sans-serif;
-  --mat-sys-label-small-font: 'Hanken Grotesk', system-ui, sans-serif;
-  --mat-sys-display-large-font: 'Hanken Grotesk', system-ui, sans-serif;
-  --mat-sys-display-medium-font: 'Hanken Grotesk', system-ui, sans-serif;
-  --mat-sys-display-small-font: 'Hanken Grotesk', system-ui, sans-serif;
-  --mat-sys-headline-large-font: 'Hanken Grotesk', system-ui, sans-serif;
-  --mat-sys-headline-medium-font: 'Hanken Grotesk', system-ui, sans-serif;
-  --mat-sys-headline-small-font: 'Hanken Grotesk', system-ui, sans-serif;
+  /* ---- Tokens de la app (compatibilidad) ---- */
+  --color-engine:        #C8341B;
+  --color-engine-dark:   #7A1A0B;
+  --color-engine-light:  #F4D1CA;
+  --color-on-primary:    #F2EEE3;
+  --color-on-primary-container: #260500;
+  --color-bg:            #F2EEE3;
+  --color-surface:       #FAFAF7;
+  --color-surface-container:       #EBE5D6;
+  --color-surface-container-low:   #F2EEE3;
+  --color-surface-container-high:  #E4DCC8;
+  --color-fg:            #0E1116;
+  --color-muted:         #3F4A52;
+  --color-subtle:        #6E7984;
+  --color-accent:        #C8341B;
+  --color-warn-bg:       #FBE9B0;
+  --color-warn-fg:       #7A5B0B;
+  --color-border:        #D9D2BF;
+  --radius:              2px;
+
+  /* ---- Tipografía ---- */
+  --font-sans:    'IBM Plex Sans', system-ui, sans-serif;
+  --font-display: 'Archivo Black', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono:    'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --mat-sys-body-large-font:        var(--font-sans);
+  --mat-sys-body-medium-font:       var(--font-sans);
+  --mat-sys-body-small-font:        var(--font-sans);
+  --mat-sys-title-large-font:       var(--font-sans);
+  --mat-sys-title-medium-font:      var(--font-sans);
+  --mat-sys-title-small-font:       var(--font-sans);
+  --mat-sys-label-large-font:       var(--font-sans);
+  --mat-sys-label-medium-font:      var(--font-sans);
+  --mat-sys-label-small-font:       var(--font-sans);
+  --mat-sys-display-large-font:     var(--font-display);
+  --mat-sys-display-medium-font:    var(--font-display);
+  --mat-sys-display-small-font:     var(--font-display);
+  --mat-sys-headline-large-font:    var(--font-display);
+  --mat-sys-headline-medium-font:   var(--font-sans);
+  --mat-sys-headline-small-font:    var(--font-sans);
 }
 
-html, body {
-  height: 100%;
-}
+/* ============================================================
+ * Base
+ * ============================================================ */
+html, body { height: 100%; }
 
 body {
-  font-family: 'Hanken Grotesk', system-ui, sans-serif;
-  color: var(--color-fg);
-  background: var(--color-bg);
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: var(--paper);
   -webkit-font-smoothing: antialiased;
   margin: 0;
 }
 
 h1, h2, h3, .display {
-  font-family: 'Hanken Grotesk', system-ui, sans-serif;
+  font-family: var(--font-sans);
   letter-spacing: -0.01em;
 }
 
-/* mat-icon usa Material Icons (cargado vía CDN en index.html). El override
- * `font-family: 'Material Icons'` está implícito en el stylesheet de Material,
- * pero lo reafirmamos aquí para que cualquier cambio futuro en el theme no
- * rompa los iconos. */
+h1, .display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Etiquetas de sección — el idioma del sitio */
+.mono-label, .stamp-label {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.stamp-label {
+  color: var(--engine);
+}
+
+.big-number {
+  font-family: var(--font-display);
+  line-height: 1;
+  color: var(--ink);
+}
+
+/* Hairlines — único separador estructural */
+.hairline {
+  border: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.hairline-v {
+  border: 0;
+  border-left: 1px solid var(--rule);
+}
+
+/* ============================================================
+ * Material icons — sin cambios
+ * ============================================================ */
 .mat-icon, mat-icon {
   font-family: 'Material Icons' !important;
   font-size: inherit;
@@ -133,70 +188,154 @@ h1, h2, h3, .display {
   line-height: 1em !important;
 }
 
-/* Snackbars personalizados — usamos panelClass="snack-warn|error"
- * para diferenciar las notificaciones que disparamos desde compare y
- * favorites. */
+/* ============================================================
+ * Snackbars
+ * ============================================================ */
 .mat-mdc-snack-bar-container.snack-warn .mdc-snackbar__surface {
-  background-color: var(--color-warn-bg);
-  color: var(--color-warn-fg);
+  background-color: var(--caution-light);
+  color: var(--caution-dark);
 }
-
 .mat-mdc-snack-bar-container.snack-error .mdc-snackbar__surface {
-  background-color: #fdecea;
-  color: #b3261e;
+  background-color: #F4D1CA;
+  color: var(--engine-dark);
 }
-
 .mat-mdc-snack-bar-container.snack-warn .mat-mdc-snack-bar-action,
 .mat-mdc-snack-bar-container.snack-error .mat-mdc-snack-bar-action {
   color: inherit;
 }
 
-/* ----------------------------------------------------------------------
- * Botones de acción destructivos (Eliminar en admin tables).
- *
- * mat-stroked-button con `color="error"` no toma estilos en M3 porque el
- * SCSS interno de @angular/material/button sólo define mappings para
- * primary / secondary / tertiary. Por eso añadimos una variante visual
- * explícita via clase `.action-danger` que:
- *   - Fija texto + icon-color en `var(--mat-sys-error)` (rojo destructivo)
- *   - Pinta el outline del stroked button en error
- *   - Mantiene el hover state coherente
- *   - Conserva el estado disabled atenuado que el botón nativo provee
- *
- * NOTA: Angular Material anota `color="error"` como atributo no-op en
- * M3 (no genera CSS). Por eso la aplicación de estilos se hace aquí. */
+/* ============================================================
+ * Botones de acción destructivos (Eliminar en admin).
+ * Override de los tokens internos de mat-stroked / flat button
+ * para que `.action-danger` se pinte engine-dark en lugar del
+ * azul que el prebuilt theme define.
+ * ============================================================ */
 .mat-mdc-outlined-button.action-danger,
 .mat-mdc-button.action-danger {
-  --mdc-outlined-button-label-text-color: var(--mat-sys-error);
-  --mdc-outlined-button-outline-color: var(--mat-sys-error);
-  --mdc-outlined-button-hover-label-text-color: var(--mat-sys-error);
-  --mdc-outlined-button-pressed-label-text-color: var(--mat-sys-error);
-  --mdc-outlined-button-focus-label-text-color: var(--mat-sys-error);
-  --mdc-protected-button-label-text-color: var(--mat-sys-error);
-  --mdc-protected-button-container-color: var(--mat-sys-error-container);
-  --mat-button-outlined-label-text-color: var(--mat-sys-error);
-  --mat-button-outlined-outline-color: var(--mat-sys-error);
-  --mat-button-protected-label-text-color: var(--mat-sys-error);
-  --mat-button-protected-container-color: var(--mat-sys-error-container);
-  color: var(--mat-sys-error);
+  --mdc-outlined-button-label-text-color: var(--engine-dark);
+  --mdc-outlined-button-outline-color:    var(--engine-dark);
+  --mdc-outlined-button-hover-label-text-color:  var(--engine-dark);
+  --mdc-outlined-button-pressed-label-text-color:var(--engine-dark);
+  --mdc-outlined-button-focus-label-text-color:  var(--engine-dark);
+  --mdc-protected-button-label-text-color: var(--engine-dark);
+  --mdc-protected-button-container-color: var(--caution-light);
+  --mat-button-outlined-label-text-color:  var(--engine-dark);
+  --mat-button-outlined-outline-color:    var(--engine-dark);
+  --mat-button-protected-label-text-color: var(--engine-dark);
+  --mat-button-protected-container-color: var(--caution-light);
+  color: var(--engine-dark);
 }
 
 .mat-mdc-outlined-button.action-danger mat-icon,
 .mat-mdc-button.action-danger mat-icon,
-button.action-danger mat-icon {
-  color: var(--mat-sys-error);
-}
+button.action-danger mat-icon { color: var(--engine-dark); }
 
 .mat-mdc-outlined-button.action-danger:disabled,
 .mat-mdc-button.action-danger:disabled {
-  color: var(--mat-sys-on-surface-variant);
-  --mdc-outlined-button-outline-color: var(--mat-sys-outline-variant);
+  color: var(--ink-muted);
+  --mdc-outlined-button-outline-color: var(--rule);
 }
 
 .mat-mdc-flat-button.action-danger {
-  --mdc-filled-button-container-color: var(--mat-sys-error);
-  --mdc-filled-button-label-text-color: var(--mat-sys-on-error);
-  --mdc-filled-button-icon-color: var(--mat-sys-on-error);
-  color: var(--mat-sys-on-error);
-  background-color: var(--mat-sys-error);
+  --mdc-filled-button-container-color: var(--engine-dark);
+  --mdc-filled-button-label-text-color: var(--paper);
+  --mdc-filled-button-icon-color: var(--paper);
+  color: var(--paper);
+  background-color: var(--engine-dark);
+}
+
+/* ============================================================
+ * Estilo global de Material buttons para casar con la ficha.
+ *
+ * Los componentes consumen muchos tokens M3 que el prebuilt theme
+ * (azure-blue) define. Estos overrides fuerzan coherencia.
+ * ============================================================ */
+.mat-mdc-unelevated-button.mat-primary {
+  --mdc-filled-button-container-color: var(--ink);
+  --mdc-filled-button-label-text-color: var(--paper);
+}
+
+.mat-mdc-unelevated-button.mat-primary:disabled {
+  --mdc-filled-button-container-color: var(--rule);
+  --mdc-filled-button-label-text-color: var(--ink-muted);
+}
+
+.mat-mdc-outlined-button.mat-primary,
+.mat-mdc-button.mat-primary {
+  --mdc-outlined-button-label-text-color: var(--ink);
+  --mdc-outlined-button-outline-color: var(--ink);
+  --mdc-outlined-button-hover-label-text-color: var(--engine);
+  --mdc-outlined-button-focus-label-text-color: var(--engine);
+}
+
+/* Cards Material → papel */
+.mat-mdc-card {
+  background-color: var(--paper-cool) !important;
+  border-radius: 4px !important;
+}
+
+/* Inputs y form-fields: hairline underline */
+.mat-mdc-form-field {
+  --mdc-outlined-text-field-outline-color: var(--rule);
+  --mdc-outlined-text-field-focus-outline-color: var(--ink);
+  --mdc-outlined-text-field-label-text-color: var(--ink-muted);
+  --mdc-outlined-text-field-hover-label-text-color: var(--ink);
+  --mdc-outlined-text-field-input-text-color: var(--ink);
+  --mdc-outlined-text-field-caret-color: var(--engine);
+  font-family: var(--font-sans) !important;
+}
+
+/* Radio buttons: a la ficha */
+.mat-mdc-radio-button .mdc-radio__background::before {
+  background-color: var(--ink) !important;
+}
+.mat-mdc-radio-button.mat-mdc-radio-checked .mdc-radio__outer-circle {
+  border-color: var(--engine) !important;
+}
+.mat-mdc-radio-button.mat-mdc-radio-checked .mdc-radio__inner-circle {
+  background-color: var(--engine) !important;
+}
+
+/* Chips simples */
+.mat-mdc-chip {
+  --mdc-chip-container-shape-radius: 2px;
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 11px !important;
+}
+
+/* Dialogs */
+.mat-mdc-dialog-surface {
+  background-color: var(--paper-cool) !important;
+  border: 1px solid var(--rule) !important;
+  border-radius: 4px !important;
+}
+
+/* Menu */
+.mat-mdc-menu-panel {
+  background-color: var(--paper-cool) !important;
+  border: 1px solid var(--rule) !important;
+  border-radius: 2px !important;
+}
+
+/* Selection / highlights azul residual del prebuilt → paper */
+::selection {
+  background: var(--caution);
+  color: var(--ink);
+}
+
+/* Focus visible universal */
+:focus-visible {
+  outline: 2px solid var(--engine);
+  outline-offset: 2px;
+}
+
+/* Reduced motion: apagar todas las animaciones de Tailwind + keyframes */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

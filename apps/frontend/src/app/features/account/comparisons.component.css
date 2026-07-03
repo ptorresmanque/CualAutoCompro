@@ -1,3 +1,5 @@
+:host { display: block; }
+
 .comparison-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -5,25 +7,23 @@
 }
 
 @media (min-width: 768px) {
-  .comparison-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  .comparison-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 .comparison-card {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  background: var(--mat-sys-surface);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 0.75rem;
+  background: var(--paper-cool);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
   padding: 1.25rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.2s;
+  transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
 .comparison-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 128, 128, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 0 -2px rgba(14, 17, 22, 0.15);
 }
 
 .comparison-thumbs {
@@ -34,21 +34,19 @@
 
 .comparison-thumb {
   aspect-ratio: 16 / 9;
-  border-radius: 0.5rem;
   background-size: cover;
   background-position: center;
-  border: 1px solid var(--mat-sys-outline-variant);
-  background-color: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--rule);
+  background-color: var(--paper-warm);
   overflow: hidden;
 }
 
 .comparison-thumb-placeholder {
   display: grid;
   place-items: center;
-  border-radius: 0.5rem;
-  border: 1px solid var(--mat-sys-outline-variant);
-  background-color: var(--mat-sys-surface-container-low);
-  color: var(--mat-sys-on-surface-variant);
+  border: 1px solid var(--rule);
+  background-color: var(--paper-warm);
+  color: var(--graphite);
   aspect-ratio: 16 / 9;
 }
 
@@ -61,10 +59,9 @@
 .comparison-thumb-large-placeholder {
   display: grid;
   place-items: center;
-  border-radius: 0.5rem;
-  border: 1px solid var(--mat-sys-outline-variant);
-  background-color: var(--mat-sys-surface-container-low);
-  color: var(--mat-sys-on-surface-variant);
+  border: 1px solid var(--rule);
+  background-color: var(--paper-warm);
+  color: var(--graphite);
   aspect-ratio: 16 / 9;
 }
 
@@ -75,33 +72,45 @@
 }
 
 .comparison-title {
+  font-family: var(--font-sans);
   font-size: 1rem;
-  font-weight: 700;
-  color: var(--mat-sys-on-surface);
+  font-weight: 600;
+  color: var(--ink);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .comparison-meta {
   margin-top: 0.25rem;
-  font-size: 0.75rem;
-  color: var(--mat-sys-on-surface-variant);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--graphite);
 }
 
 .comparison-slug {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem;
-  background: var(--mat-sys-surface-container-low);
-  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--paper-warm);
+  border: 1px solid var(--rule);
 }
 
 .comparison-slug-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--mat-sys-primary);
+  font-weight: 600;
+  color: var(--ink);
   background: transparent;
+}
+
+.comparison-slug button.mat-mdc-button {
+  font-family: var(--font-mono) !important;
+  font-size: 0.6875rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .comparison-actions {
@@ -110,14 +119,27 @@
   justify-content: space-between;
   margin-top: auto;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--mat-sys-outline-variant);
+  border-top: 1px solid var(--rule);
+}
+
+.comparison-actions .mat-mdc-outlined-button,
+.comparison-actions .mat-mdc-button {
+  font-family: var(--font-sans) !important;
+  border-radius: 0 !important;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.75rem !important;
+  height: 32px !important;
 }
 
 .empty-card {
-  background: var(--mat-sys-surface);
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 0.75rem;
+  background: var(--paper-cool);
+  border: 1px solid var(--ink);
   padding: 3rem;
   text-align: center;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .comparison-card { transition: none !important; }
+  .comparison-card:hover { transform: none; }
 }

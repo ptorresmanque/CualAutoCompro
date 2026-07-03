@@ -1,31 +1,31 @@
 <section class="mx-auto max-w-7xl px-4 py-6 md:px-8">
-  <header class="mb-8">
-    <h1 class="text-3xl md:text-4xl font-bold text-ink tracking-tight">
-      Mis comparaciones guardadas
+  <header class="mb-8 mt-2">
+    <p class="stamp-label mb-2">N° comparaciones guardadas</p>
+    <h1 class="font-display text-3xl md:text-5xl text-ink leading-tight">
+      Mis comparaciones
     </h1>
     <p class="mt-2 text-sm md:text-base text-ink-muted max-w-2xl">
-      Comparte estas URLs con quien quieras. Cada comparación tiene un slug
-      único de 8 caracteres.
+      Cada una tiene un slug único de 8 caracteres para compartir.
     </p>
   </header>
 
   @if (loading()) {
-    <p class="text-sm text-brand-600" data-testid="loading">Cargando…</p>
+    <p class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted" data-testid="loading">Cargando…</p>
   }
 
   @if (error(); as msg) {
     <div
-      class="rounded-md border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark"
+      class="border border-engine bg-engine-50 px-4 py-3 text-sm text-engine-dark"
       role="alert"
       data-testid="error"
     >
-      {{ msg }}
+      <span class="stamp-label mr-2">Error</span>{{ msg }}
     </div>
   }
 
   @if (!loading() && !hasItems() && !error()) {
-    <div class="empty-card" data-testid="empty">
-      <p class="font-bold text-lg text-ink">
+    <div class="border border-ink bg-paper-cool p-12 text-center" data-testid="empty">
+      <p class="font-semibold text-lg text-ink">
         Aún no tenés comparaciones guardadas
       </p>
       <p class="mt-2 text-sm text-ink-muted">
@@ -33,9 +33,7 @@
       </p>
       <a
         routerLink="/"
-        mat-flat-button
-        color="primary"
-        class="!mt-4"
+        class="mt-4 inline-flex items-center justify-center h-10 px-5 bg-ink text-paper font-semibold text-sm uppercase tracking-stamp hover:bg-engine transition-colors"
       >
         Ir al catálogo
       </a>

@@ -1,14 +1,13 @@
 .app-footer {
-  border-top: 1px solid var(--mat-sys-outline-variant);
-  background: var(--mat-sys-surface-container-low);
-  color: var(--mat-sys-on-surface-variant);
+  border-top: 1px solid var(--ink);
+  background: var(--paper-warm);
+  color: var(--ink-muted);
 }
 
 .app-footer-inner {
-  max-width: 72rem;
+  max-width: 80rem;
   margin: 0 auto;
-  padding: 1.5rem 1rem;
-  font-size: 0.875rem;
+  padding: 1.25rem 1rem;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -16,24 +15,56 @@
   gap: 0.75rem;
 }
 
+.app-footer-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.app-footer-mark {
+  font-family: var(--font-display);
+  color: var(--engine);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.app-footer-name {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--ink);
+  text-transform: lowercase;
+  letter-spacing: -0.01em;
+}
+
 .app-footer-nav {
   display: flex;
-  gap: 1rem;
+  gap: 1.25rem;
+  align-items: center;
 }
 
 .app-footer-nav a {
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--ink-muted);
   text-decoration: none;
-  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
   transition: color 0.2s;
 }
 
-.app-footer-nav a:hover {
-  color: var(--mat-sys-primary);
-}
+.app-footer-nav a:hover { color: var(--engine); }
 
 .app-footer-meta {
-  font-size: 0.75rem;
-  color: var(--mat-sys-on-surface-variant);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--graphite);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   margin: 0;
+}
+
+@media (min-width: 768px) {
+  .app-footer-inner { padding: 1.25rem 2rem; }
 }

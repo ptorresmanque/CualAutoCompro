@@ -1,8 +1,10 @@
 <section class="auth-shell mx-auto max-w-md px-4">
   <header class="auth-shell-header">
-    <span class="auth-avatar" aria-hidden="true">c</span>
-    <h1 class="font-bold text-2xl text-ink">Iniciar sesión</h1>
-    <p class="mt-1 text-sm text-ink-muted">
+    <p class="stamp-label mb-3">N° sesión · iniciar</p>
+    <h1 class="font-display text-4xl text-ink leading-tight">
+      Iniciar sesión
+    </h1>
+    <p class="mt-2 text-sm text-ink-muted">
       Accedé a tus comparaciones guardadas.
     </p>
   </header>
@@ -49,20 +51,18 @@
 
         @if (error(); as msg) {
           <div
-            class="rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark"
+            class="border border-engine bg-engine-50 px-4 py-3 text-sm text-engine-dark"
             role="alert"
             data-testid="error"
           >
-            {{ msg }}
+            <span class="stamp-label mr-2">Error</span>{{ msg }}
           </div>
         }
 
         <button
-          mat-flat-button
-          color="primary"
           type="submit"
           [disabled]="submitting()"
-          class="w-full"
+          class="auth-submit w-full"
           data-testid="submit"
         >
           {{ submitting() ? 'Ingresando…' : 'Iniciar sesión' }}
@@ -71,7 +71,7 @@
     </mat-card-content>
   </mat-card>
 
-  <div class="auth-divider">o continúa sin cuenta</div>
+  <div class="auth-divider"><span>o continúa sin cuenta</span></div>
 
   <div class="auth-alternate">
     <a routerLink="/" class="auth-button">
@@ -86,12 +86,12 @@
 
   <p class="mt-6 text-center text-sm text-ink-muted">
     ¿No tenés cuenta?
-    <a routerLink="/register" class="text-brand-700 font-bold hover:underline">
+    <a routerLink="/register" class="text-engine font-semibold hover:underline">
       Crear cuenta
     </a>
   </p>
 
-  <p class="mt-6 text-center text-[11px] text-ink-subtle">
-    Al iniciar sesión aceptás nuestros términos de uso y política de privacidad.
+  <p class="mt-6 text-center font-mono text-[11px] uppercase tracking-stamp text-ink-muted">
+    Al iniciar sesión aceptás nuestros términos y política de privacidad.
   </p>
 </section>
