@@ -11,6 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
 import { AuthService } from '../core/auth.service';
 import { CompareStore } from '../core/compare-store.service';
 
@@ -33,6 +34,7 @@ interface NavLink {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatMenuModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -43,7 +45,6 @@ export class TopNavBarComponent {
   private route = inject(ActivatedRoute);
 
   readonly user = this.auth.currentUser;
-  readonly menuOpen = signal(false);
   readonly compareCount = computed(() => this.compareStore.ids().length);
 
   readonly searchTerm = signal(
@@ -85,17 +86,9 @@ export class TopNavBarComponent {
     });
   }
 
-  toggleMenu(): void {
-    this.menuOpen.update((v) => !v);
-  }
-
-  closeMenu(): void {
-    this.menuOpen.set(false);
-  }
-
   async logout(): Promise<void> {
     await this.auth.logout();
-    this.closeMenu();
     await this.router.navigateByUrl('/');
   }
 }
+

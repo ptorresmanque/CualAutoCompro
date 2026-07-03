@@ -72,37 +72,31 @@
           mat-mini-fab
           color="primary"
           type="button"
-          (click)="toggleMenu()"
+          [matMenuTriggerFor]="userMenu"
           [attr.aria-label]="'Menú de ' + u.name"
           class="user-button"
         >
           {{ initials() || '?' }}
         </button>
-        @if (menuOpen()) {
-          <div
-            class="user-menu"
-            role="menu"
-            data-testid="user-menu"
+        <mat-menu #userMenu="matMenu" class="user-menu" data-testid="user-menu">
+          <a
+            mat-menu-item
+            routerLink="/account/comparisons"
           >
-            <a
-              routerLink="/account/comparisons"
-              (click)="closeMenu()"
-              class="user-menu-item"
-              role="menuitem"
-            >
-              Mis comparaciones
-            </a>
-            <button
-              type="button"
-              (click)="logout()"
-              class="user-menu-item user-menu-item-danger"
-              role="menuitem"
-              data-testid="logout"
-            >
-              Cerrar sesión
-            </button>
-          </div>
-        }
+            <mat-icon>bookmarks</mat-icon>
+            <span>Mis comparaciones</span>
+          </a>
+          <button
+            mat-menu-item
+            type="button"
+            (click)="logout()"
+            data-testid="logout"
+            class="logout-item"
+          >
+            <mat-icon>logout</mat-icon>
+            <span>Cerrar sesión</span>
+          </button>
+        </mat-menu>
       } @else {
         <a
           mat-stroked-button

@@ -92,7 +92,7 @@
 
 .user-button.mat-mdc-mini-fab {
   --mdc-fab-container-shape: 9999px;
-  background: var(--mat-sys-primary-container);
+  background: var(--mat-sys-primary);
   color: var(--mat-sys-on-primary-container);
   font-weight: 700;
   font-size: 0.875rem;
@@ -101,38 +101,34 @@
   box-shadow: none;
 }
 
-.user-menu {
-  position: absolute;
-  right: 1rem;
-  top: 4rem;
-  margin-top: 0.5rem;
-  width: 12rem;
-  border-radius: 0.5rem;
+/* mat-menu styling: items show leading icon + label with M3 tokens. */
+.user-menu .mat-mdc-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.user-menu .mat-mdc-menu-item mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.user-menu .mat-mdc-menu-content {
   background: var(--mat-sys-surface);
   border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.5rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  padding: 0.25rem;
-  z-index: 10;
+  min-width: 12rem;
 }
 
-.user-menu-item {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-  color: var(--mat-sys-on-surface);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  text-decoration: none;
+.user-menu .logout-item {
+  color: var(--mat-sys-error);
 }
 
-.user-menu-item:hover {
-  background: var(--mat-sys-surface-container);
-}
-
-.user-menu-item-danger {
-  color: #ba1a1a;
+.user-menu .logout-item mat-icon {
+  color: var(--mat-sys-error);
 }

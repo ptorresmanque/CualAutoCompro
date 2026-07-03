@@ -91,7 +91,7 @@
 
 .vehicle-card-segment {
   border-radius: 0.25rem;
-  background: var(--mat-sys-primary-container);
+  background: var(--mat-sys-surface-tint);
   color: var(--mat-sys-on-primary-container);
   padding: 0.125rem 0.5rem;
   font-size: 10px;
