@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-2 w-full">
   @if (selectedIds().length > 0) {
     <ul data-testid="ms-chips" class="flex flex-wrap gap-1.5">
-      @for (id of selectedIds(); track id) {
+      @for (id of selectedIds(); track $index) {
         <li
           data-testid="ms-chip"
           class="inline-flex items-center gap-1 rounded-full bg-brand-100 text-brand-900 px-2 py-0.5 text-xs font-semibold"
@@ -38,7 +38,7 @@
       role="listbox"
       class="max-h-60 overflow-auto rounded border border-border bg-surface shadow-e2"
     >
-      @for (item of available(); track item.id) {
+      @for (item of available(); track $index) {
         <li
           data-testid="ms-option"
           role="option"
