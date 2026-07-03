@@ -99,4 +99,76 @@ describe('AdminEditDialogComponent', () => {
     const ms = fixture.nativeElement.querySelector('app-multi-select-field');
     expect(ms).toBeTruthy();
   });
+
+  it('version con 5 equipment items prellena TODOS los chips (regression)', async () => {
+    TestBed.configureTestingModule({
+      imports: [AdminEditDialogComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(AdminEditDialogComponent);
+    fixture.componentRef.setInput('entityKey', 'version');
+    fixture.componentRef.setInput('apiPath', 'versions');
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+
+    // Flush template.
+    http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version')).flush({
+      data: {
+        modelId: '', name: '', year: 2026, priceClp: 0,
+        transmission: 'MANUAL', fuel: 'BENCINA',
+        engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
+        consumptionCityKmL: 0, consumptionHighwayKmL: 0,
+        lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
+        trunkLiters: 0, airbagCount: 0,
+        hasAbs: false, hasEsp: false, hasCruiseControl: false,
+      },
+    });
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    // Flush equipment list (multi-select loads on init).
+    http.expectOne((r) => r.url.includes('/api/v1/admin/equipment')).flush({
+      data: [
+        { id: 'e1', name: 'Aire' },
+        { id: 'e2', name: 'Bluetooth' },
+        { id: 'e3', name: 'Camara' },
+        { id: 'e4', name: 'Sensores' },
+        { id: 'e5', name: 'Crucero' },
+      ],
+    });
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    // Set entity with 5 equipment items (the shape openEdit produces).
+    const component = fixture.componentInstance as AdminEditDialogComponent;
+    fixture.componentRef.setInput('entity', {
+      id: 'v1',
+      name: 'v1',
+      year: 2026,
+      priceClp: 0,
+      modelId: 'm1',
+      model: { name: 'M' },
+      equipment: ['e1', 'e2', 'e3', 'e4', 'e5'],
+      equipmentItems: [
+        { equipmentItem: { id: 'e1', name: 'A', category: 'C' } },
+        { equipmentItem: { id: 'e2', name: 'B', category: 'C' } },
+        { equipmentItem: { id: 'e3', name: 'C', category: 'C' } },
+        { equipmentItem: { id: 'e4', name: 'D', category: 'C' } },
+        { equipmentItem: { id: 'e5', name: 'E', category: 'C' } },
+      ],
+    } as any);
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    // Form value should have all 5 ids.
+    const formValue = component.form().get('equipment')?.value;
+    expect(formValue).toEqual(['e1', 'e2', 'e3', 'e4', 'e5']);
+
+    // DOM should have 5 chips.
+    const chips = fixture.nativeElement.querySelectorAll('[data-testid="ms-chip"]');
+    expect(chips.length).toBe(5);
+  });
 });
