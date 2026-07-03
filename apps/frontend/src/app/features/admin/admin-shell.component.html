@@ -1,5 +1,5 @@
-<section class="mx-auto max-w-7xl px-4 md:px-8 py-6">
-  <h1 class="text-2xl font-bold text-ink mb-4">Panel de administración</h1>
+<section class="admin-shell-wrap">
+  <h1 class="admin-shell-title">Panel de administración</h1>
   <nav mat-tab-nav-bar mat-stretch-tabs="false" class="admin-shell-tabs" [tabPanel]="panel">
     @for (l of subLinks; track l.path) {
       <a mat-tab-link [routerLink]="l.path" [active]="isActive(l.path)">{{ l.label }}</a>

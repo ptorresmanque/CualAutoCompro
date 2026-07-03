@@ -1,19 +1,19 @@
-<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+<section class="admin-stat-grid">
   @for (c of cards(); track c.path) {
     <mat-card class="admin-stat-card" appearance="outlined">
       <a [routerLink]="c.path" class="admin-stat-link">
-        <mat-card-content class="!p-6">
-          <h2 class="text-lg font-bold text-ink">{{ c.label }}</h2>
-          <p class="mt-2 text-3xl font-bold text-brand-700">
+        <mat-card-content class="admin-stat-body">
+          <h2 class="admin-stat-label">{{ c.label }}</h2>
+          <p class="admin-stat-value">
             @if (c.loading) {
-              <span class="text-ink-muted">…</span>
+              <span class="admin-stat-pending">…</span>
             } @else if (c.count === null) {
-              <span class="text-warn-dark">Error</span>
+              <span class="admin-stat-error">Error</span>
             } @else {
               {{ c.count }}
             }
           </p>
-          <p class="mt-2 text-xs text-ink-muted">Administrar →</p>
+          <p class="admin-stat-cta">Administrar →</p>
         </mat-card-content>
       </a>
     </mat-card>

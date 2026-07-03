@@ -2,7 +2,31 @@
   display: block;
 }
 
+.admin-shell-wrap {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+@media (min-width: 768px) {
+  .admin-shell-wrap {
+    padding: 1.5rem 2rem;
+  }
+}
+
+.admin-shell-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--mat-sys-on-surface);
+  letter-spacing: -0.015em;
+  margin: 0 0 1rem;
+}
+
 .admin-shell-tabs.mat-mdc-tab-nav-bar {
   margin-bottom: 1.5rem;
   border-bottom: 1px solid var(--mat-sys-outline-variant);
+  --mdc-tab-indicator-active-indicator-color: var(--mat-sys-primary);
+  --mat-tab-header-active-label-text-color: var(--mat-sys-primary);
+  --mat-tab-header-active-focus-indicator-color: var(--mat-sys-primary);
+  --mat-tab-header-active-ripple-color: var(--mat-sys-primary);
 }

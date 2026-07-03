@@ -24,10 +24,7 @@
   }
 
   @if (!loading() && !hasItems() && !error()) {
-    <div
-      class="rounded-xl border border-border bg-surface p-12 text-center shadow-sm"
-      data-testid="empty"
-    >
+    <div class="empty-card" data-testid="empty">
       <p class="font-bold text-lg text-ink">
         Aún no tenés comparaciones guardadas
       </p>
@@ -46,59 +43,49 @@
   }
 
   @if (hasItems()) {
-    <ul
-      class="grid grid-cols-1 md:grid-cols-2 gap-6"
-      data-testid="list"
-    >
+    <ul class="comparison-grid" data-testid="list">
       @for (c of comparisons(); track c.id) {
         <li
-          class="bg-surface border border-border rounded-xl p-5 shadow-sm hover:shadow-e2 transition-shadow flex flex-col gap-4"
+          class="comparison-card"
           [attr.data-testid]="'comparison-' + c.id"
         >
           @if (c.items.length > 0) {
-            <div class="grid grid-cols-3 gap-2">
+            <div class="comparison-thumbs">
               @for (item of c.items.slice(0, 3); track item.position) {
                 <div
-                  class="aspect-video rounded-lg bg-cover bg-center overflow-hidden border border-border bg-surface-muted"
+                  class="comparison-thumb"
                   [style.background-image]="thumbStyle(item.version.model.imageUrl ?? item.version.model.galleryUrls?.[0])"
                   aria-hidden="true"
                 ></div>
               }
               @for (_ of [].constructor(maxItems() - c.items.length); track $index) {
                 <div
-                  class="aspect-video rounded-lg border border-border bg-surface-muted grid place-items-center text-ink-subtle"
+                  class="comparison-thumb-placeholder"
                   aria-hidden="true"
                 >
-                  <mat-icon class="text-2xl">directions_car</mat-icon>
+                  <mat-icon>directions_car</mat-icon>
                 </div>
               }
             </div>
           } @else {
-            <div
-              class="aspect-video rounded-lg border border-border bg-surface-muted grid place-items-center text-ink-subtle"
-            >
-              <mat-icon class="text-3xl">directions_car</mat-icon>
+            <div class="comparison-thumb-large-placeholder">
+              <mat-icon>directions_car</mat-icon>
             </div>
           }
 
           <div>
-            <h3 class="font-bold text-base text-ink">
+            <h3 class="comparison-title">
               {{ displayName(c) }}
             </h3>
-            <p class="mt-1 text-xs text-ink-muted">
+            <p class="comparison-meta">
               Guardada el {{ formatSharedDate(c.createdAt) }} ·
               {{ c.items.length }} versión(es)
             </p>
           </div>
 
           @if (c.slug) {
-            <div
-              class="flex items-center justify-between p-2 bg-surface-muted rounded-lg"
-            >
-              <code
-                class="font-mono text-sm font-bold text-brand-700"
-                data-testid="slug"
-              >
+            <div class="comparison-slug">
+              <code class="comparison-slug-code" data-testid="slug">
                 /{{ c.slug }}
               </code>
               <button
@@ -114,7 +101,7 @@
             </div>
           }
 
-          <div class="flex items-center justify-between mt-auto pt-3 border-t border-border">
+          <div class="comparison-actions">
             <a
               mat-stroked-button
               color="primary"

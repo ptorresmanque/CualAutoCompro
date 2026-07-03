@@ -1,15 +1,70 @@
 :host { display: block; }
 
+.admin-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .admin-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .admin-stat-card.mat-mdc-card {
-  transition: border-color 0.2s;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.75rem;
+  background: var(--mat-sys-surface);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: 0;
 }
 
 .admin-stat-card:hover {
   border-color: var(--mat-sys-primary) !important;
+  box-shadow: 0 4px 12px rgba(0, 128, 128, 0.08);
 }
 
 .admin-stat-link {
   display: block;
   color: inherit;
   text-decoration: none;
+}
+
+.admin-stat-body.mat-mdc-card-content {
+  padding: 1.5rem;
+}
+
+.admin-stat-label {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--mat-sys-on-surface);
+  margin: 0;
+}
+
+.admin-stat-value {
+  margin-top: 0.5rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--mat-sys-primary);
+}
+
+.admin-stat-pending {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.admin-stat-error {
+  color: #92400e;
+}
+
+.admin-stat-cta {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
 }
