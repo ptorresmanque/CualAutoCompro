@@ -569,6 +569,25 @@ describe('CatalogComponent', () => {
     await p2;
   });
 
+  it('sort-select es un <mat-select> (no <select> nativo)', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
+    http
+      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await fixture.componentInstance.initialLoad;
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement.querySelector(
+      '[data-testid="sort-select"]',
+    );
+    expect(el).not.toBeNull();
+    expect(el.tagName.toLowerCase()).toBe('mat-select');
+  });
+
   it('clearFilters también resetea selectedVersions (I8)', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
