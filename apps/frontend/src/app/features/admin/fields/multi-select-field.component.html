@@ -1,0 +1,56 @@
+<div class="flex flex-col gap-2 w-full">
+  @if (selectedIds().length > 0) {
+    <ul data-testid="ms-chips" class="flex flex-wrap gap-1.5">
+      @for (id of selectedIds(); track id) {
+        <li
+          data-testid="ms-chip"
+          class="inline-flex items-center gap-1 rounded-full bg-brand-100 text-brand-900 px-2 py-0.5 text-xs font-semibold"
+        >
+          <span>{{ labelOf(id) }}</span>
+          <button
+            type="button"
+            data-testid="ms-chip-remove"
+            (click)="removeAt(id)"
+            class="text-brand-900/70 hover:text-warn-dark"
+            [attr.aria-label]="'Quitar ' + labelOf(id)"
+          >
+            <span class="material-symbols-outlined text-sm">close</span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+  <input
+    type="text"
+    data-testid="ms-input"
+    role="combobox"
+    [attr.aria-expanded]="open()"
+    [value]="query()"
+    (input)="onInput($any($event.target).value)"
+    (focus)="open.set(true)"
+    (keydown.escape)="open.set(false)"
+    [placeholder]="placeholder()"
+    class="w-full rounded border border-border px-2 py-1.5 text-sm bg-surface"
+  />
+  @if (open() && available().length > 0) {
+    <ul
+      data-testid="ms-options"
+      role="listbox"
+      class="max-h-60 overflow-auto rounded border border-border bg-surface shadow-e2"
+    >
+      @for (item of available(); track item.id) {
+        <li
+          data-testid="ms-option"
+          role="option"
+          (click)="pick(item)"
+          class="px-3 py-1.5 text-sm cursor-pointer hover:bg-brand-50"
+        >
+          {{ item[optionLabel()] }}
+        </li>
+      }
+    </ul>
+  }
+  @if (error(); as err) {
+    <p class="text-warn-dark text-xs">{{ err }}</p>
+  }
+</div>
