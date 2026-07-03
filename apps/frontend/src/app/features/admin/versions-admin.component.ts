@@ -4,7 +4,14 @@ import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { sortItems, type SortDir } from './sort-utils';
 
-interface VersionRow { id: string; name: string; year: number; priceClp: number; model: { name: string } | null; }
+interface VersionRow {
+  id: string;
+  name: string;
+  year: number;
+  priceClp: number;
+  model: { name: string } | null;
+  equipmentItems?: { equipmentItem: { id: string; name: string; category: string } }[];
+}
 interface ModelOption { id: string; name: string; }
 type SortKey = 'name' | 'year' | 'priceClp' | 'modelName';
 
@@ -90,17 +97,47 @@ export class VersionsAdminComponent {
 
   async onSave(value: Record<string, unknown>): Promise<void> {
     const e = this.dialogEntity();
+    const newEquipmentIds = (value['equipment'] as string[] | null) ?? [];
+    const { toAdd, toRemove } = this.computeEquipmentDiff(e, newEquipmentIds);
+
+    // 1) Save the version (without the equipment field).
+    const { equipment: _ignore, ...versionPayload } = value;
+    let versionId: string;
     try {
       if (e) {
-        await this.api.patch(`/admin/versions/${e.id}`, value);
+        versionId = e.id;
+        await this.api.patch(`/admin/versions/${versionId}`, versionPayload);
       } else {
-        await this.api.post(`/admin/versions`, value);
+        const created = await this.api.post<{ data: { id: string } }>(
+          `/admin/versions`,
+          versionPayload,
+        );
+        versionId = created.data.id;
       }
+
+      // 2) Sync equipment relations.
+      for (const itemId of toRemove) {
+        await this.api.delete(`/admin/equipment/version/${versionId}/item/${itemId}`);
+      }
+      for (const itemId of toAdd) {
+        await this.api.post(`/admin/equipment/attach`, { versionId, itemId });
+      }
+
       this.dialogEntity.set(undefined);
       await this.load();
     } catch (err) {
       this.error.set((err as Error).message);
     }
+  }
+
+  private computeEquipmentDiff(
+    e: VersionRow | null | undefined,
+    newIds: string[],
+  ): { toAdd: string[]; toRemove: string[] } {
+    const oldIds = (e?.equipmentItems ?? []).map((ei) => ei.equipmentItem.id);
+    const toAdd = newIds.filter((id) => !oldIds.includes(id));
+    const toRemove = oldIds.filter((id) => !newIds.includes(id));
+    return { toAdd, toRemove };
   }
 
   async confirmDelete(row: VersionRow): Promise<void> {
