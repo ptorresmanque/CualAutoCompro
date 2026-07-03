@@ -59,6 +59,12 @@ describe('MultiSelectFieldComponent', () => {
     await new Promise((r) => setTimeout(r, 0));
     fixture.detectChanges();
 
+    const input: HTMLInputElement = fixture.nativeElement.querySelector(
+      '[data-testid="ms-input"]',
+    );
+    input.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+
     const items = fixture.nativeElement.querySelectorAll('[data-testid="ms-option"]');
     (items[0] as HTMLElement).click();
     fixture.detectChanges();
@@ -84,6 +90,13 @@ describe('MultiSelectFieldComponent', () => {
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
     fixture.detectChanges();
+
+    const input: HTMLInputElement = fixture.nativeElement.querySelector(
+      '[data-testid="ms-input"]',
+    );
+    input.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+
     const items = fixture.nativeElement.querySelectorAll('[data-testid="ms-option"]');
     expect(items.length).toBe(1);
     expect(items[0].textContent).toContain('Bluetooth');

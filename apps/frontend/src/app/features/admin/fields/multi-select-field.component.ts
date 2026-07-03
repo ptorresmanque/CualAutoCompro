@@ -30,7 +30,7 @@ export class MultiSelectFieldComponent implements OnInit {
   readonly placeholder = input<string>('Buscar…');
 
   readonly query = signal('');
-  readonly open = signal(true);
+  readonly open = signal(false);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly remoteOptions = signal<OptionItem[]>([]);
