@@ -8,6 +8,9 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
@@ -76,7 +79,13 @@ type TabKey = 'specs' | 'equipment';
   selector: 'app-model',
   templateUrl: './model.component.html',
   styleUrl: './model.component.css',
-  imports: [RouterLink, DisclaimerComponent],
+  imports: [
+    RouterLink,
+    DisclaimerComponent,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatIconModule,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ModelComponent {
@@ -102,10 +111,6 @@ export class ModelComponent {
   readonly currentIndex = signal(0);
   readonly currentUrl = computed(() => {
     const raw = this.galleryUrls()[this.currentIndex()] ?? '';
-    // Resolves relative /uploads/... URLs to the backend origin so the
-    // browser can fetch the image even in dev (frontend on :4200,
-    // backend on :3000). In production the apiBase is the same origin
-    // so this is a no-op.
     return toAbsoluteUploadUrl(raw) ?? raw;
   });
   private readonly _hovered = signal(false);

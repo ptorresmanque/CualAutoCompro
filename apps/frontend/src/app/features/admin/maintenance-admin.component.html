@@ -2,26 +2,26 @@
   <header class="flex items-center justify-between mb-4 gap-2">
     <h2 class="text-xl font-bold">Mantención</h2>
     <button
+      mat-flat-button
+      color="primary"
       type="button"
       (click)="openCreate()"
       [disabled]="!selectedVersion()"
-      class="rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700 disabled:opacity-50"
     >+ Nuevo</button>
   </header>
 
-  <label class="flex flex-col text-xs mb-4 max-w-md">
-    <span class="font-bold mb-1">Versión</span>
-    <select
-      class="rounded border border-border px-3 py-2 text-sm bg-surface"
+  <mat-form-field appearance="outline" class="w-full max-w-md" subscriptSizing="dynamic">
+    <mat-label>Versión</mat-label>
+    <mat-select
       [value]="selectedVersion()"
-      (change)="onVersionChange($any($event.target).value)"
+      (selectionChange)="onVersionChange($event.value)"
     >
-      <option value="">— Selecciona una versión —</option>
+      <mat-option value="">— Selecciona una versión —</mat-option>
       @for (v of versions(); track v.id) {
-        <option [value]="v.id">{{ v.model?.name ? v.model.name + ' · ' : '' }}{{ v.name }}</option>
+        <mat-option [value]="v.id">{{ v.model?.name ? v.model.name + ' · ' : '' }}{{ v.name }}</mat-option>
       }
-    </select>
-  </label>
+    </mat-select>
+  </mat-form-field>
 
   @if (error(); as err) {
     <div class="mb-3 rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark">{{ err }}</div>
@@ -42,7 +42,7 @@
               (click)="toggleSort('mileageTag')"
               [attr.aria-sort]="sortKey() === 'mileageTag' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
               Kilometraje
-              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'mileageTag' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+              <mat-icon class="sort-icon">{{ sortKey() === 'mileageTag' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
             </button>
           </th>
           <th class="py-2">
@@ -50,7 +50,7 @@
               (click)="toggleSort('costClp')"
               [attr.aria-sort]="sortKey() === 'costClp' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
               Costo
-              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'costClp' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+              <mat-icon class="sort-icon">{{ sortKey() === 'costClp' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
             </button>
           </th>
           <th class="py-2 w-32">Acciones</th>
@@ -62,8 +62,8 @@
             <td class="py-2">{{ m.mileageTag | number }} km</td>
             <td class="py-2">{{ formatPrice(m.costClp) }}</td>
             <td class="py-2">
-              <button class="text-brand-700 mr-2" (click)="openEdit(m)">Editar</button>
-              <button class="text-warn-dark" (click)="confirmDelete(m)">Eliminar</button>
+              <button mat-button color="primary" (click)="openEdit(m)">Editar</button>
+              <button mat-button color="warn" (click)="confirmDelete(m)">Eliminar</button>
             </td>
           </tr>
         }

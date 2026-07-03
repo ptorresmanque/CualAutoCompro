@@ -1,5 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
 import { ApiService } from '../../core/api.service';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { sortItems, type SortDir } from './sort-utils';
@@ -10,7 +14,14 @@ type SortKey = 'versionId' | 'mileageTag' | 'costClp';
 
 @Component({
   selector: 'app-maintenance-admin',
-  imports: [AdminEditDialogComponent, DecimalPipe],
+  imports: [
+    AdminEditDialogComponent,
+    DecimalPipe,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatSelectModule,
+  ],
   templateUrl: './maintenance-admin.component.html',
   styleUrl: './maintenance-admin.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -92,10 +103,6 @@ export class MaintenanceAdminComponent {
 
   async onSave(value: Record<string, unknown>): Promise<void> {
     const e = this.dialogEntity();
-    // In create mode, versionId is required and comes from the parent selector.
-    // In edit mode, the entity already carries its own versionId; do NOT
-    // overwrite it with the currently-selected version (otherwise switching
-    // the dropdown while editing would silently reparent the record).
     const payload: Record<string, unknown> = e
       ? value
       : { ...value, versionId: this.selectedVersion() };

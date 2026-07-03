@@ -7,12 +7,15 @@
       </p>
     </div>
     @if (hasItems()) {
-      <button type="button"
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
         (click)="compareAllMine()"
-        class="rounded-full bg-brand-600 text-white text-sm font-bold px-5 py-2 hover:bg-brand-700 transition-colors flex items-center gap-2"
         data-testid="compare-all"
-        [disabled]="models().length < 2">
-        <span class="material-symbols-outlined text-base">compare_arrows</span>
+        [disabled]="models().length < 2"
+      >
+        <mat-icon>compare_arrows</mat-icon>
         Comparar mis favoritos ({{ compareCount() }})
       </button>
     }
@@ -40,7 +43,12 @@
       <p class="mt-2 text-sm text-ink-muted">
         Marcá con el corazón desde el catálogo para verlos acá.
       </p>
-      <a routerLink="/catalogo" class="mt-4 inline-block rounded-full bg-brand-600 px-5 py-2 text-sm font-bold text-white hover:bg-brand-700 transition-colors">
+      <a
+        routerLink="/catalogo"
+        mat-flat-button
+        color="primary"
+        class="!mt-4"
+      >
         Ir al catálogo
       </a>
     </div>

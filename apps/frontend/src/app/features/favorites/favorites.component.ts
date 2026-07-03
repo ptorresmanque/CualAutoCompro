@@ -6,6 +6,8 @@ import {
   signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
@@ -23,7 +25,7 @@ interface FavoriteModel extends VehicleCardInput {
   selector: 'app-favorites',
   templateUrl: './favorites.component.html',
   styleUrl: './favorites.component.css',
-  imports: [RouterLink, VehicleCardComponent],
+  imports: [RouterLink, VehicleCardComponent, MatButtonModule, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FavoritesComponent {

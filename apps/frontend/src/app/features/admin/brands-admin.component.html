@@ -2,9 +2,10 @@
   <header class="flex items-center justify-between mb-4 gap-2">
     <h2 class="text-xl font-bold">Marcas</h2>
     <button
+      mat-flat-button
+      color="primary"
       type="button"
       (click)="openCreate()"
-      class="rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700"
     >+ Nueva</button>
   </header>
 
@@ -34,9 +35,9 @@
               [attr.aria-sort]="sortKey() === 'name' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'"
             >
               Nombre
-              <span class="material-symbols-outlined text-sm">
+              <mat-icon class="sort-icon">
                 {{ sortKey() === 'name' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward' ) : 'unfold_more' }}
-              </span>
+              </mat-icon>
             </button>
           </th>
           <th class="py-2 w-32">Acciones</th>
@@ -47,8 +48,8 @@
           <tr class="border-t border-border">
             <td class="py-2">{{ b.name }}</td>
             <td class="py-2">
-              <button class="text-brand-700 mr-2" (click)="openEdit(b)">Editar</button>
-              <button class="text-warn-dark" (click)="confirmDelete(b)">Eliminar</button>
+              <button mat-button color="primary" (click)="openEdit(b)">Editar</button>
+              <button mat-button color="warn" (click)="confirmDelete(b)">Eliminar</button>
             </td>
           </tr>
         }

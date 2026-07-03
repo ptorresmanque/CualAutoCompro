@@ -2,9 +2,10 @@
   <header class="flex items-center justify-between mb-4 gap-2">
     <h2 class="text-xl font-bold">Versiones</h2>
     <button
+      mat-flat-button
+      color="primary"
       type="button"
       (click)="openCreate()"
-      class="rounded-full bg-brand-600 text-white px-4 py-1.5 text-sm font-bold hover:bg-brand-700"
     >+ Nueva</button>
   </header>
 
@@ -31,7 +32,7 @@
               (click)="toggleSort('name')"
               [attr.aria-sort]="sortKey() === 'name' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
               Nombre
-              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'name' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+              <mat-icon class="sort-icon">{{ sortKey() === 'name' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
             </button>
           </th>
           <th class="py-2">
@@ -39,7 +40,7 @@
               (click)="toggleSort('modelName')"
               [attr.aria-sort]="sortKey() === 'modelName' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
               Modelo
-              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'modelName' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+              <mat-icon class="sort-icon">{{ sortKey() === 'modelName' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
             </button>
           </th>
           <th class="py-2">
@@ -47,7 +48,7 @@
               (click)="toggleSort('year')"
               [attr.aria-sort]="sortKey() === 'year' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
               Año
-              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'year' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+              <mat-icon class="sort-icon">{{ sortKey() === 'year' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
             </button>
           </th>
           <th class="py-2">
@@ -55,7 +56,7 @@
               (click)="toggleSort('priceClp')"
               [attr.aria-sort]="sortKey() === 'priceClp' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
               Precio
-              <span class="material-symbols-outlined text-sm">{{ sortKey() === 'priceClp' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</span>
+              <mat-icon class="sort-icon">{{ sortKey() === 'priceClp' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
             </button>
           </th>
           <th class="py-2 w-32">Acciones</th>
@@ -69,8 +70,8 @@
             <td class="py-2">{{ v.year }}</td>
             <td class="py-2">{{ formatPrice(v.priceClp) }}</td>
             <td class="py-2">
-              <button class="text-brand-700 mr-2" (click)="openEdit(v)">Editar</button>
-              <button class="text-warn-dark" (click)="confirmDelete(v)">Eliminar</button>
+              <button mat-button color="primary" (click)="openEdit(v)">Editar</button>
+              <button mat-button color="warn" (click)="confirmDelete(v)">Eliminar</button>
             </td>
           </tr>
         }

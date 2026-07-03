@@ -17,3 +17,35 @@ section[role='region'][aria-roledescription='carrusel'] button:focus-visible {
   outline: 2px solid #008080;
   outline-offset: 2px;
 }
+
+.crumb-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+}
+
+.carousel-nav.mat-mdc-icon-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.carousel-nav-left {
+  left: 1rem;
+}
+
+.carousel-nav-right {
+  right: 1rem;
+}
+
+.spec-group-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  color: var(--mat-sys-primary);
+}

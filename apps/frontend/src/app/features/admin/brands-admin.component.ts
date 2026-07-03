@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../core/api.service';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
@@ -9,7 +11,7 @@ type SortKey = 'name';
 
 @Component({
   selector: 'app-brands-admin',
-  imports: [AdminEditDialogComponent, SearchInputComponent],
+  imports: [AdminEditDialogComponent, SearchInputComponent, MatButtonModule, MatIconModule],
   templateUrl: './brands-admin.component.html',
   styleUrl: './brands-admin.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

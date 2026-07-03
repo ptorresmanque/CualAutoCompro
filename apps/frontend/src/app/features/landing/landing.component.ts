@@ -6,6 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../core/api.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
 import {
@@ -26,7 +27,7 @@ const FEATURED_ON_LANDING = new Set(['Corolla', 'Tucson', 'CX-5']);
   selector: 'app-landing',
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.css',
-  imports: [RouterLink, VehicleCardComponent],
+  imports: [RouterLink, VehicleCardComponent, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LandingComponent {

@@ -6,6 +6,8 @@ import {
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
@@ -40,7 +42,7 @@ interface Comparison {
   selector: 'app-comparisons',
   templateUrl: './comparisons.component.html',
   styleUrl: './comparisons.component.css',
-  imports: [RouterLink, DisclaimerComponent],
+  imports: [RouterLink, DisclaimerComponent, MatButtonModule, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ComparisonsComponent {
