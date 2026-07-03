@@ -11,6 +11,9 @@ interface VersionRow {
   priceClp: number;
   model: { name: string } | null;
   equipmentItems?: { equipmentItem: { id: string; name: string; category: string } }[];
+  // Projected from equipmentItems by openEdit so the dialog's multi-select
+  // control named 'equipment' can be preloaded. Read by computeEquipmentDiff.
+  equipment?: string[];
 }
 interface ModelOption { id: string; name: string; }
 type SortKey = 'name' | 'year' | 'priceClp' | 'modelName';
@@ -89,7 +92,15 @@ export class VersionsAdminComponent {
     this.dialogEntity.set(null);
   }
   openEdit(row: VersionRow): void {
-    this.dialogEntity.set(row);
+    // Project equipmentItems[].equipmentItem.id -> equipment: string[] so the
+    // dialog's multiSelect control named 'equipment' gets preloaded. Without
+    // this projection, the dialog's effect iterates Object.entries(entity) and
+    // calls form.get('equipmentItems')?.setValue(...), which is a no-op because
+    // the form control is named 'equipment'. The control would stay at [],
+    // and any save would detach every existing item (data loss).
+    const { equipmentItems, ...rest } = row;
+    const equipment = equipmentItems?.map((ei) => ei.equipmentItem.id) ?? [];
+    this.dialogEntity.set({ ...rest, equipment });
   }
   closeDialog(): void {
     this.dialogEntity.set(undefined);

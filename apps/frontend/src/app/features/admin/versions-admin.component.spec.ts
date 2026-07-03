@@ -26,6 +26,43 @@ describe('VersionsAdminComponent', () => {
     expect(fixture.componentInstance.items().length).toBeGreaterThan(0);
   });
 
+  it('openEdit proyecta equipmentItems a equipment: string[] para que el form se precargue', async () => {
+    TestBed.configureTestingModule({
+      imports: [VersionsAdminComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(VersionsAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+
+    // Drain initial load() requests.
+    for (const r of http.match(() => true)) {
+      r.flush({ data: { items: [] } });
+    }
+    await fixture.whenStable();
+
+    // Simulate opening edit on a version that already has equipment.
+    const row = {
+      id: 'v1',
+      name: 'v1',
+      year: 2026,
+      priceClp: 0,
+      model: { name: 'M' },
+      equipmentItems: [
+        { equipmentItem: { id: 'e1', name: 'A', category: 'C' } },
+        { equipmentItem: { id: 'e2', name: 'B', category: 'C' } },
+      ],
+    };
+    fixture.componentInstance.openEdit(row as any);
+
+    const entity = fixture.componentInstance.dialogEntity();
+    expect(entity?.equipment).toEqual(['e1', 'e2']);
+    // The original equipmentItems must not be carried into the form value
+    // because the dialog has a control named 'equipment', not
+    // 'equipmentItems'.
+    expect((entity as any)?.equipmentItems).toBeUndefined();
+  });
+
   it('openCreate muestra dialog', async () => {
     TestBed.configureTestingModule({
       imports: [VersionsAdminComponent],
