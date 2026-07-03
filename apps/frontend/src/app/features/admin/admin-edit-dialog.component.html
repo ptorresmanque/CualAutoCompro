@@ -32,7 +32,7 @@
         </div>
       }
       @if (loading()) {
-        <p class="text-sm text-ink-muted">Cargando plantilla…</p>
+        <p class="dialog-loading">Cargando plantilla…</p>
       } @else if (tab() === 'form') {
         <form [formGroup]="form()" class="dialog-grid">
           @for (meta of fieldMetas(); track meta.field) {
@@ -55,20 +55,20 @@
           }
         </form>
       } @else {
-        <div class="flex flex-col gap-2">
+        <div class="json-pane">
           <textarea
             class="json-editor"
             [value]="jsonText()"
             (input)="jsonText.set($any($event.target).value)"
           ></textarea>
           @if (jsonError(); as err) {
-            <p class="text-warn-dark text-xs">{{ err }}</p>
+            <p class="dialog-error">{{ err }}</p>
           }
           <button
             mat-flat-button
             color="primary"
             type="button"
-            class="self-start"
+            class="json-load"
             (click)="loadJson()"
             data-testid="dialog-load-json"
           >Cargar</button>
