@@ -181,12 +181,13 @@
           [attr.data-version-id]="v.id"
         >
             <button
+              mat-icon-button
               type="button"
               (click)="removeFromCompare(v.id)"
               [attr.aria-label]="'Quitar ' + fullName(v)"
-              class="absolute top-2 right-2 grid h-8 w-8 place-items-center rounded-full bg-surface-muted text-ink-subtle hover:bg-error/10 hover:text-error transition-colors"
+              class="!absolute top-2 right-2"
             >
-              <span class="material-symbols-outlined text-base">close</span>
+              <mat-icon>close</mat-icon>
             </button>
           <div class="flex items-center gap-2 mb-1">
             <span
@@ -218,7 +219,7 @@
                 [attr.data-testid]="'swap-button-' + v.id"
                 class="text-xs text-brand-700 font-bold hover:underline flex items-center gap-1 mb-1"
               >
-                <span class="material-symbols-outlined text-base">swap_horiz</span>
+                <mat-icon class="text-base">swap_horiz</mat-icon>
                 Cambiar versión
               </button>
 
@@ -253,33 +254,33 @@
             <div
               class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
             >
-              <span class="material-symbols-outlined text-brand-700 text-base">
+              <mat-icon class="text-brand-700 text-base">
                 settings
-              </span>
+              </mat-icon>
               <span class="text-xs font-semibold">{{ v.engineDisplacementCc ? (v.engineDisplacementCc / 1000).toFixed(1) + 'L' : '—' }}</span>
             </div>
             <div
               class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
             >
-              <span class="material-symbols-outlined text-brand-700 text-base">
+              <mat-icon class="text-brand-700 text-base">
                 account_tree
-              </span>
+              </mat-icon>
               <span class="text-xs font-semibold">{{ v.transmission ?? '—' }}</span>
             </div>
             <div
               class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
             >
-              <span class="material-symbols-outlined text-brand-700 text-base">
+              <mat-icon class="text-brand-700 text-base">
                 local_gas_station
-              </span>
+              </mat-icon>
               <span class="text-xs font-semibold">{{ v.fuel ?? '—' }}</span>
             </div>
             <div
               class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
             >
-              <span class="material-symbols-outlined text-brand-700 text-base">
+              <mat-icon class="text-brand-700 text-base">
                 speed
-              </span>
+              </mat-icon>
               <span class="text-xs font-semibold">{{ v.consumptionCityKmL ? v.consumptionCityKmL + ' km/l' : '—' }}</span>
             </div>
           </div>
@@ -301,23 +302,23 @@
             class="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-surface-muted transition-colors list-none"
           >
             <div class="flex items-center gap-3">
-              <span class="material-symbols-outlined text-brand-700">
+              <mat-icon class="text-brand-700">
                 {{ sectionIcon(s.name) }}
-              </span>
+              </mat-icon>
               <h2 class="font-bold text-base">{{ s.label }}</h2>
-              <span
-                class="material-symbols-outlined text-ink-muted cursor-help text-base"
+              <mat-icon
+                class="text-ink-muted cursor-help text-base"
                 [attr.title]="disclaimerText"
                 tabindex="0"
                 [attr.aria-label]="disclaimerText"
                 data-testid="info-icon"
-              >info</span>
+              >info</mat-icon>
             </div>
-            <span
-              class="material-symbols-outlined group-open:rotate-180 transition-transform"
+            <mat-icon
+              class="group-open:rotate-180 transition-transform"
             >
               expand_more
-            </span>
+            </mat-icon>
           </summary>
           <div class="border-t border-border overflow-x-auto">
             <table class="w-full text-sm">
@@ -364,14 +365,17 @@
   <!-- Floating action button: guardar comparación -->
   @if (user() && !savedSlug()) {
     <button
+      mat-fab
+      extended
+      color="primary"
       type="button"
       (click)="saveComparison()"
       [disabled]="saving()"
       data-testid="save-fab"
-      class="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-brand-600 text-white pl-5 pr-5 py-3 text-sm font-bold shadow-e2 hover:bg-brand-700 transition-colors disabled:opacity-60"
+      class="!fixed bottom-6 right-6 z-40"
     >
       {{ saving() ? 'Guardando…' : 'Guardar' }}
-      <span class="material-symbols-outlined text-base">save</span>
+      <mat-icon>save</mat-icon>
     </button>
   }
 </section>

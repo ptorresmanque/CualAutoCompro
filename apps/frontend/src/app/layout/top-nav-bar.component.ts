@@ -7,6 +7,10 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../core/auth.service';
 import { CompareStore } from '../core/compare-store.service';
 
@@ -21,7 +25,15 @@ interface NavLink {
   selector: 'app-top-nav-bar',
   templateUrl: './top-nav-bar.component.html',
   styleUrl: './top-nav-bar.component.css',
-  imports: [FormsModule, RouterLink, RouterLinkActive],
+  imports: [
+    FormsModule,
+    RouterLink,
+    RouterLinkActive,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TopNavBarComponent {
