@@ -98,9 +98,15 @@ export class VersionsAdminComponent {
     // calls form.get('equipmentItems')?.setValue(...), which is a no-op because
     // the form control is named 'equipment'. The control would stay at [],
     // and any save would detach every existing item (data loss).
+    //
+    // IMPORTANT: keep `equipmentItems` on the entity too. The onSave diff
+    // uses e.equipmentItems to compute toAdd/toRemove against the user's
+    // new equipment selection. If equipmentItems is dropped, oldIds is [],
+    // and the diff tries to attach every selected item — including the ones
+    // already attached — which the backend rejects with 409 Conflict.
     const { equipmentItems, ...rest } = row;
     const equipment = equipmentItems?.map((ei) => ei.equipmentItem.id) ?? [];
-    this.dialogEntity.set({ ...rest, equipment });
+    this.dialogEntity.set({ ...rest, equipment, equipmentItems } as VersionRow);
   }
   closeDialog(): void {
     this.dialogEntity.set(undefined);

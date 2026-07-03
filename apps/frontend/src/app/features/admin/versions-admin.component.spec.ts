@@ -26,7 +26,7 @@ describe('VersionsAdminComponent', () => {
     expect(fixture.componentInstance.items().length).toBeGreaterThan(0);
   });
 
-  it('openEdit proyecta equipmentItems a equipment: string[] para que el form se precargue', async () => {
+  it('openEdit proyecta equipmentItems a equipment y preserva equipmentItems en el entity', async () => {
     TestBed.configureTestingModule({
       imports: [VersionsAdminComponent],
       providers: [provideHttpClient(), provideHttpClientTesting()],
@@ -55,12 +55,17 @@ describe('VersionsAdminComponent', () => {
     };
     fixture.componentInstance.openEdit(row as any);
 
-    const entity = fixture.componentInstance.dialogEntity();
-    expect(entity?.equipment).toEqual(['e1', 'e2']);
-    // The original equipmentItems must not be carried into the form value
-    // because the dialog has a control named 'equipment', not
-    // 'equipmentItems'.
-    expect((entity as any)?.equipmentItems).toBeUndefined();
+    const entity = fixture.componentInstance.dialogEntity() as any;
+    // Projected array used to preload the dialog's 'equipment' control.
+    expect(entity.equipment).toEqual(['e1', 'e2']);
+    // Raw equipmentItems kept on the entity so onSave's diff can compute
+    // toAdd/toRemove against the actually-attached items. Dropping it
+    // would make every selected item look "new" to the diff and the
+    // backend would 409 on the already-attached ones.
+    expect(entity.equipmentItems).toEqual([
+      { equipmentItem: { id: 'e1', name: 'A', category: 'C' } },
+      { equipmentItem: { id: 'e2', name: 'B', category: 'C' } },
+    ]);
   });
 
   it('openCreate muestra dialog', async () => {
@@ -169,5 +174,107 @@ describe('VersionsAdminComponent', () => {
 
     await savePromise;
     await fixture.whenStable();
+  });
+
+  it('edit + agregar nuevo item: el diff solo attach el nuevo (no los existentes)', async () => {
+    // Regression: previously openEdit projected equipmentItems -> equipment
+    // but DROPPED equipmentItems from the entity. onSave's diff uses
+    // e.equipmentItems to compute toAdd; with the field missing, oldIds=[]
+    // and the diff tried to attach every selected item, including the
+    // already-attached ones, causing 409 Conflict on the backend.
+    TestBed.configureTestingModule({
+      imports: [VersionsAdminComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(VersionsAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+
+    // Initial load of /admin/versions and /models.
+    const versionsReq = http.expectOne((r) => r.url.includes('/api/v1/admin/versions'));
+    versionsReq.flush({
+      data: [
+        {
+          id: 'v1',
+          name: 'v1',
+          year: 2026,
+          priceClp: 0,
+          model: { name: 'M' },
+          equipmentItems: [
+            { equipmentItem: { id: 'e1', name: 'A', category: 'C' } },
+            { equipmentItem: { id: 'e2', name: 'B', category: 'C' } },
+          ],
+        },
+      ],
+    });
+    http.expectOne((r) => r.url.includes('/api/v1/models')).flush({ data: { items: [] } });
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    // openEdit (must preserve equipmentItems on the entity for the diff).
+    const component = fixture.componentInstance as VersionsAdminComponent;
+    const row = {
+      id: 'v1',
+      name: 'v1',
+      year: 2026,
+      priceClp: 0,
+      model: { name: 'M' },
+      equipmentItems: [
+        { equipmentItem: { id: 'e1', name: 'A', category: 'C' } },
+        { equipmentItem: { id: 'e2', name: 'B', category: 'C' } },
+      ],
+    };
+    component.openEdit(row as any);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Sanity: entity must carry BOTH equipment (projected) and equipmentItems
+    // (raw, used by the diff).
+    const entity = component.dialogEntity() as any;
+    expect(entity.equipment).toEqual(['e1', 'e2']);
+    expect(entity.equipmentItems).toEqual([
+      { equipmentItem: { id: 'e1', name: 'A', category: 'C' } },
+      { equipmentItem: { id: 'e2', name: 'B', category: 'C' } },
+    ]);
+
+    // User adds e3. Form.equipment = [e1, e2, e3].
+    const savePromise = component.onSave({
+      modelId: 'm1',
+      name: 'v1',
+      year: 2026,
+      priceClp: 0,
+      transmission: 'MANUAL',
+      fuel: 'BENCINA',
+      engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
+      consumptionCityKmL: 0, consumptionHighwayKmL: 0,
+      lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
+      trunkLiters: 0, airbagCount: 0,
+      hasAbs: false, hasEsp: false, hasCruiseControl: false,
+      equipment: ['e1', 'e2', 'e3'],
+    });
+    fixture.detectChanges();
+
+    // 1) PATCH version (no equipment field).
+    const patchReq = http.expectOne(
+      (r) => r.url.includes('/api/v1/admin/versions/v1') && r.method === 'PATCH',
+    );
+    expect(patchReq.request.body.equipment).toBeUndefined();
+    patchReq.flush({ data: { id: 'v1', name: 'v1' } });
+
+    // 2) POST attach ONLY e3 (not e1 or e2 — those are already attached).
+    await new Promise((r) => setTimeout(r, 0));
+    const attachReqs = http.match((r) => r.url.includes('/api/v1/admin/equipment/attach'));
+    expect(attachReqs.length).toBe(1);
+    expect(attachReqs[0]?.request.body).toEqual({ versionId: 'v1', itemId: 'e3' });
+    for (const r of attachReqs) {
+      r.flush({ data: { versionId: 'v1', equipmentItemId: r.request.body['itemId'] } });
+    }
+
+    // 3) reload (load() fires BOTH /admin/versions and /models).
+    await new Promise((r) => setTimeout(r, 0));
+    http.expectOne((r) => r.url.includes('/api/v1/admin/versions')).flush({ data: { items: [] } });
+    http.expectOne((r) => r.url.includes('/api/v1/models')).flush({ data: { items: [] } });
+    await savePromise;
   });
 });
