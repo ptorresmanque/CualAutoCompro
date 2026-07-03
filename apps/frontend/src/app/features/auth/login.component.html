@@ -1,18 +1,13 @@
-<section class="mx-auto max-w-md px-4 py-12 font-sans">
-  <header class="mb-6 text-center">
-    <span
-      class="mx-auto grid h-12 w-12 place-items-center rounded-full bg-brand-600 text-white font-bold mb-3"
-      aria-hidden="true"
-    >
-      c
-    </span>
+<section class="auth-shell mx-auto max-w-md px-4">
+  <header class="auth-shell-header">
+    <span class="auth-avatar" aria-hidden="true">c</span>
     <h1 class="font-bold text-2xl text-ink">Iniciar sesión</h1>
     <p class="mt-1 text-sm text-ink-muted">
       Accedé a tus comparaciones guardadas.
     </p>
   </header>
 
-  <mat-card class="auth-card">
+  <mat-card class="auth-card" appearance="outlined">
     <mat-card-content>
       <form
         [formGroup]="form"
@@ -76,24 +71,14 @@
     </mat-card-content>
   </mat-card>
 
-  <div class="mt-6 flex items-center gap-3 text-xs uppercase tracking-wider text-ink-muted">
-    <span class="flex-1 h-px bg-border"></span>
-    <span>o continúa sin cuenta</span>
-    <span class="flex-1 h-px bg-border"></span>
-  </div>
+  <div class="auth-divider">o continúa sin cuenta</div>
 
-  <div class="mt-6 space-y-2">
-    <a
-      routerLink="/"
-      class="w-full inline-flex items-center justify-center gap-2 rounded-full border border-brand-600 text-brand-700 font-bold py-2.5 px-4 text-sm hover:bg-brand-50 transition-colors"
-    >
+  <div class="auth-alternate">
+    <a routerLink="/" class="auth-button">
       <mat-icon class="text-base">directions_car</mat-icon>
       Explorar catálogo
     </a>
-    <a
-      routerLink="/compare"
-      class="w-full inline-flex items-center justify-center gap-2 rounded-full border border-brand-600 text-brand-700 font-bold py-2.5 px-4 text-sm hover:bg-brand-50 transition-colors"
-    >
+    <a routerLink="/compare" class="auth-button">
       <mat-icon class="text-base">compare_arrows</mat-icon>
       Comparar autos
     </a>

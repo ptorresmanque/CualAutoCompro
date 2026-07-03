@@ -1,0 +1,220 @@
+:host {
+  display: block;
+}
+
+.compare-section.mat-expansion-panel {
+  background: var(--mat-sys-surface);
+  border-radius: 0.75rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.compare-section .mat-expansion-panel-header {
+  padding: 1rem 1.25rem;
+  height: auto;
+}
+
+.compare-section .mat-expansion-panel-header-title,
+.compare-section .mat-expansion-panel-header-description {
+  align-items: center;
+  color: var(--mat-sys-on-surface);
+}
+
+.compare-section .mat-expansion-panel-body {
+  padding: 0;
+}
+
+.compare-card-section {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .compare-card-section {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.compare-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--mat-sys-surface);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  padding: 1rem;
+  transition: box-shadow 0.2s;
+}
+
+.compare-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 128, 128, 0.08);
+}
+
+.compare-card-remove.mat-mdc-icon-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  color: var(--mat-sys-on-surface-variant);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.compare-card-remove.mat-mdc-icon-button:hover {
+  color: var(--mat-sys-error);
+}
+
+.compare-card-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.compare-card-brand-avatar {
+  display: grid;
+  place-items: center;
+  height: 1.5rem;
+  width: 1.5rem;
+  border-radius: 9999px;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.compare-card-brand-text {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.compare-card-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--mat-sys-on-surface);
+  margin: 0 0 0.25rem 0;
+  padding-right: 2rem;
+}
+
+.compare-card-price {
+  color: var(--mat-sys-primary);
+  font-weight: 800;
+  font-size: 1.25rem;
+  margin: 0 0 0.75rem 0;
+}
+
+.compare-card-price-unit {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--mat-sys-on-surface-variant);
+  margin-left: 0.25rem;
+}
+
+.compare-card-attributes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.compare-card-attribute {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: var(--mat-sys-surface-container-low);
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.compare-card-attribute mat-icon {
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+  color: var(--mat-sys-primary);
+}
+
+.compare-card-attribute-value {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface);
+}
+
+.compare-share-banner {
+  margin-bottom: 1.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--mat-sys-primary-fixed);
+  background: var(--mat-sys-primary-container);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--mat-sys-on-primary-fixed-variant);
+}
+
+.compare-save-error-banner {
+  margin-bottom: 1.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--mat-sys-error);
+  background: #fdecea;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #b3261e;
+}
+
+.compare-save-fab.mat-mdc-fab {
+  position: fixed !important;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 40;
+}
+
+.compare-swap-popover {
+  position: absolute;
+  z-index: 20;
+  right: 0;
+  top: 100%;
+  margin-top: 0.25rem;
+  background: var(--mat-sys-surface);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 128, 128, 0.08);
+  padding: 0.25rem;
+  width: 15rem;
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.compare-swap-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.compare-swap-option:hover {
+  background: var(--mat-sys-surface-container-low);
+}
+
+.compare-swap-button {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--mat-sys-primary);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.compare-swap-button:hover {
+  text-decoration: underline;
+}

@@ -101,32 +101,13 @@ h1, h2, h3, .display {
   letter-spacing: -0.01em;
 }
 
-/* Material Symbols — fuente de iconos (legacy icons también siguen funcionando
- * a través de las clases `material-symbols-outlined` y `mat-icon`). */
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
-  vertical-align: middle;
-}
-
-.material-symbols-outlined.filled {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-}
-
-/* Forzar a mat-icon a usar material-icons (icons nativos de Material) por
- * defecto. Es posible sobreescribir por uso con fontSet="material-symbols-outlined". */
+/* mat-icon usa Material Icons (cargado vía CDN en index.html). El override
+ * `font-family: 'Material Icons'` está implícito en el stylesheet de Material,
+ * pero lo reafirmamos aquí para que cualquier cambio futuro en el theme no
+ * rompa los iconos. */
 .mat-icon, mat-icon {
   font-family: 'Material Icons' !important;
+  vertical-align: middle;
 }
 
 /* Snackbars personalizados — usamos panelClass="snack-warn|error"

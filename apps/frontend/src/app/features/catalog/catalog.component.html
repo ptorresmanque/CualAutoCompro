@@ -1,5 +1,5 @@
 <section>
-  <div class="border-b border-border bg-surface-muted">
+  <div class="catalog-header">
     <div class="mx-auto max-w-7xl px-4 py-6 flex items-end justify-between">
       <div>
         <p class="text-xs uppercase tracking-wider text-brand-700 font-bold">
@@ -17,10 +17,10 @@
 
   <div class="mx-auto max-w-7xl px-4 py-6 md:py-8 flex flex-col md:flex-row gap-6">
     <aside class="w-full md:w-72 flex-shrink-0">
-      <mat-card class="filters-card md:sticky md:top-24">
-        <mat-card-content class="space-y-5 !p-5">
-          <header class="flex items-center justify-between">
-            <h2 class="font-bold text-ink flex items-center gap-2 text-lg">
+      <mat-card class="filters-card md:sticky md:top-24" appearance="outlined">
+        <mat-card-content>
+          <header class="filters-card-header">
+            <h2 class="filters-card-title">
               <mat-icon>filter_list</mat-icon>
               Filtros
             </h2>
@@ -33,11 +33,11 @@
             >Limpiar</button>
           </header>
 
-          <div>
+          <div class="filter-section">
             <span class="filter-label">Segmento</span>
             <mat-radio-group
               aria-label="Segmento"
-              class="flex flex-col gap-2"
+              class="filter-radio-group"
               [value]="filters().segment ?? null"
               (change)="updateFilter({ segment: $any($event).value || undefined })"
             >
@@ -48,7 +48,7 @@
             </mat-radio-group>
           </div>
 
-          <div>
+          <div class="filter-section">
             <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
               <mat-label>Marca</mat-label>
               <mat-select
@@ -64,11 +64,11 @@
             </mat-form-field>
           </div>
 
-          <div>
+          <div class="filter-section">
             <span class="filter-label">Transmisión</span>
             <mat-radio-group
               aria-label="Transmisión"
-              class="flex flex-col gap-2"
+              class="filter-radio-group"
               [value]="filters().transmission ?? null"
               (change)="updateFilter({ transmission: $any($event).value || undefined })"
             >
@@ -79,11 +79,11 @@
             </mat-radio-group>
           </div>
 
-          <div>
+          <div class="filter-section">
             <span class="filter-label">Combustible</span>
             <mat-radio-group
               aria-label="Combustible"
-              class="flex flex-col gap-2"
+              class="filter-radio-group"
               [value]="filters().fuel ?? null"
               (change)="updateFilter({ fuel: $any($event).value || undefined })"
             >
@@ -94,7 +94,7 @@
             </mat-radio-group>
           </div>
 
-          <div>
+          <div class="filter-section">
             <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
               <mat-label>Año</mat-label>
               <mat-select
@@ -110,7 +110,7 @@
             </mat-form-field>
           </div>
 
-          <div>
+          <div class="filter-section">
             <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
               <mat-label>Precio mínimo (CLP)</mat-label>
               <input
@@ -125,7 +125,7 @@
             </mat-form-field>
           </div>
 
-          <div>
+          <div class="filter-section">
             <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
               <mat-label>Precio máximo (CLP)</mat-label>
               <input
@@ -140,7 +140,7 @@
             </mat-form-field>
           </div>
 
-          <div>
+          <div class="filter-section">
             <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
               <mat-label>Potencia mínima (hp)</mat-label>
               <input
@@ -156,7 +156,7 @@
             </mat-form-field>
           </div>
 
-          <div>
+          <div class="filter-section">
             <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
               <mat-label>Consumo máx. ciudad (km/L)</mat-label>
               <input
@@ -172,8 +172,8 @@
             </mat-form-field>
           </div>
 
-          <p class="text-xs text-ink-muted">
-            <span class="font-bold text-ink" data-testid="catalog-total">{{ total() }}</span>
+          <p class="filter-total">
+            <strong data-testid="catalog-total">{{ total() }}</strong>
             modelos disponibles
           </p>
         </mat-card-content>
@@ -200,7 +200,8 @@
             [class.bg-brand-600]="(filters().order ?? 'asc') === 'asc'"
             [class.text-white]="(filters().order ?? 'asc') === 'asc'"
             [class.text-ink-muted]="(filters().order ?? 'asc') !== 'asc'"
-            class="grid place-items-center w-8 h-8 hover:bg-surface-muted"
+            class="sort-button"
+            [class.is-active]="(filters().order ?? 'asc') === 'asc'"
             data-testid="sort-asc"
             aria-label="Ascendente">
             <mat-icon class="text-base">arrow_upward</mat-icon>
@@ -211,7 +212,8 @@
             [class.bg-brand-600]="filters().order === 'desc'"
             [class.text-white]="filters().order === 'desc'"
             [class.text-ink-muted]="filters().order !== 'desc'"
-            class="grid place-items-center w-8 h-8 hover:bg-surface-muted"
+            class="sort-button"
+            [class.is-active]="filters().order === 'desc'"
             data-testid="sort-desc"
             aria-label="Descendente">
             <mat-icon class="text-base">arrow_downward</mat-icon>
@@ -224,7 +226,7 @@
       }
 
       @if (items().length === 0 && !loading()) {
-        <div class="rounded-xl border border-border bg-surface p-12 text-center shadow-sm" data-testid="empty">
+        <div class="empty-card">
           <p class="font-bold text-ink mb-2">No se encontraron modelos</p>
           <p class="text-sm text-ink-muted">Probá ajustar los filtros o limpiarlos.</p>
           <button type="button"
@@ -252,7 +254,7 @@
       </ul>
 
       @if (selectionCount() > 0) {
-        <div class="sticky bottom-4 mt-6 z-30 rounded-2xl bg-ink text-surface shadow-e2 p-4 flex items-center justify-between gap-4 border border-brand-600" data-testid="selection-bar">
+        <div class="selection-bar" data-testid="selection-bar">
           <div class="flex items-center gap-3">
             <span class="grid h-8 w-8 place-items-center rounded-full bg-brand-600 text-white text-xs font-bold">{{ selectionCount() }}</span>
             <span class="text-sm">
@@ -266,12 +268,12 @@
             <button type="button" (click)="clearSelection()"
               [attr.aria-label]="'Limpiar selección de ' + selectionCount() + ' versiones'"
               data-testid="selection-bar-clear"
-              class="rounded-full bg-ink text-surface border border-surface-muted hover:bg-surface-muted text-xs font-bold px-3 py-2 transition-colors flex items-center gap-1.5">
+              class="selection-action ghost">
               <mat-icon class="text-base">delete_sweep</mat-icon>
               Limpiar
             </button>
             <a routerLink="/compare"
-              class="rounded-full bg-brand-600 text-white text-sm font-bold px-5 py-2 hover:bg-brand-700 transition-colors flex items-center gap-2"
+              class="selection-action primary"
               data-testid="selection-bar-compare">
               <mat-icon class="text-base">compare_arrows</mat-icon>
               Ver comparación
