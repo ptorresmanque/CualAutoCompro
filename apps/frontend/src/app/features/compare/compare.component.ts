@@ -12,6 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
@@ -128,6 +129,7 @@ export class CompareComponent {
   private compareStore = inject(CompareStore);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private snackBar = inject(MatSnackBar);
 
   readonly user = this.auth.currentUser;
 
@@ -587,10 +589,17 @@ export class CompareComponent {
       if (err?.status === 409 && dup?.code === 'COMPARISON_DUPLICATE' && dup.slug) {
         this.duplicateSlug.set(dup.slug);
         this.savedSlug.set(dup.slug);
+        this.snackBar.open('Ya tenés esta comparación guardada.', 'Cerrar', {
+          duration: 5000,
+        });
       } else {
         this.saveError.set(
           'No pudimos guardar la comparación. Intentá de nuevo.',
         );
+        this.snackBar.open('No pudimos guardar la comparación. Intentá de nuevo.', 'Cerrar', {
+          duration: 5000,
+          panelClass: 'snack-error',
+        });
       }
     } finally {
       this.saving.set(false);

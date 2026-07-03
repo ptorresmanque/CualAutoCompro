@@ -37,7 +37,7 @@
     </div>
   }
 
-  @if (!loading() && !hasItems() && !error()) {
+  @if (!loading() && !hasItems() && !error() && !compareMessage()) {
     <div class="rounded-xl border border-border bg-surface p-12 text-center shadow-sm" data-testid="empty">
       <p class="font-bold text-lg text-ink">Aún no tenés favoritos</p>
       <p class="mt-2 text-sm text-ink-muted">

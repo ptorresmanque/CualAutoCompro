@@ -128,3 +128,21 @@ h1, h2, h3, .display {
 .mat-icon, mat-icon {
   font-family: 'Material Icons' !important;
 }
+
+/* Snackbars personalizados — usamos panelClass="snack-warn|error"
+ * para diferenciar las notificaciones que disparamos desde compare y
+ * favorites. */
+.mat-mdc-snack-bar-container.snack-warn .mdc-snackbar__surface {
+  background-color: var(--color-warn-bg);
+  color: var(--color-warn-fg);
+}
+
+.mat-mdc-snack-bar-container.snack-error .mdc-snackbar__surface {
+  background-color: #fdecea;
+  color: #b3261e;
+}
+
+.mat-mdc-snack-bar-container.snack-warn .mat-mdc-snack-bar-action,
+.mat-mdc-snack-bar-container.snack-error .mat-mdc-snack-bar-action {
+  color: inherit;
+}

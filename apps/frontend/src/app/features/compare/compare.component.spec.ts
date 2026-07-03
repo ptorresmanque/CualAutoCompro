@@ -364,11 +364,16 @@ describe('CompareComponent', () => {
     await expect(p).resolves.toBeUndefined();
     fixture.detectChanges();
 
+    // Error ahora se notifica via MatSnackBar en lugar de banner inline,
+    // así que verificamos el signal `error()` y que el DOM no muestre ya el
+    // banner legacy.
+    expect(fixture.componentInstance.saveError()).toContain(
+      'No pudimos guardar la comparación',
+    );
     const banner = fixture.nativeElement.querySelector(
       '[data-testid="save-error"]',
     );
-    expect(banner).not.toBeNull();
-    expect(banner.textContent).toContain('No pudimos guardar la comparación');
+    expect(banner).toBeNull();
     // savedSlug NO se setea en error no-409
     expect(fixture.componentInstance.savedSlug()).toBeNull();
   });

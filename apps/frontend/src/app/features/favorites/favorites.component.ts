@@ -8,6 +8,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { ApiService } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
@@ -33,6 +34,7 @@ export class FavoritesComponent {
   private compare = inject(CompareStore);
   private favorites = inject(FavoritesStore);
   private router = inject(Router);
+  private snackBar = inject(MatSnackBar);
 
   readonly models = signal<FavoriteModel[]>([]);
   readonly loading = signal(true);
@@ -83,11 +85,23 @@ export class FavoritesComponent {
       this.compareMessage.set(
         'Máximo 3, limpiá la comparación actual primero.',
       );
+      this.snackBar.open(
+        'Máximo 3, limpiá la comparación actual primero.',
+        'Cerrar',
+        { duration: 5000, panelClass: 'snack-warn' },
+      );
       return;
     }
     if (!v?.id) return;
     this.compare.setIds([...this.compare.ids(), v.id]);
     this.compareMessage.set(null);
+    this.snackBar.open(
+      `Versión ${v.name} agregada a la comparación`,
+      'Ver',
+      { duration: 4000 },
+    ).onAction().subscribe(() => {
+      void this.router.navigate(['/compare']);
+    });
   }
 
   async onVersionSelected(
@@ -107,6 +121,11 @@ export class FavoritesComponent {
       );
     } catch {
       this.error.set('No pudimos cambiar la versión favorita.');
+      this.snackBar.open(
+        'No pudimos cambiar la versión favorita.',
+        'Cerrar',
+        { duration: 5000, panelClass: 'snack-error' },
+      );
     } finally {
       this.changingVersionFor.set(null);
     }

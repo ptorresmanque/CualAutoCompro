@@ -2,7 +2,7 @@
   <h1 class="text-2xl font-bold text-ink mb-4">Panel de administración</h1>
   <nav mat-tab-nav-bar mat-stretch-tabs="false" class="admin-shell-tabs" [tabPanel]="panel">
     @for (l of subLinks; track l.path) {
-      <a mat-tab-link [routerLink]="l.path" [routerLinkActiveOptions]="{ exact: l.path === '/admin' }" [active]="isActive(l.path)">{{ l.label }}</a>
+      <a mat-tab-link [routerLink]="l.path" [active]="isActive(l.path)">{{ l.label }}</a>
     }
   </nav>
   <mat-tab-nav-panel #panel>
