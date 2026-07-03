@@ -51,7 +51,7 @@
               <mat-icon class="sort-icon">{{ sortKey() === 'segment' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
             </button>
           </th>
-          <th class="py-2 w-32">Acciones</th>
+          <th class="py-2 w-40">Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -61,8 +61,16 @@
             <td class="py-2">{{ m.brand?.name ?? '—' }}</td>
             <td class="py-2">{{ m.segment }}</td>
             <td class="py-2">
-              <button mat-button color="primary" (click)="openEdit(m)">Editar</button>
-              <button mat-button color="warn" (click)="confirmDelete(m)">Eliminar</button>
+              <div class="action-buttons">
+                <button mat-stroked-button color="primary" (click)="openEdit(m)">
+                  <mat-icon class="action-icon">edit</mat-icon>
+                  Editar
+                </button>
+                <button mat-stroked-button color="error" (click)="confirmDelete(m)">
+                  <mat-icon class="action-icon">delete</mat-icon>
+                  Eliminar
+                </button>
+              </div>
             </td>
           </tr>
         }

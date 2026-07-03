@@ -59,7 +59,7 @@
               <mat-icon class="sort-icon">{{ sortKey() === 'priceClp' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
             </button>
           </th>
-          <th class="py-2 w-32">Acciones</th>
+          <th class="py-2 w-40">Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -70,8 +70,16 @@
             <td class="py-2">{{ v.year }}</td>
             <td class="py-2">{{ formatPrice(v.priceClp) }}</td>
             <td class="py-2">
-              <button mat-button color="primary" (click)="openEdit(v)">Editar</button>
-              <button mat-button color="warn" (click)="confirmDelete(v)">Eliminar</button>
+              <div class="action-buttons">
+                <button mat-stroked-button color="primary" (click)="openEdit(v)">
+                  <mat-icon class="action-icon">edit</mat-icon>
+                  Editar
+                </button>
+                <button mat-stroked-button color="error" (click)="confirmDelete(v)">
+                  <mat-icon class="action-icon">delete</mat-icon>
+                  Eliminar
+                </button>
+              </div>
             </td>
           </tr>
         }
