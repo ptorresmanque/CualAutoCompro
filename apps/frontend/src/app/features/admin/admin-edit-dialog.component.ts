@@ -155,7 +155,25 @@ export class AdminEditDialogComponent {
         const value = sanitize(e) ?? tpl;
         for (const [k, v] of Object.entries(value)) {
           if (HIDDEN_KEYS.has(k)) continue;
-          form.get(k)?.setValue(v);
+          const ctrl = form.get(k);
+          if (!ctrl) continue;
+          // For array-valued controls (e.g. equipment multiSelect), merge the
+          // entity's value with the form's current value instead of
+          // replacing it. This prevents a race where the user picks an
+          // option before the template response arrives and the preload
+          // (running after) overwrites the user's pick.
+          if (
+            Array.isArray(v) &&
+            Array.isArray(ctrl.value) &&
+            (ctrl.value as unknown[]).length > 0
+          ) {
+            const merged = Array.from(
+              new Set([...(ctrl.value as string[]), ...(v as string[])]),
+            );
+            ctrl.setValue(merged);
+          } else {
+            ctrl.setValue(v);
+          }
         }
         this.jsonText.set(JSON.stringify(value, null, 2));
       });

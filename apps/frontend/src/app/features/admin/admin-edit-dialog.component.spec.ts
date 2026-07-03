@@ -171,4 +171,90 @@ describe('AdminEditDialogComponent', () => {
     const chips = fixture.nativeElement.querySelectorAll('[data-testid="ms-chip"]');
     expect(chips.length).toBe(5);
   });
+
+  it('race: pick antes del preload preserva el pick (merge con entity, no replace)', async () => {
+    // Regression: previously the effect 3 in admin-edit-dialog did
+    // `setValue` on the form, which OVERWROTE the user's pick if the
+    // pick happened before the template response arrived. The user
+    // reported "agrega android auto y apple carplay → siempre la
+    // reemplaza una por otra".
+    //
+    // The fix: for array-valued controls (multiSelect), merge the
+    // entity's value with the form's current value instead of
+    // replacing. This handles the race gracefully — the user's pick is
+    // preserved AND the entity's existing values are added.
+    TestBed.configureTestingModule({
+      imports: [AdminEditDialogComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(AdminEditDialogComponent);
+    fixture.componentRef.setInput('entityKey', 'version');
+    fixture.componentRef.setInput('apiPath', 'versions');
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+
+    // Step 1: User picks an item BEFORE the template response arrives.
+    // (This is the race: between dialog mount and template fetch, the
+    // user clicks an option in the multi-select dropdown.)
+    const form = (fixture.componentInstance as AdminEditDialogComponent).form();
+    // setControl replaces the existing 'equipment' control with one
+    // holding the user's pick. In real usage, the multi-select's
+    // pick() does this via control.setValue(); setControl achieves the
+    // same end-state here.
+    form.setControl('equipment', new (await import('@angular/forms')).FormControl(['androidAuto']));
+    fixture.detectChanges();
+
+    // Step 2: Template response arrives. Effect 3 runs.
+    http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version')).flush({
+      data: {
+        modelId: '', name: '', year: 2026, priceClp: 0,
+        transmission: 'MANUAL', fuel: 'BENCINA',
+        engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
+        consumptionCityKmL: 0, consumptionHighwayKmL: 0,
+        lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
+        trunkLiters: 0, airbagCount: 0,
+        hasAbs: false, hasEsp: false, hasCruiseControl: false,
+      },
+    });
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    // Step 3: Equipment list response.
+    http.expectOne((r) => r.url.includes('/api/v1/admin/equipment')).flush({
+      data: [
+        { id: 'appleCarPlay', name: 'Apple CarPlay' },
+        { id: 'androidAuto', name: 'Android Auto' },
+      ],
+    });
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    // Step 4: Now set the entity. This re-runs effect 3 which is the
+    // second time the preload might overwrite the pick.
+    fixture.componentRef.setInput('entity', {
+      id: 'v1',
+      name: 'v1',
+      year: 2026,
+      priceClp: 0,
+      model: { name: 'M' },
+      equipment: ['appleCarPlay'],
+      equipmentItems: [
+        { equipmentItem: { id: 'appleCarPlay', name: 'Apple CarPlay', category: 'C' } },
+      ],
+    } as any);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    // The form should have BOTH items: the user's pick (androidAuto)
+    // AND the entity's existing value (appleCarPlay). Previously this
+    // was just [appleCarPlay] because the setValue overwrote the pick.
+    const formValue = form.get('equipment')?.value;
+    expect(formValue).toContain('androidAuto');
+    expect(formValue).toContain('appleCarPlay');
+    expect(formValue.length).toBe(2);
+  });
 });
