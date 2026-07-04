@@ -183,6 +183,127 @@ git commit -m "feat(be): migrar schema.prisma de PostgreSQL a MariaDB"
 
 ---
 
+## Tarea 2b: Cambiar enums a `String` en schema (decisión arquitectónica)
+
+**Por qué:** Prisma genera columnas inline `ENUM('VAL1','VAL2',...)` para el provider `mysql`, no `VARCHAR`. Esto rompe la feature de "extender enums en runtime" porque cualquier valor fuera de la lista falla con `Data truncated`. Solución: cambiar los tipos enum a `String` en el schema para que Prisma genere `VARCHAR(191)`, aceptando cualquier string. Las constantes `SEGMENTS`/`FUELS`/`TRANSMISSIONS` en los services siguen validando los valores conocidos; los valores extendidos pasan vía raw SQL sin validación Prisma.
+
+**Files:**
+- Modify: `apps/backend/prisma/schema.prisma` (4 cambios: enum `Segment`, enum `Fuel`, enum `Transmission`, enum `UserRole`, y los usos en Model/Version/User)
+- Modify: `apps/backend/prisma/migrations/<existing_init>/migration.sql` (regenerar para reflejar VARCHAR)
+- Delete: `apps/backend/prisma/migrations/<existing_init>/` (para regenerar limpio)
+
+**Interfaces:**
+- Consumes: schema.prisma actual con provider mysql
+- Produces: schema.prisma con campos `String` donde antes había enums, migración regenerada con columnas `VARCHAR(191)`.
+
+- [ ] **Paso 1: Reemplazar los bloques `enum` en `schema.prisma`**
+
+Localizar las líneas 39-101 de schema.prisma que contienen:
+
+```prisma
+enum Segment {
+  SEDAN
+  SUV
+  HATCHBACK
+  PICKUP
+  CROSSOVER
+  COMMERCIAL
+}
+
+enum Transmission {
+  MANUAL
+  AUTOMATIC
+  CVT
+  DCT
+}
+
+enum Fuel {
+  BENCINA
+  DIESEL
+  HYBRID
+  ELECTRIC
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+```
+
+Reemplazar TODO el bloque por una sola línea de comentario:
+
+```prisma
+// Enums eliminados para MariaDB: Prisma genera columnas inline ENUM(...) que
+// no se pueden extender en runtime. Usamos String + constantes SEGMENTS/
+// FUELS/TRANSMISSIONS en services para validar valores conocidos y permitir
+// valores extendidos vía raw SQL.
+```
+
+- [ ] **Paso 2: Reemplazar usos de los enums por `String` en schema.prisma**
+
+- Línea 25: `segment     Segment` → `segment     String`
+- Línea 54: `transmission          Transmission` → `transmission          String`
+- Línea 55: `fuel                  Fuel` → `fuel                  String`
+- Línea 140: `role         UserRole     @default(USER)` → `role         String     @default("USER")`
+
+- [ ] **Paso 3: Borrar la migración init existente**
+
+```bash
+rm -rf apps/backend/prisma/migrations/<timestamp>_init
+```
+
+- [ ] **Paso 4: Regenerar Prisma Client (sin migración nueva — solo para tipos TS)**
+
+```bash
+cd apps/backend && pnpm exec prisma generate
+```
+
+- [ ] **Paso 5: Generar nueva migración con SQL workaround (shadow DB)**
+
+Como `cualauto` no tiene `CREATE` global para shadow DB, usar `prisma migrate diff`:
+
+```bash
+cd apps/backend
+pnpm exec prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/$(date +%Y%m%d%H%M%S)_init/migration.sql
+mkdir -p prisma/migrations/$(date +%Y%m%d%H%M%S)_init
+mv prisma/migrations/$(date +%Y%m%d%H%M%S)_init/migration.sql prisma/migrations/$(date +%Y%m%d%H%M%S)_init/migration.sql 2>/dev/null || true
+# Lo correcto es crear el directorio primero:
+TS=$(date +%Y%m%d%H%M%S)
+mkdir -p prisma/migrations/${TS}_init
+pnpm exec prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/${TS}_init/migration.sql
+```
+
+- [ ] **Paso 6: Aplicar la migración**
+
+```bash
+pnpm exec prisma migrate deploy
+```
+
+Esperado: "All migrations have been successfully applied".
+
+- [ ] **Paso 7: Verificar que las columnas son VARCHAR**
+
+```bash
+cd apps/backend && cat prisma/migrations/<new_ts>_init/migration.sql | grep -A1 "segment\|transmission\|fuel\|role"
+```
+
+Esperado: `segment VARCHAR(191) NOT NULL`, etc. (no `ENUM(...)`).
+
+- [ ] **Paso 8: Regenerar Prisma Client**
+
+```bash
+pnpm exec prisma generate
+```
+
+- [ ] **Paso 9: Commit**
+
+```bash
+git add apps/backend/prisma/
+git commit -m "feat(be): cambiar enums a String para aceptar valores extendidos en MariaDB"
+```
+
+---
+
 ## Tarea 3: Crear helper `toGalleryUrls` (TDD)
 
 **Files:**
@@ -409,13 +530,18 @@ git commit -m "refactor(be): extendEnum como no-op en MariaDB"
 
 ## Tarea 5: Reescribir raw SQL en `models.service.ts` (create + update)
 
+**Cambios respecto al plan original:**
+- Enums son ahora `String` (VARCHAR) en schema — no se necesita cast especial en INSERT.
+- `CAST(? AS JSON)` se reemplaza por `?` directo (columna es `longtext`, no `JSON` válido como CAST target en MariaDB).
+- `UPDATE` no soporta `RETURNING` en MariaDB → split en 2 queries (UPDATE, luego SELECT WHERE id=?).
+
 **Files:**
-- Modify: `apps/backend/src/modules/models/models.service.ts:160-180` (create)
-- Modify: `apps/backend/src/modules/models/models.service.ts:209-225` (update)
+- Modify: `apps/backend/src/modules/models/models.service.ts:152-180` (create raw INSERT)
+- Modify: `apps/backend/src/modules/models/models.service.ts:187-225` (update raw UPDATE → split)
 
 **Interfaces:**
-- Consumes: `toGalleryUrls` de `apps/backend/src/shared/json.ts` (Tarea 3), `extendEnum` no-op (Tarea 4)
-- Produces: `ModelsService.create()` y `ModelsService.update()` ejecutan SQL MariaDB-compatible y devuelven `galleryUrls: string[]`.
+- Consumes: `toGalleryUrls` (Tarea 3), `extendEnum` no-op (Tarea 4)
+- Produces: `ModelsService.create()` y `ModelsService.update()` ejecutan SQL MariaDB-compatible.
 
 - [ ] **Paso 1: Reemplazar el INSERT raw en `create()` (líneas 152-180)**
 
@@ -426,12 +552,9 @@ Reemplazar desde `await extendEnum(this.prisma, "Segment", input.segment);` (lí
     const id = randomUUID();
     // SCHEMA-DRIFT NOTE: raw SQL is required because Prisma 5's query engine
     // validates enums against the codegen-time schema and rejects new values.
-    // MariaDB uses `?` placeholders (not `$N`), VARCHAR for enums (so no
-    // enum cast needed — Prisma generates them as VARCHAR columns), and
-    // LONGTEXT for `Json` (so we CAST galleryUrls to JSON when binding).
-    // The column list below mirrors `Model` in prisma/schema.prisma — if
-    // a column is added, removed, or renamed, this query MUST be updated
-    // in lockstep. There is no compile-time check for this drift.
+    // MariaDB uses `?` placeholders (not `$N`), VARCHAR columns (no enum
+    // cast needed), and LONGTEXT for `Json` (bound as JSON-formatted string,
+    // no CAST — MariaDB doesn't accept `CAST AS JSON`).
     const rows = await this.prisma.$queryRawUnsafe<Array<{
       id: string;
       brandId: string;
@@ -443,7 +566,7 @@ Reemplazar desde `await extendEnum(this.prisma, "Segment", input.segment);` (lí
       createdAt: Date;
     }>>(
       `INSERT INTO \`Model\` (id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`createdAt\`, \`deletedAt\`)
-       VALUES (?, ?, ?, ?, ?, CAST(? AS JSON), NOW(), NULL)
+       VALUES (?, ?, ?, ?, ?, ?, NOW(), NULL)
        RETURNING id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`deletedAt\`, \`createdAt\``,
       id,
       input.brandId,
@@ -459,20 +582,17 @@ Reemplazar desde `await extendEnum(this.prisma, "Segment", input.segment);` (lí
     };
 ```
 
-Notas:
-- Las comillas de los identifiers cambian de `"Model"` a `` `Model` `` (MariaDB usa backticks).
-- `galleryUrls` ahora es `string` en el tipo de retorno del raw query (viene de LONGTEXT).
-- Se aplica `toGalleryUrls` para normalizar.
+- [ ] **Paso 2: Confirmar import de `toGalleryUrls` al inicio del archivo**
 
-- [ ] **Paso 2: Agregar import de `toGalleryUrls` al inicio del archivo**
-
-Agregar (junto a los otros imports de `../../shared/...`):
-
+Verificar que existe:
 ```ts
 import { toGalleryUrls } from "../../shared/json.js";
 ```
+Si no existe (puede haber sido removido entre fixes), agregarlo junto a los otros imports de `../../shared/...`.
 
 - [ ] **Paso 3: Reemplazar el UPDATE raw en `update()` (líneas 187-225)**
+
+MariaDB no soporta `UPDATE ... RETURNING`. Split en 2 queries: UPDATE primero, luego SELECT para devolver la fila actualizada.
 
 Reemplazar el bloque desde `if (newSegment) {` (línea 187) hasta el `return rows[0]!;` (línea 224) por:
 
@@ -492,11 +612,19 @@ Reemplazar el bloque desde `if (newSegment) {` (línea 187) hasta el `return row
         values.push(input.imageUrl);
       }
       if (input.galleryUrls !== undefined) {
-        setClauses.push("`galleryUrls` = CAST(? AS JSON)");
+        setClauses.push("`galleryUrls` = ?");
         values.push(JSON.stringify(input.galleryUrls));
       }
       values.push(id);
-      // SCHEMA-DRIFT NOTE: see the comment in create() above.
+      // SCHEMA-DRIFT NOTE: raw UPDATE porque extendEnum agrega un valor
+      // nuevo al enum runtime y Prisma's query engine lo rechazaría. En
+      // MariaDB no hay RETURNING para UPDATE, así que hacemos SELECT
+      // después para devolver la fila actualizada.
+      const updateResult = await this.prisma.$executeRawUnsafe(
+        `UPDATE \`Model\` SET ${setClauses.join(", ")} WHERE id = ? AND \`deletedAt\` IS NULL`,
+        ...values,
+      );
+      if (updateResult === 0) throw notFound("Modelo no encontrado");
       const rows = await this.prisma.$queryRawUnsafe<Array<{
         id: string;
         brandId: string;
@@ -507,11 +635,10 @@ Reemplazar el bloque desde `if (newSegment) {` (línea 187) hasta el `return row
         deletedAt: Date | null;
         createdAt: Date;
       }>>(
-        `UPDATE \`Model\` SET ${setClauses.join(", ")} WHERE id = ? AND \`deletedAt\` IS NULL
-         RETURNING id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`deletedAt\`, \`createdAt\``,
-        ...values,
+        `SELECT id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`deletedAt\`, \`createdAt\`
+         FROM \`Model\` WHERE id = ? AND \`deletedAt\` IS NULL`,
+        id,
       );
-      if (rows.length === 0) throw notFound("Modelo no encontrado");
       const row = rows[0]!;
       return {
         ...row,
@@ -526,7 +653,7 @@ Reemplazar el bloque desde `if (newSegment) {` (línea 187) hasta el `return row
 cd apps/backend && pnpm exec tsc --noEmit
 ```
 
-Esperado: sin errores. Si hay errores en `galleryUrls: string[]` vs `JsonValue`, ajustar los tipos de retorno de los raw queries (ya están como `string`, falta que `toGalleryUrls` devuelva `string[]` que sí está bien).
+Esperado: 5 errores restantes (los de `mode: insensitive` y `favorites.service.ts` — esos son de Tarea 7).
 
 - [ ] **Paso 5: Correr tests del módulo**
 
@@ -534,22 +661,26 @@ Esperado: sin errores. Si hay errores en `galleryUrls: string[]` vs `JsonValue`,
 pnpm test src/modules/models/models.service.spec.ts
 ```
 
-Esperado: algunos tests pueden fallar porque los tests existentes insertan `galleryUrls: [...]` directo (que ahora es Json) y leen de vuelta. Anotar fallos para Tarea 8.
+Esperado: 5/5 pasan (los tests que usan `TEST_NEW_SEG_...` ahora funcionan porque la columna es VARCHAR).
 
 - [ ] **Paso 6: Commit**
 
 ```bash
 git add apps/backend/src/modules/models/models.service.ts
-git commit -m "refactor(be): raw SQL de ModelsService compatible con MariaDB"
+git commit -m "refactor(be): raw SQL de ModelsService compatible con MariaDB (VARCHAR + split UPDATE)"
 ```
 
 ---
 
 ## Tarea 6: Reescribir raw SQL en `versions.service.ts` (create + update)
 
+**Cambios respecto al plan original:**
+- Enums son `String` (VARCHAR) en schema — sin cast especial.
+- `UPDATE` no soporta `RETURNING` en MariaDB → split en UPDATE + SELECT.
+
 **Files:**
-- Modify: `apps/backend/src/modules/versions/versions.service.ts:128-166` (create)
-- Modify: `apps/backend/src/modules/versions/versions.service.ts:269-275` (update)
+- Modify: `apps/backend/src/modules/versions/versions.service.ts:121-166` (create)
+- Modify: `apps/backend/src/modules/versions/versions.service.ts:188-275` (update → split)
 
 **Interfaces:**
 - Consumes: `extendEnum` no-op (Tarea 4)
@@ -561,12 +692,10 @@ Reemplazar desde `const id = randomUUID();` (línea 121) hasta el cierre del blo
 
 ```ts
     const id = randomUUID();
-    // SCHEMA-DRIFT NOTE: raw SQL is required because Prisma 5's query engine
-    // validates enums against the codegen-time schema and rejects new values.
-    // MariaDB uses `?` placeholders (not `$N`) and backtick-quoted identifiers.
-    // The column list below mirrors `Version` in prisma/schema.prisma — if a
-    // column is added, removed, or renamed, this query (and VERSION_RETURNING)
-    // MUST be updated in lockstep.
+    // SCHEMA-DRIFT NOTE: raw SQL is required porque extendEnum agrega un
+    // valor nuevo al enum runtime y Prisma's query engine lo rechazaría.
+    // MariaDB uses `?` placeholders (not `$N`), VARCHAR columns (no enum
+    // cast needed), backtick-quoted identifiers.
     const rows = await this.prisma.$queryRawUnsafe<VersionRow[]>(
       `INSERT INTO \`Version\` (
          id, \`modelId\`, name, year, \`priceClp\`, transmission, fuel,
@@ -609,6 +738,8 @@ Reemplazar desde `const id = randomUUID();` (línea 121) hasta el cierre del blo
 ```
 
 - [ ] **Paso 2: Reemplazar el UPDATE raw en `update()` (líneas 188-275)**
+
+Split en UPDATE + SELECT (MariaDB no soporta `UPDATE ... RETURNING`).
 
 Reemplazar todo el bloque desde `const setClauses: string[] = [];` (línea 188) hasta el `return rows[0]!;` (línea 275) por:
 
@@ -692,12 +823,18 @@ Reemplazar todo el bloque desde `const setClauses: string[] = [];` (línea 188) 
         values.push(input.hasCruiseControl);
       }
       values.push(id);
-      const rows = await this.prisma.$queryRawUnsafe<VersionRow[]>(
-        `UPDATE \`Version\` SET ${setClauses.join(", ")} WHERE id = ? AND \`deletedAt\` IS NULL
-         RETURNING ${VERSION_RETURNING}`,
+      // SCHEMA-DRIFT NOTE: raw UPDATE porque extendEnum agrega un valor
+      // nuevo al enum runtime. En MariaDB no hay RETURNING para UPDATE,
+      // así que hacemos SELECT después para devolver la fila actualizada.
+      const updateResult = await this.prisma.$executeRawUnsafe(
+        `UPDATE \`Version\` SET ${setClauses.join(", ")} WHERE id = ? AND \`deletedAt\` IS NULL`,
         ...values,
       );
-      if (rows.length === 0) throw notFound("Versión no encontrada");
+      if (updateResult === 0) throw notFound("Versión no encontrada");
+      const rows = await this.prisma.$queryRawUnsafe<VersionRow[]>(
+        `SELECT ${VERSION_RETURNING} FROM \`Version\` WHERE id = ? AND \`deletedAt\` IS NULL`,
+        id,
+      );
       return rows[0]!;
 ```
 
@@ -707,7 +844,7 @@ Reemplazar todo el bloque desde `const setClauses: string[] = [];` (línea 188) 
 cd apps/backend && pnpm exec tsc --noEmit
 ```
 
-Esperado: sin errores.
+Esperado: 5 errores restantes (los de `mode: insensitive` y `favorites.service.ts`).
 
 - [ ] **Paso 4: Correr tests del módulo**
 
@@ -715,13 +852,13 @@ Esperado: sin errores.
 pnpm test src/modules/versions
 ```
 
-Esperado: pasan todos (no usan galleryUrls directamente).
+Esperado: pasan todos.
 
 - [ ] **Paso 5: Commit**
 
 ```bash
 git add apps/backend/src/modules/versions/versions.service.ts
-git commit -m "refactor(be): raw SQL de VersionsService compatible con MariaDB"
+git commit -m "refactor(be): raw SQL de VersionsService compatible con MariaDB (VARCHAR + split UPDATE)"
 ```
 
 ---
