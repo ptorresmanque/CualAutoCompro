@@ -152,13 +152,26 @@ export class ModelsService {
 
     await extendEnum(this.prisma, "Segment", input.segment);
     const id = randomUUID();
-    // SCHEMA-DRIFT NOTE: raw SQL is required because Prisma 5's query engine
-    // validates enums against the codegen-time schema and rejects new values.
-    // MariaDB uses `?` placeholders (not `$N`), backtick identifiers, and
-    // `longtext` for `Json` (plain string, normalized by `toGalleryUrls()`
-    // on read). The column list below mirrors `Model` in prisma/schema.prisma
-    // — if a column is added, removed, or renamed, this query MUST be updated
-    // in lockstep. There is no compile-time check for this drift.
+    // SCHEMA-DRIFT NOTE: raw SQL porque extendEnum registra un valor nuevo
+    // y queremos evitar la validación de Prisma para campos `Json`. MariaDB
+    // usa `?` placeholders (no `$N`), backtick identifiers, y `longtext` para
+    // `Json` (string plano, normalizado por `toGalleryUrls()` al leer). El
+    // driver de Prisma 5 para MariaDB **no propaga los nombres de columna**
+    // cuando se usa `INSERT ... RETURNING` (devuelve `f0..fN`), así que
+    // hacemos INSERT y luego un SELECT con nombres propios para que
+    // `toGalleryUrls()` y el caller reciban un objeto tipado. Las listas
+    // de columnas de las 3 queries abajo deben mantenerse en sync con
+    // `Model` en prisma/schema.prisma — no hay verificación en compile-time.
+    await this.prisma.$executeRawUnsafe(
+      `INSERT INTO \`Model\` (id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`createdAt\`, \`deletedAt\`)
+       VALUES (?, ?, ?, ?, ?, ?, NOW(), NULL)`,
+      id,
+      input.brandId,
+      input.name,
+      input.segment,
+      input.imageUrl ?? null,
+      JSON.stringify(input.galleryUrls ?? []),
+    );
     const rows = await this.prisma.$queryRawUnsafe<Array<{
       id: string;
       brandId: string;
@@ -169,15 +182,9 @@ export class ModelsService {
       deletedAt: Date | null;
       createdAt: Date;
     }>>(
-      `INSERT INTO \`Model\` (id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`createdAt\`, \`deletedAt\`)
-       VALUES (?, ?, ?, ?, ?, ?, NOW(), NULL)
-       RETURNING id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`deletedAt\`, \`createdAt\``,
+      `SELECT id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`deletedAt\`, \`createdAt\`
+       FROM \`Model\` WHERE id = ? AND \`deletedAt\` IS NULL`,
       id,
-      input.brandId,
-      input.name,
-      input.segment,
-      input.imageUrl ?? null,
-      JSON.stringify(input.galleryUrls ?? []),
     );
     const row = rows[0]!;
     return {
@@ -209,7 +216,15 @@ export class ModelsService {
         values.push(JSON.stringify(input.galleryUrls));
       }
       values.push(id);
-      // SCHEMA-DRIFT NOTE: see the comment in create() above.
+      // SCHEMA-DRIFT NOTE: raw UPDATE porque extendEnum agrega un valor
+      // nuevo al enum runtime y Prisma's query engine lo rechazaría. En
+      // MariaDB no hay RETURNING para UPDATE, así que hacemos SELECT
+      // después para devolver la fila actualizada.
+      const updateResult = await this.prisma.$executeRawUnsafe(
+        `UPDATE \`Model\` SET ${setClauses.join(", ")} WHERE id = ? AND \`deletedAt\` IS NULL`,
+        ...values,
+      );
+      if (updateResult === 0) throw notFound("Modelo no encontrado");
       const rows = await this.prisma.$queryRawUnsafe<Array<{
         id: string;
         brandId: string;
@@ -220,11 +235,10 @@ export class ModelsService {
         deletedAt: Date | null;
         createdAt: Date;
       }>>(
-        `UPDATE \`Model\` SET ${setClauses.join(", ")} WHERE id = ? AND \`deletedAt\` IS NULL
-         RETURNING id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`deletedAt\`, \`createdAt\``,
-        ...values,
+        `SELECT id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`deletedAt\`, \`createdAt\`
+         FROM \`Model\` WHERE id = ? AND \`deletedAt\` IS NULL`,
+        id,
       );
-      if (rows.length === 0) throw notFound("Modelo no encontrado");
       const row = rows[0]!;
       return {
         ...row,
