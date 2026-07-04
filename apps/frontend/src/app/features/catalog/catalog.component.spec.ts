@@ -610,4 +610,194 @@ describe('CatalogComponent', () => {
 
     expect(fixture.componentInstance.selectedVersions()).toEqual({});
   });
+
+  it('sliders existen: filtro de año NO existe; precio tiene doble thumb; hay sliders de potencia, consumo ciudad y consumo carretera', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
+    http
+      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await fixture.componentInstance.initialLoad;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="filter-year"]')).toBeNull();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="filter-price-low"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="filter-price-high"]'),
+    ).not.toBeNull();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="filter-powerMin-low"]'),
+    ).not.toBeNull();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="filter-consumptionMax-low"]'),
+    ).not.toBeNull();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="filter-consumptionHighwayMax-low"]'),
+    ).not.toBeNull();
+  });
+
+  it('priceMin slider omite el query param cuando está en el bound mínimo', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
+    http
+      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await fixture.componentInstance.initialLoad;
+
+    const p = fixture.componentInstance.onPriceMinChange(0);
+    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    expect(req.request.params.has('priceMin')).toBe(false);
+    req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await p;
+  });
+
+  it('priceMax slider omite el query param cuando está en el bound máximo', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
+    http
+      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await fixture.componentInstance.initialLoad;
+
+    const p = fixture.componentInstance.onPriceMaxChange(
+      fixture.componentInstance.priceBounds.max,
+    );
+    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    expect(req.request.params.has('priceMax')).toBe(false);
+    req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await p;
+  });
+
+  it('price range slider envía priceMin/priceMax cuando están dentro del rango', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
+    http
+      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await fixture.componentInstance.initialLoad;
+
+    const pMin = fixture.componentInstance.onPriceMinChange(5_000_000);
+    const req1 = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    expect(req1.request.params.get('priceMin')).toBe('5000000');
+    req1.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await pMin;
+
+    const pMax = fixture.componentInstance.onPriceMaxChange(20_000_000);
+    const req2 = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    expect(req2.request.params.get('priceMax')).toBe('20000000');
+    req2.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await pMax;
+  });
+
+  it('powerMin slider envía powerMin solo cuando v > bound mínimo', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
+    http
+      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await fixture.componentInstance.initialLoad;
+
+    const p = fixture.componentInstance.onPowerMinChange(150);
+    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    expect(req.request.params.get('powerMin')).toBe('150');
+    req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await p;
+  });
+
+  it('consumptionMax slider envía consumptionMax cuando v < bound máximo', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
+    http
+      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await fixture.componentInstance.initialLoad;
+
+    const p = fixture.componentInstance.onConsumptionMaxChange(15);
+    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    expect(req.request.params.get('consumptionMax')).toBe('15');
+    req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await p;
+  });
+
+  it('consumptionHighwayMax slider envía consumptionHighwayMax cuando v < bound máximo', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
+    http
+      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await fixture.componentInstance.initialLoad;
+
+    const p = fixture.componentInstance.onConsumptionHighwayMaxChange(18);
+    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    expect(req.request.params.get('consumptionHighwayMax')).toBe('18');
+    req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await p;
+  });
+
+  it('consumptionMax slider omite el query param cuando está en el bound máximo', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
+    http
+      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await fixture.componentInstance.initialLoad;
+
+    const p = fixture.componentInstance.onConsumptionMaxChange(
+      fixture.componentInstance.consumptionBounds.max,
+    );
+    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    expect(req.request.params.has('consumptionMax')).toBe(false);
+    req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await p;
+  });
+
+  it('powerMin slider omite el query param cuando está en el bound mínimo', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [] });
+    http
+      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await fixture.componentInstance.initialLoad;
+
+    const p = fixture.componentInstance.onPowerMinChange(
+      fixture.componentInstance.powerBounds.min,
+    );
+    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    expect(req.request.params.has('powerMin')).toBe(false);
+    req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
+    await p;
+  });
 });

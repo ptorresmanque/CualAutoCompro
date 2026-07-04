@@ -1,0 +1,64 @@
+<div class="rs">
+  @if (label()) {
+    <div class="rs-label font-mono text-[11px] uppercase tracking-[0.08em] text-graphite font-semibold">
+      <span>{{ label() }}</span>
+      <span class="rs-values" [attr.data-testid]="(testid() ?? 'rs') + '-values'">
+        <span>{{ displayLow() }}</span>
+        @if (dual()) {
+          <span class="rs-sep">–</span>
+          <span>{{ displayHigh() }}</span>
+        }
+      </span>
+    </div>
+  } @else {
+    <div class="rs-values rs-values-top" [attr.data-testid]="(testid() ?? 'rs') + '-values'">
+      <span>{{ displayLow() }}</span>
+      @if (dual()) {
+        <span class="rs-sep">–</span>
+        <span>{{ displayHigh() }}</span>
+      }
+    </div>
+  }
+
+  <div class="rs-track">
+    <div class="rs-track-bg"></div>
+    <div class="rs-fill" [ngStyle]="{ left: lowPercent() + '%', right: (100 - highPercent()) + '%' }"></div>
+
+    @if (dual()) {
+      <input
+        type="range"
+        class="rs-input rs-input-low"
+        [min]="minBound()"
+        [max]="maxBound()"
+        [step]="step()"
+        [value]="lowEffective()"
+        (input)="onLowInput($event)"
+        [attr.data-testid]="(testid() ?? 'rs') + '-low'"
+        [attr.aria-label]="label() ? (label() + ' mínimo') : 'mínimo'"
+      >
+      <input
+        type="range"
+        class="rs-input rs-input-high"
+        [min]="minBound()"
+        [max]="maxBound()"
+        [step]="step()"
+        [value]="highEffective()"
+        (input)="onHighInput($event)"
+        [attr.data-testid]="(testid() ?? 'rs') + '-high'"
+        [attr.aria-label]="label() ? (label() + ' máximo') : 'máximo'"
+      >
+    } @else {
+      <input
+        type="range"
+        class="rs-input rs-input-low"
+        [min]="minBound()"
+        [max]="maxBound()"
+        [step]="step()"
+        [value]="lowEffective()"
+        (input)="onLowInput($event)"
+        [attr.data-testid]="(testid() ?? 'rs') + '-low'"
+        [attr.aria-label]="label() || 'valor'"
+      >
+    }
+  </div>
+</div>

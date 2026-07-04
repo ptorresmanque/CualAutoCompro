@@ -83,81 +83,58 @@
           </div>
 
           <div class="filter-section">
-            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-              <mat-label>Año</mat-label>
-              <mat-select
-                [value]="filters().year ?? null"
-                (selectionChange)="updateFilter({ year: $any($event).value || undefined })"
-                data-testid="filter-year"
-              >
-                <mat-option [value]="null">Cualquiera</mat-option>
-                @for (y of years; track y) {
-                  <mat-option [value]="y">{{ y }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+            <span class="filter-label">Precio (CLP)</span>
+            <app-range-slider
+              [minBound]="priceBounds.min"
+              [maxBound]="priceBounds.max"
+              [step]="priceBounds.step"
+              [dual]="true"
+              [low]="filters().priceMin"
+              [high]="filters().priceMax"
+              [format]="priceFormatter"
+              testid="filter-price"
+              (lowChange)="onPriceMinChange($event)"
+              (highChange)="onPriceMaxChange($event)"
+            />
           </div>
 
           <div class="filter-section">
-            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-              <mat-label>Precio mínimo (CLP)</mat-label>
-              <input
-                matInput
-                type="number"
-                min="0"
-                step="100000"
-                placeholder="0"
-                [value]="filters().priceMin ?? null"
-                (change)="updateFilter({ priceMin: +$any($event.target).value || undefined })"
-              />
-            </mat-form-field>
+            <span class="filter-label">Potencia mínima</span>
+            <app-range-slider
+              [minBound]="powerBounds.min"
+              [maxBound]="powerBounds.max"
+              [step]="powerBounds.step"
+              [low]="filters().powerMin"
+              [format]="hpFormatter"
+              testid="filter-powerMin"
+              (lowChange)="onPowerMinChange($event)"
+            />
           </div>
 
           <div class="filter-section">
-            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-              <mat-label>Precio máximo (CLP)</mat-label>
-              <input
-                matInput
-                type="number"
-                min="0"
-                step="100000"
-                placeholder="30.000.000"
-                [value]="filters().priceMax ?? null"
-                (change)="updateFilter({ priceMax: +$any($event.target).value || undefined })"
-              />
-            </mat-form-field>
+            <span class="filter-label">Consumo máx. ciudad</span>
+            <app-range-slider
+              [minBound]="consumptionBounds.min"
+              [maxBound]="consumptionBounds.max"
+              [step]="consumptionBounds.step"
+              [low]="filters().consumptionMax"
+              [format]="kmLFormatter"
+              testid="filter-consumptionMax"
+              (lowChange)="onConsumptionMaxChange($event)"
+            />
           </div>
 
           <div class="filter-section">
-            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-              <mat-label>Potencia mínima (hp)</mat-label>
-              <input
-                matInput
-                type="number"
-                min="0"
-                step="10"
-                placeholder="80"
-                [value]="filters().powerMin ?? null"
-                (change)="updateFilter({ powerMin: +$any($event.target).value || undefined })"
-                data-testid="filter-powerMin"
-              />
-            </mat-form-field>
-          </div>
-
-          <div class="filter-section">
-            <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-              <mat-label>Consumo máx. ciudad (km/L)</mat-label>
-              <input
-                matInput
-                type="number"
-                min="0"
-                step="0.5"
-                placeholder="20"
-                [value]="filters().consumptionMax ?? null"
-                (change)="updateFilter({ consumptionMax: +$any($event.target).value || undefined })"
-                data-testid="filter-consumptionMax"
-              />
-            </mat-form-field>
+            <span class="filter-label">Consumo máx. carretera</span>
+            <app-range-slider
+              [minBound]="consumptionBounds.min"
+              [maxBound]="consumptionBounds.max"
+              [step]="consumptionBounds.step"
+              [low]="filters().consumptionHighwayMax"
+              [format]="kmLFormatter"
+              testid="filter-consumptionHighwayMax"
+              (lowChange)="onConsumptionHighwayMaxChange($event)"
+            />
           </div>
 
           <p class="filter-total md:mt-auto">

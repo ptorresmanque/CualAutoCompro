@@ -105,6 +105,32 @@ describe("GET /api/v1/models", () => {
       expect(cx5).toBeUndefined();
     });
   });
+
+  describe("filtro consumptionHighwayMax (DB-level, semántica some)", () => {
+    it("incluye modelos con al menos una versión que cumple consumptionHighwayMax=20 (Yaris:XLS 19≤20)", async () => {
+      const res = await request(createApp()).get("/api/v1/models?consumptionHighwayMax=20");
+      const yaris = res.body.data.items.find((m: { name: string }) => m.name === "Yaris");
+      expect(yaris).toBeDefined();
+    });
+
+    it("excluye modelos cuando ninguna versión cumple consumptionHighwayMax=15 (Yaris:XLS 19>15, Sport 22>15)", async () => {
+      const res = await request(createApp()).get("/api/v1/models?consumptionHighwayMax=15");
+      const yaris = res.body.data.items.find((m: { name: string }) => m.name === "Yaris");
+      expect(yaris).toBeUndefined();
+    });
+
+    it("incluye modelos cuando ambas versiones cumplen consumptionHighwayMax=25", async () => {
+      const res = await request(createApp()).get("/api/v1/models?consumptionHighwayMax=25");
+      const yaris = res.body.data.items.find((m: { name: string }) => m.name === "Yaris");
+      expect(yaris).toBeDefined();
+    });
+
+    it("excluye modelos sin versiones (Mazda CX-5) incluso con consumptionHighwayMax permisivo", async () => {
+      const res = await request(createApp()).get("/api/v1/models?consumptionHighwayMax=100");
+      const cx5 = res.body.data.items.find((m: { name: string }) => m.name === "CX-5");
+      expect(cx5).toBeUndefined();
+    });
+  });
 });
 
 describe("GET /api/v1/models sort + order + minConsumption", () => {

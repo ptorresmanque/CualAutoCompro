@@ -4,7 +4,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { ApiService, QueryParams } from '../../core/api.service';
@@ -14,6 +13,7 @@ import {
   VehicleCardComponent,
   VehicleCardInput,
 } from '../../shared/ui/vehicle-card.component';
+import { RangeSliderComponent } from '../../shared/ui/range-slider.component';
 import { VehicleVersion } from '../../core/types/vehicle';
 
 type Segment =
@@ -37,15 +37,18 @@ export interface CatalogFilters {
   priceMax?: number;
   transmission?: Transmission;
   fuel?: Fuel;
-  year?: number;
   powerMin?: number;
   consumptionMax?: number;
+  consumptionHighwayMax?: number;
   sort?: Sort;
   order?: Order;
 }
 
 const FEATURED_MODEL_NAMES = new Set(['Corolla', 'Tucson', 'CX-5']);
-const YEARS: ReadonlyArray<number> = [2024, 2025, 2026, 2027];
+
+const PRICE_BOUNDS = { min: 0, max: 100_000_000, step: 500_000 };
+const POWER_BOUNDS = { min: 0, max: 1000, step: 10 };
+const CONSUMPTION_BOUNDS = { min: 0, max: 40, step: 0.5 };
 
 @Component({
   selector: 'app-catalog',
@@ -54,11 +57,11 @@ const YEARS: ReadonlyArray<number> = [2024, 2025, 2026, 2027];
   imports: [
     RouterLink,
     VehicleCardComponent,
+    RangeSliderComponent,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
     MatRadioModule,
     MatSelectModule,
   ],
@@ -98,7 +101,9 @@ export class CatalogComponent {
     { value: 'minConsumption', label: 'Rendimiento', tip: 'Rendimiento = menor consumo de combustible en ciudad (km/L).' },
   ];
 
-  readonly years = YEARS;
+  readonly priceBounds = PRICE_BOUNDS;
+  readonly powerBounds = POWER_BOUNDS;
+  readonly consumptionBounds = CONSUMPTION_BOUNDS;
 
   readonly brands = signal<Array<{ id: string; name: string }>>([]);
 
@@ -196,6 +201,41 @@ export class CatalogComponent {
   formatPrice(value: number | null | undefined): string {
     if (value === null || value === undefined) return '';
     return new Intl.NumberFormat('es-CL').format(value);
+  }
+
+  readonly priceFormatter = (v: number): string =>
+    `$${new Intl.NumberFormat('es-CL').format(v)}`;
+  readonly hpFormatter = (v: number): string => `${v} hp`;
+  readonly kmLFormatter = (v: number): string => `${v} km/L`;
+
+  onPriceMinChange(v: number): Promise<void> {
+    return this.updateFilter({
+      priceMin: v > this.priceBounds.min ? v : undefined,
+    });
+  }
+
+  onPriceMaxChange(v: number): Promise<void> {
+    return this.updateFilter({
+      priceMax: v < this.priceBounds.max ? v : undefined,
+    });
+  }
+
+  onPowerMinChange(v: number): Promise<void> {
+    return this.updateFilter({
+      powerMin: v > this.powerBounds.min ? v : undefined,
+    });
+  }
+
+  onConsumptionMaxChange(v: number): Promise<void> {
+    return this.updateFilter({
+      consumptionMax: v < this.consumptionBounds.max ? v : undefined,
+    });
+  }
+
+  onConsumptionHighwayMaxChange(v: number): Promise<void> {
+    return this.updateFilter({
+      consumptionHighwayMax: v < this.consumptionBounds.max ? v : undefined,
+    });
   }
 
   sortTip(): string {

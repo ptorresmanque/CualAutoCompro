@@ -1,0 +1,126 @@
+:host { display: block; width: 100%; }
+
+.rs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.rs-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.rs-values {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.rs-values-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.rs-sep {
+  color: var(--ink-muted);
+  margin: 0 0.25rem;
+}
+
+.rs-track {
+  position: relative;
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.rs-track-bg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--rule);
+}
+
+.rs-fill {
+  position: absolute;
+  height: 3px;
+  background: var(--engine);
+  pointer-events: none;
+}
+
+.rs-input {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 24px;
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+}
+
+.rs-input::-webkit-slider-runnable-track {
+  height: 3px;
+  background: transparent;
+}
+
+.rs-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  cursor: grab;
+  margin-top: -7.5px;
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+.rs-input::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  background: var(--engine);
+  border-color: var(--engine);
+  transform: scale(1.1);
+}
+
+.rs-input::-moz-range-track {
+  height: 3px;
+  background: transparent;
+}
+
+.rs-input::-moz-range-thumb {
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  cursor: grab;
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+.rs-input::-moz-range-thumb:active {
+  cursor: grabbing;
+  background: var(--engine);
+  border-color: var(--engine);
+  transform: scale(1.1);
+}
+
+.rs-input.rs-input-low { z-index: 3; }
+.rs-input.rs-input-high { z-index: 2; }
+
+.rs:focus-within .rs-input::-webkit-slider-thumb,
+.rs-input:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgba(232, 89, 28, 0.18);
+}

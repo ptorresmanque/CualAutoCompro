@@ -27,7 +27,6 @@ export class ModelsService {
     const vWhere: Prisma.VersionWhereInput = {};
     if (q.transmission) vWhere.transmission = q.transmission;
     if (q.fuel) vWhere.fuel = q.fuel;
-    if (q.year !== undefined) vWhere.year = q.year;
     if (q.priceMin !== undefined || q.priceMax !== undefined) {
       vWhere.priceClp = {
         ...(q.priceMin !== undefined ? { gte: q.priceMin } : {}),
@@ -36,6 +35,7 @@ export class ModelsService {
     }
     if (q.powerMin !== undefined) vWhere.powerHp = { gte: q.powerMin };
     if (q.consumptionMax !== undefined) vWhere.consumptionCityKmL = { lte: q.consumptionMax };
+    if (q.consumptionHighwayMax !== undefined) vWhere.consumptionHighwayKmL = { lte: q.consumptionHighwayMax };
 
     if (Object.keys(vWhere).length > 0) {
       vWhere.deletedAt = null;
