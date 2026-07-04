@@ -17,8 +17,8 @@ export class ModelsService {
       const term = q.q.trim();
       if (term.length > 0) {
         where.OR = [
-          { name: { contains: term, mode: "insensitive" } },
-          { brand: { name: { contains: term, mode: "insensitive" } } },
+          { name: { contains: term } },
+          { brand: { name: { contains: term } } },
         ];
       }
     }
@@ -88,13 +88,14 @@ export class ModelsService {
         consumptionCityKmL: v.consumptionCityKmL,
         consumptionHighwayKmL: v.consumptionHighwayKmL,
       }));
+      const galleryUrls = toGalleryUrls(m.galleryUrls);
       return {
         id: m.id, brandId: m.brandId, name: m.name, segment: m.segment,
         // imageUrl is the explicitly-set primary image. The first gallery
         // image is only a fallback for models where the admin didn't set
         // a primary image.
-        imageUrl: m.imageUrl ?? m.galleryUrls[0] ?? null,
-        galleryUrls: m.galleryUrls, brand: m.brand,
+        imageUrl: m.imageUrl ?? galleryUrls[0] ?? null,
+        galleryUrls, brand: m.brand,
         minPrice, minConsumption, maxPrice, versionCount: m.versions.length,
         defaultVersion,
         versions,

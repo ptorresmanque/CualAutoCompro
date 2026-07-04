@@ -1,5 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { notFound, badRequest } from "../../shared/errors.js";
+import { toGalleryUrls } from "../../shared/json.js";
 
 export interface FavoriteModelCard {
   id: string;
@@ -116,7 +118,7 @@ export class FavoritesService {
       name: string;
       segment: string;
       imageUrl: string | null;
-      galleryUrls: string[];
+      galleryUrls: Prisma.JsonValue;
       brand: { id: string; name: string };
       versions: Array<{
         id: string;
@@ -144,7 +146,7 @@ export class FavoritesService {
       // imageUrl is the explicitly-set primary image. The first gallery
       // image is only a fallback for models where the admin didn't set
       // a primary image. Same rule as ModelsService.list().
-      imageUrl: m.imageUrl ?? m.galleryUrls[0] ?? null,
+      imageUrl: m.imageUrl ?? toGalleryUrls(m.galleryUrls)[0] ?? null,
       minPrice,
       versionId,
       versions: m.versions.map((v) => ({
