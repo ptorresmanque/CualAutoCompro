@@ -154,11 +154,10 @@ export class ModelsService {
     const id = randomUUID();
     // SCHEMA-DRIFT NOTE: raw SQL is required because Prisma 5's query engine
     // validates enums against the codegen-time schema and rejects new values.
-    // MariaDB uses `?` placeholders (not `$N`), VARCHAR for enums (so no
-    // enum cast needed — Prisma generates them as VARCHAR columns), and
-    // LONGTEXT for `Json` (so we CAST galleryUrls to JSON when binding).
-    // The column list below mirrors `Model` in prisma/schema.prisma — if
-    // a column is added, removed, or renamed, this query MUST be updated
+    // MariaDB uses `?` placeholders (not `$N`), backtick identifiers, and
+    // `longtext` for `Json` (plain string, normalized by `toGalleryUrls()`
+    // on read). The column list below mirrors `Model` in prisma/schema.prisma
+    // — if a column is added, removed, or renamed, this query MUST be updated
     // in lockstep. There is no compile-time check for this drift.
     const rows = await this.prisma.$queryRawUnsafe<Array<{
       id: string;
@@ -171,7 +170,7 @@ export class ModelsService {
       createdAt: Date;
     }>>(
       `INSERT INTO \`Model\` (id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`createdAt\`, \`deletedAt\`)
-       VALUES (?, ?, ?, ?, ?, CAST(? AS JSON), NOW(), NULL)
+       VALUES (?, ?, ?, ?, ?, ?, NOW(), NULL)
        RETURNING id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`deletedAt\`, \`createdAt\``,
       id,
       input.brandId,
@@ -206,7 +205,7 @@ export class ModelsService {
         values.push(input.imageUrl);
       }
       if (input.galleryUrls !== undefined) {
-        setClauses.push("`galleryUrls` = CAST(? AS JSON)");
+        setClauses.push("`galleryUrls` = ?");
         values.push(JSON.stringify(input.galleryUrls));
       }
       values.push(id);
