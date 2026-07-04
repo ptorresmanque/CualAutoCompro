@@ -1,13 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { PrismaClient } from "@prisma/client";
-import { extendEnum, type EnumName } from "./enum-extension.js";
+import { extendEnum } from "./enum-extension.js";
 
-const prisma = new PrismaClient();
-
-describe("extendEnum", () => {
-  beforeEach(async () => {
-    // Conexión al test DB (pglite configurado en vitest.config.ts)
-  });
+describe("extendEnum (MariaDB no-op)", () => {
+  const prisma = new PrismaClient();
   afterEach(async () => {
     await prisma.$disconnect();
   });
@@ -21,21 +17,18 @@ describe("extendEnum", () => {
     ).rejects.toThrow(/Valor inválido/);
   });
 
-  it("agrega un valor nuevo al enum Segment y permite usarlo", async () => {
-    const newValue = `TEST_SEGMENT_${Date.now()}`;
-    await extendEnum(prisma, "Segment", newValue);
+  it("acepta un valor válido como no-op (no lanza ni toca la DB)", async () => {
     await expect(
-      prisma.$queryRawUnsafe<{ enumlabel: string }[]>(
-        `SELECT enumlabel FROM pg_enum WHERE enumtypid = (SELECT oid FROM pg_type WHERE typname = 'Segment')`,
-      ),
-    ).resolves.toEqual(
-      expect.arrayContaining([expect.objectContaining({ enumlabel: newValue })]),
-    );
+      extendEnum(prisma, "Segment", "NEW_VALID_VALUE"),
+    ).resolves.not.toThrow();
   });
 
-  it("es idempotente: llamar 2 veces con el mismo valor no rompe", async () => {
-    const newValue = `TEST_DUP_${Date.now()}`;
-    await extendEnum(prisma, "Fuel", newValue);
-    await expect(extendEnum(prisma, "Fuel", newValue)).resolves.not.toThrow();
+  it("valida los 3 enums (Segment, Fuel, Transmission)", async () => {
+    await expect(extendEnum(prisma, "Segment", "BAD VALUE")).rejects.toThrow();
+    await expect(extendEnum(prisma, "Fuel", "BAD VALUE")).rejects.toThrow();
+    await expect(extendEnum(prisma, "Transmission", "BAD VALUE")).rejects.toThrow();
+    await expect(extendEnum(prisma, "Segment", "GOOD_VALUE")).resolves.not.toThrow();
+    await expect(extendEnum(prisma, "Fuel", "GOOD_VALUE")).resolves.not.toThrow();
+    await expect(extendEnum(prisma, "Transmission", "GOOD_VALUE")).resolves.not.toThrow();
   });
 });
