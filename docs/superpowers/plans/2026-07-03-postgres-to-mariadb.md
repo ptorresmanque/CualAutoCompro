@@ -677,6 +677,7 @@ git commit -m "refactor(be): raw SQL de ModelsService compatible con MariaDB (VA
 **Cambios respecto al plan original:**
 - Enums son `String` (VARCHAR) en schema — sin cast especial.
 - `UPDATE` no soporta `RETURNING` en MariaDB → split en UPDATE + SELECT.
+- `INSERT ... RETURNING` con Prisma 5.22 + MariaDB devuelve columnas como `f0..fN` (no nombres), por lo que también se hace split INSERT + SELECT para tener nombres tipados.
 
 **Files:**
 - Modify: `apps/backend/src/modules/versions/versions.service.ts:121-166` (create)
@@ -692,11 +693,13 @@ Reemplazar desde `const id = randomUUID();` (línea 121) hasta el cierre del blo
 
 ```ts
     const id = randomUUID();
-    // SCHEMA-DRIFT NOTE: raw SQL is required porque extendEnum agrega un
-    // valor nuevo al enum runtime y Prisma's query engine lo rechazaría.
-    // MariaDB uses `?` placeholders (not `$N`), VARCHAR columns (no enum
-    // cast needed), backtick-quoted identifiers.
-    const rows = await this.prisma.$queryRawUnsafe<VersionRow[]>(
+    // SCHEMA-DRIFT NOTE: raw SQL porque extendEnum agrega un valor nuevo
+    // al enum runtime y Prisma's query engine lo rechazaría. MariaDB usa
+    // `?` placeholders, VARCHAR (no cast de enum), backtick identifiers.
+    // IMPORTANTE: `INSERT ... RETURNING` con Prisma 5.22 + MariaDB devuelve
+    // columnas como `f0..fN` (no nombres), por eso hacemos INSERT y luego
+    // SELECT explícito para tener nombres de columna tipados.
+    await this.prisma.$executeRawUnsafe(
       `INSERT INTO \`Version\` (
          id, \`modelId\`, name, year, \`priceClp\`, transmission, fuel,
          \`engineDisplacementCc\`, \`powerHp\`, \`torqueNm\`, \`consumptionCityKmL\`,
@@ -710,8 +713,7 @@ Reemplazar desde `const id = randomUUID();` (línea 121) hasta el cierre del blo
          ?, ?, ?, ?, ?,
          ?, ?, ?, ?, ?,
          NULL, NOW()
-       )
-       RETURNING ${VERSION_RETURNING}`,
+       )`,
       id,
       input.modelId,
       input.name,
@@ -733,6 +735,10 @@ Reemplazar desde `const id = randomUUID();` (línea 121) hasta el cierre del blo
       input.hasAbs,
       input.hasEsp,
       input.hasCruiseControl,
+    );
+    const rows = await this.prisma.$queryRawUnsafe<VersionRow[]>(
+      `SELECT ${VERSION_RETURNING} FROM \`Version\` WHERE id = ?`,
+      id,
     );
     return rows[0]!;
 ```
