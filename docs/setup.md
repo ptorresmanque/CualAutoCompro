@@ -44,10 +44,22 @@ sin password en local. Para crear el usuario y las bases que usa el proyecto:
 ```bash
 mariadb -uroot <<'SQL'
 CREATE USER IF NOT EXISTS 'cualauto'@'localhost' IDENTIFIED BY 'cualauto';
+CREATE USER IF NOT EXISTS 'cualauto'@'127.0.0.1' IDENTIFIED BY 'cualauto';
+CREATE USER IF NOT EXISTS 'cualauto'@'%'          IDENTIFIED BY 'cualauto';
 GRANT ALL PRIVILEGES ON *.* TO 'cualauto'@'localhost';
+GRANT ALL PRIVILEGES ON *.* TO 'cualauto'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON *.* TO 'cualauto'@'%';
 FLUSH PRIVILEGES;
 SQL
 ```
+
+> **Por qué GRANT global (`*.*`):** `prisma migrate dev` necesita crear una **shadow DB**
+> para detectar drift. Si el usuario solo tiene grants por-database, falla con `P3014`
+> y obliga a usar el workaround `prisma migrate diff` + `prisma migrate deploy`.
+
+> **Por qué los 3 hosts:** las conexiones TCP a `localhost:3306` pueden resolverse como
+> `cualauto@'localhost'` o `cualauto@'127.0.0.1'` dependiendo del cliente y la config del
+> servidor. Crear los 3 evita fallos intermitentes.
 
 ### Opción C: Instalación local (Ubuntu/Debian)
 
@@ -57,7 +69,11 @@ sudo systemctl start mariadb
 sudo mariadb
 # dentro del cliente:
 CREATE USER IF NOT EXISTS 'cualauto'@'localhost' IDENTIFIED BY 'cualauto';
+CREATE USER IF NOT EXISTS 'cualauto'@'127.0.0.1' IDENTIFIED BY 'cualauto';
+CREATE USER IF NOT EXISTS 'cualauto'@'%'          IDENTIFIED BY 'cualauto';
 GRANT ALL PRIVILEGES ON *.* TO 'cualauto'@'localhost';
+GRANT ALL PRIVILEGES ON *.* TO 'cualauto'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON *.* TO 'cualauto'@'%';
 FLUSH PRIVILEGES;
 ```
 
