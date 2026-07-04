@@ -35,11 +35,11 @@ type VersionRow = {
   createdAt: Date;
 };
 
-const VERSION_RETURNING = `id, "modelId", name, year, "priceClp", transmission, fuel,
-  "engineDisplacementCc", "powerHp", "torqueNm", "consumptionCityKmL",
-  "consumptionHighwayKmL", "lengthMm", "widthMm", "heightMm", "weightKg",
-  "trunkLiters", "airbagCount", "hasAbs", "hasEsp", "hasCruiseControl",
-  "deletedAt", "createdAt"`;
+const VERSION_RETURNING = `id, \`modelId\`, name, year, \`priceClp\`, transmission, fuel,
+  \`engineDisplacementCc\`, \`powerHp\`, \`torqueNm\`, \`consumptionCityKmL\`,
+  \`consumptionHighwayKmL\`, \`lengthMm\`, \`widthMm\`, \`heightMm\`, \`weightKg\`,
+  \`trunkLiters\`, \`airbagCount\`, \`hasAbs\`, \`hasEsp\`, \`hasCruiseControl\`,
+  \`deletedAt\`, \`createdAt\``;
 
 export class VersionsService {
   constructor(private readonly prisma: PrismaClient) {}
