@@ -119,28 +119,27 @@ export class VersionsService {
     }
 
     const id = randomUUID();
-    // SCHEMA-DRIFT NOTE: raw SQL is required because Prisma 5's query engine
-    // validates enums against the codegen-time schema and rejects new values
-    // even after ALTER TYPE ADD VALUE succeeds on the live DB. The column list
-    // below mirrors `Version` in prisma/schema.prisma — if a column is added,
-    // removed, or renamed, this query (and VERSION_RETURNING) MUST be updated
-    // in lockstep. There is no compile-time check for this drift.
-    const rows = await this.prisma.$queryRawUnsafe<VersionRow[]>(
-      `INSERT INTO "Version" (
-         id, "modelId", name, year, "priceClp", transmission, fuel,
-         "engineDisplacementCc", "powerHp", "torqueNm", "consumptionCityKmL",
-         "consumptionHighwayKmL", "lengthMm", "widthMm", "heightMm", "weightKg",
-         "trunkLiters", "airbagCount", "hasAbs", "hasEsp", "hasCruiseControl",
-         "deletedAt", "createdAt"
+    // SCHEMA-DRIFT NOTE: raw SQL porque extendEnum agrega un valor nuevo
+    // al enum runtime y Prisma's query engine lo rechazaría. MariaDB usa
+    // `?` placeholders, VARCHAR (no cast de enum), backtick identifiers.
+    // IMPORTANTE: `INSERT ... RETURNING` con Prisma 5.22 + MariaDB devuelve
+    // columnas como `f0..fN` (no nombres), por eso hacemos INSERT y luego
+    // SELECT explícito para tener nombres de columna tipados.
+    await this.prisma.$executeRawUnsafe(
+      `INSERT INTO \`Version\` (
+         id, \`modelId\`, name, year, \`priceClp\`, transmission, fuel,
+         \`engineDisplacementCc\`, \`powerHp\`, \`torqueNm\`, \`consumptionCityKmL\`,
+         \`consumptionHighwayKmL\`, \`lengthMm\`, \`widthMm\`, \`heightMm\`, \`weightKg\`,
+         \`trunkLiters\`, \`airbagCount\`, \`hasAbs\`, \`hasEsp\`, \`hasCruiseControl\`,
+         \`deletedAt\`, \`createdAt\`
        )
        VALUES (
-         $1, $2, $3, $4, $5, $6::"Transmission", $7::"Fuel",
-         $8, $9, $10, $11,
-         $12, $13, $14, $15, $16,
-         $17, $18, $19, $20, $21,
+         ?, ?, ?, ?, ?, ?, ?,
+         ?, ?, ?, ?,
+         ?, ?, ?, ?, ?,
+         ?, ?, ?, ?, ?,
          NULL, NOW()
-       )
-       RETURNING ${VERSION_RETURNING}`,
+       )`,
       id,
       input.modelId,
       input.name,
@@ -162,6 +161,10 @@ export class VersionsService {
       input.hasAbs,
       input.hasEsp,
       input.hasCruiseControl,
+    );
+    const rows = await this.prisma.$queryRawUnsafe<VersionRow[]>(
+      `SELECT ${VERSION_RETURNING} FROM \`Version\` WHERE id = ?`,
+      id,
     );
     return rows[0]!;
   }
@@ -187,91 +190,95 @@ export class VersionsService {
 
       const setClauses: string[] = [];
       const values: unknown[] = [];
-      let idx = 1;
       if (input.name !== undefined) {
-        setClauses.push(`name = $${idx++}`);
+        setClauses.push("name = ?");
         values.push(input.name);
       }
       if (input.year !== undefined) {
-        setClauses.push(`year = $${idx++}`);
+        setClauses.push("year = ?");
         values.push(input.year);
       }
       if (input.priceClp !== undefined) {
-        setClauses.push(`"priceClp" = $${idx++}`);
+        setClauses.push("`priceClp` = ?");
         values.push(input.priceClp);
       }
       if (input.transmission !== undefined) {
-        setClauses.push(`transmission = $${idx++}::"Transmission"`);
+        setClauses.push("transmission = ?");
         values.push(input.transmission);
       }
       if (input.fuel !== undefined) {
-        setClauses.push(`fuel = $${idx++}::"Fuel"`);
+        setClauses.push("fuel = ?");
         values.push(input.fuel);
       }
       if (input.engineDisplacementCc !== undefined) {
-        setClauses.push(`"engineDisplacementCc" = $${idx++}`);
+        setClauses.push("`engineDisplacementCc` = ?");
         values.push(input.engineDisplacementCc);
       }
       if (input.powerHp !== undefined) {
-        setClauses.push(`"powerHp" = $${idx++}`);
+        setClauses.push("`powerHp` = ?");
         values.push(input.powerHp);
       }
       if (input.torqueNm !== undefined) {
-        setClauses.push(`"torqueNm" = $${idx++}`);
+        setClauses.push("`torqueNm` = ?");
         values.push(input.torqueNm);
       }
       if (input.consumptionCityKmL !== undefined) {
-        setClauses.push(`"consumptionCityKmL" = $${idx++}`);
+        setClauses.push("`consumptionCityKmL` = ?");
         values.push(input.consumptionCityKmL);
       }
       if (input.consumptionHighwayKmL !== undefined) {
-        setClauses.push(`"consumptionHighwayKmL" = $${idx++}`);
+        setClauses.push("`consumptionHighwayKmL` = ?");
         values.push(input.consumptionHighwayKmL);
       }
       if (input.lengthMm !== undefined) {
-        setClauses.push(`"lengthMm" = $${idx++}`);
+        setClauses.push("`lengthMm` = ?");
         values.push(input.lengthMm);
       }
       if (input.widthMm !== undefined) {
-        setClauses.push(`"widthMm" = $${idx++}`);
+        setClauses.push("`widthMm` = ?");
         values.push(input.widthMm);
       }
       if (input.heightMm !== undefined) {
-        setClauses.push(`"heightMm" = $${idx++}`);
+        setClauses.push("`heightMm` = ?");
         values.push(input.heightMm);
       }
       if (input.weightKg !== undefined) {
-        setClauses.push(`"weightKg" = $${idx++}`);
+        setClauses.push("`weightKg` = ?");
         values.push(input.weightKg);
       }
       if (input.trunkLiters !== undefined) {
-        setClauses.push(`"trunkLiters" = $${idx++}`);
+        setClauses.push("`trunkLiters` = ?");
         values.push(input.trunkLiters);
       }
       if (input.airbagCount !== undefined) {
-        setClauses.push(`"airbagCount" = $${idx++}`);
+        setClauses.push("`airbagCount` = ?");
         values.push(input.airbagCount);
       }
       if (input.hasAbs !== undefined) {
-        setClauses.push(`"hasAbs" = $${idx++}`);
+        setClauses.push("`hasAbs` = ?");
         values.push(input.hasAbs);
       }
       if (input.hasEsp !== undefined) {
-        setClauses.push(`"hasEsp" = $${idx++}`);
+        setClauses.push("`hasEsp` = ?");
         values.push(input.hasEsp);
       }
       if (input.hasCruiseControl !== undefined) {
-        setClauses.push(`"hasCruiseControl" = $${idx++}`);
+        setClauses.push("`hasCruiseControl` = ?");
         values.push(input.hasCruiseControl);
       }
       values.push(id);
-      // SCHEMA-DRIFT NOTE: see the comment in create() above.
-      const rows = await this.prisma.$queryRawUnsafe<VersionRow[]>(
-        `UPDATE "Version" SET ${setClauses.join(", ")} WHERE id = $${idx} AND "deletedAt" IS NULL
-         RETURNING ${VERSION_RETURNING}`,
+      // SCHEMA-DRIFT NOTE: raw UPDATE porque extendEnum agrega un valor
+      // nuevo al enum runtime. En MariaDB no hay RETURNING para UPDATE,
+      // así que hacemos SELECT después para devolver la fila actualizada.
+      const updateResult = await this.prisma.$executeRawUnsafe(
+        `UPDATE \`Version\` SET ${setClauses.join(", ")} WHERE id = ? AND \`deletedAt\` IS NULL`,
         ...values,
       );
-      if (rows.length === 0) throw notFound("Versión no encontrada");
+      if (updateResult === 0) throw notFound("Versión no encontrada");
+      const rows = await this.prisma.$queryRawUnsafe<VersionRow[]>(
+        `SELECT ${VERSION_RETURNING} FROM \`Version\` WHERE id = ? AND \`deletedAt\` IS NULL`,
+        id,
+      );
       return rows[0]!;
     }
 
