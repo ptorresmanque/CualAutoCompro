@@ -5,6 +5,7 @@ import type { z } from "zod";
 import type { listModelsQuerySchema } from "./models.dto.js";
 import { conflict, notFound } from "../../shared/errors.js";
 import { extendEnum } from "../../shared/enum-extension.js";
+import { toGalleryUrls } from "../../shared/json.js";
 import { SEGMENTS, type CreateModelInput, type UpdateModelInput } from "./models.dto.admin.js";
 
 export class ModelsService {
@@ -152,32 +153,38 @@ export class ModelsService {
     await extendEnum(this.prisma, "Segment", input.segment);
     const id = randomUUID();
     // SCHEMA-DRIFT NOTE: raw SQL is required because Prisma 5's query engine
-    // validates enums against the codegen-time schema and rejects new values
-    // even after ALTER TYPE ADD VALUE succeeds on the live DB. The column list
-    // below mirrors `Model` in prisma/schema.prisma — if a column is added,
-    // removed, or renamed, this query MUST be updated in lockstep. There is
-    // no compile-time check for this drift.
+    // validates enums against the codegen-time schema and rejects new values.
+    // MariaDB uses `?` placeholders (not `$N`), VARCHAR for enums (so no
+    // enum cast needed — Prisma generates them as VARCHAR columns), and
+    // LONGTEXT for `Json` (so we CAST galleryUrls to JSON when binding).
+    // The column list below mirrors `Model` in prisma/schema.prisma — if
+    // a column is added, removed, or renamed, this query MUST be updated
+    // in lockstep. There is no compile-time check for this drift.
     const rows = await this.prisma.$queryRawUnsafe<Array<{
       id: string;
       brandId: string;
       name: string;
       segment: string;
       imageUrl: string | null;
-      galleryUrls: string[];
+      galleryUrls: string;
       deletedAt: Date | null;
       createdAt: Date;
     }>>(
-      `INSERT INTO "Model" (id, "brandId", name, segment, "imageUrl", "galleryUrls", "createdAt", "deletedAt")
-       VALUES ($1, $2, $3, $4::"Segment", $5, $6::text[], NOW(), NULL)
-       RETURNING id, "brandId", name, segment, "imageUrl", "galleryUrls", "deletedAt", "createdAt"`,
+      `INSERT INTO \`Model\` (id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`createdAt\`, \`deletedAt\`)
+       VALUES (?, ?, ?, ?, ?, CAST(? AS JSON), NOW(), NULL)
+       RETURNING id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`deletedAt\`, \`createdAt\``,
       id,
       input.brandId,
       input.name,
       input.segment,
       input.imageUrl ?? null,
-      input.galleryUrls ?? [],
+      JSON.stringify(input.galleryUrls ?? []),
     );
-    return rows[0]!;
+    const row = rows[0]!;
+    return {
+      ...row,
+      galleryUrls: toGalleryUrls(row.galleryUrls),
+    };
   }
 
   async update(id: string, input: UpdateModelInput) {
@@ -188,40 +195,42 @@ export class ModelsService {
       await extendEnum(this.prisma, "Segment", newSegment);
       const setClauses: string[] = [];
       const values: unknown[] = [];
-      let idx = 1;
       if (input.name !== undefined) {
-        setClauses.push(`name = $${idx++}`);
+        setClauses.push("name = ?");
         values.push(input.name);
       }
-      setClauses.push(`segment = $${idx++}::"Segment"`);
+      setClauses.push("segment = ?");
       values.push(input.segment);
       if (input.imageUrl !== undefined) {
-        setClauses.push(`"imageUrl" = $${idx++}`);
+        setClauses.push("`imageUrl` = ?");
         values.push(input.imageUrl);
       }
       if (input.galleryUrls !== undefined) {
-        setClauses.push(`"galleryUrls" = $${idx++}::text[]`);
-        values.push(input.galleryUrls);
+        setClauses.push("`galleryUrls` = CAST(? AS JSON)");
+        values.push(JSON.stringify(input.galleryUrls));
       }
       values.push(id);
-      // SCHEMA-DRIFT NOTE: see the comment in create() above. The RETURNING
-      // tuple must mirror `Model` in prisma/schema.prisma.
+      // SCHEMA-DRIFT NOTE: see the comment in create() above.
       const rows = await this.prisma.$queryRawUnsafe<Array<{
         id: string;
         brandId: string;
         name: string;
         segment: string;
         imageUrl: string | null;
-        galleryUrls: string[];
+        galleryUrls: string;
         deletedAt: Date | null;
         createdAt: Date;
       }>>(
-        `UPDATE "Model" SET ${setClauses.join(", ")} WHERE id = $${idx} AND "deletedAt" IS NULL
-         RETURNING id, "brandId", name, segment, "imageUrl", "galleryUrls", "deletedAt", "createdAt"`,
+        `UPDATE \`Model\` SET ${setClauses.join(", ")} WHERE id = ? AND \`deletedAt\` IS NULL
+         RETURNING id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`deletedAt\`, \`createdAt\``,
         ...values,
       );
       if (rows.length === 0) throw notFound("Modelo no encontrado");
-      return rows[0]!;
+      const row = rows[0]!;
+      return {
+        ...row,
+        galleryUrls: toGalleryUrls(row.galleryUrls),
+      };
     }
 
     const data = Object.fromEntries(
