@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { conflict, notFound } from "../../shared/errors.js";
+import { toGalleryUrls } from "../../shared/json.js";
 import type { CreateBrandInput, UpdateBrandInput } from "./brands.dto.admin.js";
 
 export class BrandsService {
@@ -23,7 +24,7 @@ export class BrandsService {
     return this.prisma.model.findMany({
       where: { brandId, deletedAt: null },
       orderBy: { name: "asc" },
-    });
+    }).then((rows) => rows.map((m) => ({ ...m, galleryUrls: toGalleryUrls(m.galleryUrls) })));
   }
 
   async create(input: CreateBrandInput) {
