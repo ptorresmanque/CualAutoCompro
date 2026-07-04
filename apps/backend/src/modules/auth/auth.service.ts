@@ -4,6 +4,7 @@ import { conflict, unauthorized } from "../../shared/errors.js";
 import { sign } from "../../infra/jwt.js";
 import { registerSchema, loginSchema } from "./auth.dto.js";
 import type { z } from "zod";
+import { narrowUserRole } from "../../shared/user-role.js";
 
 export class AuthService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -16,7 +17,7 @@ export class AuthService {
     const user = await this.prisma.user.create({
       data: { email, passwordHash, name, role: "USER" },
     });
-    return { id: user.id, email: user.email, name: user.name, role: user.role };
+    return { id: user.id, email: user.email, name: user.name, role: narrowUserRole(user.role) };
   }
 
   async login(input: z.infer<typeof loginSchema>) {
@@ -25,9 +26,10 @@ export class AuthService {
     if (!user) throw unauthorized("Credenciales inválidas");
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) throw unauthorized("Credenciales inválidas");
-    const token = sign({ sub: user.id, email: user.email, name: user.name, role: user.role });
+    const role = narrowUserRole(user.role);
+    const token = sign({ sub: user.id, email: user.email, name: user.name, role });
     return {
-      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      user: { id: user.id, email: user.email, name: user.name, role },
       token,
     };
   }

@@ -1,11 +1,12 @@
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
+import type { UserRole } from "../shared/user-role.js";
 
 export type JwtPayload = {
   sub: string;
   email: string;
   name: string;
-  role: "USER" | "ADMIN";
+  role: UserRole;
 };
 
 export const sign = (payload: JwtPayload): string =>
@@ -14,5 +15,14 @@ export const sign = (payload: JwtPayload): string =>
 export const verify = (token: string): JwtPayload => {
   const decoded = jwt.verify(token, env.JWT_SECRET);
   if (typeof decoded === "string") throw new Error("INVALID_TOKEN");
-  return decoded as unknown as JwtPayload;
+  const payload = decoded as Partial<JwtPayload>;
+  if (
+    typeof payload.sub !== "string" ||
+    typeof payload.email !== "string" ||
+    typeof payload.name !== "string" ||
+    (payload.role !== "USER" && payload.role !== "ADMIN")
+  ) {
+    throw new Error("INVALID_TOKEN");
+  }
+  return payload as JwtPayload;
 };

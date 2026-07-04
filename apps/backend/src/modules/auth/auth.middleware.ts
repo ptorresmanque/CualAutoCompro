@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { unauthorized } from "../../shared/errors.js";
 import { verify } from "../../infra/jwt.js";
+import type { UserRole } from "../../shared/user-role.js";
 
 declare global {
   namespace Express {
@@ -9,7 +10,7 @@ declare global {
         id: string;
         email: string;
         name: string;
-        role: "USER" | "ADMIN";
+        role: UserRole;
       };
     }
   }
