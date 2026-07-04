@@ -119,11 +119,12 @@ export class ModelsService {
   }
 
   async listAll() {
-    return this.prisma.model.findMany({
+    const rows = await this.prisma.model.findMany({
       where: { deletedAt: null, brand: { deletedAt: null } },
       orderBy: { name: "asc" },
       include: { brand: { select: { id: true, name: true } } },
     });
+    return rows.map((m) => ({ ...m, galleryUrls: toGalleryUrls(m.galleryUrls) }));
   }
 
   async detail(id: string) {
