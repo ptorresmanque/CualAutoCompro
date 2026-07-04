@@ -7,7 +7,7 @@ config({ path: path.resolve(__dirname, "../.env.test"), override: false });
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
-    "DATABASE_URL is required for backend tests. Copy apps/backend/.env.test.example to apps/backend/.env.test and set it. See docs/setup.md (TODO) for details.",
+    "DATABASE_URL is required for backend tests. Copy apps/backend/.env.test.example to apps/backend/.env.test and set it. See docs/setup.md for details.",
   );
 }
 

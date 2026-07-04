@@ -1,23 +1,20 @@
 # Migrations
 
-## CONCURRENTLY Workaround
+Este proyecto corre sobre **MariaDB 10.5+** con Prisma ORM. El provider en
+`migration_lock.toml` está fijado a `mysql`.
 
-Prisma cannot execute `CREATE INDEX CONCURRENTLY` inside its transactional
-wrapper — running `npx prisma migrate dev` will fail on migrations that use
-CONCURRENTLY indexes.
+```bash
+# aplicar migraciones pendientes (producción / CI)
+cd apps/backend && pnpm exec prisma migrate deploy
 
-For migrations containing `CREATE INDEX CONCURRENTLY` (e.g.
-`20260701201531_add_deleted_at`):
+# desarrollo: crear/aplicar migración y regenerar cliente
+pnpm db:migrate
+```
 
-1. Apply the SQL manually with psql:
-   ```bash
-   psql "$DATABASE_URL" -f apps/backend/prisma/migrations/<migration>/migration.sql
-   ```
-2. Mark it as applied so Prisma skips it on subsequent runs:
-   ```bash
-   cd apps/backend && npx prisma migrate resolve --applied <migration_name>
-   ```
-3. Do NOT run `npx prisma migrate dev` until the migration is resolved.
+## Notas
 
-This pattern is used for the soft-delete indexes (`deletedAt` columns) so that
-adding the indexes does not block writes on tables that are already populated.
+- MariaDB no soporta `CREATE INDEX CONCURRENTLY` (eso es PostgreSQL), por lo que no
+  se necesita el workaround que se usaba cuando el backend corría sobre Postgres.
+- Todas las migraciones deben ser idempotentes al aplicar con `migrate deploy`
+  desde una base limpia. El charset `utf8mb4` y el collation `utf8mb4_unicode_ci`
+  ya están fijados en `migration_lock.toml` y se respetan al generar SQL.
