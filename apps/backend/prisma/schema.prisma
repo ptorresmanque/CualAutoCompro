@@ -22,7 +22,7 @@ model Model {
   id          String    @id @default(cuid())
   brandId     String
   name        String
-  segment     Segment
+  segment     String
   imageUrl    String?
   galleryUrls Json      @default("[]")
   brand       Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
@@ -36,14 +36,10 @@ model Model {
   @@index([deletedAt])
 }
 
-enum Segment {
-  SEDAN
-  SUV
-  HATCHBACK
-  PICKUP
-  CROSSOVER
-  COMMERCIAL
-}
+// Enums eliminados para MariaDB: Prisma genera columnas inline ENUM(...) que
+// no se pueden extender en runtime. Usamos String + constantes SEGMENTS/
+// FUELS/TRANSMISSIONS en services para validar valores conocidos y permitir
+// valores extendidos vía raw SQL.
 
 model Version {
   id                    String             @id @default(cuid())
@@ -51,8 +47,8 @@ model Version {
   name                  String
   year                  Int
   priceClp              Int
-  transmission          Transmission
-  fuel                  Fuel
+  transmission          String
+  fuel                  String
   engineDisplacementCc  Int
   powerHp               Int
   torqueNm              Int
@@ -79,25 +75,6 @@ model Version {
   @@index([priceClp])
   @@index([year])
   @@index([deletedAt])
-}
-
-enum Transmission {
-  MANUAL
-  AUTOMATIC
-  CVT
-  DCT
-}
-
-enum Fuel {
-  BENCINA
-  DIESEL
-  HYBRID
-  ELECTRIC
-}
-
-enum UserRole {
-  USER
-  ADMIN
 }
 
 model EquipmentItem {
@@ -137,7 +114,7 @@ model User {
   email        String       @unique
   passwordHash String
   name         String
-  role         UserRole     @default(USER)
+  role         String     @default("USER")
   createdAt    DateTime     @default(now())
   comparisons  Comparison[]
   favorites    Favorite[]
