@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -24,7 +24,7 @@ model Model {
   name        String
   segment     Segment
   imageUrl    String?
-  galleryUrls String[]  @default([])
+  galleryUrls Json      @default("[]")
   brand       Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
   versions  Version[]
   favorites Favorite[]
