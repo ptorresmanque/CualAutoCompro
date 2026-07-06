@@ -9,7 +9,7 @@ generator client {
   //   - linux-musl-openssl-3.0.x = alternativa para Aliyun/CloudLinux/Alpine
   // Si tu hosting usa otra distro, ajusta este valor. Lista completa en:
   //   https://www.prisma.io/docs/orm/reference/prisma-schema-reference#binarytargets-options
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
