@@ -15,23 +15,29 @@
 //
 // Que hace este script:
 //   - Detecta si estamos en un entorno con poca memoria (LVE o < 2GB RAM).
-//   - Si lo estamos, OMITE 'prisma generate' con exit 0 y muestra las
-//     instrucciones para usar un cliente pre-generado desde la maquina
-//     de desarrollo. Asi 'npm ci' no falla aunque no haya cliente generado.
-//   - En entornos de desarrollo (>= 2GB RAM, sin LVE) ejecuta 'prisma
-//     generate' normalmente como antes.
+//   - Si lo estamos:
+//       1. Omite 'prisma generate' (evita el OOM).
+//       2. Copia el cliente Prisma pre-generado desde
+//          apps/backend/vendor/prisma-client/ al lugar correcto en
+//          node_modules/. Asi el backend arranca sin necesidad de
+//          generar nada.
+//       3. Si el vendor no existe, da instrucciones para crearlo.
+//   - En entornos de desarrollo (>= 2GB RAM, sin LVE) ejecuta
+//     'prisma generate' normalmente.
 //
-// Como pre-generar el cliente en otra maquina:
-//   1. pnpm install
-//   2. pnpm exec prisma generate  (o el postinstall se ejecuta solo)
-//   3. Subir apps/backend/node_modules/.prisma/client/ al server, dentro
-//      de node_modules/.prisma/client/
+// Como pre-generar y commitear el vendor:
+//   1. Local: pnpm install && pnpm exec prisma generate
+//   2. Local: pnpm run vendor:prisma
+//   3. Local: git add apps/backend/vendor/ && git commit && git push
 
 const { execSync } = require("node:child_process");
 const os = require("node:os");
 const fs = require("node:fs");
+const path = require("node:path");
 
 const MIN_RAM_GB = 2;
+const APP_ROOT = path.join(__dirname, "..");
+const VENDORED_DIR = path.join(APP_ROOT, "vendor", "prisma-client");
 
 function detectLVE() {
   try {
@@ -45,14 +51,12 @@ function detectLVE() {
 function detectCgroupMemoryLimitMB() {
   try {
     const data = fs.readFileSync("/proc/self/cgroup", "utf8");
-    // v2: "0::/path"
-    // v1: "N:cpu,cpuacct:/path"
     for (const line of data.split("\n")) {
       const parts = line.split(":");
       if (parts.length < 3) continue;
-      const path = parts[2] || "";
-      const v2File = `/sys/fs/cgroup${path}/memory.max`;
-      const v1File = `/sys/fs/cgroup${path}/memory.limit_in_bytes`;
+      const cgroupPath = parts[2] || "";
+      const v2File = `/sys/fs/cgroup${cgroupPath}/memory.max`;
+      const v1File = `/sys/fs/cgroup${cgroupPath}/memory.limit_in_bytes`;
       if (fs.existsSync(v2File)) {
         const v = fs.readFileSync(v2File, "utf8").trim();
         if (v !== "max") return Math.floor(parseInt(v, 10) / 1024 / 1024);
@@ -65,6 +69,66 @@ function detectCgroupMemoryLimitMB() {
     // ignore
   }
   return null;
+}
+
+function copyRecursive(src, dest) {
+  if (!fs.existsSync(src)) return false;
+  fs.mkdirSync(dest, { recursive: true });
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const s = path.join(src, entry.name);
+    const d = path.join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copyRecursive(s, d);
+    } else if (entry.isSymbolicLink()) {
+      const real = fs.realpathSync(s);
+      if (fs.statSync(real).isDirectory()) {
+        copyRecursive(real, d);
+      } else {
+        fs.copyFileSync(real, d);
+      }
+    } else {
+      fs.copyFileSync(s, d);
+    }
+  }
+  return true;
+}
+
+function findPrismaClientTargetDir() {
+  // Encuentra donde esta instalado @prisma/client para colocar
+  // .prisma/client/ al lado (mismo node_modules).
+  // Funciona tanto con npm como con pnpm:
+  //   npm:  .../node_modules/@prisma/client/index.js
+  //   pnpm: .../node_modules/.pnpm/@prisma+client@5.22.0_.../node_modules/@prisma/client/index.js
+  const candidates = [
+    path.join(APP_ROOT, "node_modules", "@prisma", "client"),
+    path.join(APP_ROOT, "..", "..", "node_modules", "@prisma", "client"),
+    path.join(APP_ROOT, "..", "node_modules", "@prisma", "client"),
+  ];
+
+  // Intento principal: usar require.resolve con el APP_ROOT como base.
+  let resolved;
+  try {
+    resolved = require.resolve("@prisma/client", { paths: [APP_ROOT] });
+  } catch {
+    // Fallback: buscar manualmente.
+    for (const c of candidates) {
+      const indexFile = path.join(c, "index.js");
+      if (fs.existsSync(indexFile)) {
+        resolved = indexFile;
+        break;
+      }
+    }
+  }
+  if (!resolved) {
+    throw new Error("@prisma/client no encontrado en " + APP_ROOT);
+  }
+
+  // Resolver symlinks para llegar al directorio real dentro de .pnpm/.
+  const realPath = fs.realpathSync(resolved);
+  const prismaClientDir = path.dirname(realPath); // .../@prisma/client
+  // Subir dos niveles: .../@prisma/client -> .../@prisma -> .../node_modules
+  const nodeModulesDir = path.dirname(path.dirname(prismaClientDir));
+  return path.join(nodeModulesDir, ".prisma", "client");
 }
 
 const totalRAMGB = os.totalmem() / 1024 ** 3;
@@ -86,28 +150,46 @@ if (shouldSkip) {
     "[postinstall]   Prisma 5.x inicializa un WebAssembly que excede este limite."
   );
   console.log("[postinstall]");
-  console.log("[postinstall] Para usar Prisma en este server, pre-genera el");
-  console.log("[postinstall] cliente desde una maquina con mas memoria:");
-  console.log("[postinstall]");
-  console.log("[postinstall]   # En tu maquina local (o CI):");
-  console.log("[postinstall]   pnpm install");
-  console.log("[postinstall]   pnpm exec prisma generate");
-  console.log("[postinstall]");
-  console.log(
-    "[postinstall]   # Sube apps/backend/node_modules/.prisma/client/ al server:"
-  );
-  console.log(
-    "[postinstall]   scp -r apps/backend/node_modules/.prisma/ \\\n" +
-      "                    usuario@server:~/cualauto-backend/node_modules/"
-  );
-  console.log(
-    "[postinstall]   # Luego en el server instala SIN scripts (saltando este postinstall):"
-  );
-  console.log(
-    "[postinstall]   cd ~/cualauto-backend && npm ci --omit=dev --ignore-scripts"
-  );
-  console.log("[postinstall]");
-  process.exit(0);
+
+  if (!fs.existsSync(VENDORED_DIR)) {
+    console.log(
+      "[postinstall] No se encontro el cliente Prisma pre-generado (vendor)."
+    );
+    console.log(`[postinstall]   Buscado en: ${VENDORED_DIR}`);
+    console.log("[postinstall]");
+    console.log("[postinstall] Para que el backend arranque, debes:");
+    console.log("[postinstall]   1. En tu maquina local (con memoria suficiente):");
+    console.log("[postinstall]      pnpm install");
+    console.log("[postinstall]      pnpm exec prisma generate");
+    console.log("[postinstall]      pnpm run vendor:prisma");
+    console.log(
+      "[postinstall]      git add apps/backend/vendor/ && git commit && git push"
+    );
+    console.log(
+      "[postinstall]   2. Volver a correr 'pnpm install' (o 'npm ci') en el server."
+    );
+    process.exit(0);
+  }
+
+  try {
+    const targetDir = findPrismaClientTargetDir();
+    console.log("[postinstall] Copiando cliente Prisma pre-generado (vendor):");
+    console.log(`[postinstall]   desde: ${VENDORED_DIR}`);
+    console.log(`[postinstall]   hacia: ${targetDir}`);
+    copyRecursive(VENDORED_DIR, targetDir);
+    const indexFile = path.join(targetDir, "index.js");
+    if (!fs.existsSync(indexFile)) {
+      throw new Error("tras copiar no existe " + indexFile);
+    }
+    console.log("[postinstall] OK - cliente Prisma instalado desde vendor.");
+    process.exit(0);
+  } catch (err) {
+    console.log(`[postinstall] Error copiando vendor: ${err.message}`);
+    console.log(
+      "[postinstall] El backend probablemente fallara al primer query Prisma."
+    );
+    process.exit(0);
+  }
 }
 
 try {

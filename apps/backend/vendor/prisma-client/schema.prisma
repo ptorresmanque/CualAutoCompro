@@ -1,0 +1,172 @@
+generator client {
+  provider      = "prisma-client-js"
+  // binaryTargets limita la descarga del query engine a las plataformas necesarias.
+  // Sin esto, Prisma descarga binarios para varias plataformas, lo que aumenta
+  // el consumo de memoria durante 'prisma generate' y puede hacer fallar el
+  // postinstall en hostings con LVE (cPanel compartido) por "Out of memory".
+  //   - native     = plataforma actual (macOS arm64 en desarrollo)
+  //   - debian-openssl-3.0.x = target comun para cPanel/DirectAdmin sobre Debian/Ubuntu
+  //   - linux-musl-openssl-3.0.x = alternativa para Aliyun/CloudLinux/Alpine
+  // Si tu hosting usa otra distro, ajusta este valor. Lista completa en:
+  //   https://www.prisma.io/docs/orm/reference/prisma-schema-reference#binarytargets-options
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  logoUrl   String?
+  models    Model[]
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([deletedAt])
+}
+
+model Model {
+  id          String     @id @default(cuid())
+  brandId     String
+  name        String
+  segment     String
+  imageUrl    String?
+  galleryUrls Json       @default("[]")
+  brand       Brand      @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  versions    Version[]
+  favorites   Favorite[]
+  deletedAt   DateTime?
+  createdAt   DateTime   @default(now())
+
+  @@unique([brandId, name])
+  @@index([segment])
+  @@index([deletedAt])
+}
+
+// Enums eliminados para MariaDB: Prisma genera columnas inline ENUM(...) que
+// no se pueden extender en runtime. Usamos String + constantes SEGMENTS/
+// FUELS/TRANSMISSIONS en services para validar valores conocidos y permitir
+// valores extendidos vía raw SQL.
+
+model Version {
+  id                    String             @id @default(cuid())
+  modelId               String
+  name                  String
+  year                  Int
+  priceClp              Int
+  transmission          String
+  fuel                  String
+  engineDisplacementCc  Int
+  powerHp               Int
+  torqueNm              Int
+  consumptionCityKmL    Float
+  consumptionHighwayKmL Float
+  lengthMm              Int
+  widthMm               Int
+  heightMm              Int
+  weightKg              Int
+  trunkLiters           Int
+  airbagCount           Int
+  hasAbs                Boolean
+  hasEsp                Boolean
+  hasCruiseControl      Boolean
+  model                 Model              @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  equipmentItems        VersionEquipment[]
+  maintenanceCosts      MaintenanceCost[]
+  comparisonItems       ComparisonItem[]
+  favorites             Favorite[]
+  deletedAt             DateTime?
+  createdAt             DateTime           @default(now())
+
+  @@index([modelId])
+  @@index([priceClp])
+  @@index([year])
+  @@index([deletedAt])
+}
+
+model EquipmentItem {
+  id        String             @id @default(cuid())
+  name      String             @unique
+  category  String
+  versions  VersionEquipment[]
+  deletedAt DateTime?
+
+  @@index([deletedAt])
+}
+
+model VersionEquipment {
+  versionId       String
+  equipmentItemId String
+  version         Version       @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  equipmentItem   EquipmentItem @relation(fields: [equipmentItemId], references: [id], onDelete: Cascade)
+
+  @@id([versionId, equipmentItemId])
+}
+
+model MaintenanceCost {
+  id         String    @id @default(cuid())
+  versionId  String
+  mileageTag Int
+  costClp    Int
+  version    Version   @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  deletedAt  DateTime?
+
+  @@unique([versionId, mileageTag])
+  @@index([versionId])
+  @@index([deletedAt])
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  name         String
+  role         String       @default("USER")
+  createdAt    DateTime     @default(now())
+  comparisons  Comparison[]
+  favorites    Favorite[]
+}
+
+model Comparison {
+  id           String           @id @default(cuid())
+  userId       String
+  slug         String?          @unique
+  name         String?
+  versionsHash String
+  createdAt    DateTime         @default(now())
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items        ComparisonItem[]
+
+  @@unique([userId, versionsHash])
+  @@index([userId])
+}
+
+model ComparisonItem {
+  id           String     @id @default(cuid())
+  comparisonId String
+  versionId    String
+  position     Int
+  comparison   Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  version      Version    @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@unique([comparisonId, position])
+  @@index([versionId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  modelId   String
+  versionId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  model     Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  version   Version  @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, versionId])
+  @@index([userId])
+  @@index([modelId])
+}

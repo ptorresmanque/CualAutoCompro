@@ -12,6 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force",
+    "vendor:prisma": "node scripts/vendor-prisma.cjs",
     "postinstall": "node scripts/postinstall.cjs"
   },
   "dependencies": {
