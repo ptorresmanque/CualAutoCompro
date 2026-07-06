@@ -1,5 +1,15 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // binaryTargets limita la descarga del query engine a las plataformas necesarias.
+  // Sin esto, Prisma descarga binarios para varias plataformas, lo que aumenta
+  // el consumo de memoria durante 'prisma generate' y puede hacer fallar el
+  // postinstall en hostings con LVE (cPanel compartido) por "Out of memory".
+  //   - native     = plataforma actual (macOS arm64 en desarrollo)
+  //   - debian-openssl-3.0.x = target comun para cPanel/DirectAdmin sobre Debian/Ubuntu
+  //   - linux-musl-openssl-3.0.x = alternativa para Aliyun/CloudLinux/Alpine
+  // Si tu hosting usa otra distro, ajusta este valor. Lista completa en:
+  //   https://www.prisma.io/docs/orm/reference/prisma-schema-reference#binarytargets-options
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
