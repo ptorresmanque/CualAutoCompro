@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force"
+    "db:reset": "prisma migrate reset --force",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
@@ -22,6 +23,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.2.0",
     "nanoid": "^5.0.9",
+    "prisma": "^5.20.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -32,7 +34,6 @@
     "@types/multer": "^2.2.0",
     "@types/node": "^20.16.0",
     "@types/supertest": "^6.0.2",
-    "prisma": "^5.20.0",
     "supertest": "^7.0.0",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2",
