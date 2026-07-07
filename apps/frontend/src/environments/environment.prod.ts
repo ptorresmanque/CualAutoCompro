@@ -1,8 +1,8 @@
 // Configuracion de entorno para PRODUCCION.
-// Apunta al backend desplegado en el subdominio api.midominio.com.
+// Apunta al backend desplegado en el subdominio api.cualautocompro.cl.
 //
 // Antes de hacer el build de produccion, edita este archivo y reemplaza
-// 'api.midominio.com' por el dominio real del backend. Esta URL debe
+// 'api.cualautocompro.cl' por el dominio real del backend. Esta URL debe
 // coincidir con WEB_ORIGIN en apps/backend/.env del server (se usa
 // en la validacion CORS del backend).
 //
@@ -11,5 +11,5 @@
 
 export const environment = {
   production: true,
-  apiBase: 'https://api.midominio.com/api/v1',
+  apiBase: 'https://api.cualautocompro.cl',
 } as const;
