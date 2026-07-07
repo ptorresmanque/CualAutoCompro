@@ -6,6 +6,8 @@ node_modules/
 # Build outputs
 dist/
 build/
+dist-bundle/
+*-bundle.tar.gz
 .angular/cache/
 .nx/cache/
 
