@@ -14,8 +14,33 @@
 
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
-import { env } from "../src/config/env.js";
+import { config } from "dotenv";
+import { z } from "zod";
 import { catalog, generateMaintenanceCosts } from "./catalog.js";
+
+// Carga el .env del directorio actual o del padre. En el server, esto es
+// apps/backend/.env (mismo directorio que este script tras la extraccion
+// del bundle FTP).
+config({ path: ".env" });
+config({ path: "../.env" });
+
+// Validacion inline solo de las variables que necesita el seed.
+// Importar desde src/config/env.js rompe en runtime con ESM + tsx
+// (Node no resuelve el .js -> .ts cuando se ejecuta via 'npx tsx').
+const seedEnv = z
+  .object({
+    ADMIN_EMAIL: z.string().email().default("admin@cualautocompro.cl"),
+    ADMIN_INITIAL_PASSWORD: z.string().min(8).default("admin1234"),
+    DATABASE_URL: z.string().url(),
+  })
+  .parse(process.env);
+
+if (
+  process.env.NODE_ENV === "production" &&
+  seedEnv.ADMIN_INITIAL_PASSWORD === "admin1234"
+) {
+  throw new Error("ADMIN_INITIAL_PASSWORD debe ser sobreescrito en produccion");
+}
 
 const prisma = new PrismaClient();
 
@@ -23,10 +48,10 @@ async function main() {
   const t0 = Date.now();
   console.log("[seed] iniciando…");
 
-  const adminEmail = env.ADMIN_EMAIL;
+  const adminEmail = seedEnv.ADMIN_EMAIL;
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
   if (!existingAdmin) {
-    const passwordHash = await bcrypt.hash(env.ADMIN_INITIAL_PASSWORD, 10);
+    const passwordHash = await bcrypt.hash(seedEnv.ADMIN_INITIAL_PASSWORD, 10);
     await prisma.user.create({
       data: { email: adminEmail, passwordHash, name: "Admin", role: "ADMIN" },
     });
