@@ -46,3 +46,7 @@ apps/backend/prisma/*.db-journal
 apps/backend/public/
 docs/generate_pdf.py
 docs/guia-despliegue-cpanel.pdf
+
+# Python bytecode (auto-created when running .py scripts)
+__pycache__/
+*.pyc
