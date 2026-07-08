@@ -5,11 +5,15 @@ generator client {
   // el consumo de memoria durante 'prisma generate' y puede hacer fallar el
   // postinstall en hostings con LVE (cPanel compartido) por "Out of memory".
   //   - native     = plataforma actual (macOS arm64 en desarrollo)
-  //   - debian-openssl-3.0.x = target comun para cPanel/DirectAdmin sobre Debian/Ubuntu
-  //   - linux-musl-openssl-3.0.x = alternativa para Aliyun/CloudLinux/Alpine
+  //   - debian-openssl-3.0.x = target correcto para cPanel/CloudLinux (RHEL/Debian/Ubuntu glibc)
+  //                              CloudLinux usa glibc (es RHEL-based), NO musl.
+  //                              Este target ES OBLIGATORIO: con el binario incorrecto,
+  //                              Prisma cae a spawn del query engine => "cagefs_enter: Unable to fork"
+  //                              bajo LVE y panics de tokio en el engine.
+  //   - linux-musl-openssl-3.0.x = SOLO para Alpine / embedded. NO usar en CloudLinux.
   // Si tu hosting usa otra distro, ajusta este valor. Lista completa en:
   //   https://www.prisma.io/docs/orm/reference/prisma-schema-reference#binarytargets-options
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
