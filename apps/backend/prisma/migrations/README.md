@@ -5,10 +5,10 @@ Este proyecto corre sobre **MariaDB 10.5+** con Prisma ORM. El provider en
 
 ```bash
 # aplicar migraciones pendientes (producción / CI)
-cd apps/backend && pnpm exec prisma migrate deploy
+cd apps/backend && npx prisma migrate deploy
 
 # desarrollo: crear/aplicar migración y regenerar cliente
-pnpm db:migrate
+npm run db:migrate
 ```
 
 ## Notas

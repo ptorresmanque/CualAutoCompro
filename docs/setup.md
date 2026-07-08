@@ -4,8 +4,8 @@ Guía para levantar el entorno de desarrollo local de **cualautocompro**.
 
 ## Requisitos
 
-- Node.js 20+
-- pnpm 10+ (`npm i -g pnpm`)
+- Node.js 20+ (incluye npm 10+)
+- npm 10+ (incluido con Node.js 20+)
 - MariaDB 10.5+ (o Docker)
 
 ## Base de datos
@@ -108,13 +108,13 @@ DATABASE_URL=mysql://cualauto:cualauto@localhost:3306/cualautocompro_test?charse
 
 ```bash
 # instalar dependencias
-pnpm install
+npm install
 
 # aplicar migraciones + seed
-pnpm db:reset
+npm run db:reset
 
 # arrancar backend en modo dev
-pnpm dev:be
+npm run dev:be
 ```
 
 El backend queda escuchando en `http://localhost:3000`. Health check: `GET /health`.
@@ -122,7 +122,7 @@ El backend queda escuchando en `http://localhost:3000`. Health check: `GET /heal
 ## Frontend
 
 ```bash
-pnpm dev:fe
+npm run dev:fe
 ```
 
 Disponible en `http://localhost:4200`.
@@ -131,26 +131,26 @@ Disponible en `http://localhost:4200`.
 
 ```bash
 # backend + frontend
-pnpm test
+npm test
 
 # solo backend
-pnpm test:be
+npm run test:be
 
 # solo frontend
-pnpm test:fe
+npm run test:fe
 ```
 
 ## Migraciones
 
 ```bash
 # desarrollo: crea/aplica migración y regenera cliente
-pnpm db:migrate
+npm run db:migrate
 
 # producción: solo aplica migraciones pendientes
-cd apps/backend && pnpm exec prisma migrate deploy
+cd apps/backend && npx prisma migrate deploy
 
 # poblar con datos de ejemplo
-pnpm db:seed
+npm run db:seed
 ```
 
 ## Reset completo de la base
@@ -162,6 +162,6 @@ mariadb -ucualauto -pcualauto -e "DROP DATABASE cualautocompro;"
 mariadb -ucualauto -pcualauto -e "DROP DATABASE cualautocompro_test;"
 mariadb -ucualauto -pcualauto -e "CREATE DATABASE cualautocompro      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 mariadb -ucualauto -pcualauto -e "CREATE DATABASE cualautocompro_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-pnpm db:migrate
-pnpm db:seed
+npm run db:migrate
+npm run db:seed
 ```
