@@ -25,7 +25,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'pnpm --filter @cualautocompro/backend run dev',
+      command: 'npm run dev -w apps/backend',
       cwd: '../..',
       url: 'http://localhost:3000/health',
       reuseExistingServer: REUSE,
@@ -34,7 +34,7 @@ export default defineConfig({
       stderr: 'pipe',
     },
     {
-      command: 'pnpm start',
+      command: 'npm start',
       cwd: '.',
       url: BASE_URL,
       reuseExistingServer: REUSE,
