@@ -17,8 +17,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force",
-    "vendor:prisma": "node scripts/vendor-prisma.cjs",
-    "bundle:ftp": "node scripts/prepare-ftp-bundle.cjs"
+    "vendor:prisma": "node scripts/vendor-prisma.cjs"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",
