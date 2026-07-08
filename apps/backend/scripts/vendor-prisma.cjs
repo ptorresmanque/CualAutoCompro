@@ -8,9 +8,9 @@
 //   postinstall (que detecta LVE y no intenta regenerar).
 //
 // Que hace:
-//   - Verifica que existe apps/backend/node_modules/.prisma/client/
-//     (es decir, que ya se ejecuto 'prisma generate' en una maquina con
-//     memoria suficiente).
+//   - Verifica que existe el cliente Prisma generado por `npx prisma generate`.
+//     Con npm workspaces, las dependencias se hoistean a la raiz del monorepo,
+//     por lo que el cliente generado vive en <repo-root>/node_modules/.prisma/client/.
 //   - Limpia apps/backend/vendor/prisma-client/.
 //   - Copia recursivamente todo el contenido.
 //
@@ -23,8 +23,14 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const APP_ROOT = path.join(__dirname, "..");
-const SOURCE_DIR = path.join(APP_ROOT, "node_modules", ".prisma", "client");
 const TARGET_DIR = path.join(APP_ROOT, "vendor", "prisma-client");
+
+// Posibles ubicaciones del cliente Prisma generado por `prisma generate`.
+// En npm workspaces (hoisting), vive en la raiz del monorepo.
+const SOURCE_CANDIDATES = [
+  path.join(APP_ROOT, "node_modules", ".prisma", "client"),     // apps/backend/node_modules/.prisma/client
+  path.join(APP_ROOT, "..", "..", "node_modules", ".prisma", "client"), // repo-root/node_modules/.prisma/client
+];
 
 function copyRecursive(src, dest) {
   if (!fs.existsSync(src)) return false;
@@ -49,12 +55,10 @@ function copyRecursive(src, dest) {
 }
 
 function resolveSourceDir() {
-  // Layout npm workspace (hoisted a raiz del monorepo).
-  // Con npm workspaces, las dependencias se instalan en
-  // <repo-root>/node_modules/ y apps/backend/node_modules no existe.
-  // El cliente Prisma generado queda en <repo-root>/node_modules/.prisma/client/.
-  if (fs.existsSync(path.join(SOURCE_DIR, "index.js"))) {
-    return SOURCE_DIR;
+  for (const candidate of SOURCE_CANDIDATES) {
+    if (fs.existsSync(path.join(candidate, "index.js"))) {
+      return candidate;
+    }
   }
   return null;
 }
@@ -62,10 +66,9 @@ function resolveSourceDir() {
 const resolvedSource = resolveSourceDir();
 if (!resolvedSource) {
   console.error("[vendor] No existe el cliente Prisma generado.");
-  console.error(`[vendor]   Buscado en: ${SOURCE_DIR}`);
-  console.error(
-    "[vendor]   (con npm workspaces debe estar en <repo-root>/node_modules/.prisma/client/)"
-  );
+  for (const candidate of SOURCE_CANDIDATES) {
+    console.error(`[vendor]   Buscado en: ${candidate}`);
+  }
   console.error("[vendor]");
   console.error("[vendor] Pasos:");
   console.error("[vendor]   1. npm install");

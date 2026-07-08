@@ -232,7 +232,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/patriciomanquepillan/Documents/dev/testSuperpowers/node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client",
+      "value": "/Users/patriciomanquepillan/Documents/dev/testSuperpowers/node_modules/@prisma/client",
       "fromEnvVar": null
     },
     "config": {
@@ -254,9 +254,9 @@ const config = {
   },
   "relativeEnvPaths": {
     "rootEnvPath": null,
-    "schemaEnvPath": "../../../../../../apps/backend/.env"
+    "schemaEnvPath": "../../../apps/backend/.env"
   },
-  "relativePath": "../../../../../../apps/backend/prisma",
+  "relativePath": "../../../apps/backend/prisma",
   "clientVersion": "5.22.0",
   "engineVersion": "605197351a3c8bdd595af2d2a9bc3025bca48ea2",
   "datasourceNames": [
