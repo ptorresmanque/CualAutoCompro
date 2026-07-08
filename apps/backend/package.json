@@ -29,7 +29,10 @@
     "multer": "2.2.0",
     "nanoid": "5.1.16",
     "prisma": "5.22.0",
-    "zod": "3.25.76"
+    "zod": "3.25.76",
+    "tsx": "4.22.4",
+    "typescript": "~6.0.2",
+    "vitest": "^4.0.8"
   },
   "devDependencies": {
     "@types/bcrypt": "5.0.2",

@@ -11,5 +11,5 @@
 
 export const environment = {
   production: true,
-  apiBase: 'https://api.cualautocompro.cl',
+  apiBase: 'https://api.cualautocompro.cl/api/v1',
 } as const;
