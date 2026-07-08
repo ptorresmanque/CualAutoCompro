@@ -26,8 +26,8 @@
 //     'prisma generate' normalmente.
 //
 // Como pre-generar y commitear el vendor:
-//   1. Local: pnpm install && pnpm exec prisma generate
-//   2. Local: pnpm run vendor:prisma
+//   1. Local: npm install && npx prisma generate
+//   2. Local: npm run vendor:prisma -w apps/backend
 //   3. Local: git add apps/backend/vendor/ && git commit && git push
 
 const { execSync } = require("node:child_process");
@@ -96,9 +96,9 @@ function copyRecursive(src, dest) {
 function findPrismaClientTargetDir() {
   // Encuentra donde esta instalado @prisma/client para colocar
   // .prisma/client/ al lado (mismo node_modules).
-  // Funciona tanto con npm como con pnpm:
-  //   npm:  .../node_modules/@prisma/client/index.js
-  //   pnpm: .../node_modules/.pnpm/@prisma+client@5.22.0_.../node_modules/@prisma/client/index.js
+  // Layout npm workspace (hoisted a raiz del monorepo):
+  //   <repo-root>/node_modules/@prisma/client/index.js
+  //   <repo-root>/node_modules/.prisma/client/
   const candidates = [
     path.join(APP_ROOT, "node_modules", "@prisma", "client"),
     path.join(APP_ROOT, "..", "..", "node_modules", "@prisma", "client"),
@@ -123,11 +123,9 @@ function findPrismaClientTargetDir() {
     throw new Error("@prisma/client no encontrado en " + APP_ROOT);
   }
 
-  // Resolver symlinks para llegar al directorio real dentro de .pnpm/.
-  const realPath = fs.realpathSync(resolved);
-  const prismaClientDir = path.dirname(realPath); // .../@prisma/client
-  // Subir dos niveles: .../@prisma/client -> .../@prisma -> .../node_modules
-  const nodeModulesDir = path.dirname(path.dirname(prismaClientDir));
+  // En npm layout, .prisma/client queda junto a @prisma/client (mismo node_modules).
+  const prismaClientDir = path.dirname(resolved); // .../@prisma/client
+  const nodeModulesDir = path.dirname(prismaClientDir); // .../node_modules
   return path.join(nodeModulesDir, ".prisma", "client");
 }
 
@@ -159,14 +157,14 @@ if (shouldSkip) {
     console.log("[postinstall]");
     console.log("[postinstall] Para que el backend arranque, debes:");
     console.log("[postinstall]   1. En tu maquina local (con memoria suficiente):");
-    console.log("[postinstall]      pnpm install");
-    console.log("[postinstall]      pnpm exec prisma generate");
-    console.log("[postinstall]      pnpm run vendor:prisma");
+    console.log("[postinstall]      npm install");
+    console.log("[postinstall]      npx prisma generate");
+    console.log("[postinstall]      npm run vendor:prisma -w apps/backend");
     console.log(
       "[postinstall]      git add apps/backend/vendor/ && git commit && git push"
     );
     console.log(
-      "[postinstall]   2. Volver a correr 'pnpm install' (o 'npm ci') en el server."
+      "[postinstall]   2. Volver a correr 'npm ci' en el server."
     );
     process.exit(0);
   }

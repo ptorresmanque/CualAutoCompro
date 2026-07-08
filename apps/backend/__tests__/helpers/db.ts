@@ -5,7 +5,7 @@ const globalForPrisma = globalThis as unknown as { __testPrisma?: PrismaClient }
 
 export const setupTestPrisma = (): PrismaClient => {
   if (!globalForPrisma.__testPrisma) {
-    execSync("pnpm exec prisma migrate deploy", {
+    execSync("npx prisma migrate deploy", {
       env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL! },
       stdio: "ignore",
     });

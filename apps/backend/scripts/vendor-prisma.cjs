@@ -49,24 +49,12 @@ function copyRecursive(src, dest) {
 }
 
 function resolveSourceDir() {
-  // Caso 1: npm layout (apps/backend/node_modules/.prisma/client/)
+  // Layout npm workspace (hoisted a raiz del monorepo).
+  // Con npm workspaces, las dependencias se instalan en
+  // <repo-root>/node_modules/ y apps/backend/node_modules no existe.
+  // El cliente Prisma generado queda en <repo-root>/node_modules/.prisma/client/.
   if (fs.existsSync(path.join(SOURCE_DIR, "index.js"))) {
     return SOURCE_DIR;
-  }
-  // Caso 2: pnpm layout (node_modules/.pnpm/.../node_modules/.prisma/client/)
-  // Lo localizamos via require.resolve + realpath.
-  try {
-    const resolved = require.resolve("@prisma/client", { paths: [APP_ROOT] });
-    const realPath = fs.realpathSync(resolved);
-    const prismaClientDir = path.dirname(realPath); // .../@prisma/client
-    // Subir dos niveles: .../@prisma/client -> .../@prisma -> .../node_modules
-    const nodeModulesDir = path.dirname(path.dirname(prismaClientDir));
-    const pnpmSourceDir = path.join(nodeModulesDir, ".prisma", "client");
-    if (fs.existsSync(path.join(pnpmSourceDir, "index.js"))) {
-      return pnpmSourceDir;
-    }
-  } catch {
-    // ignore
   }
   return null;
 }
@@ -76,13 +64,13 @@ if (!resolvedSource) {
   console.error("[vendor] No existe el cliente Prisma generado.");
   console.error(`[vendor]   Buscado en: ${SOURCE_DIR}`);
   console.error(
-    "[vendor]   y en layouts pnpm (node_modules/.pnpm/.../node_modules/.prisma/client/)"
+    "[vendor]   (con npm workspaces debe estar en <repo-root>/node_modules/.prisma/client/)"
   );
   console.error("[vendor]");
   console.error("[vendor] Pasos:");
-  console.error("[vendor]   1. pnpm install");
-  console.error("[vendor]   2. pnpm exec prisma generate");
-  console.error("[vendor]   3. pnpm run vendor:prisma");
+  console.error("[vendor]   1. npm install");
+  console.error("[vendor]   2. npx prisma generate");
+  console.error("[vendor]   3. npm run vendor:prisma -w apps/backend");
   process.exit(1);
 }
 

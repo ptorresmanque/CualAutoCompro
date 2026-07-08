@@ -14,7 +14,7 @@
 //   - dist/                    codigo compilado (JS)
 //   - vendor/prisma-client/    cliente Prisma pre-generado
 //   - prisma/                  schema + migrations
-//   - package.json             solo los campos esenciales
+//   - package.json             dependencias y scripts
 //   - package-lock.json        para npm ci reproducible
 //   - .env.example             plantilla (NO incluye .env real con secretos)
 //   - README-DEPLOY.md         instrucciones rapidas para el server
@@ -99,8 +99,8 @@ console.log("[bundle] Preparando bundle FTP para deploy...");
 
 // 1. Verificar pre-requisitos
 const checks = [
-  [path.join(APP_ROOT, "dist"), "Build del backend (corre: pnpm build)"],
-  [path.join(APP_ROOT, "vendor", "prisma-client"), "Vendor Prisma (corre: pnpm run vendor:prisma)"],
+  [path.join(APP_ROOT, "dist"), "Build del backend (corre: npm run build -w apps/backend)"],
+  [path.join(APP_ROOT, "vendor", "prisma-client"), "Vendor Prisma (corre: npm run vendor:prisma -w apps/backend)"],
   [path.join(APP_ROOT, "prisma"), "Schema y migraciones Prisma"],
   [path.join(APP_ROOT, "package.json"), "package.json"],
 ];
@@ -108,16 +108,10 @@ let allOk = true;
 for (const [p, label] of checks) {
   if (!ensureExists(p, label)) allOk = false;
 }
-// Lockfile: aceptar package-lock.json (npm) o pnpm-lock.yaml (pnpm) en raiz del monorepo.
-const lockfileCandidates = [
-  path.join(APP_ROOT, "package-lock.json"),
-  path.join(APP_ROOT, "pnpm-lock.yaml"),
-  path.join(APP_ROOT, "..", "..", "pnpm-lock.yaml"),
-  path.join(APP_ROOT, "..", "..", "package-lock.json"),
-];
-const lockfileFound = lockfileCandidates.find((p) => fs.existsSync(p));
-if (!lockfileFound) {
-  console.error("[bundle] Falta: Lockfile (package-lock.json o pnpm-lock.yaml)");
+// Lockfile: package-lock.json en la raiz del monorepo.
+const rootLockfile = path.join(APP_ROOT, "..", "..", "package-lock.json");
+if (!fs.existsSync(rootLockfile)) {
+  console.error("[bundle] Falta: package-lock.json en la raiz del monorepo");
   allOk = false;
 }
 if (!allOk) {
@@ -144,14 +138,13 @@ console.log("[bundle] Copiando package.json ...");
 fs.copyFileSync(path.join(APP_ROOT, "package.json"),
                 path.join(BUNDLE_DIR, "package.json"));
 
-// Lockfile: pnpm-lock.yaml es el del monorepo, no del backend individual.
-// Mejor copiar el pnpm-lock.yaml de la raiz.
-const rootLockfile = path.join(APP_ROOT, "..", "..", "pnpm-lock.yaml");
+// Lockfile: package-lock.json es el del monorepo, no del backend individual.
+// Mejor copiarlo desde la raiz.
 if (fs.existsSync(rootLockfile)) {
-  console.log("[bundle] Copiando pnpm-lock.yaml ...");
-  fs.copyFileSync(rootLockfile, path.join(BUNDLE_DIR, "pnpm-lock.yaml"));
+  console.log("[bundle] Copiando package-lock.json ...");
+  fs.copyFileSync(rootLockfile, path.join(BUNDLE_DIR, "package-lock.json"));
 } else {
-  console.log("[bundle] Aviso: pnpm-lock.yaml no encontrado en la raiz del monorepo.");
+  console.log("[bundle] Aviso: package-lock.json no encontrado en la raiz del monorepo.");
 }
 
 console.log("[bundle] Copiando .env.example ...");
@@ -171,7 +164,7 @@ Paquete listo para subir por FTP y desplegar en hosting cPanel con LVE.
 - vendor/prisma-client/    Cliente Prisma pre-generado (~48 MB)
 - prisma/                  Schema y migraciones
 - package.json             Dependencias y scripts
-- pnpm-lock.yaml           Lockfile para builds reproducibles
+- package-lock.json        Lockfile para builds reproducibles (npm)
 - .env.example             Plantilla de variables de entorno
 
 ## Pasos en el servidor
@@ -185,8 +178,6 @@ Paquete listo para subir por FTP y desplegar en hosting cPanel con LVE.
 3. Instalar dependencias de produccion saltando scripts (el postinstall
    detecta LVE y copia el vendor Prisma automaticamente):
    npm ci --omit=dev --ignore-scripts
-   # o equivalentemente:
-   pnpm install --prod --ignore-scripts
 
 4. Aplicar migraciones de base de datos:
    npx prisma migrate deploy

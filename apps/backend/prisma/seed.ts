@@ -10,7 +10,7 @@
 //
 // Idempotencia: las primeras 4 son upserts. Versions / joins / maintenance son
 // `create` directos — un re-run falla en el primer PK duplicado. Para reset
-// completo usar `pnpm db:reset` (definido en package.json).
+// completo usar `npm run db:reset` (definido en package.json).
 
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
