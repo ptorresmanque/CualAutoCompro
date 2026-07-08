@@ -62,8 +62,14 @@
 
 .auth-alternate {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 0.5rem;
+}
+
+@media (min-width: 480px) {
+  .auth-alternate {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .auth-button {

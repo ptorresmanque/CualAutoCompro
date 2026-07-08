@@ -1,8 +1,18 @@
-<section>
-
-  <div class="mx-auto max-w-7xl px-4 py-6 md:grid md:grid-cols-[18rem_1fr] md:gap-x-6">
-    <aside class="w-full md:flex md:flex-col">
-      <mat-card class="filters-card md:sticky md:h-full md:flex md:flex-col top-[50px]">
+<section class="catalog-section">
+  <mat-sidenav-container
+    class="catalog-container"
+    [hasBackdrop]="isHandset()"
+    autosize
+  >
+    <mat-sidenav
+      #filtersDrawer
+      class="catalog-filters-drawer"
+      [mode]="sidenavMode()"
+      [opened]="!isHandset() || filtersOpen()"
+      position="start"
+      (closedStart)="closeFilters()"
+    >
+      <mat-card class="filters-card" appearance="outlined">
         <mat-card-content>
           <header class="filters-card-header">
             <span class="stamp-label">N° 002 · Catálogo</span>
@@ -137,54 +147,85 @@
             />
           </div>
 
-          <p class="filter-total md:mt-auto">
+          <p class="filter-total">
             <strong data-testid="catalog-total">{{ total() }}</strong>
             modelos disponibles
           </p>
+
+          @if (isHandset()) {
+<button
+            mat-flat-button
+            color="primary"
+            type="button"
+            class="filters-apply md:!hidden"
+            (click)="closeFilters()"
+            data-testid="filters-apply"
+          >
+            Ver resultados
+          </button>
+          }
         </mat-card-content>
       </mat-card>
-    </aside>
+    </mat-sidenav>
 
-    <main class="flex-1">
-      <div class="mb-4 flex items-center gap-3 justify-end" data-testid="sort-bar">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="z-10">
-          <mat-label>Ordenar por</mat-label>
-          <mat-select
-            [value]="filters().sort ?? 'name'"
-            (selectionChange)="updateFilter({ sort: $any($event).value })"
-            [attr.title]="sortTip()"
-            data-testid="sort-select"
-          >
-            @for (opt of sortOptions; track opt.value) {
-              <mat-option [value]="opt.value" [attr.title]="opt.tip ?? ''">{{ opt.label }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <div class="flex items-center border border-border rounded overflow-hidden" role="group" aria-label="Dirección">
-          <button type="button"
-            (click)="updateFilter({ order: 'asc' })"
-            [attr.aria-pressed]="(filters().order ?? 'asc') === 'asc'"
-            [class.bg-engine]="(filters().order ?? 'asc') === 'asc'"
-            [class.text-white]="(filters().order ?? 'asc') === 'asc'"
-            [class.text-ink-muted]="(filters().order ?? 'asc') !== 'asc'"
-            class="sort-button"
-            [class.is-active]="(filters().order ?? 'asc') === 'asc'"
-            data-testid="sort-asc"
-            aria-label="Ascendente">
-            <mat-icon class="text-base">arrow_upward</mat-icon>
-          </button>
-          <button type="button"
-            (click)="updateFilter({ order: 'desc' })"
-            [attr.aria-pressed]="filters().order === 'desc'"
-            [class.bg-engine]="filters().order === 'desc'"
-            [class.text-white]="filters().order === 'desc'"
-            [class.text-ink-muted]="filters().order !== 'desc'"
-            class="sort-button"
-            [class.is-active]="filters().order === 'desc'"
-            data-testid="sort-desc"
-            aria-label="Descendente">
-            <mat-icon class="text-base">arrow_downward</mat-icon>
-          </button>
+    <mat-sidenav-content class="catalog-content">
+      <div class="catalog-toolbar">
+        <button
+          mat-stroked-button
+          type="button"
+          class="catalog-filters-trigger md:!hidden"
+          (click)="toggleFilters()"
+          [attr.aria-expanded]="!isHandset() || filtersOpen()"
+          aria-controls="catalog-filters-drawer"
+          data-testid="filters-toggle"
+        >
+          <mat-icon>filter_list</mat-icon>
+          Filtros
+          @if (total() > 0) {
+            <span class="catalog-filters-count">({{ total() }})</span>
+          }
+        </button>
+
+        <div class="catalog-sortbar" data-testid="sort-bar">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="catalog-sort-field z-10">
+            <mat-label>Ordenar por</mat-label>
+            <mat-select
+              [value]="filters().sort ?? 'name'"
+              (selectionChange)="updateFilter({ sort: $any($event).value })"
+              [attr.title]="sortTip()"
+              data-testid="sort-select"
+            >
+              @for (opt of sortOptions; track opt.value) {
+                <mat-option [value]="opt.value" [attr.title]="opt.tip ?? ''">{{ opt.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <div class="flex items-center border border-border rounded overflow-hidden" role="group" aria-label="Dirección">
+            <button type="button"
+              (click)="updateFilter({ order: 'asc' })"
+              [attr.aria-pressed]="(filters().order ?? 'asc') === 'asc'"
+              [class.bg-engine]="(filters().order ?? 'asc') === 'asc'"
+              [class.text-white]="(filters().order ?? 'asc') === 'asc'"
+              [class.text-ink-muted]="(filters().order ?? 'asc') !== 'asc'"
+              class="sort-button"
+              [class.is-active]="(filters().order ?? 'asc') === 'asc'"
+              data-testid="sort-asc"
+              aria-label="Ascendente">
+              <mat-icon class="text-base">arrow_upward</mat-icon>
+            </button>
+            <button type="button"
+              (click)="updateFilter({ order: 'desc' })"
+              [attr.aria-pressed]="filters().order === 'desc'"
+              [class.bg-engine]="filters().order === 'desc'"
+              [class.text-white]="filters().order === 'desc'"
+              [class.text-ink-muted]="filters().order !== 'desc'"
+              class="sort-button"
+              [class.is-active]="filters().order === 'desc'"
+              data-testid="sort-desc"
+              aria-label="Descendente">
+              <mat-icon class="text-base">arrow_downward</mat-icon>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -222,32 +263,32 @@
 
       @if (selectionCount() > 0) {
         <div class="selection-bar" data-testid="selection-bar">
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 min-w-0">
             <span class="selection-count-badge">{{ selectionCount() }}</span>
-            <span class="font-mono text-[11px] uppercase tracking-stamp">
+            <span class="font-mono text-[11px] uppercase tracking-stamp selection-label">
               {{ selectionCount() === 1 ? '1 versión seleccionada' : selectionCount() + ' versiones seleccionadas' }}
               @if (!maxReached()) {
                 <span class="text-graphite"> · podés agregar hasta 3</span>
               }
             </span>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-shrink-0">
             <button type="button" (click)="clearSelection()"
               [attr.aria-label]="'Limpiar selección de ' + selectionCount() + ' versiones'"
               data-testid="selection-bar-clear"
               class="selection-action ghost">
               <mat-icon class="text-base">delete_sweep</mat-icon>
-              Limpiar
+              <span class="hidden sm:inline">Limpiar</span>
             </button>
             <a routerLink="/compare"
               class="selection-action primary"
               data-testid="selection-bar-compare">
               <mat-icon class="text-base">compare_arrows</mat-icon>
-              Ver comparación
+              <span>Comparar</span>
             </a>
           </div>
         </div>
       }
-    </main>
-  </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
 </section>

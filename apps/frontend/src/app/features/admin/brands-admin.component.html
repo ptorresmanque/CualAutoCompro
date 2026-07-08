@@ -24,45 +24,47 @@
   } @else if (displayed().length === 0) {
     <p class="text-sm text-ink-muted">No hay marcas.</p>
   } @else {
-    <table class="w-full text-sm">
-      <thead class="text-left text-xs text-ink-muted">
-        <tr>
-          <th class="py-2">
-            <button
-              type="button"
-              class="inline-flex items-center gap-1 sort-header font-bold uppercase tracking-wide hover:text-ink"
-              (click)="toggleSort('name')"
-              [attr.aria-sort]="sortKey() === 'name' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'"
-            >
-              Nombre
-              <mat-icon class="sort-icon">
-                {{ sortKey() === 'name' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward' ) : 'unfold_more' }}
-              </mat-icon>
-            </button>
-          </th>
-          <th class="py-2 w-40">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (b of displayed(); track b.id) {
-          <tr class="border-t border-border">
-            <td class="py-2">{{ b.name }}</td>
-            <td class="py-2">
-              <div class="action-buttons">
-                <button mat-stroked-button color="primary" (click)="openEdit(b)">
-                  <mat-icon class="action-icon">edit</mat-icon>
-                  Editar
-                </button>
-                <button mat-stroked-button class="action-danger" (click)="confirmDelete(b)">
-                  <mat-icon class="action-icon">delete</mat-icon>
-                  Eliminar
-                </button>
-              </div>
-            </td>
+    <div class="admin-table-scroll">
+      <table class="admin-table w-full text-sm">
+        <thead class="text-left text-xs text-ink-muted">
+          <tr>
+            <th class="py-2">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 sort-header font-bold uppercase tracking-wide hover:text-ink"
+                (click)="toggleSort('name')"
+                [attr.aria-sort]="sortKey() === 'name' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'"
+              >
+                Nombre
+                <mat-icon class="sort-icon">
+                  {{ sortKey() === 'name' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward' ) : 'unfold_more' }}
+                </mat-icon>
+              </button>
+            </th>
+            <th class="py-2 actions-col">Acciones</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (b of displayed(); track b.id) {
+            <tr class="border-t border-border">
+              <td class="py-2">{{ b.name }}</td>
+              <td class="py-2 actions-col">
+                <div class="action-buttons">
+                  <button mat-stroked-button color="primary" (click)="openEdit(b)">
+                    <mat-icon class="action-icon">edit</mat-icon>
+                    <span class="action-label">Editar</span>
+                  </button>
+                  <button mat-stroked-button class="action-danger" (click)="confirmDelete(b)">
+                    <mat-icon class="action-icon">delete</mat-icon>
+                    <span class="action-label">Eliminar</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   }
 
   @if (dialogMode() === 'open') {

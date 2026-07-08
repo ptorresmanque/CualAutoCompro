@@ -14,6 +14,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuthService } from '../core/auth.service';
 import { CompareStore } from '../core/compare-store.service';
+import { SidenavService } from '../core/sidenav.service';
 
 interface NavLink {
   path: string;
@@ -43,6 +44,7 @@ export class TopNavBarComponent {
   private compareStore = inject(CompareStore);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  readonly sidenav = inject(SidenavService);
 
   readonly user = this.auth.currentUser;
   readonly compareCount = computed(() => this.compareStore.ids().length);
@@ -86,9 +88,12 @@ export class TopNavBarComponent {
     });
   }
 
+  toggleMenu(): void {
+    this.sidenav.toggle();
+  }
+
   async logout(): Promise<void> {
     await this.auth.logout();
     await this.router.navigateByUrl('/');
   }
 }
-

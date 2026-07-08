@@ -12,6 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../core/api.service';
@@ -119,6 +120,7 @@ interface ComparisonBySlugResponse {
     MatCardModule,
     MatExpansionModule,
     MatIconModule,
+    MatMenuModule,
     MatTooltipModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -144,8 +146,6 @@ export class CompareComponent {
   saveError = signal<string | null>(null);
   swappingFor = signal<string | null>(null); // versionId of card with open popover
   favoriteModels = signal<VehicleCardInput[]>([]);
-  carouselOpenFor = signal<string | null>(null); // model.id del popover abierto
-  carouselPopoverPos = signal<{ top: number; left: number } | null>(null);
 
   readonly count = computed(() => this.versions().length);
 
@@ -172,11 +172,6 @@ export class CompareComponent {
     // close swap
     if (this.swappingFor() !== null && !target.closest('[data-testid^="swap-popover-"]') && !target.closest('[data-testid^="swap-button-"]')) {
       this.closeSwap();
-    }
-    // close carousel popover
-    if (this.carouselOpenFor() !== null && !target.closest('[data-testid^="favorite-carousel-popover-"]') && !target.closest('[data-testid^="favorite-carousel-btn-"]')) {
-      this.carouselOpenFor.set(null);
-      this.carouselPopoverPos.set(null);
     }
   }
 
@@ -532,24 +527,9 @@ export class CompareComponent {
     return resolved ? `url("${resolved}")` : 'none';
   }
 
-  toggleCarouselFor(modelId: string, buttonEl?: EventTarget | null): void {
-    if (this.carouselOpenFor() === modelId) {
-      this.carouselOpenFor.set(null);
-      this.carouselPopoverPos.set(null);
-      return;
-    }
-    if (buttonEl instanceof HTMLElement) {
-      const card = buttonEl.closest('li');
-      const rect = (card ?? buttonEl).getBoundingClientRect();
-      const popoverWidth = 224;
-      const margin = 8;
-      const left = Math.max(margin, rect.right - popoverWidth);
-      const top = rect.bottom + 4;
-      this.carouselPopoverPos.set({ top, left });
-    } else {
-      this.carouselPopoverPos.set(null);
-    }
-    this.carouselOpenFor.set(modelId);
+  versionsForModel(modelId: string): AvailableVersionLite[] {
+    const m = this.favoriteModels().find((x) => x.id === modelId);
+    return (m?.versions ?? []) as AvailableVersionLite[];
   }
 
   async addFavoriteVersionToCompare(
@@ -558,8 +538,6 @@ export class CompareComponent {
   ): Promise<void> {
     if (this.compareStore.ids().length >= 3) return;
     this.compareStore.setIds([...this.compareStore.ids(), versionId]);
-    this.carouselOpenFor.set(null);
-    this.carouselPopoverPos.set(null);
     await this.reloadCompare();
   }
 

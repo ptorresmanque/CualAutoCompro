@@ -1,7 +1,103 @@
-<div class="app-shell">
-  <app-top-nav-bar></app-top-nav-bar>
-  <main class="app-main" id="main">
-    <router-outlet></router-outlet>
-  </main>
-  <app-footer></app-footer>
-</div>
+<mat-sidenav-container class="app-shell" [hasBackdrop]="sidenav.isHandset()" autosize>
+  @if (sidenav.isHandset()) {
+    <mat-sidenav
+      #drawer
+      class="app-sidenav"
+      mode="over"
+      [opened]="sidenav.isOpen()"
+      (closedStart)="sidenav.close()"
+      position="start"
+    >
+    <div class="sidenav-inner">
+      <a
+        routerLink="/"
+        class="sidenav-brand"
+        (click)="onNavLinkClick()"
+        aria-label="cualautocompro.cl — ir al inicio"
+      >
+        <span class="sidenav-brand-mark" aria-hidden="true">c.</span>
+        <span class="sidenav-brand-text">cualautocompro</span>
+      </a>
+
+      <nav class="sidenav-nav" aria-label="Navegación principal">
+        @for (link of navLinks(); track link.path) {
+          <a
+            [routerLink]="link.path"
+            routerLinkActive
+            [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+            class="sidenav-link"
+            activeClass="sidenav-link-active"
+            (click)="onNavLinkClick()"
+          >
+            @if (link.icon) {
+              <mat-icon class="sidenav-link-icon">{{ link.icon }}</mat-icon>
+            }
+            <span class="sidenav-link-label">{{ link.label }}</span>
+            @if (link.path === '/compare' && compareCount() > 0) {
+              <span class="sidenav-count-badge">{{ compareCount() }}</span>
+            }
+          </a>
+        }
+      </nav>
+
+      <hr class="sidenav-rule" />
+
+      <div class="sidenav-auth">
+        @if (user(); as u) {
+          <div class="sidenav-user">
+            <span class="sidenav-user-avatar" aria-hidden="true">{{ initials() || '?' }}</span>
+            <span class="sidenav-user-name">{{ u.name }}</span>
+          </div>
+          <a
+            mat-stroked-button
+            color="primary"
+            routerLink="/account/comparisons"
+            (click)="onNavLinkClick()"
+            class="sidenav-auth-btn"
+          >
+            <mat-icon>bookmarks</mat-icon>
+            Mis comparaciones
+          </a>
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="logout()"
+            class="sidenav-auth-btn sidenav-logout"
+            data-testid="sidenav-logout"
+          >
+            <mat-icon>logout</mat-icon>
+            Cerrar sesión
+          </button>
+        } @else {
+          <a
+            mat-stroked-button
+            color="primary"
+            routerLink="/login"
+            (click)="onNavLinkClick()"
+            class="sidenav-auth-btn"
+          >
+            Iniciar sesión
+          </a>
+          <a
+            mat-flat-button
+            color="primary"
+            routerLink="/register"
+            (click)="onNavLinkClick()"
+            class="sidenav-auth-btn"
+          >
+            Crear cuenta
+          </a>
+        }
+      </div>
+    </div>
+  </mat-sidenav>
+  }
+
+  <mat-sidenav-content class="app-sidenav-content">
+    <app-top-nav-bar></app-top-nav-bar>
+    <main class="app-main" id="main">
+      <router-outlet></router-outlet>
+    </main>
+    <app-footer></app-footer>
+  </mat-sidenav-content>
+</mat-sidenav-container>

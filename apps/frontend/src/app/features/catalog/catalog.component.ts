@@ -6,6 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { ApiService, QueryParams } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
@@ -64,6 +65,7 @@ const CONSUMPTION_BOUNDS = { min: 0, max: 40, step: 0.5 };
     MatIconModule,
     MatRadioModule,
     MatSelectModule,
+    MatSidenavModule,
   ],
 })
 export class CatalogComponent {
@@ -119,6 +121,29 @@ export class CatalogComponent {
   readonly selectionCount = computed(() => this.selectedIds().length);
   readonly maxReached = computed(() => this.selectionCount() >= 3);
 
+  readonly isHandset = signal(false);
+  readonly sidenavMode = computed<'over' | 'side'>(() =>
+    this.isHandset() ? 'over' : 'side',
+  );
+  readonly filtersOpen = signal(false);
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      const mq = window.matchMedia('(max-width: 767.98px)');
+      this.isHandset.set(mq.matches);
+      mq.addEventListener('change', (e) => {
+        this.isHandset.set(e.matches);
+        if (!e.matches) {
+          this.filtersOpen.set(false);
+        }
+      });
+    }
+    const q = this.route.snapshot.queryParamMap.get('q')?.trim() ?? '';
+    this.currentQuery.set(q);
+    if (q) this.filters.update((f) => ({ ...f, q }));
+    this.initialLoad = Promise.all([this.loadBrands(), this.load()]);
+  }
+
   isAdded(item: VehicleCardInput): boolean {
     const id = this.selectedVersionId(item);
     return id ? this.selectedIds().includes(id) : false;
@@ -135,13 +160,6 @@ export class CatalogComponent {
   }
 
   readonly initialLoad: Promise<unknown>;
-
-  constructor() {
-    const q = this.route.snapshot.queryParamMap.get('q')?.trim() ?? '';
-    this.currentQuery.set(q);
-    if (q) this.filters.update((f) => ({ ...f, q }));
-    this.initialLoad = Promise.all([this.loadBrands(), this.load()]);
-  }
 
   private async loadBrands(): Promise<void> {
     try {
@@ -196,6 +214,17 @@ export class CatalogComponent {
     this.filters.set({ sort: 'name', order: 'asc' });
     this.selectedVersions.set({});
     await this.load();
+    if (this.isHandset()) {
+      this.filtersOpen.set(false);
+    }
+  }
+
+  toggleFilters(): void {
+    this.filtersOpen.update((v) => !v);
+  }
+
+  closeFilters(): void {
+    this.filtersOpen.set(false);
   }
 
   formatPrice(value: number | null | undefined): string {

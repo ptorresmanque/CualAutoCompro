@@ -1,10 +1,12 @@
 <section class="admin-shell-wrap">
   <h1 class="admin-shell-title">Panel de administración</h1>
-  <nav mat-tab-nav-bar mat-stretch-tabs="false" class="admin-shell-tabs" [tabPanel]="panel">
-    @for (l of subLinks; track l.path) {
-      <a mat-tab-link [routerLink]="l.path" [active]="isActive(l.path)">{{ l.label }}</a>
-    }
-  </nav>
+  <div class="admin-shell-tabs-scroll">
+    <nav mat-tab-nav-bar mat-stretch-tabs="false" class="admin-shell-tabs" [tabPanel]="panel">
+      @for (l of subLinks; track l.path) {
+        <a mat-tab-link [routerLink]="l.path" [active]="isActive(l.path)">{{ l.label }}</a>
+      }
+    </nav>
+  </div>
   <mat-tab-nav-panel #panel>
     <router-outlet />
   </mat-tab-nav-panel>

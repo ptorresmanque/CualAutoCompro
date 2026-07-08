@@ -1,5 +1,16 @@
 <header class="top-nav">
   <div class="top-nav-inner">
+    <button
+      mat-icon-button
+      type="button"
+      class="nav-hamburger md:hidden"
+      (click)="toggleMenu()"
+      aria-label="Abrir menú de navegación"
+      data-testid="nav-hamburger"
+    >
+      <mat-icon>menu</mat-icon>
+    </button>
+
     <a
       routerLink="/"
       class="brand"
@@ -7,7 +18,6 @@
     >
       <span class="brand-mark" aria-hidden="true">c.</span>
       <span class="brand-text">cualautocompro</span>
-      <span class="brand-meta">·CL</span>
     </a>
 
     <nav class="hidden md:flex items-center gap-7">
@@ -103,7 +113,7 @@
           mat-stroked-button
           color="primary"
           routerLink="/login"
-          class="nav-login-btn"
+          class="nav-login-btn hidden md:inline-flex"
         >
           Iniciar sesión
         </a>
@@ -111,7 +121,7 @@
           mat-flat-button
           color="primary"
           routerLink="/register"
-          class="nav-register-btn"
+          class="nav-register-btn hidden md:inline-flex"
         >
           Crear cuenta
         </a>

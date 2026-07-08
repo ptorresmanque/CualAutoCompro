@@ -1,118 +1,144 @@
 :host { display: block; }
 
-/* ----- Filters card: índice de papel, no card Material ----- */
-.filters-card.mat-mdc-card {
-  border: 1px solid var(--ink);
-  border-radius: 2px;
-  background: var(--paper-cool);
-  box-shadow: none;
+/* ============================================================
+ * Catalog layout — sidenav en móvil, columna sticky en desktop
+ * (selection-bar / sort-button / empty-card / filters-card viven
+ *  en styles.css global por budget de componente)
+ * ============================================================ */
+
+.catalog-section {
+  max-width: 80rem;
+  margin: 0 auto;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
 }
 
-.filters-card .mat-mdc-card-content {
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  flex: 1;
-  min-height: 0;
+.catalog-container.mat-drawer-container {
+  background: transparent;
+  position: relative;
+  min-height: 60vh;
 }
 
-.filters-card-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--rule);
+.catalog-container.mat-drawer-container,
+.catalog-container .mat-drawer-content {
+  overflow: visible;
 }
 
-.filters-card-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+/* ----- Sidenav filtros ----- */
+.catalog-filters-drawer.mat-drawer {
+  width: 18rem;
+  max-width: 85vw;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  top: 0 !important;
+  padding-top: 1rem;
+  border-radius: 0;
 }
 
-.filters-card-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink);
-  margin: 0;
+@media (min-width: 768px) {
+  .catalog-filters-drawer.mat-drawer {
+    padding-top: 1.5rem;
+    padding-left: 2rem;
+  }
+  .catalog-filters-drawer.mat-drawer-side {
+    border-right: 1px solid var(--rule);
+    height: calc(100vh - 4rem);
+  }
 }
 
-.filter-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+@media (max-width: 767.98px) {
+  .catalog-filters-drawer.mat-drawer {
+    background: var(--paper);
+  }
+  .catalog-filters-drawer .mat-drawer-inner-container {
+    overflow-y: auto;
+  }
 }
 
-.filter-label {
+.catalog-content.mat-drawer-content {
   display: block;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--graphite);
-  font-weight: 600;
+  padding: 1rem 0.75rem;
+  background: transparent;
 }
 
-.filter-radio-group.mat-mdc-radio-group {
+@media (min-width: 768px) {
+  .catalog-content.mat-drawer-content {
+    padding: 1.5rem 2rem;
+  }
+}
+
+/* ----- Toolbar del catálogo: filtro trigger + sort ----- */
+.catalog-toolbar {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
-.filter-total {
+@media (min-width: 768px) {
+  .catalog-toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+  }
+}
+
+.catalog-filters-trigger.mat-mdc-outlined-button {
+  border-radius: 0 !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.8125rem !important;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600 !important;
+  height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  --mdc-outlined-button-label-text-color: var(--ink);
+  --mdc-outlined-button-outline-color: var(--ink);
+}
+
+@media (min-width: 768px) {
+  .catalog-filters-trigger.mat-mdc-outlined-button {
+    display: none !important;
+  }
+}
+
+.catalog-filters-count {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--graphite);
-  border-top: 1px solid var(--rule);
-  padding-top: 0.75rem;
+  color: var(--ink-muted);
+  margin-left: 0.125rem;
 }
 
-.filter-total strong {
-  font-family: var(--font-display);
-  font-weight: 400;
-  color: var(--ink);
-  font-size: 1rem;
+.catalog-sortbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.catalog-sort-field {
+  width: auto;
+  min-width: 10rem;
 }
 
 /* ----- Sort select: compacto para alinear con los botones asc/desc ----- */
-.compact-sort.mat-mdc-form-field {
-  --mat-select-panel-item-min-height: 36px;
-  width: auto;
-  min-width: 10rem;
-  font-size: 0.8125rem;
-  margin-bottom: 0;
-}
-
-.compact-sort .mat-mdc-form-field-infix {
+.catalog-sort-field .mat-mdc-form-field-infix {
   min-height: 1rem;
   padding-top: 0.35rem;
   padding-bottom: 0.35rem;
+  width: auto;
+  min-width: 10rem;
 }
 
-.compact-sort .mat-mdc-form-field-flex {
-  align-items: center;
-}
-
-.compact-sort .mat-mdc-select-trigger {
+.catalog-sort-field .mat-mdc-select-trigger {
   min-height: 1rem;
   align-items: center;
 }
 
-.compact-sort .mat-mdc-select-value {
+.catalog-sort-field .mat-mdc-select-value {
   text-align: center;
   display: flex;
   align-items: center;
@@ -121,118 +147,12 @@
   line-height: normal;
 }
 
-.compact-sort .mat-mdc-select-value-text,
-.compact-sort .mat-mdc-select-min-line,
-.compact-sort .mat-mdc-select-placeholder {
+.catalog-sort-field .mat-mdc-select-value-text,
+.catalog-sort-field .mat-mdc-select-min-line,
+.catalog-sort-field .mat-mdc-select-placeholder {
   text-align: center;
   line-height: normal;
   display: inline-block;
   vertical-align: middle;
   width: auto;
-}
-
-/* ----- Sort buttons: rectangulares ----- */
-.sort-button {
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid var(--rule);
-  border-left-width: 0;
-  background: var(--paper-cool);
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
-  color: var(--ink-muted);
-}
-
-.sort-button:hover { background: var(--paper-warm); color: var(--ink); }
-.sort-button.is-active {
-  background: var(--ink);
-  color: var(--paper);
-  border-color: var(--ink);
-}
-.sort-button.is-active + .sort-button { border-left-width: 1px; }
-
-/* ----- Selection bar (footer tipo ticket) ----- */
-.selection-bar {
-  position: sticky;
-  bottom: 1rem;
-  margin-top: 1.5rem;
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.875rem 1rem;
-  border-radius: 2px;
-  background: var(--ink);
-  color: var(--paper);
-  box-shadow: 0 6px 0 -2px rgba(14, 17, 22, 0.18);
-  border: 1px solid var(--ink);
-}
-
-.selection-count-badge {
-  display: grid;
-  place-items: center;
-  height: 1.75rem;
-  min-width: 1.75rem;
-  padding: 0 0.375rem;
-  background: var(--engine);
-  color: var(--paper);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.selection-bar .selection-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border-radius: 0;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 0.5rem 0.875rem;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.selection-action.ghost {
-  background: transparent;
-  border: 1px solid var(--graphite);
-  color: var(--paper);
-}
-.selection-action.ghost:hover { background: rgba(255, 255, 255, 0.08); }
-
-.selection-action.primary {
-  background: var(--engine);
-  color: var(--paper);
-  border: 1px solid var(--engine);
-}
-.selection-action.primary:hover { background: var(--engine-dark); border-color: var(--engine-dark); }
-
-.empty-card {
-  border: 1px dashed var(--rule);
-  background: var(--paper-cool);
-  padding: 2.5rem 1.5rem;
-  text-align: center;
-}
-
-.empty-card button.btn-engine {
-  background: var(--engine);
-  color: var(--paper);
-  font-family: var(--font-sans);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 0.625rem 1.25rem;
-  border-radius: 0;
-  border: 1px solid var(--engine);
-}
-
-.empty-card button.btn-engine:hover {
-  background: var(--engine-dark);
 }

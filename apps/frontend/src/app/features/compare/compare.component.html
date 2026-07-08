@@ -68,41 +68,31 @@
                 </p>
                 <button
                   type="button"
-                  (click)="toggleCarouselFor(m.id, $event.currentTarget); $event.stopPropagation()"
-                  [attr.aria-expanded]="carouselOpenFor() === m.id"
+                  [matMenuTriggerFor]="versionsMenu"
+                  [matMenuTriggerData]="{ modelId: m.id }"
                   [attr.data-testid]="'favorite-carousel-btn-' + m.id"
                   class="mt-2 w-full text-xs font-bold bg-engine text-white rounded-full py-1.5 hover:bg-engine-dark"
                 >
                   Agregar versión
                 </button>
-                @if (carouselOpenFor() === m.id) {
-                  <ul
-                    class="fixed z-50 bg-surface border border-border rounded-lg shadow-e2 p-1"
-                    style="width: 14rem; max-height: 15rem; overflow-y: auto;"
-                    role="listbox"
-                    [attr.data-testid]="'favorite-carousel-popover-' + m.id"
-                    [style.top.px]="carouselPopoverPos()?.top ?? 0"
-                    [style.left.px]="carouselPopoverPos()?.left ?? 0"
-                  >
-                    @for (v of m.versions; track v.id) {
-                      <li>
-                        <button
-                          type="button"
-                          role="option"
-                          (click)="addFavoriteVersionToCompare(m.id, v.id)"
-                          [attr.data-testid]="'favorite-carousel-opt-' + v.id"
-                          class="block w-full text-left text-xs px-2 py-1.5 hover:bg-paper-warm"
-                        >
-                          <span class="font-semibold">{{ v.name }} {{ v.year }}</span>
-                          @if (v.priceClp != null) {
-                            <span class="text-ink-muted">
-                              · ${{ formatPricePlain(v.priceClp) }}</span>
-                          }
-                        </button>
-                      </li>
+                <mat-menu #versionsMenu="matMenu" class="compare-versions-menu">
+                  <ng-template matMenuContent let-modelId="modelId">
+                    @for (v of versionsForModel(modelId); track v.id) {
+                      <button
+                        mat-menu-item
+                        type="button"
+                        (click)="addFavoriteVersionToCompare(modelId, v.id)"
+                        [attr.data-testid]="'favorite-carousel-opt-' + v.id"
+                      >
+                        <span class="font-semibold">{{ v.name }} {{ v.year }}</span>
+                        @if (v.priceClp != null) {
+                          <span class="text-ink-muted">
+                            · ${{ formatPricePlain(v.priceClp) }}</span>
+                        }
+                      </button>
                     }
-                  </ul>
-                }
+                  </ng-template>
+                </mat-menu>
               </li>
             }
           }
@@ -314,7 +304,7 @@
             </mat-panel-description>
           </mat-expansion-panel-header>
           <div class="border-t border-border overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="w-full text-sm min-w-[28rem]">
               <thead>
                 <tr class="bg-surface-muted">
                   <th class="w-1/4 px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-ink-muted">
