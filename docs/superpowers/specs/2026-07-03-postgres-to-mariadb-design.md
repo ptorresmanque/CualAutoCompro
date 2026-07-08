@@ -70,7 +70,7 @@ Los enums (`Segment`, `Transmission`, `Fuel`, `UserRole`) **no cambian** en el s
   - `20260701160000_favorite_version_id/`
   - `20260701201118_add_user_role/`
   - `20260701201531_add_deleted_at/`
-- Regenerar con: `pnpm --filter backend exec prisma migrate dev --name init` apuntando a una MariaDB local limpia.
+- Regenerar con: `npm -w backend exec prisma migrate dev --name init` apuntando a una MariaDB local limpia.
 - Resultado: una sola migración `2026MMDDHHMMSS_init/migration.sql` con tipos MariaDB nativos (`VARCHAR` para enums, `LONGTEXT` para `galleryUrls`, sin `CREATE TYPE`).
 
 ### 4. Raw SQL en services
@@ -180,17 +180,17 @@ DATABASE_URL=mysql://user:pass@localhost:3306/cualautocompro_test?charset=utf8mb
 1. Configurar MariaDB 10.5+ en hosting con charset `utf8mb4`.
 2. Crear DB y usuario dedicado.
 3. Actualizar `DATABASE_URL` en variables de entorno de producción.
-4. `pnpm install` (regenera cliente Prisma para provider `mysql`).
-5. `pnpm db:migrate deploy` (aplica migración nueva).
-6. `pnpm db:seed` si aplica.
-7. `pnpm build && pnpm start`.
+4. `npm install` (regenera cliente Prisma para provider `mysql`).
+5. `npm run db:migrate deploy` (aplica migración nueva).
+6. `npm run db:seed` si aplica.
+7. `npm run build && npm start`.
 
 ## Criterios de aceptación
 
-- [ ] `pnpm test` pasa contra MariaDB local.
-- [ ] `pnpm db:migrate` aplica la nueva migración sin errores.
-- [ ] `pnpm db:seed` puebla datos correctamente.
-- [ ] `pnpm dev:be` arranca sin errores de conexión.
+- [ ] `npm test` pasa contra MariaDB local.
+- [ ] `npm run db:migrate` aplica la nueva migración sin errores.
+- [ ] `npm run db:seed` puebla datos correctamente.
+- [ ] `npm run dev:be` arranca sin errores de conexión.
 - [ ] Smoke test: `POST /api/models` con `galleryUrls` se persiste y se lee como array.
 - [ ] `GET /api/models` devuelve `galleryUrls` como `string[]` (vía `toGalleryUrls`).
 - [ ] Admin puede crear Model/Version con valores de enum "extendidos" sin errores en runtime.

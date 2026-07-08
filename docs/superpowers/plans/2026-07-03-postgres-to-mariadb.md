@@ -142,7 +142,7 @@ rm -rf apps/backend/prisma/migrations/20260630120609_init \
 
 ```bash
 cd apps/backend
-pnpm exec prisma migrate dev --name init
+npx prisma migrate dev --name init
 ```
 
 Esperado: crea `apps/backend/prisma/migrations/<timestamp>_init/migration.sql`. Si pregunta por "reset", confirmar.
@@ -161,7 +161,7 @@ Verificar:
 - [ ] **Paso 7: Regenerar Prisma Client**
 
 ```bash
-pnpm exec prisma generate
+npx prisma generate
 ```
 
 Esperado: mensaje "Generated Prisma Client". Si hay errores de tipo por `galleryUrls` ahora siendo `Json` en vez de `String[]`, anotarlos para resolver en Tarea 7.
@@ -169,7 +169,7 @@ Esperado: mensaje "Generated Prisma Client". Si hay errores de tipo por `gallery
 - [ ] **Paso 8: Confirmar que la DB está sincronizada**
 
 ```bash
-pnpm exec prisma migrate status
+npx prisma migrate status
 ```
 
 Esperado: "Database schema is up to date".
@@ -255,7 +255,7 @@ rm -rf apps/backend/prisma/migrations/<timestamp>_init
 - [ ] **Paso 4: Regenerar Prisma Client (sin migración nueva — solo para tipos TS)**
 
 ```bash
-cd apps/backend && pnpm exec prisma generate
+cd apps/backend && npx prisma generate
 ```
 
 - [ ] **Paso 5: Generar nueva migración con SQL workaround (shadow DB)**
@@ -264,19 +264,19 @@ Como `cualauto` no tiene `CREATE` global para shadow DB, usar `prisma migrate di
 
 ```bash
 cd apps/backend
-pnpm exec prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/$(date +%Y%m%d%H%M%S)_init/migration.sql
+npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/$(date +%Y%m%d%H%M%S)_init/migration.sql
 mkdir -p prisma/migrations/$(date +%Y%m%d%H%M%S)_init
 mv prisma/migrations/$(date +%Y%m%d%H%M%S)_init/migration.sql prisma/migrations/$(date +%Y%m%d%H%M%S)_init/migration.sql 2>/dev/null || true
 # Lo correcto es crear el directorio primero:
 TS=$(date +%Y%m%d%H%M%S)
 mkdir -p prisma/migrations/${TS}_init
-pnpm exec prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/${TS}_init/migration.sql
+npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > prisma/migrations/${TS}_init/migration.sql
 ```
 
 - [ ] **Paso 6: Aplicar la migración**
 
 ```bash
-pnpm exec prisma migrate deploy
+npx prisma migrate deploy
 ```
 
 Esperado: "All migrations have been successfully applied".
@@ -292,7 +292,7 @@ Esperado: `segment VARCHAR(191) NOT NULL`, etc. (no `ENUM(...)`).
 - [ ] **Paso 8: Regenerar Prisma Client**
 
 ```bash
-pnpm exec prisma generate
+npx prisma generate
 ```
 
 - [ ] **Paso 9: Commit**
@@ -362,7 +362,7 @@ describe("toGalleryUrls", () => {
 - [ ] **Paso 2: Correr test, ver que falla**
 
 ```bash
-cd apps/backend && pnpm test src/shared/json.spec.ts
+cd apps/backend && npm test src/shared/json.spec.ts
 ```
 
 Esperado: FAIL con "Cannot find module './json.js'".
@@ -405,7 +405,7 @@ export function toGalleryUrls(value: Prisma.JsonValue | null | undefined): strin
 - [ ] **Paso 4: Correr test, ver que pasa**
 
 ```bash
-pnpm test src/shared/json.spec.ts
+npm test src/shared/json.spec.ts
 ```
 
 Esperado: 9 tests pass.
@@ -473,7 +473,7 @@ describe("extendEnum (MariaDB no-op)", () => {
 - [ ] **Paso 2: Correr test, ver que falla**
 
 ```bash
-pnpm test src/shared/enum-extension.spec.ts
+npm test src/shared/enum-extension.spec.ts
 ```
 
 Esperado: FAIL porque `extendEnum` todavía ejecuta SQL Postgres que rompe contra MariaDB, o porque eliminamos tests que ahora compilan pero el test de rechazo de regex sigue pasando pero el de aceptación exitosa falla porque intenta `ALTER TYPE`.
@@ -514,7 +514,7 @@ export async function extendEnum(
 - [ ] **Paso 4: Correr test, ver que pasa**
 
 ```bash
-pnpm test src/shared/enum-extension.spec.ts
+npm test src/shared/enum-extension.spec.ts
 ```
 
 Esperado: 3 tests pass.
@@ -650,7 +650,7 @@ Reemplazar el bloque desde `if (newSegment) {` (línea 187) hasta el `return row
 - [ ] **Paso 4: Correr typecheck**
 
 ```bash
-cd apps/backend && pnpm exec tsc --noEmit
+cd apps/backend && npx tsc --noEmit
 ```
 
 Esperado: 5 errores restantes (los de `mode: insensitive` y `favorites.service.ts` — esos son de Tarea 7).
@@ -658,7 +658,7 @@ Esperado: 5 errores restantes (los de `mode: insensitive` y `favorites.service.t
 - [ ] **Paso 5: Correr tests del módulo**
 
 ```bash
-pnpm test src/modules/models/models.service.spec.ts
+npm test src/modules/models/models.service.spec.ts
 ```
 
 Esperado: 5/5 pasan (los tests que usan `TEST_NEW_SEG_...` ahora funcionan porque la columna es VARCHAR).
@@ -847,7 +847,7 @@ Reemplazar todo el bloque desde `const setClauses: string[] = [];` (línea 188) 
 - [ ] **Paso 3: Correr typecheck**
 
 ```bash
-cd apps/backend && pnpm exec tsc --noEmit
+cd apps/backend && npx tsc --noEmit
 ```
 
 Esperado: 5 errores restantes (los de `mode: insensitive` y `favorites.service.ts`).
@@ -855,7 +855,7 @@ Esperado: 5 errores restantes (los de `mode: insensitive` y `favorites.service.t
 - [ ] **Paso 4: Correr tests del módulo**
 
 ```bash
-pnpm test src/modules/versions
+npm test src/modules/versions
 ```
 
 Esperado: pasan todos.
@@ -947,7 +947,7 @@ import { Prisma } from "@prisma/client";
 - [ ] **Paso 5: Correr typecheck**
 
 ```bash
-cd apps/backend && pnpm exec tsc --noEmit
+cd apps/backend && npx tsc --noEmit
 ```
 
 Esperado: sin errores.
@@ -988,7 +988,7 @@ En `favorites.service.spec.ts` líneas 71 y 84, mismo tratamiento.
 - [ ] **Paso 3: Correr tests de models**
 
 ```bash
-cd apps/backend && pnpm test src/modules/models/models.service.spec.ts
+cd apps/backend && npm test src/modules/models/models.service.spec.ts
 ```
 
 Esperado: pasan todos.
@@ -996,7 +996,7 @@ Esperado: pasan todos.
 - [ ] **Paso 4: Correr tests de favorites**
 
 ```bash
-pnpm test src/modules/favorites/favorites.service.spec.ts
+npm test src/modules/favorites/favorites.service.spec.ts
 ```
 
 Esperado: pasan todos.
@@ -1019,7 +1019,7 @@ Si no hubo cambios en los archivos, saltarse el commit.
 
 **Interfaces:**
 - Consumes: nothing
-- Produces: `package.json` sin `@electric-sql/pglite`. `pnpm install` lo desinstala.
+- Produces: `package.json` sin `@electric-sql/pglite`. `npm install` lo desinstala.
 
 - [ ] **Paso 1: Editar `apps/backend/package.json`**
 
@@ -1034,15 +1034,15 @@ Borrarla (incluyendo la coma final si corresponde).
 - [ ] **Paso 2: Eliminarlo del lockfile**
 
 ```bash
-cd apps/backend && pnpm remove @electric-sql/pglite
+cd apps/backend && npm uninstall @electric-sql/pglite
 ```
 
-Esperado: elimina del package.json y del pnpm-lock.yaml.
+Esperado: elimina del package.json y del package-lock.json.
 
 - [ ] **Paso 3: Commit**
 
 ```bash
-git add apps/backend/package.json pnpm-lock.yaml
+git add apps/backend/package.json package-lock.json
 git commit -m "chore(be): remover @electric-sql/pglite (no se usa)"
 ```
 
@@ -1062,7 +1062,7 @@ git commit -m "chore(be): remover @electric-sql/pglite (no se usa)"
 - [ ] **Paso 1: Correr suite completa de tests**
 
 ```bash
-pnpm test
+npm test
 ```
 
 Esperado: todos los tests pasan. Si alguno falla, volver a la tarea correspondiente y resolver.
@@ -1070,7 +1070,7 @@ Esperado: todos los tests pasan. Si alguno falla, volver a la tarea correspondie
 - [ ] **Paso 2: Correr seed y verificar que puebla datos**
 
 ```bash
-cd apps/backend && pnpm db:reset
+cd apps/backend && npm run db:reset
 ```
 
 Esperado: crea las tablas, aplica migración, ejecuta seed sin errores.
@@ -1080,7 +1080,7 @@ Esperado: crea las tablas, aplica migración, ejecuta seed sin errores.
 Levantar backend:
 
 ```bash
-pnpm dev:be
+npm run dev:be
 ```
 
 En otra terminal:
@@ -1113,7 +1113,7 @@ docker exec cualautocompro-db mariadb -ucualauto -pcualauto \
 Aplicar migraciones:
 
 ```bash
-cd apps/backend && pnpm exec prisma migrate deploy
+cd apps/backend && npx prisma migrate deploy
 ```
 
 Esperado: aplica la migración init sin errores.
@@ -1177,10 +1177,10 @@ git commit -m "docs(be): actualizar setup a MariaDB 10.5+ con utf8mb4"
 
 Después de la Tarea 10, verificar:
 
-- [ ] `pnpm test` pasa contra MariaDB local.
-- [ ] `pnpm db:migrate` aplica la nueva migración sin errores.
-- [ ] `pnpm db:seed` puebla datos correctamente.
-- [ ] `pnpm dev:be` arranca sin errores de conexión.
+- [ ] `npm test` pasa contra MariaDB local.
+- [ ] `npm run db:migrate` aplica la nueva migración sin errores.
+- [ ] `npm run db:seed` puebla datos correctamente.
+- [ ] `npm run dev:be` arranca sin errores de conexión.
 - [ ] Smoke test: `POST /api/models` con `galleryUrls` se persiste y se lee como array.
 - [ ] `GET /api/models` devuelve `galleryUrls` como `string[]`.
 - [ ] Admin puede crear Model/Version con valores de enum "extendidos" sin errores en runtime.

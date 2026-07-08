@@ -468,7 +468,7 @@ git commit -m "feat(be): relax version fuel/transmission DTO + extend enum at ru
 - [ ] **Step 1: Sumar dependencias**
 
 ```bash
-cd apps/backend && pnpm add multer && pnpm add -D @types/multer
+cd apps/backend && npm install multer && npm install -D @types/multer
 ```
 
 - [ ] **Step 2: Escribir test del controller**
@@ -628,7 +628,7 @@ Expected: PASS (4/4).
 - [ ] **Step 8: Commit**
 
 ```bash
-git add apps/backend/package.json pnpm-lock.yaml apps/backend/src/modules/uploads/ apps/backend/src/app.ts
+git add apps/backend/package.json package-lock.json apps/backend/src/modules/uploads/ apps/backend/src/app.ts
 git commit -m "feat(be): add uploads module (local disk, multer, mime whitelist)"
 ```
 

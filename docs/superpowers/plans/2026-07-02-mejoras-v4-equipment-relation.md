@@ -891,13 +891,13 @@ Expected: sin errores TS.
 
 - [ ] **Step 4: Frontend build**
 
-Run: `cd apps/frontend && pnpm ng build --configuration development`
+Run: `cd apps/frontend && npx ng build --configuration development`
 Expected: bundle OK.
 
 - [ ] **Step 5: Smoke test manual**
 
-- Backend dev: `cd apps/backend && pnpm dev`
-- Frontend dev: `cd apps/frontend && pnpm start`
+- Backend dev: `cd apps/backend && npm run dev`
+- Frontend dev: `cd apps/frontend && npm start`
 - Login como admin.
 - Ir a /admin/versions → Nueva versión.
 - Sección "Equipamiento" visible con buscador + input vacío.

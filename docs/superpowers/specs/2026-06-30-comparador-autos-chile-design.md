@@ -179,7 +179,7 @@ Errores tipados:
 ```
 /
 ├── package.json              # workspaces root, scripts orquestadores
-├── pnpm-workspace.yaml
+├── 
 ├── tsconfig.base.json
 ├── .gitignore
 ├── .editorconfig

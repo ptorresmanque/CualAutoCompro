@@ -38,7 +38,7 @@ Valores copiados **verbatim** del spec `docs/superpowers/specs/2026-06-30-compar
 - IDs comparación: máx 3; nanoid de 8 chars para `slug`.
 - Mantención: `mileageTag` ∈ `{10000, 20000, 30000, 40000, 60000}`.
 - Tests: TDD (red → green → refactor). Co-located `*.spec.ts`.
-- pnpm workspaces. Scripts raíz: `dev`, `dev:be`, `dev:fe`, `test`, `test:e2e`, `db:migrate`, `db:seed`, `db:reset`.
+- npm workspaces. Scripts raíz: `dev`, `dev:be`, `dev:fe`, `test`, `test:e2e`, `db:migrate`, `db:seed`, `db:reset`.
 - Convención commits: Conventional Commits (`feat:`, `test:`, `chore:`, `docs:`, `fix:`).
 - Idioma del código/comments/mensajes: **español (es-CL)**; idioma de UI: español.
 - Disclaimer visible en UI: "precios referencia año 2026, confirmar en concesionario" y "valor estimado referencial" en mantención.
@@ -53,7 +53,7 @@ Antes de las tareas, el mapa de archivos. Cada archivo tiene **una responsabilid
 ```
 /
 ├── package.json                       # workspaces, scripts orquestadores
-├── pnpm-workspace.yaml                # packages: apps/*
+├──                 # packages: apps/*
 ├── tsconfig.base.json                 # strict, target ES2022
 ├── .gitignore                         # ya existe
 ├── .editorconfig
@@ -187,7 +187,7 @@ Antes de las tareas, el mapa de archivos. Cada archivo tiene **una responsabilid
 
 **Files:**
 - Create: `/package.json`
-- Create: `/pnpm-workspace.yaml`
+- Create: `/`
 - Create: `/tsconfig.base.json`
 - Create: `/tsconfig.json` (root reenvía a base)
 - Create: `/.editorconfig`
@@ -249,7 +249,7 @@ Antes de las tareas, el mapa de archivos. Cada archivo tiene **una responsabilid
 }
 ```
 
-- [ ] **Step 4: Crear `pnpm-workspace.yaml`**
+- [ ] **Step 4: Crear ``**
 
 ```yaml
 packages:
@@ -289,7 +289,7 @@ WEB_ORIGIN=http://localhost:4200
 - [ ] **Step 8: Commit**
 
 ```bash
-git add .nvmrc tsconfig.base.json tsconfig.json .editorconfig package.json pnpm-workspace.yaml .env.example
+git add .nvmrc tsconfig.base.json tsconfig.json .editorconfig package.json  .env.example
 git commit -m "chore: bootstrap monorepo cualautocompro con workspaces"
 ```
 
@@ -556,14 +556,14 @@ describe("GET /health", () => {
 });
 ```
 
-Run: `pnpm -w apps/backend test`
+Run: `npm -w apps/backend test`
 Expected: PASS (la implementación ya está; el test verifica que el contrato se cumple). Si el archivo de test ya está creado en este Step, ejecuta y verifica que pase con el código de los Steps 8-11.
 
 - [ ] **Step 13: Install + verificación local**
 
 ```bash
-pnpm install
-pnpm -w apps/backend test
+npm install
+npm -w apps/backend test
 ```
 
 Expected: 1 test passing.
@@ -743,7 +743,7 @@ model ComparisonItem {
 - [ ] **Step 2: Generar cliente Prisma para tipos**
 
 ```bash
-pnpm -w apps/backend exec prisma generate
+npm -w apps/backend exec prisma generate
 ```
 
 Expected: cliente generado en `node_modules/.prisma/client`.
@@ -773,7 +773,7 @@ const globalForPrisma = globalThis as unknown as { __testPrisma?: PrismaClient }
 
 export const setupTestPrisma = (): PrismaClient => {
   if (!globalForPrisma.__testPrisma) {
-    execSync("pnpm exec prisma migrate deploy", {
+    execSync("npx prisma migrate deploy", {
       env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL! },
       stdio: "ignore",
     });
@@ -802,7 +802,7 @@ Nota: Para v1 usamos una Postgres real en Docker para tests si pglite genera fri
 - [ ] **Step 5: Verificar TypeScript del backend**
 
 ```bash
-pnpm -w apps/backend exec tsc --noEmit
+npm -w apps/backend exec tsc --noEmit
 ```
 
 Expected: sin errores.
@@ -884,7 +884,7 @@ describe("AuthService", () => {
 - [ ] **Step 2: Run tests — confirmar fallo**
 
 ```bash
-pnpm -w apps/backend test -- auth.service
+npm -w apps/backend test -- auth.service
 ```
 
 Expected: FAIL (AuthService no existe).
@@ -960,7 +960,7 @@ export class AuthService {
 - [ ] **Step 6: Run tests — deben pasar**
 
 ```bash
-pnpm -w apps/backend test -- auth.service
+npm -w apps/backend test -- auth.service
 ```
 
 Expected: PASS.
@@ -1118,7 +1118,7 @@ app.use("/api/v1/auth", authRouter);
 - [ ] **Step 12: Run tests — deben pasar**
 
 ```bash
-pnpm -w apps/backend test -- auth
+npm -w apps/backend test -- auth
 ```
 
 Expected: 7 tests passing (4 service + 3 controller).
@@ -1206,7 +1206,7 @@ describe("GET /api/v1/models", () => {
 - [ ] **Step 2: Run tests — confirmar fallo**
 
 ```bash
-pnpm -w apps/backend test -- models
+npm -w apps/backend test -- models
 ```
 
 Expected: FAIL.
@@ -1376,8 +1376,8 @@ app.use("/api/v1/models", modelsRouter);
 - [ ] **Step 9: Run tests + typecheck**
 
 ```bash
-pnpm -w apps/backend exec tsc --noEmit
-pnpm -w apps/backend test
+npm -w apps/backend exec tsc --noEmit
+npm -w apps/backend test
 ```
 
 Expected: tests passing, 0 errores TS.
@@ -1576,7 +1576,7 @@ app.use("/api/v1/compare", compareRouter);
 - [ ] **Step 7: Run tests**
 
 ```bash
-pnpm -w apps/backend test
+npm -w apps/backend test
 ```
 
 Expected: todos los tests pasando.
@@ -1707,7 +1707,7 @@ export class ComparisonsService {
 }
 ```
 
-(Añade `nanoid` a dependencies: `pnpm -w apps/backend add nanoid`).
+(Añade `nanoid` a dependencies: `npm -w apps/backend add nanoid`).
 
 - [ ] **Step 4: Implementar `comparisons.controller.ts` + `routes`**
 
@@ -1771,7 +1771,7 @@ app.use("/api/v1/me/comparisons", meComparisonsRouter);
 - [ ] **Step 6: Run tests + commit**
 
 ```bash
-pnpm -w apps/backend test
+npm -w apps/backend test
 git add apps/backend
 git commit -m "feat(be): comparisons (slug público + lista/guardar por usuario)"
 ```
@@ -1821,8 +1821,8 @@ main().finally(() => prisma.$disconnect());
 
 ```bash
 docker compose up -d postgres
-pnpm db:migrate
-pnpm db:seed
+npm run db:migrate
+npm run db:seed
 ```
 
 Expected: log "Seed completado" y filas en `Model` y `Version`.
@@ -1847,7 +1847,7 @@ git commit -m "feat(be): seed de catálogo inicial Chile"
 - [ ] **Step 1: Crear Angular app vía CLI con schematics CSS**
 
 ```bash
-cd apps && npx -y @angular/cli@22 new frontend --style=css --routing=true --skip-git --package-manager=pnpm --strict
+cd apps && npx -y @angular/cli@22 new frontend --style=css --routing=true --skip-git --package-manager=npm --strict
 ```
 
 Expected: app Angular 22 generada en `apps/frontend` con `*.css` por defecto.
@@ -1855,8 +1855,8 @@ Expected: app Angular 22 generada en `apps/frontend` con `*.css` por defecto.
 - [ ] **Step 2: Añadir Tailwind + PostCSS**
 
 ```bash
-pnpm -w apps/frontend add -D tailwindcss postcss autoprefixer
-pnpm -w apps/frontend exec npx tailwindcss init -p
+npm -w apps/frontend add -D tailwindcss postcss autoprefixer
+npm -w apps/frontend exec npx tailwindcss init -p
 ```
 
 Expected: `tailwind.config.js` y `postcss.config.js` creados.
@@ -1939,7 +1939,7 @@ h1, h2, h3 { font-family: 'Manrope', 'Inter', system-ui, sans-serif; }
 - [ ] **Step 6: Verificar que el proyecto arranca**
 
 ```bash
-pnpm dev:fe
+npm run dev:fe
 ```
 
 Expected: Angular dev server en `http://localhost:4200` con texto "cualautocompro" o similar.
@@ -2200,7 +2200,7 @@ export const appConfig: ApplicationConfig = {
 - [ ] **Step 10: Run tests**
 
 ```bash
-pnpm -w apps/frontend test -- --watch=false
+npm -w apps/frontend test -- --watch=false
 ```
 
 Expected: passing.
@@ -2285,7 +2285,7 @@ export const authGuard: CanActivateFn = () => {
 };
 ```
 
-- [ ] **Step 6: Verificar `pnpm dev:fe` y commit**
+- [ ] **Step 6: Verificar `npm run dev:fe` y commit**
 
 ```bash
 git add apps/frontend
@@ -2391,7 +2391,7 @@ export class CatalogComponent {
 - [ ] **Step 3: Test PASS + commit**
 
 ```bash
-pnpm -w apps/frontend test -- --watch=false
+npm -w apps/frontend test -- --watch=false
 git add apps/frontend
 git commit -m "feat(fe): catálogo con filtros avanzados y grid"
 ```
@@ -2444,7 +2444,7 @@ describe('CompareComponent', () => {
 - [ ] **Step 3: Test PASS + commit**
 
 ```bash
-pnpm -w apps/frontend test -- --watch=false
+npm -w apps/frontend test -- --watch=false
 git add apps/frontend
 git commit -m "feat(fe): pantalla de comparación híbrida (cards + tabla con diffs)"
 ```
@@ -2494,7 +2494,7 @@ git commit -m "feat(fe): pantallas auth + model detail + account/comparisons"
 
 - [ ] **Step 4: Ajustar Tailwind + styles con tokens reales** generados por Stitch.
 
-- [ ] **Step 5: Verificar visualmente `pnpm dev:fe`** — abrir cada pantalla, comparar con mockup.
+- [ ] **Step 5: Verificar visualmente `npm run dev:fe`** — abrir cada pantalla, comparar con mockup.
 
 - [ ] **Step 6: Commit**
 
@@ -2514,11 +2514,11 @@ git commit -m "design(fe): sistema de diseño Stitch + mockups base aplicados"
 - [ ] **Step 1: Instalar Playwright**
 
 ```bash
-pnpm -w apps/frontend add -D @playwright/test
-pnpm -w apps/frontend exec npx playwright install --with-deps chromium
+npm -w apps/frontend add -D @playwright/test
+npm -w apps/frontend exec npx playwright install --with-deps chromium
 ```
 
-- [ ] **Step 2: `playwright.config.ts`** — baseURL `http://localhost:4200`, webServer arranca `pnpm start` y backend (`pnpm dev:be`).
+- [ ] **Step 2: `playwright.config.ts`** — baseURL `http://localhost:4200`, webServer arranca `npm start` y backend (`npm run dev:be`).
 
 - [ ] **Step 3: Escribir `auth.spec.ts`** — registro → historial vacío.
 
@@ -2526,7 +2526,7 @@ pnpm -w apps/frontend exec npx playwright install --with-deps chromium
 
 - [ ] **Step 5: Escribir `compare.spec.ts`** — seleccionar 3 autos → cards/tabla visibles → guardar con login → URL pública accesible anónimamente.
 
-- [ ] **Step 6: Ejecutar `pnpm test:e2e`** y commit
+- [ ] **Step 6: Ejecutar `npm test:e2e`** y commit
 
 ```bash
 git add apps/frontend
@@ -2543,7 +2543,7 @@ git commit -m "test(e2e): playwright specs para auth, explore y compare"
 
 ## pglite en tests
 
-- Si `pnpm exec prisma migrate deploy` falla contra pglite (drivers incompatibles), fallback: levantar Postgres en Docker y correr tests contra esa DB con `DATABASE_URL` apuntando al contenedor; `helpers/db.ts` ya está escrito para Postgres.
+- Si `npx prisma migrate deploy` falla contra pglite (drivers incompatibles), fallback: levantar Postgres en Docker y correr tests contra esa DB con `DATABASE_URL` apuntando al contenedor; `helpers/db.ts` ya está escrito para Postgres.
 
 ## Convenciones de código
 
