@@ -4,17 +4,21 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "db:generate": "prisma generate",
+    "predev": "prisma generate",
     "dev": "tsx watch src/index.ts",
+    "prebuild": "prisma generate",
     "build": "tsc -p tsconfig.json",
+    "prestart": "prisma generate",
     "start": "node dist/src/index.js",
+    "pretest": "prisma generate",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force",
     "vendor:prisma": "node scripts/vendor-prisma.cjs",
-    "bundle:ftp": "node scripts/prepare-ftp-bundle.cjs",
-    "postinstall": "node scripts/postinstall.cjs"
+    "bundle:ftp": "node scripts/prepare-ftp-bundle.cjs"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",

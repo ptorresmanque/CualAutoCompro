@@ -2,10 +2,11 @@
 //
 // Por que existe:
 //   En hostings con LVE (cPanel + CloudLinux) el comando 'prisma generate'
-//   falla con 'WebAssembly.Instance(): Out of memory' durante el postinstall.
-//   Para esos entornos, el cliente Prisma pre-generado debe venir con el
-//   repositorio (vendorizado en git) y copiarse al lugar correcto por el
-//   postinstall (que detecta LVE y no intenta regenerar).
+//   falla con 'WebAssembly.Instance(): Out of memory' durante el postinstall
+//   de @prisma/client. Este proyecto usa --ignore-scripts en el deploy y
+//   tampoco usa postinstall propio, por lo que el cliente Prisma debe venir
+//   ya generado dentro del bundle FTP (vendorizado en git) y copiarse
+//   manualmente tras npm ci (ver README-DEPLOY.md del bundle).
 //
 // Que hace:
 //   - Verifica que existe el cliente Prisma generado por `npx prisma generate`.
@@ -112,5 +113,7 @@ console.log("[vendor]   git add apps/backend/vendor/prisma-client/");
 console.log("[vendor]   git commit -m 'chore(be): vendor prisma client'");
 console.log("[vendor]   git push");
 console.log("[vendor]");
-console.log("[vendor] El postinstall en el server detectara LVE y copiara");
-console.log("[vendor] este vendor al lugar correcto en node_modules.");
+console.log("[vendor] En el server, tras 'npm ci --omit=dev --ignore-scripts',");
+console.log("[vendor] hay que copiar el vendor manualmente:");
+console.log("[vendor]   mkdir -p node_modules/.prisma");
+console.log("[vendor]   cp -r vendor/prisma-client node_modules/.prisma/client");

@@ -175,17 +175,26 @@ Paquete listo para subir por FTP y desplegar en hosting cPanel con LVE.
    cp .env.example .env
    nano .env  # editar DATABASE_URL, JWT_SECRET, WEB_ORIGIN, ADMIN_*
 
-3. Instalar dependencias de produccion saltando scripts (el postinstall
-   detecta LVE y copia el vendor Prisma automaticamente):
+3. Instalar dependencias de produccion saltando scripts de ciclo de vida
+   (no hay postinstall nuestro; usar --ignore-scripts evita ejecutar
+   los postinstall de paquetes de terceros como @prisma/client que
+   pueden causar OOM en servidores con LVE):
    npm ci --omit=dev --ignore-scripts
 
-4. Aplicar migraciones de base de datos:
+4. Copiar el cliente Prisma pre-generado (vendor) a la ubicacion donde
+   @prisma/client lo busca. Sin esto el backend fallara al primer
+   query Prisma porque la instalacion con --ignore-scripts no genera
+   el cliente:
+   mkdir -p node_modules/.prisma
+   cp -r vendor/prisma-client node_modules/.prisma/client
+
+5. Aplicar migraciones de base de datos:
    npx prisma migrate deploy
 
-5. (Opcional) Cargar datos iniciales:
+6. (Opcional) Cargar datos iniciales:
    npx tsx prisma/seed.ts
 
-6. Arrancar el backend (desde el Application Manager de cPanel):
+7. Arrancar el backend (desde el Application Manager de cPanel):
    - Application root: ~/cualauto-backend
    - Application startup file: dist/src/index.js
    - O via linea de comandos:
