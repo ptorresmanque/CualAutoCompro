@@ -104,6 +104,25 @@ Para los tests, copiar `apps/backend/.env.test.example` a `apps/backend/.env.tes
 DATABASE_URL=mysql://cualauto:cualauto@localhost:3306/cualautocompro_test?charset=utf8mb4
 ```
 
+### Plantilla para local dev
+
+Si vas a trabajar contra MariaDB local, puedes partir del archivo
+`apps/backend/.env.development` (committed con defaults de local dev):
+
+```bash
+cp apps/backend/.env.development apps/backend/.env
+```
+
+Esa plantilla viene con `NODE_ENV` indefinido (default `development`),
+`DATABASE_URL` apuntando a `localhost` y `ADMIN_INITIAL_PASSWORD=admin1234`
+— el `throw` de producción NO se activa porque la condición es
+`NODE_ENV === "production"`.
+
+Si en algún momento necesitas probar el deploy localmente con la BD
+de producción, restaura el `.env` con tus valores reales (o cámbialo
+manualmente) y verifica que `ADMIN_INITIAL_PASSWORD` esté sobreescrito
+con un valor distinto a `admin1234`.
+
 ## Backend
 
 ```bash
