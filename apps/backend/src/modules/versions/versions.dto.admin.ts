@@ -4,7 +4,7 @@ export const TRANSMISSIONS = ["MANUAL", "AUTOMATIC", "CVT", "DCT"] as const;
 export const FUELS = ["BENCINA", "DIESEL", "HYBRID", "ELECTRIC"] as const;
 export const ENUM_REGEX = /^[A-Z0-9_]+$/;
 
-export const createVersionSchema = z.object({
+const versionObjectSchema = z.object({
   modelId: z.string().min(1),
   name: z.string().min(2).max(80),
   year: z.number().int().min(1990).max(2100),
@@ -25,9 +25,34 @@ export const createVersionSchema = z.object({
   hasAbs: z.boolean(),
   hasEsp: z.boolean(),
   hasCruiseControl: z.boolean(),
+  circulationPermitClp: z.number().int().nonnegative().nullable().optional(),
+  mandatoryInsuranceClp: z.number().int().nonnegative().nullable().optional(),
+  voluntaryInsuranceClp: z.number().int().nonnegative().nullable().optional(),
+  fuelTankLiters: z.number().nonnegative().nullable().optional(),
+  batteryCapacityKwh: z.number().nonnegative().nullable().optional(),
+  hasRecall: z.boolean().default(false),
+  recallUrl: z.string().url().nullable().optional(),
 });
 
-export const updateVersionSchema = createVersionSchema.partial().omit({ modelId: true });
+const validateRecall = (
+  data: { hasRecall?: boolean; recallUrl?: string | null },
+  ctx: z.RefinementCtx,
+) => {
+  if (data.hasRecall && !data.recallUrl) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["recallUrl"],
+      message: "recallUrl es obligatorio cuando hasRecall=true",
+    });
+  }
+};
+
+export const createVersionSchema = versionObjectSchema.superRefine(validateRecall);
+
+export const updateVersionSchema = versionObjectSchema
+  .partial()
+  .omit({ modelId: true })
+  .superRefine(validateRecall);
 
 export type CreateVersionInput = z.infer<typeof createVersionSchema>;
 export type UpdateVersionInput = z.infer<typeof updateVersionSchema>;

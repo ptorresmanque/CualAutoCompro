@@ -31,6 +31,13 @@ type VersionRow = {
   hasAbs: boolean;
   hasEsp: boolean;
   hasCruiseControl: boolean;
+  circulationPermitClp: number | null;
+  mandatoryInsuranceClp: number | null;
+  voluntaryInsuranceClp: number | null;
+  fuelTankLiters: number | null;
+  batteryCapacityKwh: number | null;
+  hasRecall: boolean;
+  recallUrl: string | null;
   deletedAt: Date | null;
   createdAt: Date;
 };
@@ -39,6 +46,8 @@ const VERSION_RETURNING = `id, \`modelId\`, name, year, \`priceClp\`, transmissi
   \`engineDisplacementCc\`, \`powerHp\`, \`torqueNm\`, \`consumptionCityKmL\`,
   \`consumptionHighwayKmL\`, \`lengthMm\`, \`widthMm\`, \`heightMm\`, \`weightKg\`,
   \`trunkLiters\`, \`airbagCount\`, \`hasAbs\`, \`hasEsp\`, \`hasCruiseControl\`,
+  \`circulationPermitClp\`, \`mandatoryInsuranceClp\`, \`voluntaryInsuranceClp\`,
+  \`fuelTankLiters\`, \`batteryCapacityKwh\`, \`hasRecall\`, \`recallUrl\`,
   \`deletedAt\`, \`createdAt\``;
 
 export class VersionsService {
@@ -131,6 +140,8 @@ export class VersionsService {
          \`engineDisplacementCc\`, \`powerHp\`, \`torqueNm\`, \`consumptionCityKmL\`,
          \`consumptionHighwayKmL\`, \`lengthMm\`, \`widthMm\`, \`heightMm\`, \`weightKg\`,
          \`trunkLiters\`, \`airbagCount\`, \`hasAbs\`, \`hasEsp\`, \`hasCruiseControl\`,
+         \`circulationPermitClp\`, \`mandatoryInsuranceClp\`, \`voluntaryInsuranceClp\`,
+         \`fuelTankLiters\`, \`batteryCapacityKwh\`, \`hasRecall\`, \`recallUrl\`,
          \`deletedAt\`, \`createdAt\`
        )
        VALUES (
@@ -138,6 +149,8 @@ export class VersionsService {
          ?, ?, ?, ?,
          ?, ?, ?, ?, ?,
          ?, ?, ?, ?, ?,
+         ?, ?, ?, ?,
+         ?, ?, ?,
          NULL, NOW()
        )`,
       id,
@@ -161,6 +174,13 @@ export class VersionsService {
       input.hasAbs,
       input.hasEsp,
       input.hasCruiseControl,
+      input.circulationPermitClp ?? null,
+      input.mandatoryInsuranceClp ?? null,
+      input.voluntaryInsuranceClp ?? null,
+      input.fuelTankLiters ?? null,
+      input.batteryCapacityKwh ?? null,
+      input.hasRecall ?? false,
+      input.recallUrl ?? null,
     );
     const rows = await this.prisma.$queryRawUnsafe<VersionRow[]>(
       `SELECT ${VERSION_RETURNING} FROM \`Version\` WHERE id = ?`,
@@ -265,6 +285,34 @@ export class VersionsService {
       if (input.hasCruiseControl !== undefined) {
         setClauses.push("`hasCruiseControl` = ?");
         values.push(input.hasCruiseControl);
+      }
+      if (input.circulationPermitClp !== undefined) {
+        setClauses.push("`circulationPermitClp` = ?");
+        values.push(input.circulationPermitClp);
+      }
+      if (input.mandatoryInsuranceClp !== undefined) {
+        setClauses.push("`mandatoryInsuranceClp` = ?");
+        values.push(input.mandatoryInsuranceClp);
+      }
+      if (input.voluntaryInsuranceClp !== undefined) {
+        setClauses.push("`voluntaryInsuranceClp` = ?");
+        values.push(input.voluntaryInsuranceClp);
+      }
+      if (input.fuelTankLiters !== undefined) {
+        setClauses.push("`fuelTankLiters` = ?");
+        values.push(input.fuelTankLiters);
+      }
+      if (input.batteryCapacityKwh !== undefined) {
+        setClauses.push("`batteryCapacityKwh` = ?");
+        values.push(input.batteryCapacityKwh);
+      }
+      if (input.hasRecall !== undefined) {
+        setClauses.push("`hasRecall` = ?");
+        values.push(input.hasRecall);
+      }
+      if (input.recallUrl !== undefined) {
+        setClauses.push("`recallUrl` = ?");
+        values.push(input.recallUrl);
       }
       values.push(id);
       // SCHEMA-DRIFT NOTE: raw UPDATE porque extendEnum agrega un valor
