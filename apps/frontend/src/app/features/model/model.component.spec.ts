@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  provideHttpClientTesting,
+  HttpTestingController,
+} from '@angular/common/http/testing';
 import {
   ActivatedRoute,
   convertToParamMap,
@@ -22,6 +25,8 @@ describe('ModelComponent — carrusel', () => {
     'https://placehold.co/1280x720/c6e9e9/006565?text=Posterior',
   ];
 
+  let http: HttpTestingController;
+
   beforeEach(() => {
     TestBed.resetTestingModule();
     const paramMap: ParamMap = convertToParamMap({
@@ -39,6 +44,13 @@ describe('ModelComponent — carrusel', () => {
         },
       ],
     });
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    for (const req of http.match(() => true)) {
+      req.flush({ data: [] });
+    }
   });
 
   function createWithGallery(galleryUrls: string[]) {
@@ -125,5 +137,137 @@ describe('ModelComponent — carrusel', () => {
     expect(cmp.currentIndex()).toBe(0);
     cmp.goTo(99);
     expect(cmp.currentIndex()).toBe(0);
+  });
+});
+
+describe('ModelComponent — recall badge + dealers', () => {
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    const paramMap: ParamMap = convertToParamMap({
+      brandSlug: 'toyota',
+      modelSlug: 'corolla',
+    });
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(paramMap), snapshot: { paramMap } },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    for (const req of http.match(() => true)) {
+      req.flush({ data: [] });
+    }
+  });
+
+  function createWithVersions(versions: any[]) {
+    const fixture = TestBed.createComponent(ModelComponent);
+    const cmp = fixture.componentInstance as ModelComponent;
+    (cmp as any).model.set({
+      id: 'm1',
+      name: 'Corolla',
+      segment: 'SEDAN',
+      brand: { name: 'Toyota' },
+      versions,
+      galleryUrls: [],
+    });
+    fixture.detectChanges();
+    return { fixture, cmp };
+  }
+
+  it('muestra recall badge si v.hasRecall=true', () => {
+    const { fixture } = createWithVersions([
+      {
+        id: 'v1',
+        name: 'XEI',
+        priceClp: 19990000,
+        year: 2026,
+        fuel: 'Gasolina',
+        transmission: 'Automática',
+        hasRecall: true,
+        recallUrl: 'https://example.com/recall/v1',
+      },
+    ]);
+    const badge = fixture.nativeElement.querySelector(
+      '[data-testid="recall-v1"]',
+    );
+    expect(badge).not.toBeNull();
+    expect(badge.getAttribute('href')).toBe('https://example.com/recall/v1');
+    expect(badge.getAttribute('target')).toBe('_blank');
+    expect(badge.textContent).toContain('Recall publicado');
+  });
+
+  it('no muestra recall badge si v.hasRecall=false', () => {
+    const { fixture } = createWithVersions([
+      {
+        id: 'v2',
+        name: 'XLI',
+        priceClp: 17990000,
+        year: 2026,
+        fuel: 'Gasolina',
+        transmission: 'Mecánica',
+        hasRecall: false,
+      },
+    ]);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="recall-v2"]'),
+    ).toBeNull();
+  });
+
+  it('carga dealers de la marca y renderiza la sección', async () => {
+    const { cmp, fixture } = createWithVersions([]);
+    (cmp as any).brand.set({ id: 'b1', name: 'Toyota', logoUrl: null });
+
+    const promise = cmp.loadBrandDealers('b1');
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands/b1/dealers'))
+      .flush({
+        data: [
+          { id: 'd1', name: 'Derco', url: 'https://derco.cl', logoUrl: null },
+          {
+            id: 'd2',
+            name: 'Salazar Israel',
+            url: 'https://salazar.cl',
+            logoUrl: 'https://cdn.example.com/salazar.png',
+          },
+        ],
+      });
+    await promise;
+
+    expect(cmp.dealers().length).toBe(2);
+    fixture.detectChanges();
+    const aside = fixture.nativeElement.querySelector(
+      '[data-testid="brand-dealers"]',
+    );
+    expect(aside).not.toBeNull();
+    expect(aside.textContent).toContain('Concesionarios oficiales');
+    expect(aside.textContent).toContain('Derco');
+    expect(aside.textContent).toContain('Salazar Israel');
+  });
+
+  it('no renderiza sección de dealers si la respuesta falla', async () => {
+    const { cmp, fixture } = createWithVersions([]);
+    (cmp as any).brand.set({ id: 'b2', name: 'Toyota', logoUrl: null });
+
+    const promise = cmp.loadBrandDealers('b2');
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands/b2/dealers'))
+      .flush({ message: 'error' }, { status: 500, statusText: 'Server Error' });
+    await promise;
+
+    expect(cmp.dealers().length).toBe(0);
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="brand-dealers"]'),
+    ).toBeNull();
   });
 });

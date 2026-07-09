@@ -50,7 +50,16 @@ interface ModelVersion {
   hasAbs?: boolean;
   hasEsp?: boolean;
   hasCruiseControl?: boolean;
+  hasRecall?: boolean | null;
+  recallUrl?: string | null;
   equipmentItems?: { equipmentItem: { name: string; category: string } }[];
+}
+
+interface BrandDealer {
+  id: string;
+  name: string;
+  url: string;
+  logoUrl: string | null;
 }
 
 interface ModelDetail {
@@ -104,6 +113,7 @@ export class ModelComponent {
 
   readonly versions = computed<ModelVersion[]>(() => this.model()?.versions ?? []);
   readonly galleryUrls = computed<string[]>(() => this.model()?.galleryUrls ?? []);
+  readonly dealers = signal<BrandDealer[]>([]);
   readonly hasGallery = computed(() => this.galleryUrls().length > 0);
   readonly tab = signal<TabKey>('specs');
 
@@ -252,6 +262,17 @@ export class ModelComponent {
     return `$${new Intl.NumberFormat('es-CL').format(value)}`;
   }
 
+  async loadBrandDealers(brandId: string): Promise<void> {
+    try {
+      const res = await this.api.get<{ data: BrandDealer[] }>(
+        `/brands/${brandId}/dealers`,
+      );
+      this.dealers.set(res.data ?? []);
+    } catch {
+      this.dealers.set([]);
+    }
+  }
+
   private nextOrPrev(delta: number): void {
     const n = this.galleryUrls().length;
     if (n === 0) return;
@@ -277,6 +298,7 @@ export class ModelComponent {
         return;
       }
       this.brand.set(brand);
+      await this.loadBrandDealers(brand.id);
 
       const modelsRes = await this.api.get<{ data: BrandModel[] }>(
         `/brands/${brand.id}/models`,

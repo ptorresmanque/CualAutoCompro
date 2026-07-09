@@ -225,6 +225,18 @@
             <p class="mt-2 font-display text-3xl text-ink leading-none">
               {{ formatPrice(v.priceClp) }}
             </p>
+            @if (v.hasRecall) {
+              <a
+                [href]="v.recallUrl"
+                target="_blank"
+                rel="noopener"
+                class="mt-2 inline-flex items-center gap-1 text-engine font-mono text-[10px] uppercase tracking-stamp border border-engine px-2 py-0.5"
+                [attr.data-testid]="'recall-' + v.id"
+              >
+                <mat-icon class="text-base">warning</mat-icon>
+                Recall publicado
+              </a>
+            }
             <mat-checkbox
               class="!mt-3 w-full"
               [checked]="isSelected(v.id)"
@@ -243,6 +255,30 @@
         }
       </aside>
     </div>
+
+    @if (dealers().length > 0) {
+      <aside class="mt-6 bg-paper-cool border border-ink p-4" data-testid="brand-dealers">
+        <h3 class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted mb-3">Concesionarios oficiales</h3>
+        <ul class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          @for (d of dealers(); track d.id) {
+            <li>
+              <a
+                [href]="d.url"
+                target="_blank"
+                rel="noopener"
+                class="flex items-center gap-2 p-2 border border-border hover:border-ink"
+              >
+                @if (d.logoUrl) {
+                  <img [src]="d.logoUrl" [alt]="d.name" class="h-8 w-8 object-contain" />
+                }
+                <span class="text-xs font-semibold truncate">{{ d.name }}</span>
+                <mat-icon class="text-base ml-auto">open_in_new</mat-icon>
+              </a>
+            </li>
+          }
+        </ul>
+      </aside>
+    }
 
     <div class="mt-8 flex items-center gap-3">
       <a
