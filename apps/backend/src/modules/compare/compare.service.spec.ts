@@ -1,10 +1,17 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { prisma } from "../../infra/prisma.js";
 import { CompareService } from "./compare.service.js";
 import { setupTestPrisma, resetTestDb } from "../../../__tests__/helpers/db.js";
-import { prisma } from "../../infra/prisma.js";
+import { FuelPricesService } from "../fuel-prices/fuel-prices.service.js";
 
 describe("CompareService", () => {
-  beforeEach(async () => { setupTestPrisma(); await resetTestDb(prisma); });
+  beforeEach(async () => {
+    setupTestPrisma();
+    await resetTestDb(prisma);
+  });
+  afterEach(async () => {
+    await prisma.$disconnect();
+  });
 
   const seed2 = async () => {
     const t = await prisma.brand.create({ data: { name: "Toyota" } });
@@ -25,13 +32,13 @@ describe("CompareService", () => {
   };
 
   it("rechaza más de 3 IDs con BAD_REQUEST", async () => {
-    const svc = new CompareService(prisma);
+    const svc = new CompareService(prisma, new FuelPricesService(prisma));
     await expect(svc.compare(["x", "y", "z", "w"])).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("devuelve 2 versiones y diffHighlights marca los campos que difieren", async () => {
     const { v1, v2 } = await seed2();
-    const svc = new CompareService(prisma);
+    const svc = new CompareService(prisma, new FuelPricesService(prisma));
     const out = await svc.compare([v1, v2]);
     expect(out.versions.length).toBe(2);
     expect(out.diffHighlights.priceClp).toBe(true);
@@ -41,16 +48,164 @@ describe("CompareService", () => {
 
   it("con 1 versión, todos los diffHighlights son false", async () => {
     const { v1 } = await seed2();
-    const svc = new CompareService(prisma);
+    const svc = new CompareService(prisma, new FuelPricesService(prisma));
     const out = await svc.compare([v1]);
     expect(out.versions.length).toBe(1);
     expect(Object.values(out.diffHighlights).every((v) => v === false)).toBe(true);
   });
 
-  it("diffHighlights incluye todos los DIFF_KEYS (18 keys)", async () => {
+  it("diffHighlights incluye todos los DIFF_KEYS (22 keys)", async () => {
     const { v1, v2 } = await seed2();
-    const svc = new CompareService(prisma);
+    const svc = new CompareService(prisma, new FuelPricesService(prisma));
     const out = await svc.compare([v1, v2]);
-    expect(Object.keys(out.diffHighlights).length).toBe(18);
+    expect(Object.keys(out.diffHighlights).length).toBe(22);
+  });
+});
+
+describe("CompareService.computeFillCost", () => {
+  beforeEach(async () => {
+    setupTestPrisma();
+    await resetTestDb(prisma);
+  });
+  afterEach(async () => {
+    await prisma.$disconnect();
+  });
+
+  it("BENCINA con fuelTankLiters usa precio vigente", async () => {
+    const fuelSvc = new FuelPricesService(prisma);
+    await fuelSvc.create({ fuelType: "BENCINA", pricePerUnitClp: 1000, unit: "L" });
+    const compareSvc = new CompareService(prisma, fuelSvc);
+    const brand = await prisma.brand.create({ data: { name: "B" } });
+    const model = await prisma.model.create({ data: { brandId: brand.id, name: "M", segment: "SEDAN" } });
+    const v = await prisma.version.create({
+      data: {
+        modelId: model.id,
+        name: "Sport",
+        year: 2025,
+        priceClp: 15000000,
+        transmission: "AUTOMATIC",
+        fuel: "BENCINA",
+        engineDisplacementCc: 2000,
+        powerHp: 150,
+        torqueNm: 200,
+        consumptionCityKmL: 12,
+        consumptionHighwayKmL: 16,
+        lengthMm: 4500,
+        widthMm: 1800,
+        heightMm: 1450,
+        weightKg: 1300,
+        trunkLiters: 450,
+        airbagCount: 6,
+        hasAbs: true,
+        hasEsp: true,
+        hasCruiseControl: true,
+        fuelTankLiters: 50,
+      },
+    });
+    const result = await compareSvc.compare([v.id]);
+    expect(result.versions[0]?.computedFillCostClp).toBe(50000);
+  });
+
+  it("ELECTRIC con batteryCapacityKwh usa precio kWh", async () => {
+    const fuelSvc = new FuelPricesService(prisma);
+    await fuelSvc.create({ fuelType: "ELECTRIC", pricePerUnitClp: 200, unit: "kWh" });
+    const compareSvc = new CompareService(prisma, fuelSvc);
+    const brand = await prisma.brand.create({ data: { name: "B" } });
+    const model = await prisma.model.create({ data: { brandId: brand.id, name: "M", segment: "SEDAN" } });
+    const v = await prisma.version.create({
+      data: {
+        modelId: model.id,
+        name: "EV",
+        year: 2025,
+        priceClp: 25000000,
+        transmission: "AUTOMATIC",
+        fuel: "ELECTRIC",
+        engineDisplacementCc: 0,
+        powerHp: 200,
+        torqueNm: 300,
+        consumptionCityKmL: 0,
+        consumptionHighwayKmL: 0,
+        lengthMm: 4500,
+        widthMm: 1800,
+        heightMm: 1450,
+        weightKg: 1700,
+        trunkLiters: 400,
+        airbagCount: 6,
+        hasAbs: true,
+        hasEsp: true,
+        hasCruiseControl: true,
+        batteryCapacityKwh: 60,
+      },
+    });
+    const result = await compareSvc.compare([v.id]);
+    expect(result.versions[0]?.computedFillCostClp).toBe(12000);
+  });
+
+  it("retorna null si no hay precio vigente para el fuelType", async () => {
+    const fuelSvc = new FuelPricesService(prisma);
+    const compareSvc = new CompareService(prisma, fuelSvc);
+    const brand = await prisma.brand.create({ data: { name: "B" } });
+    const model = await prisma.model.create({ data: { brandId: brand.id, name: "M", segment: "SEDAN" } });
+    const v = await prisma.version.create({
+      data: {
+        modelId: model.id,
+        name: "Sport",
+        year: 2025,
+        priceClp: 15000000,
+        transmission: "AUTOMATIC",
+        fuel: "BENCINA",
+        engineDisplacementCc: 2000,
+        powerHp: 150,
+        torqueNm: 200,
+        consumptionCityKmL: 12,
+        consumptionHighwayKmL: 16,
+        lengthMm: 4500,
+        widthMm: 1800,
+        heightMm: 1450,
+        weightKg: 1300,
+        trunkLiters: 450,
+        airbagCount: 6,
+        hasAbs: true,
+        hasEsp: true,
+        hasCruiseControl: true,
+        fuelTankLiters: 50,
+      },
+    });
+    const result = await compareSvc.compare([v.id]);
+    expect(result.versions[0]?.computedFillCostClp).toBeNull();
+  });
+
+  it("diffHighlights incluye nuevas keys de costos", async () => {
+    const fuelSvc = new FuelPricesService(prisma);
+    const compareSvc = new CompareService(prisma, fuelSvc);
+    const brand = await prisma.brand.create({ data: { name: "B" } });
+    const model = await prisma.model.create({ data: { brandId: brand.id, name: "M", segment: "SEDAN" } });
+    const a = await prisma.version.create({
+      data: {
+        modelId: model.id, name: "A", year: 2025, priceClp: 15000000,
+        transmission: "AUTOMATIC", fuel: "BENCINA",
+        engineDisplacementCc: 2000, powerHp: 150, torqueNm: 200,
+        consumptionCityKmL: 12, consumptionHighwayKmL: 16,
+        lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300,
+        trunkLiters: 450, airbagCount: 6,
+        hasAbs: true, hasEsp: true, hasCruiseControl: true,
+        circulationPermitClp: 100000, mandatoryInsuranceClp: 50000,
+      },
+    });
+    const b = await prisma.version.create({
+      data: {
+        modelId: model.id, name: "B", year: 2025, priceClp: 18000000,
+        transmission: "AUTOMATIC", fuel: "BENCINA",
+        engineDisplacementCc: 2000, powerHp: 150, torqueNm: 200,
+        consumptionCityKmL: 12, consumptionHighwayKmL: 16,
+        lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300,
+        trunkLiters: 450, airbagCount: 6,
+        hasAbs: true, hasEsp: true, hasCruiseControl: true,
+        circulationPermitClp: 200000, mandatoryInsuranceClp: 80000,
+      },
+    });
+    const result = await compareSvc.compare([a.id, b.id]);
+    expect(result.diffHighlights.circulationPermitClp).toBe(true);
+    expect(result.diffHighlights.mandatoryInsuranceClp).toBe(true);
   });
 });

@@ -2,14 +2,16 @@ import { z } from "zod";
 import { ah } from "../../shared/async-handler.js";
 import { ok } from "../../shared/response.js";
 import { prisma } from "../../infra/prisma.js";
-import { CompareService } from "./compare.service.js";
 import { validation } from "../../shared/errors.js";
+import { CompareService } from "./compare.service.js";
+import { FuelPricesService } from "../fuel-prices/fuel-prices.service.js";
 
 const postBodySchema = z.object({
   versionIds: z.array(z.string()).min(1).max(3),
 });
 
-const svc = new CompareService(prisma);
+const fuelPriceSvc = new FuelPricesService(prisma);
+const svc = new CompareService(prisma, fuelPriceSvc);
 
 export const compareController = {
   post: ah(async (req, res) => {
