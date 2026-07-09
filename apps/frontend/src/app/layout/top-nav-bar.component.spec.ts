@@ -144,10 +144,10 @@ describe('TopNavBarComponent', () => {
       const f = TestBed.createComponent(TestHostComponent);
       f.detectChanges();
 
-      const loginBtn = f.nativeElement.querySelector('[data-testid="nav-login-btn"]');
-      const registerBtn = f.nativeElement.querySelector('[data-testid="nav-register-btn"]');
-      expect(loginBtn).toBeTruthy();
-      expect(registerBtn).toBeTruthy();
+      const loginBtns = f.nativeElement.querySelectorAll('[data-testid="nav-login-btn"]');
+      const registerBtns = f.nativeElement.querySelectorAll('[data-testid="nav-register-btn"]');
+      expect(loginBtns.length).toBeGreaterThanOrEqual(2);
+      expect(registerBtns.length).toBeGreaterThanOrEqual(2);
     });
   });
 
