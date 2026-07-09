@@ -141,9 +141,11 @@ export class ModelComponent {
     return (seg && map[seg]) ?? seg ?? '';
   });
 
-  readonly specGroups = computed<SpecGroup[]>(() => {
-    const v = this.versions()[0];
-    if (!v) return [];
+  readonly specGroupsByVersion = computed<{ version: ModelVersion; groups: SpecGroup[] }[]>(() => {
+    return this.versions().map((v) => ({ version: v, groups: this.buildSpecGroups(v) }));
+  });
+
+  private buildSpecGroups(v: ModelVersion): SpecGroup[] {
     return [
       {
         title: 'Motorización',
@@ -198,7 +200,7 @@ export class ModelComponent {
         ],
       },
     ];
-  });
+  }
 
   readonly equipmentNames = computed<string[]>(() => {
     const all = this.versions().flatMap((v) =>

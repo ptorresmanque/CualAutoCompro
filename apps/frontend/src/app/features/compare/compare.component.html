@@ -164,29 +164,29 @@
           data-testid="card"
           [attr.data-version-id]="v.id"
         >
+          <button
+            mat-icon-button
+            type="button"
+            (click)="removeFromCompare(v.id)"
+            [attr.aria-label]="'Quitar ' + fullName(v)"
+            class="!absolute !top-2 !right-2 !w-7 !h-7 !min-w-0 z-20"
+          >
+            <mat-icon class="text-base leading-none">close</mat-icon>
+          </button>
           @if (v.hasRecall) {
             <a
               [href]="v.recallUrl"
               target="_blank"
               rel="noopener"
-              class="absolute top-1.5 left-1.5 inline-flex items-center gap-1 text-engine font-mono text-[10px] uppercase tracking-stamp border border-engine bg-white px-1.5 py-0.5 z-10"
+              class="absolute top-2 left-2 inline-flex items-center gap-1 text-engine font-mono text-[10px] uppercase tracking-stamp border border-engine bg-white px-1.5 py-0.5 z-10 pr-8"
               [attr.data-testid]="'recall-card-' + v.id"
             >
               <mat-icon class="text-base">warning</mat-icon>
               Recall
             </a>
           }
-          <header class="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-rule">
+          <header class="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-rule pr-8">
             <span class="font-mono text-[10px] uppercase tracking-stamp text-graphite">Modelo</span>
-            <button
-              mat-icon-button
-              type="button"
-              (click)="removeFromCompare(v.id)"
-              [attr.aria-label]="'Quitar ' + fullName(v)"
-              class="!absolute top-1.5 right-1.5 !w-7 !h-7 !min-w-0"
-            >
-              <mat-icon class="text-base">close</mat-icon>
-            </button>
           </header>
 
           <div class="flex items-center gap-2 mb-1">

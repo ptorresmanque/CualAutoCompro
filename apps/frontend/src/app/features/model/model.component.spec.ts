@@ -270,4 +270,22 @@ describe('ModelComponent — recall badge + dealers', () => {
       fixture.nativeElement.querySelector('[data-testid="brand-dealers"]'),
     ).toBeNull();
   });
+
+  it('renderiza spec groups separados para cada versión', () => {
+    const { cmp, fixture } = createWithVersions([
+      { id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450, airbagCount: 6, hasAbs: true, hasEsp: true, hasCruiseControl: true },
+      { id: 'v2', name: 'Limited', year: 2025, priceClp: 18000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 180, engineDisplacementCc: 2500, torqueNm: 250, consumptionCityKmL: 11, consumptionHighwayKmL: 15, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450, airbagCount: 8, hasAbs: true, hasEsp: true, hasCruiseControl: true },
+    ]);
+    fixture.detectChanges();
+    const sections = fixture.nativeElement.querySelectorAll('[data-testid^="spec-version-"]');
+    expect(sections.length).toBe(2);
+    expect(sections[0].getAttribute('data-testid')).toBe('spec-version-v1');
+    expect(sections[1].getAttribute('data-testid')).toBe('spec-version-v2');
+    const motorV1 = sections[0].querySelector('[data-testid="spec-group-v1-Motorización"]');
+    const motorV2 = sections[1].querySelector('[data-testid="spec-group-v2-Motorización"]');
+    expect(motorV1).not.toBeNull();
+    expect(motorV2).not.toBeNull();
+    expect(motorV1?.textContent).toContain('150 HP');
+    expect(motorV2?.textContent).toContain('180 HP');
+  });
 });
