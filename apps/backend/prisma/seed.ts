@@ -141,14 +141,13 @@ async function main() {
   const mcResult = await prisma.maintenanceCost.createMany({ data: maintenanceData });
   console.log(`[seed] maintenance:   ${mcResult.count}`);
 
-  // Precios de combustible iniciales (BENCINA_93/95/97, DIESEL). Skip si ya
+  // Precios de combustible iniciales (BENCINA, DIESEL, ELECTRIC). Skip si ya
   // existe al menos un precio por fuelType (idempotencia — los precios reales
   // los gestiona el admin via /admin/fuel-prices).
-  const initialFuelPrices = [
-    { fuelType: "BENCINA_93", pricePerUnitClp: 1100, unit: "CLP/L" },
-    { fuelType: "BENCINA_95", pricePerUnitClp: 1200, unit: "CLP/L" },
-    { fuelType: "BENCINA_97", pricePerUnitClp: 1300, unit: "CLP/L" },
-    { fuelType: "DIESEL", pricePerUnitClp: 1050, unit: "CLP/L" },
+const initialFuelPrices = [
+    { fuelType: "BENCINA", pricePerUnitClp: 1200, unit: "L" },
+    { fuelType: "DIESEL", pricePerUnitClp: 1050, unit: "L" },
+    { effectiveFrom: new Date(Date.now() - 86400000), fuelType: "ELECTRIC", pricePerUnitClp: 200, unit: "kWh" },
   ];
   let fpCount = 0;
   for (const fp of initialFuelPrices) {
