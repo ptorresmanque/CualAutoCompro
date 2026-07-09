@@ -83,7 +83,7 @@ model Version {
   voluntaryInsuranceClp Int?
   fuelTankLiters        Float?
   batteryCapacityKwh    Float?
-  hasRecall             Boolean            @default(false)
+  hasRecall Boolean @default(false)
   recallUrl             String?
   model                 Model              @relation(fields: [modelId], references: [id], onDelete: Cascade)
   equipmentItems        VersionEquipment[]
