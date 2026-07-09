@@ -39,4 +39,18 @@ describe("BrandsService.update dealerIds sync", () => {
     const relations = await prisma.brandDealer.findMany({ where: { brandId: brand.id } });
     expect(relations).toHaveLength(1);
   });
+
+  it("update con dealerIds: [] elimina todas las relaciones BrandDealer", async () => {
+    const svc = new BrandsService(prisma);
+    const brand = await prisma.brand.create({ data: { name: "Toyota" } });
+    const dealerA = await prisma.dealer.create({ data: { name: "Derco", url: "https://derco.cl" } });
+    const dealerB = await prisma.dealer.create({ data: { name: "Salazar", url: "https://salazar.cl" } });
+    await prisma.brandDealer.create({ data: { brandId: brand.id, dealerId: dealerA.id } });
+    await prisma.brandDealer.create({ data: { brandId: brand.id, dealerId: dealerB.id } });
+
+    await svc.update(brand.id, { dealerIds: [] });
+
+    const remaining = await prisma.brandDealer.count({ where: { brandId: brand.id } });
+    expect(remaining).toBe(0);
+  });
 });
