@@ -211,7 +211,9 @@ model FuelPrice {
   pricePerUnitClp Float
   unit            String
   effectiveFrom   DateTime @default(now())
+  deletedAt       DateTime?
 
   @@unique([fuelType, effectiveFrom])
   @@index([fuelType])
+  @@index([deletedAt])
 }
