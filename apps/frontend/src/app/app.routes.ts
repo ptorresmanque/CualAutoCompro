@@ -117,6 +117,20 @@ export const routes: Routes = [
                 (m) => m.MaintenanceAdminComponent,
               ),
           },
+          {
+            path: 'dealers',
+            loadComponent: () =>
+              import('./features/admin/dealers-admin.component').then(
+                (m) => m.DealersAdminComponent,
+              ),
+          },
+          {
+            path: 'fuel-prices',
+            loadComponent: () =>
+              import('./features/admin/fuel-prices-admin.component').then(
+                (m) => m.FuelPricesAdminComponent,
+              ),
+          },
         ],
       },
     ],

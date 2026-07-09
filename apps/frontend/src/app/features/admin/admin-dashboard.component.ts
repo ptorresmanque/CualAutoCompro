@@ -21,11 +21,13 @@ export class AdminDashboardComponent {
   private api = inject(ApiService);
 
   readonly cards = signal<Card[]>([
-    { path: '/admin/brands',      label: 'Marcas',       count: null, loading: true },
-    { path: '/admin/models',      label: 'Modelos',      count: null, loading: true },
-    { path: '/admin/versions',    label: 'Versiones',    count: null, loading: true },
-    { path: '/admin/equipment',   label: 'Equipamiento', count: null, loading: true },
-    { path: '/admin/maintenance', label: 'Mantención',   count: null, loading: true },
+    { path: '/admin/brands',      label: 'Marcas',              count: null, loading: true },
+    { path: '/admin/models',      label: 'Modelos',             count: null, loading: true },
+    { path: '/admin/versions',    label: 'Versiones',           count: null, loading: true },
+    { path: '/admin/equipment',   label: 'Equipamiento',        count: null, loading: true },
+    { path: '/admin/maintenance', label: 'Mantención',          count: null, loading: true },
+    { path: '/admin/dealers',     label: 'Concesionarios',      count: null, loading: true },
+    { path: '/admin/fuel-prices', label: 'Precios combustible', count: null, loading: true },
   ]);
 
   constructor() {
@@ -34,11 +36,13 @@ export class AdminDashboardComponent {
 
   private async loadCounts(): Promise<void> {
     await Promise.all([
-      this.load('/brands',                0),
-      this.load('/models?pageSize=1',     1),
-      this.load('/versions?pageSize=1',   2),
-      this.load('/equipment',             3),
-      this.load('/admin/maintenance', 4),
+      this.load('/brands',                       0),
+      this.load('/models?pageSize=1',            1),
+      this.load('/versions?pageSize=1',          2),
+      this.load('/equipment',                    3),
+      this.load('/admin/maintenance',            4),
+      this.load('/admin/dealers',                5),
+      this.load('/admin/fuel-prices',            6),
     ]);
   }
 
