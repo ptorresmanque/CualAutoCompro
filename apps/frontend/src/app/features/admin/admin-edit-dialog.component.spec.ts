@@ -77,7 +77,9 @@ describe('AdminEditDialogComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     const toggles = fixture.nativeElement.querySelectorAll('app-toggle-field');
-    expect(toggles.length).toBe(3);
+    expect(toggles.length).toBe(4);
+    const allText = fixture.nativeElement.textContent ?? '';
+    expect(allText.toLowerCase()).toContain('recall');
   });
 
   it('version con equipment renderiza app-multi-select-field', async () => {
