@@ -7,6 +7,24 @@ const storage = createMemoryStorage();
 globalThis.localStorage = storage;
 window.localStorage = storage;
 
+const matchMedia = (query: string): MediaQueryList => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener() {},
+  removeListener() {},
+  addEventListener() {},
+  removeEventListener() {},
+  dispatchEvent: () => false,
+});
+
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: window.matchMedia ?? matchMedia,
+});
+
+globalThis.matchMedia = window.matchMedia;
+
 function createMemoryStorage(): Storage {
   const data = new Map<string, string>();
   return {

@@ -25,4 +25,13 @@ describe('ToggleFieldComponent', () => {
     fixture.detectChanges();
     expect(btn.getAttribute('aria-checked')).toBe('true');
   });
+
+  it('no renderiza texto extra junto al toggle', () => {
+    TestBed.configureTestingModule({ imports: [ToggleFieldComponent] });
+    const fixture = TestBed.createComponent(ToggleFieldComponent);
+    const ctrl = new FormControl<boolean>(false, { nonNullable: true });
+    fixture.componentRef.setInput('control', ctrl);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent?.trim()).toBe('');
+  });
 });

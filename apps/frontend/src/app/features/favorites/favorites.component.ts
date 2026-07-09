@@ -83,10 +83,10 @@ export class FavoritesComponent {
   async onCompareTapped(m: FavoriteModel, v: VehicleVersion): Promise<void> {
     if (this.compare.ids().length >= 3) {
       this.compareMessage.set(
-        'Máximo 3, limpiá la comparación actual primero.',
+        'Máximo 3, limpia la comparación actual primero.',
       );
       this.snackBar.open(
-        'Máximo 3, limpiá la comparación actual primero.',
+        'Máximo 3, limpia la comparación actual primero.',
         'Cerrar',
         { duration: 5000, panelClass: 'snack-warn' },
       );

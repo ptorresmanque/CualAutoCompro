@@ -236,7 +236,7 @@
       @if (items().length === 0 && !loading()) {
         <div class="empty-card">
           <p class="font-semibold text-ink mb-2">No se encontraron modelos</p>
-          <p class="text-sm text-ink-muted mb-4">Probá ajustar los filtros o limpiarlos.</p>
+          <p class="text-sm text-ink-muted mb-4">Prueba ajustar los filtros o limpiarlos.</p>
           <button type="button"
             class="inline-block px-5 py-2.5 text-sm bg-engine text-paper hover:bg-engine-dark btn-engine"
             (click)="clearFilters()">Limpiar filtros</button>
@@ -268,7 +268,7 @@
             <span class="font-mono text-[11px] uppercase tracking-stamp selection-label">
               {{ selectionCount() === 1 ? '1 versión seleccionada' : selectionCount() + ' versiones seleccionadas' }}
               @if (!maxReached()) {
-                <span class="text-graphite"> · podés agregar hasta 3</span>
+                <span class="text-graphite"> · puedes agregar hasta 3</span>
               }
             </span>
           </div>

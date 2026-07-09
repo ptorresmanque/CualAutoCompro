@@ -4,7 +4,7 @@
       <p class="stamp-label mb-2">N° favoritos</p>
       <h1 class="font-display text-3xl md:text-5xl text-ink leading-tight">Mis favoritos</h1>
       <p class="mt-2 text-sm md:text-base text-ink-muted max-w-2xl">
-        Modelos que marcaste con el corazón. Elegí la versión que querés comparar y agregala.
+        Modelos que marcaste con el corazón. Elige la versión que quieres comparar y agrégala.
       </p>
     </div>
     @if (hasItems()) {
@@ -41,9 +41,9 @@
 
   @if (!loading() && !hasItems() && !error() && !compareMessage()) {
     <div class="border border-ink bg-paper-cool p-12 text-center" data-testid="empty">
-      <p class="font-semibold text-lg text-ink">Aún no tenés favoritos</p>
+      <p class="font-semibold text-lg text-ink">Aún no tienes favoritos</p>
       <p class="mt-2 text-sm text-ink-muted">
-        Marcá con el corazón desde el catálogo para verlos acá.
+        Marca con el corazón desde el catálogo para verlos acá.
       </p>
       <a
         routerLink="/catalogo"
