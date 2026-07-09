@@ -27,9 +27,18 @@ const TEMPLATES: Record<string, unknown> = {
     hasAbs: false,
     hasEsp: false,
     hasCruiseControl: false,
+    circulationPermitClp: null,
+    mandatoryInsuranceClp: null,
+    voluntaryInsuranceClp: null,
+    fuelTankLiters: null,
+    batteryCapacityKwh: null,
+    hasRecall: false,
+    recallUrl: null,
   },
   equipment: { name: "", category: "" },
   maintenance: { versionId: "", mileageTag: 0, costClp: 0 },
+  dealer: { name: "", url: "", logoUrl: null },
+  fuelPrice: { fuelType: "BENCINA", pricePerUnitClp: 0, unit: "L" },
 };
 
 export const seedController = {
