@@ -32,6 +32,7 @@ const imageUrlField = z
 export const brandSchema = z.object({
   name: z.string().min(2).max(80),
   logoUrl: imageUrlField.nullable().optional(),
+  dealerIds: z.array(z.string()).optional(),
 });
 
 export const modelSchema = z.object({
@@ -63,6 +64,13 @@ export const versionSchema = z.object({
   hasAbs: z.boolean(),
   hasEsp: z.boolean(),
   hasCruiseControl: z.boolean(),
+  circulationPermitClp: z.number().int().nonnegative().nullable().optional(),
+  mandatoryInsuranceClp: z.number().int().nonnegative().nullable().optional(),
+  voluntaryInsuranceClp: z.number().int().nonnegative().nullable().optional(),
+  fuelTankLiters: z.number().nonnegative().nullable().optional(),
+  batteryCapacityKwh: z.number().nonnegative().nullable().optional(),
+  hasRecall: z.boolean().default(false),
+  recallUrl: z.string().url().nullable().optional(),
 });
 
 export const equipmentSchema = z.object({
@@ -76,13 +84,27 @@ export const maintenanceSchema = z.object({
   costClp: z.number().int().nonnegative(),
 });
 
+export const dealerSchema = z.object({
+  name: z.string().min(2).max(120),
+  url: z.string().url(),
+  logoUrl: imageUrlField.nullable().optional(),
+});
+
+export const fuelPriceSchema = z.object({
+  fuelType: z.enum(FUELS),
+  pricePerUnitClp: z.number().positive(),
+  unit: z.enum(['L', 'kWh']),
+});
+
 export type BrandInput = z.infer<typeof brandSchema>;
 export type ModelInput = z.infer<typeof modelSchema>;
 export type VersionInput = z.infer<typeof versionSchema>;
 export type EquipmentInput = z.infer<typeof equipmentSchema>;
 export type MaintenanceInput = z.infer<typeof maintenanceSchema>;
+export type DealerInput = z.infer<typeof dealerSchema>;
+export type FuelPriceInput = z.infer<typeof fuelPriceSchema>;
 
-export type EntityKey = 'brand' | 'model' | 'version' | 'equipment' | 'maintenance';
+export type EntityKey = 'brand' | 'model' | 'version' | 'equipment' | 'maintenance' | 'dealer' | 'fuelPrice';
 
 export const entitySchemaByKey: Record<EntityKey, z.ZodTypeAny> = {
   brand: brandSchema,
@@ -90,6 +112,8 @@ export const entitySchemaByKey: Record<EntityKey, z.ZodTypeAny> = {
   version: versionSchema,
   equipment: equipmentSchema,
   maintenance: maintenanceSchema,
+  dealer: dealerSchema,
+  fuelPrice: fuelPriceSchema,
 };
 
 export type FieldKind =
@@ -116,6 +140,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
   brand: [
     { field: 'name', label: 'Nombre', kind: 'text' },
     { field: 'logoUrl', label: 'Logo', kind: 'imageUrl' },
+    { field: 'dealerIds', label: 'Concesionarios', kind: 'multiSelect', optionsApi: '/admin/dealers', optionLabel: 'name' },
   ],
   model: [
     { field: 'brandId', label: 'Marca', kind: 'foreignKey', optionsApi: '/brands', optionLabel: 'name' },
@@ -146,6 +171,13 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'hasEsp', label: 'Control de estabilidad', kind: 'boolean' },
     { field: 'hasCruiseControl', label: 'Control de crucero', kind: 'boolean' },
     { field: 'equipment', label: 'Equipamiento', kind: 'multiSelect', optionsApi: '/admin/equipment', optionLabel: 'name' },
+    { field: 'circulationPermitClp', label: 'Permiso circulación CLP', kind: 'number' },
+    { field: 'mandatoryInsuranceClp', label: 'SOAP CLP', kind: 'number' },
+    { field: 'voluntaryInsuranceClp', label: 'Seguro automotriz CLP', kind: 'number' },
+    { field: 'fuelTankLiters', label: 'Capacidad estanque L', kind: 'number' },
+    { field: 'batteryCapacityKwh', label: 'Capacidad batería kWh', kind: 'number' },
+    { field: 'hasRecall', label: '¿Tiene recall?', kind: 'boolean' },
+    { field: 'recallUrl', label: 'URL del informe (si recall)', kind: 'text' },
   ],
   equipment: [
     { field: 'name', label: 'Nombre', kind: 'text' },
@@ -155,5 +187,15 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'versionId', label: 'Versión', kind: 'foreignKey', optionsApi: '/versions', optionLabel: 'name' },
     { field: 'mileageTag', label: 'Kilometraje', kind: 'number' },
     { field: 'costClp', label: 'Costo CLP', kind: 'number' },
+  ],
+  dealer: [
+    { field: 'name', label: 'Nombre', kind: 'text' },
+    { field: 'url', label: 'URL', kind: 'text' },
+    { field: 'logoUrl', label: 'Logo', kind: 'imageUrl' },
+  ],
+  fuelPrice: [
+    { field: 'fuelType', label: 'Tipo de combustible', kind: 'enumWithOther', options: [...FUELS] },
+    { field: 'pricePerUnitClp', label: 'Precio CLP / unidad', kind: 'number' },
+    { field: 'unit', label: 'Unidad', kind: 'enumWithOther', options: ['L', 'kWh'] },
   ],
 };
