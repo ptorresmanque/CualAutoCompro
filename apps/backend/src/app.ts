@@ -13,6 +13,8 @@ import { comparisonsRouter, meComparisonsRouter } from "./modules/comparisons/co
 import { meFavoritesRouter } from "./modules/favorites/favorites.routes.js";
 import { equipmentAdminRouter, equipmentRouter } from "./modules/equipment/equipment.routes.js";
 import { maintenanceAdminRouter, maintenanceRouter } from "./modules/maintenance/maintenance.routes.js";
+import { dealersRouter, dealersAdminRouter } from "./modules/dealers/dealers.routes.js";
+import { fuelPricesRouter, fuelPricesAdminRouter } from "./modules/fuel-prices/fuel-prices.routes.js";
 import { adminRouter } from "./modules/admin/admin.routes.js";
 import { uploadsAdminRouter } from "./modules/uploads/uploads.routes.js";
 
@@ -57,6 +59,10 @@ export const createApp = () => {
   app.use("/api/v1/admin/equipment", equipmentAdminRouter);
   app.use("/api/v1/maintenance", maintenanceRouter);
   app.use("/api/v1/admin/maintenance", maintenanceAdminRouter);
+  app.use("/api/v1/brands", dealersRouter);
+  app.use("/api/v1/fuel-prices", fuelPricesRouter);
+  app.use("/api/v1/admin/dealers", dealersAdminRouter);
+  app.use("/api/v1/admin/fuel-prices", fuelPricesAdminRouter);
   app.use("/api/v1/admin", adminRouter);
   app.use("/api/v1/admin/uploads", uploadsAdminRouter);
   app.use("/uploads", express.static(path.resolve(process.cwd(), "public", "uploads")));
