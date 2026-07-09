@@ -6,7 +6,9 @@ export const createBrandSchema = z.object({
   logoUrl: imageUrl.nullable().optional(),
 });
 
-export const updateBrandSchema = createBrandSchema.partial();
+export const updateBrandSchema = createBrandSchema.partial().extend({
+  dealerIds: z.array(z.string()).optional(),
+});
 
 export type CreateBrandInput = z.infer<typeof createBrandSchema>;
 export type UpdateBrandInput = z.infer<typeof updateBrandSchema>;

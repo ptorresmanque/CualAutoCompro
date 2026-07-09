@@ -17,6 +17,9 @@ export class BrandsService {
     return this.prisma.brand.findMany({
       where: { deletedAt: null },
       orderBy: { name: "asc" },
+      include: {
+        dealers: { include: { dealer: { select: { id: true, name: true, url: true, logoUrl: true } } } },
+      },
     });
   }
 
@@ -32,14 +35,24 @@ export class BrandsService {
   }
 
   async update(id: string, input: UpdateBrandInput) {
+    const { dealerIds, ...rest } = input;
     const data = Object.fromEntries(
-      Object.entries(input).filter(([, v]) => v !== undefined),
+      Object.entries(rest).filter(([, v]) => v !== undefined),
     ) as Prisma.BrandUpdateInput;
     try {
-      return await this.prisma.brand.update({
+      const brand = await this.prisma.brand.update({
         where: { id, deletedAt: null },
         data,
       });
+      if (dealerIds !== undefined) {
+        await this.prisma.brandDealer.deleteMany({ where: { brandId: id } });
+        if (dealerIds.length > 0) {
+          await this.prisma.brandDealer.createMany({
+            data: dealerIds.map((dealerId) => ({ brandId: id, dealerId })),
+          });
+        }
+      }
+      return brand;
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
         throw notFound("Marca no encontrada");
