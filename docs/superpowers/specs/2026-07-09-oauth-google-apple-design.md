@@ -31,7 +31,7 @@ interceptors no cambian.
 | Decisión | Valor | Justificación |
 |---|---|---|
 | Proveedores v1 | Google + Apple | Recomendado. Cubre ~95% usuarios Chile/Latam; Apple es obligatorio en iOS/iPadOS. Otros (Facebook/GitHub/Microsoft) se pueden agregar después con el mismo patrón. |
-| Librería | `passport`, `passport-google-oauth20`, `@nicokrause/passport-apple`, `openid-client` | Soberanía total, sin SaaS externo, sin vendor lock-in, sin procesar datos personales en terceros. Caben en cPanel (JS puro, sin binarios nativos). |
+| Librería | `passport`, `passport-google-oauth20`, `@nicokaiser/passport-apple`, `openid-client` | Soberanía total, sin SaaS externo, sin vendor lock-in, sin procesar datos personales en terceros. Caben en cPanel (JS puro, sin binarios nativos). |
 | Estado durante OAuth | Cookie firmada `oauth_state` (HS256 con `JWT_SECRET`), 10min, `path=/api/v1/auth`, `httpOnly`, `sameSite=lax`, `secure` en prod | Sin `express-session`, sin Redis, sin memoria compartida. Compatible con reinicios del proceso Node en cPanel. |
 | Vinculación de cuentas | Automática por email verificado | Recomendado. Cero fricción. Bloqueamos si `email_verified=false`. |
 | Mantener email/password | Sí, sin cambios | Backward compatible. Sin migración de usuarios existentes. |
@@ -67,7 +67,7 @@ interceptors no cambian.
   "dependencies": {
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "@nicokrause/passport-apple": "^2.0.0",
+    "@nicokaiser/passport-apple": "^2.0.0",
     "openid-client": "^5.7.0"
   },
   "devDependencies": {
@@ -77,7 +77,7 @@ interceptors no cambian.
 }
 ```
 
-(`@nicokrause/passport-apple` se prefiere sobre `passport-apple` original porque
+(`@nicokaiser/passport-apple` se prefiere sobre `passport-apple` original porque
 mantiene `openid-client` actualizado y compatibilidad con Apple Sign-In actual.
 No requiere tipos propios — los provee `passport`.)
 
@@ -514,7 +514,7 @@ URLs calcen.
 ### 5.3 Riesgos conocidos (documentados)
 
 - **Apple rota JWKS** periódicamente. Mitigado usando el helper de
-  `@nicokrause/passport-apple` que hace refresh automático desde
+  `@nicokaiser/passport-apple` que hace refresh automático desde
   `https://appleid.apple.com/auth/keys`.
 - **Google `picture` puede ser grande**. Se ignora en esta entrega; si en el
   futuro se quiere avatar, se guarda aparte y se redimensiona.

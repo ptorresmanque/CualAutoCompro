@@ -6,7 +6,7 @@
 
 **Architecture:** Passport.js + `openid-client` contra los endpoints oficiales de Google y Apple. Cookie firmada propia para el `state`/`nonce` (sin `express-session`). Tabla nueva `UserIdentity` para vincular providers a `User`. Frontend hace full navigation a `/api/v1/auth/{provider}` para que la cookie httpOnly se setee.
 
-**Tech Stack:** Node 20+, Express 4, Prisma 5.22 + MariaDB 11, TypeScript ~6, Vitest 4, Passport 0.7, `passport-google-oauth20` 2, `@nicokrause/passport-apple` 2, `openid-client` 5; Angular 22 (standalone + signals + OnPush), Angular Material 22, Vitest 4, Playwright 1.61.
+**Tech Stack:** Node 20+, Express 4, Prisma 5.22 + MariaDB 11, TypeScript ~6, Vitest 4, Passport 0.7, `passport-google-oauth20` 2, `@nicokaiser/passport-apple` 2, `openid-client` 5; Angular 22 (standalone + signals + OnPush), Angular Material 22, Vitest 4, Playwright 1.61.
 
 **Spec:** `docs/superpowers/specs/2026-07-09-oauth-google-apple-design.md`
 
@@ -99,7 +99,7 @@ Run:
 npm -w apps/backend install \
   passport@0.7.0 \
   passport-google-oauth20@2.0.0 \
-  @nicokrause/passport-apple@2.0.0 \
+  @nicokaiser/passport-apple@2.0.0 \
   openid-client@5.7.0
 npm -w apps/backend install -D \
   @types/passport@1.0.16 \
@@ -112,7 +112,7 @@ Expected: ambas installs terminan sin error.
 
 Run:
 ```bash
-grep -E '"(passport|passport-google-oauth20|@nicokrause/passport-apple|openid-client)"' apps/backend/package.json
+grep -E '"(passport|passport-google-oauth20|@nicokaiser/passport-apple|openid-client)"' apps/backend/package.json
 ```
 
 Expected: 4 líneas con las versiones exactas.
@@ -823,8 +823,8 @@ git commit -m "feat(be): OAuth envs + consistency check"
 ```ts
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-// @ts-expect-error — @nicokrause/passport-apple no exporta tipos consistentes
-import AppleStrategy from "@nicokrause/passport-apple";
+// @ts-expect-error — @nicokaiser/passport-apple no exporta tipos consistentes
+import AppleStrategy from "@nicokaiser/passport-apple";
 import { env } from "../../../config/env.js";
 import type { OAuthProvider } from "../oauth-state.js";
 
