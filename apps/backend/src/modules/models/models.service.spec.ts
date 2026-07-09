@@ -146,4 +146,102 @@ describe("ModelsService + extendEnum", () => {
     const found = res.items.find((m) => m.name === name)!;
     expect(found.imageUrl).toBe("/uploads/2026-07/fallback.png");
   });
+
+  it("detail() incluye equipmentItems por versión (necesario para la tabla de Equipamiento)", async () => {
+    const svc = new ModelsService(prisma);
+    const brand = await prisma.brand.findFirstOrThrow({ where: { name: "Toyota" } });
+    const model = await svc.create({
+      brandId: brand.id,
+      name: `Modelo Equip ${Date.now()}`,
+      segment: "SEDAN",
+      imageUrl: null,
+      galleryUrls: [],
+    });
+    const version = await prisma.version.create({
+      data: {
+        modelId: model.id,
+        name: "1.6",
+        year: 2026,
+        priceClp: 1000000,
+        transmission: "MANUAL",
+        fuel: "BENCINA",
+        engineDisplacementCc: 0,
+        powerHp: 0,
+        torqueNm: 0,
+        consumptionCityKmL: 0,
+        consumptionHighwayKmL: 0,
+        lengthMm: 0,
+        widthMm: 0,
+        heightMm: 0,
+        weightKg: 0,
+        trunkLiters: 0,
+        airbagCount: 0,
+        hasAbs: false,
+        hasEsp: false,
+        hasCruiseControl: false,
+      },
+    });
+    const item = await prisma.equipmentItem.create({
+      data: { name: "Apple CarPlay", category: "Conectividad" },
+    });
+    await prisma.versionEquipment.create({
+      data: { versionId: version.id, equipmentItemId: item.id },
+    });
+
+    const detail = await svc.detail(model.id);
+    const v = detail.versions.find((x) => x.id === version.id)!;
+    expect(v.equipmentItems).toBeDefined();
+    expect(v.equipmentItems.length).toBe(1);
+    expect(v.equipmentItems[0]?.equipmentItem.name).toBe("Apple CarPlay");
+  });
+
+  it("list() incluye equipmentItems por versión", async () => {
+    const svc = new ModelsService(prisma);
+    const brand = await prisma.brand.findFirstOrThrow({ where: { name: "Toyota" } });
+    const name = `Modelo ListEquip ${Date.now()}`;
+    const model = await svc.create({
+      brandId: brand.id,
+      name,
+      segment: "SEDAN",
+      imageUrl: null,
+      galleryUrls: [],
+    });
+    const version = await prisma.version.create({
+      data: {
+        modelId: model.id,
+        name: "1.6",
+        year: 2026,
+        priceClp: 0,
+        transmission: "MANUAL",
+        fuel: "BENCINA",
+        engineDisplacementCc: 0,
+        powerHp: 0,
+        torqueNm: 0,
+        consumptionCityKmL: 0,
+        consumptionHighwayKmL: 0,
+        lengthMm: 0,
+        widthMm: 0,
+        heightMm: 0,
+        weightKg: 0,
+        trunkLiters: 0,
+        airbagCount: 0,
+        hasAbs: false,
+        hasEsp: false,
+        hasCruiseControl: false,
+      },
+    });
+    const item = await prisma.equipmentItem.create({
+      data: { name: "Cámara 360°", category: "Seguridad" },
+    });
+    await prisma.versionEquipment.create({
+      data: { versionId: version.id, equipmentItemId: item.id },
+    });
+
+    const res = await svc.list({ page: 1, pageSize: 50, sort: "name", order: "asc" });
+    const found = res.items.find((m) => m.name === name)!;
+    const v = found.versions.find((x) => x.id === version.id)!;
+    expect(v.equipmentItems).toBeDefined();
+    expect(v.equipmentItems?.length).toBe(1);
+    expect(v.equipmentItems?.[0]?.equipmentItem.name).toBe("Cámara 360°");
+  });
 });

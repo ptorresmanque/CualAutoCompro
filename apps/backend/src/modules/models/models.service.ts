@@ -49,7 +49,15 @@ export class ModelsService {
         where,
         include: {
           brand: true,
-          versions: { where: { deletedAt: null }, orderBy: { priceClp: "asc" } },
+          versions: {
+            where: { deletedAt: null },
+            orderBy: { priceClp: "asc" },
+            include: {
+              equipmentItems: {
+                include: { equipmentItem: { select: { id: true, name: true, category: true } } },
+              },
+            },
+          },
         },
         skip: (q.page - 1) * q.pageSize,
         take: q.pageSize,
@@ -87,6 +95,9 @@ export class ModelsService {
         torqueNm: v.torqueNm,
         consumptionCityKmL: v.consumptionCityKmL,
         consumptionHighwayKmL: v.consumptionHighwayKmL,
+        equipmentItems: v.equipmentItems.map((ei) => ({
+          equipmentItem: { id: ei.equipmentItem.id, name: ei.equipmentItem.name, category: ei.equipmentItem.category },
+        })),
       }));
       const galleryUrls = toGalleryUrls(m.galleryUrls);
       return {
@@ -132,7 +143,15 @@ export class ModelsService {
       where: { id, deletedAt: null, brand: { deletedAt: null } },
       include: {
         brand: true,
-        versions: { where: { deletedAt: null }, orderBy: { priceClp: "asc" } },
+        versions: {
+          where: { deletedAt: null },
+          orderBy: { priceClp: "asc" },
+          include: {
+            equipmentItems: {
+              include: { equipmentItem: { select: { id: true, name: true, category: true } } },
+            },
+          },
+        },
       },
     });
     if (!m) throw notFound("Modelo no encontrado");
