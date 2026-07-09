@@ -23,7 +23,7 @@ export class AuthService {
   async login(input: z.infer<typeof loginSchema>) {
     const { email, password } = loginSchema.parse(input);
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) throw unauthorized("Credenciales inválidas");
+    if (!user || !user.passwordHash) throw unauthorized("Credenciales inválidas");
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) throw unauthorized("Credenciales inválidas");
     const role = narrowUserRole(user.role);
