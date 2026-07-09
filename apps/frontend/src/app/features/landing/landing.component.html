@@ -13,7 +13,7 @@
           </h1>
           <p class="text-base md:text-lg text-ink-muted max-w-xl mb-8 leading-relaxed">
             Ficha técnica, precios CLP y equipamiento en un solo lugar.
-            Tomá una decisión informada antes de pisar el concesionario.
+            Toma una decisión informada antes de pisar el concesionario.
           </p>
           <div class="flex flex-col sm:flex-row gap-3">
             <a
@@ -105,7 +105,7 @@
         <h3 class="font-semibold text-lg text-ink mb-2">Mercado chileno 2026</h3>
         <p class="text-sm text-ink-muted leading-relaxed">
           Precios en CLP, combustibles locales (gasolina, diésel, GLP,
-          eléctrico). Comparás contra el mercado real, no el catálogo gringo.
+          eléctrico). Comparas contra el mercado real, no el catálogo gringo.
         </p>
       </article>
 
@@ -118,8 +118,8 @@
         </header>
         <h3 class="font-semibold text-lg text-ink mb-2">Link compartible de 8 caracteres</h3>
         <p class="text-sm text-ink-muted leading-relaxed">
-          Cada comparación se guarda con un código corto. Mandala por WhatsApp
-          y la otra persona ve exactamente lo mismo que vos.
+          Cada comparación se guarda con un código corto. Mándala por WhatsApp
+          y la otra persona ve exactamente lo mismo que tú.
         </p>
       </article>
     </div>
@@ -169,8 +169,12 @@
             <app-vehicle-card
               [model]="m"
               [featured]="true"
-              [selectedVersionId]="m.versions[0]?.id ?? null"
-              [isFavorite]="favorites.isFavorite(m.versions[0]?.id ?? '')"
+              [added]="isAdded(m)"
+              [maxReached]="maxReached()"
+              [selectedVersionId]="selectedVersionId(m)"
+              [isFavorite]="favorites.isFavorite(selectedVersionId(m) ?? '')"
+              (compareTapped)="addToCompare($event)"
+              (versionSelected)="onVersionSelected(m, $event)"
               (favoriteToggled)="onFavoriteToggle(m, $event)"
             />
           </li>
@@ -213,7 +217,7 @@
         Tu próxima ficha<br />empieza acá.
       </h2>
       <p class="text-ink-muted max-w-xl mb-7 leading-relaxed">
-        Creá una cuenta gratis para guardar comparaciones, retomar donde las
+        Crea una cuenta gratis para guardar comparaciones, retomar donde las
         dejaste y acceder desde cualquier dispositivo.
       </p>
       <a

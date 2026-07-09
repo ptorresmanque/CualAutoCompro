@@ -6,6 +6,7 @@ import { provideRouter } from '@angular/router';
 import { LandingComponent } from './landing.component';
 import { AuthService, type User } from '../../core/auth.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
+import { CompareStore } from '../../core/compare-store.service';
 
 class AuthServiceStub {
   currentUser = signal<User | null>(null);
@@ -19,9 +20,11 @@ class FavoritesStoreStub {
 
 describe('LandingComponent', () => {
   let http: HttpTestingController;
+  let compare: CompareStore;
 
   beforeEach(() => {
     TestBed.resetTestingModule();
+    localStorage.clear();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -32,10 +35,12 @@ describe('LandingComponent', () => {
       ],
     });
     http = TestBed.inject(HttpTestingController);
+    compare = TestBed.inject(CompareStore);
   });
 
   afterEach(() => {
     http.verify();
+    localStorage.clear();
   });
 
   it('renderiza hero con H1 y dos CTAs', async () => {
@@ -137,6 +142,46 @@ describe('LandingComponent', () => {
     );
     expect(grid).not.toBeNull();
     expect(grid?.querySelectorAll('app-vehicle-card').length).toBe(3);
+  });
+
+  it('agrega a comparación la versión seleccionada desde fichas del mes', async () => {
+    const fixture = TestBed.createComponent(LandingComponent);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/api/v1/models')).flush({
+      data: {
+        total: 1,
+        items: [
+          {
+            id: 'm1',
+            name: 'Corolla',
+            brand: { name: 'Toyota' },
+            segment: 'SEDAN',
+            minPrice: 10000000,
+            versions: [
+              { id: 'v1', name: 'Base', year: 2026, priceClp: 10000000 },
+              { id: 'v2', name: 'Sport', year: 2026, priceClp: 12000000 },
+            ],
+          },
+        ],
+        page: 1,
+        pageSize: 30,
+      },
+    });
+    await fixture.componentInstance.ready;
+    fixture.detectChanges();
+
+    const version = fixture.nativeElement.querySelector(
+      '[data-testid="version-chip-v2"]',
+    ) as HTMLButtonElement;
+    version.click();
+    fixture.detectChanges();
+
+    const compareButton = fixture.nativeElement.querySelector(
+      '[data-testid="compare-m1"]',
+    ) as HTMLButtonElement;
+    compareButton.click();
+
+    expect(compare.ids()).toEqual(['v2']);
   });
 
   it('muestra error si el backend falla', async () => {

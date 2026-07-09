@@ -8,6 +8,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../core/api.service';
+import { CompareStore } from '../../core/compare-store.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
 import {
   VehicleCardComponent,
@@ -32,6 +33,7 @@ const FEATURED_ON_LANDING = new Set(['Corolla', 'Tucson', 'CX-5']);
 })
 export class LandingComponent {
   private api = inject(ApiService);
+  private compare = inject(CompareStore);
   readonly favorites = inject(FavoritesStore);
 
   readonly featured = signal<VehicleCardInput[]>([]);
@@ -39,6 +41,32 @@ export class LandingComponent {
   readonly loadError = signal<string | null>(null);
 
   readonly stats = signal<Stats | null>(null);
+  readonly selectedVersions = signal<Record<string, string>>({});
+  readonly selectedIds = this.compare.ids;
+  readonly maxReached = computed(() => this.selectedIds().length >= 3);
+
+  selectedVersionId(item: VehicleCardInput): string | null {
+    const override = this.selectedVersions()[item.id];
+    if (override) return override;
+    return item.versions[0]?.id ?? item.defaultVersion?.id ?? null;
+  }
+
+  isAdded(item: VehicleCardInput): boolean {
+    const id = this.selectedVersionId(item);
+    return id ? this.selectedIds().includes(id) : false;
+  }
+
+  addToCompare(version: VehicleVersion): void {
+    if (this.selectedIds().includes(version.id)) {
+      this.compare.remove(version.id);
+    } else {
+      this.compare.add(version.id);
+    }
+  }
+
+  onVersionSelected(item: VehicleCardInput, v: VehicleVersion): void {
+    this.selectedVersions.update((m) => ({ ...m, [item.id]: v.id }));
+  }
 
   onFavoriteToggle(m: VehicleCardInput, v: VehicleVersion): void {
     void this.favorites.toggle({ modelId: m.id, versionId: v.id });
