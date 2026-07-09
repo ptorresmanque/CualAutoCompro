@@ -59,6 +59,7 @@ export const createApp = () => {
   app.use("/api/v1/admin/equipment", equipmentAdminRouter);
   app.use("/api/v1/maintenance", maintenanceRouter);
   app.use("/api/v1/admin/maintenance", maintenanceAdminRouter);
+  // dealers nested under brands: /:brandId/dealers (no conflict with brandsRouter's /:id/models because the param value differs)
   app.use("/api/v1/brands", dealersRouter);
   app.use("/api/v1/fuel-prices", fuelPricesRouter);
   app.use("/api/v1/admin/dealers", dealersAdminRouter);
