@@ -6,7 +6,13 @@ import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { sortItems, type SortDir } from './sort-utils';
 
-interface BrandRow { id: string; name: string; logoUrl: string | null; }
+interface BrandRow {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+  dealers?: { dealer: { id: string } }[];
+  dealerIds?: string[];
+}
 type SortKey = 'name';
 
 @Component({
@@ -58,7 +64,8 @@ export class BrandsAdminComponent {
     this.dialogEntity.set(null);
   }
   openEdit(row: BrandRow): void {
-    this.dialogEntity.set(row);
+    const dealerIds = row.dealers?.map((d) => d.dealer.id) ?? [];
+    this.dialogEntity.set({ ...row, dealerIds });
   }
   closeDialog(): void {
     this.dialogEntity.set(undefined);

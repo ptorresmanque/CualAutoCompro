@@ -3,6 +3,14 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { BrandsAdminComponent } from './brands-admin.component';
 
+interface BrandRow {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+  dealers?: { dealer: { id: string } }[];
+  dealerIds?: string[];
+}
+
 describe('BrandsAdminComponent', () => {
   it('carga lista desde /admin/brands (fallback /brands en test)', async () => {
     TestBed.configureTestingModule({
@@ -107,6 +115,34 @@ describe('BrandsAdminComponent', () => {
 
     for (const r of http.match(() => true)) r.flush({ data: [] });
     await fixture.whenStable();
+  });
+
+  it('openEdit proyecta dealers -> dealerIds', async () => {
+    TestBed.configureTestingModule({
+      imports: [BrandsAdminComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(BrandsAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    for (const r of http.match(() => true)) {
+      r.flush({ data: [] });
+    }
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+
+    const cmp = fixture.componentInstance;
+    const row: BrandRow = {
+      id: 'b1',
+      name: 'Toyota',
+      logoUrl: null,
+      dealers: [{ dealer: { id: 'd1' } }, { dealer: { id: 'd2' } }],
+    };
+    cmp.openEdit(row);
+
+    const dialogEntity = cmp.dialogEntity() as BrandRow | null;
+    expect(dialogEntity).not.toBeNull();
+    expect(dialogEntity!.dealerIds).toEqual(['d1', 'd2']);
   });
 
   it('al crear marca, POST no envía dealerIds', async () => {
