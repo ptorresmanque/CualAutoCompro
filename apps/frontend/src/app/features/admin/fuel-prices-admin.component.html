@@ -1,0 +1,81 @@
+<section>
+  <header class="flex items-center justify-between mb-4 gap-2">
+    <h2 class="text-xl font-bold">Precios de combustible</h2>
+    <button mat-flat-button color="primary" type="button" (click)="openCreate()">+ Nuevo</button>
+  </header>
+
+  <app-search-input placeholder="Buscar por tipo…" [value]="search()" (changed)="onSearch($event)" />
+
+  @if (error(); as err) {
+    <div class="mb-3 rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark">{{ err }}</div>
+  }
+
+  @if (loading()) {
+    <p class="text-sm text-ink-muted">Cargando…</p>
+  } @else if (displayed().length === 0) {
+    <p class="text-sm text-ink-muted">No hay precios registrados.</p>
+  } @else {
+    <div class="admin-table-scroll">
+      <table class="admin-table w-full text-sm">
+        <thead class="text-left text-xs text-ink-muted">
+          <tr>
+            <th class="py-2">
+              <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
+                (click)="toggleSort('fuelType')"
+                [attr.aria-sort]="sortKey() === 'fuelType' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+                Tipo
+                <mat-icon class="sort-icon">{{ sortKey() === 'fuelType' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
+              </button>
+            </th>
+            <th class="py-2">
+              <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
+                (click)="toggleSort('pricePerUnitClp')"
+                [attr.aria-sort]="sortKey() === 'pricePerUnitClp' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+                Precio CLP
+                <mat-icon class="sort-icon">{{ sortKey() === 'pricePerUnitClp' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
+              </button>
+            </th>
+            <th class="py-2">Unidad</th>
+            <th class="py-2">
+              <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
+                (click)="toggleSort('effectiveFrom')"
+                [attr.aria-sort]="sortKey() === 'effectiveFrom' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+                Vigente desde
+                <mat-icon class="sort-icon">{{ sortKey() === 'effectiveFrom' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
+              </button>
+            </th>
+            <th class="py-2 actions-col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (fp of displayed(); track fp.id) {
+            <tr class="border-t border-border">
+              <td class="py-2">{{ fp.fuelType }}</td>
+              <td class="py-2">{{ formatCurrency(fp.pricePerUnitClp) }}</td>
+              <td class="py-2">{{ fp.unit }}</td>
+              <td class="py-2">{{ fp.effectiveFrom | date: 'short' }}</td>
+              <td class="py-2 actions-col">
+                <div class="action-buttons">
+                  <button mat-stroked-button class="action-danger" (click)="confirmDelete(fp)">
+                    <mat-icon class="action-icon">delete</mat-icon>
+                    <span class="action-label">Eliminar</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (dialogMode() === 'open') {
+    <app-admin-edit-dialog
+      [entityKey]="'fuelPrice'"
+      [apiPath]="'fuel-prices'"
+      [entity]="$any(dialogEntity())"
+      (save)="onSave($event)"
+      (cancel)="closeDialog()"
+    />
+  }
+</section>
