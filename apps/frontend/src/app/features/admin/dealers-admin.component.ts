@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../core/api.service';
+import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { sortItems, type SortDir } from './sort-utils';
@@ -100,5 +101,9 @@ export class DealersAdminComponent {
       this.sortKey.set(key);
       this.sortDir.set('asc');
     }
+  }
+
+  logoSrc(url: string | null | undefined): string | null {
+    return toAbsoluteUploadUrl(url);
   }
 }

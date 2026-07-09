@@ -54,8 +54,8 @@
                 <a [href]="d.url" target="_blank" rel="noopener" class="text-engine underline truncate max-w-xs block">{{ d.url }}</a>
               </td>
               <td class="py-2">
-                @if (d.logoUrl) {
-                  <img [src]="d.logoUrl" alt="logo" class="h-8 object-contain" />
+                @if (logoSrc(d.logoUrl); as src) {
+                  <img [src]="src" alt="logo" class="h-8 object-contain" />
                 } @else {
                   <span class="text-ink-muted">—</span>
                 }

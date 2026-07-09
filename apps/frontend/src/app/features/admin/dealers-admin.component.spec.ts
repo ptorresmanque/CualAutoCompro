@@ -74,4 +74,26 @@ describe('DealersAdminComponent', () => {
     expect(cmp.sortDir()).toBe('desc');
     expect(cmp.displayed().map((d) => d.name)).toEqual(['Zoe Motors', 'Mazda Store', 'Audi Dealer']);
   });
+
+  it('logoSrc resuelve path relativo /uploads/... a URL absoluta del backend', async () => {
+    TestBed.configureTestingModule({
+      imports: [DealersAdminComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(DealersAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    for (const r of http.match(() => true)) r.flush({ data: [] });
+    await fixture.whenStable();
+    const cmp = fixture.componentInstance;
+
+    expect(cmp.logoSrc(null)).toBeNull();
+    expect(cmp.logoSrc(undefined)).toBeNull();
+    expect(cmp.logoSrc('')).toBeNull();
+    expect(cmp.logoSrc('https://cdn.example.com/logo.png')).toBe('https://cdn.example.com/logo.png');
+    const resolved = cmp.logoSrc('/uploads/2026-07/abc.png');
+    expect(resolved).not.toBeNull();
+    expect(resolved).not.toBe('/uploads/2026-07/abc.png');
+    expect(resolved).toMatch(/^https?:\/\/.+\/uploads\/2026-07\/abc\.png$/);
+  });
 });
