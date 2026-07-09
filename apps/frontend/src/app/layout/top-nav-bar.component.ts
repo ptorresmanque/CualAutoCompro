@@ -12,6 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../core/auth.service';
 import { CompareStore } from '../core/compare-store.service';
 import { SidenavService } from '../core/sidenav.service';
@@ -36,6 +37,7 @@ interface NavLink {
     MatIconModule,
     MatInputModule,
     MatMenuModule,
+    MatTooltipModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -110,10 +110,31 @@
         </mat-menu>
       } @else {
         <a
+          mat-icon-button
+          routerLink="/login"
+          class="md:hidden"
+          matTooltip="Iniciar sesión"
+          aria-label="Iniciar sesión"
+          data-testid="nav-login-btn"
+        >
+          <mat-icon>login</mat-icon>
+        </a>
+        <a
+          mat-icon-button
+          routerLink="/register"
+          class="md:hidden"
+          matTooltip="Crear cuenta"
+          aria-label="Crear cuenta"
+          data-testid="nav-register-btn"
+        >
+          <mat-icon>person_add</mat-icon>
+        </a>
+        <a
           mat-stroked-button
           color="primary"
           routerLink="/login"
           class="nav-login-btn hidden md:inline-flex"
+          data-testid="nav-login-btn"
         >
           Iniciar sesión
         </a>
@@ -122,6 +143,7 @@
           color="primary"
           routerLink="/register"
           class="nav-register-btn hidden md:inline-flex"
+          data-testid="nav-register-btn"
         >
           Crear cuenta
         </a>

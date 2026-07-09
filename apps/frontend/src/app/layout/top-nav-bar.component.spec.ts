@@ -131,6 +131,26 @@ describe('TopNavBarComponent', () => {
     expect(adminLink).toBeNull();
   });
 
+  describe('responsive visibility', () => {
+    it('expone data-testid en ambas variantes (mobile + desktop) de los botones auth', () => {
+      TestBed.configureTestingModule({
+        imports: [TestHostComponent],
+        providers: [
+          provideRouter([]),
+          { provide: AuthService, useValue: authStub },
+          { provide: CompareStore, useClass: CompareStoreStub },
+        ],
+      });
+      const f = TestBed.createComponent(TestHostComponent);
+      f.detectChanges();
+
+      const loginBtn = f.nativeElement.querySelector('[data-testid="nav-login-btn"]');
+      const registerBtn = f.nativeElement.querySelector('[data-testid="nav-register-btn"]');
+      expect(loginBtn).toBeTruthy();
+      expect(registerBtn).toBeTruthy();
+    });
+  });
+
   it('buscador: input se enlaza y submit navega a /catalogo con ?q=', async () => {
     TestBed.configureTestingModule({
       imports: [TestHostComponent],
