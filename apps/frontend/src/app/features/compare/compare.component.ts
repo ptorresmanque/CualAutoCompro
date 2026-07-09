@@ -7,6 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -56,6 +57,15 @@ export interface CompareVersion {
   hasAbs?: boolean | null;
   hasEsp?: boolean | null;
   hasCruiseControl?: boolean | null;
+  circulationPermitClp?: number | null;
+  mandatoryInsuranceClp?: number | null;
+  voluntaryInsuranceClp?: number | null;
+  fuelTankLiters?: number | null;
+  batteryCapacityKwh?: number | null;
+  hasRecall?: boolean | null;
+  recallUrl?: string | null;
+  computedFillCostClp?: number | null;
+  maintenanceCosts?: { mileageTag: number; costClp: number }[];
   model?: ModelLite & { id?: string; availableVersions?: AvailableVersionLite[] };
 }
 
@@ -77,18 +87,20 @@ type DiffKey =
   | 'airbagCount'
   | 'hasAbs'
   | 'hasEsp'
-  | 'hasCruiseControl';
+  | 'hasCruiseControl'
+  | 'circulationPermitClp'
+  | 'mandatoryInsuranceClp'
+  | 'voluntaryInsuranceClp'
+  | 'computedFillCostClp';
 
-interface SectionRow {
-  key: DiffKey;
-  label: string;
-  format: (v: CompareVersion) => string;
-}
+type CompareRow =
+  | { kind: 'simple'; key: DiffKey; label: string; format: (v: CompareVersion) => string }
+  | { kind: 'maintenanceBreakdown'; label: string };
 
 interface Section {
   name: string;
   label: string;
-  rows: SectionRow[];
+  rows: CompareRow[];
 }
 
 interface CompareResponse {
@@ -122,6 +134,7 @@ interface ComparisonBySlugResponse {
     MatIconModule,
     MatMenuModule,
     MatTooltipModule,
+    DecimalPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -145,6 +158,7 @@ export class CompareComponent {
   loadError = signal<string | null>(null);
   saveError = signal<string | null>(null);
   swappingFor = signal<string | null>(null); // versionId of card with open popover
+  maintPopoverFor = signal<string | null>(null);
   favoriteModels = signal<VehicleCardInput[]>([]);
 
   readonly count = computed(() => this.versions().length);
@@ -169,9 +183,11 @@ export class CompareComponent {
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
     if (!target) return;
-    // close swap
     if (this.swappingFor() !== null && !target.closest('[data-testid^="swap-popover-"]') && !target.closest('[data-testid^="swap-button-"]')) {
       this.closeSwap();
+    }
+    if (this.maintPopoverFor() !== null && !target.closest('[data-testid^="maint-popover-panel-"]') && !target.closest('[data-testid^="maint-popover-btn-"]')) {
+      this.closeMaintPopover();
     }
   }
 
@@ -181,61 +197,73 @@ export class CompareComponent {
       label: 'Especificaciones',
       rows: [
         {
+          kind: 'simple',
           key: 'engineDisplacementCc',
           label: 'Cilindrada',
           format: (v) => (v.engineDisplacementCc ? `${v.engineDisplacementCc} cc` : '—'),
         },
         {
+          kind: 'simple',
           key: 'powerHp',
           label: 'Potencia',
           format: (v) => (v.powerHp ? `${v.powerHp} hp` : '—'),
         },
         {
+          kind: 'simple',
           key: 'torqueNm',
           label: 'Torque',
           format: (v) => (v.torqueNm ? `${v.torqueNm} Nm` : '—'),
         },
         {
+          kind: 'simple',
           key: 'consumptionCityKmL',
           label: 'Consumo ciudad',
           format: (v) => (v.consumptionCityKmL ? `${v.consumptionCityKmL} km/L` : '—'),
         },
         {
+          kind: 'simple',
           key: 'consumptionHighwayKmL',
           label: 'Consumo carretera',
           format: (v) => (v.consumptionHighwayKmL ? `${v.consumptionHighwayKmL} km/L` : '—'),
         },
         {
+          kind: 'simple',
           key: 'transmission',
           label: 'Transmisión',
           format: (v) => v.transmission ?? '—',
         },
         {
+          kind: 'simple',
           key: 'fuel',
           label: 'Combustible',
           format: (v) => v.fuel ?? '—',
         },
         {
+          kind: 'simple',
           key: 'lengthMm',
           label: 'Largo',
           format: (v) => (v.lengthMm ? `${v.lengthMm} mm` : '—'),
         },
         {
+          kind: 'simple',
           key: 'widthMm',
           label: 'Ancho',
           format: (v) => (v.widthMm ? `${v.widthMm} mm` : '—'),
         },
         {
+          kind: 'simple',
           key: 'heightMm',
           label: 'Alto',
           format: (v) => (v.heightMm ? `${v.heightMm} mm` : '—'),
         },
         {
+          kind: 'simple',
           key: 'weightKg',
           label: 'Peso',
           format: (v) => (v.weightKg ? `${v.weightKg} kg` : '—'),
         },
         {
+          kind: 'simple',
           key: 'trunkLiters',
           label: 'Maletero',
           format: (v) => (v.trunkLiters ? `${v.trunkLiters} L` : '—'),
@@ -247,11 +275,13 @@ export class CompareComponent {
       label: 'Precio y Año',
       rows: [
         {
+          kind: 'simple',
           key: 'priceClp',
           label: 'Precio (CLP)',
           format: (v) => (v.priceClp ? this.formatPrice(v.priceClp) : '—'),
         },
         {
+          kind: 'simple',
           key: 'year',
           label: 'Año',
           format: (v) => (v.year ? String(v.year) : '—'),
@@ -263,21 +293,25 @@ export class CompareComponent {
       label: 'Equipamiento',
       rows: [
         {
+          kind: 'simple',
           key: 'airbagCount',
           label: 'Airbags',
           format: (v) => (v.airbagCount ? String(v.airbagCount) : '—'),
         },
         {
+          kind: 'simple',
           key: 'hasAbs',
           label: 'ABS',
           format: (v) => (v.hasAbs ? 'Sí' : 'No'),
         },
         {
+          kind: 'simple',
           key: 'hasEsp',
           label: 'Control de estabilidad',
           format: (v) => (v.hasEsp ? 'Sí' : 'No'),
         },
         {
+          kind: 'simple',
           key: 'hasCruiseControl',
           label: 'Control de crucero',
           format: (v) => (v.hasCruiseControl ? 'Sí' : 'No'),
@@ -285,13 +319,33 @@ export class CompareComponent {
       ],
     },
     {
-      name: 'mantencion',
-      label: 'Mantención',
+      name: 'costos',
+      label: 'Costos',
       rows: [
+        { kind: 'maintenanceBreakdown', label: 'Mantención (CLP/por km)' },
         {
-          key: 'priceClp',
-          label: 'Costo referencial',
-          format: (v) => (v.priceClp ? this.formatPrice(Math.round(v.priceClp * 0.04)) : '—'),
+          kind: 'simple',
+          key: 'circulationPermitClp',
+          label: 'Permiso de circulación',
+          format: (v) => (v.circulationPermitClp ? this.formatPrice(v.circulationPermitClp) : '—'),
+        },
+        {
+          kind: 'simple',
+          key: 'mandatoryInsuranceClp',
+          label: 'Seguro obligatorio (SOAP)',
+          format: (v) => (v.mandatoryInsuranceClp ? this.formatPrice(v.mandatoryInsuranceClp) : '—'),
+        },
+        {
+          kind: 'simple',
+          key: 'voluntaryInsuranceClp',
+          label: 'Seguro automotriz',
+          format: (v) => (v.voluntaryInsuranceClp ? this.formatPrice(v.voluntaryInsuranceClp) : '—'),
+        },
+        {
+          kind: 'simple',
+          key: 'computedFillCostClp',
+          label: 'Llenar estanque',
+          format: (v) => (v.computedFillCostClp ? this.formatPrice(v.computedFillCostClp) : '—'),
         },
       ],
     },
@@ -444,8 +498,8 @@ export class CompareComponent {
         return 'payments';
       case 'equipamiento':
         return 'inventory_2';
-      case 'mantencion':
-        return 'build';
+      case 'costos':
+        return 'payments';
       default:
         return 'analytics';
     }
@@ -455,8 +509,8 @@ export class CompareComponent {
     return v.id;
   }
 
-  trackByRow(_: number, row: SectionRow): string {
-    return row.key;
+  trackByRow(_: number, row: CompareRow): string {
+    return row.kind === 'simple' ? row.key : 'maintenance-breakdown';
   }
 
   trackBySection(_: number, s: Section): string {
@@ -474,6 +528,14 @@ export class CompareComponent {
 
   closeSwap(): void {
     this.swappingFor.set(null);
+  }
+
+  openMaintPopover(versionId: string): void {
+    this.maintPopoverFor.update((cur) => (cur === versionId ? null : versionId));
+  }
+
+  closeMaintPopover(): void {
+    this.maintPopoverFor.set(null);
   }
 
   availableVersionsFor(v: CompareVersion): AvailableVersionLite[] {

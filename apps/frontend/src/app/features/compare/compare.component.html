@@ -164,6 +164,18 @@
           data-testid="card"
           [attr.data-version-id]="v.id"
         >
+          @if (v.hasRecall) {
+            <a
+              [href]="v.recallUrl"
+              target="_blank"
+              rel="noopener"
+              class="absolute top-1.5 left-1.5 inline-flex items-center gap-1 text-engine font-mono text-[10px] uppercase tracking-stamp border border-engine bg-white px-1.5 py-0.5 z-10"
+              [attr.data-testid]="'recall-card-' + v.id"
+            >
+              <mat-icon class="text-base">warning</mat-icon>
+              Recall
+            </a>
+          }
           <header class="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-rule">
             <span class="font-mono text-[10px] uppercase tracking-stamp text-graphite">Modelo</span>
             <button
@@ -318,21 +330,50 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-border">
-                @for (row of s.rows; track row.key) {
-                  <tr
-                    [attr.data-testid]="'row-' + row.key"
-                    [class]="cellClass(row.key)"
-                  >
-                    <th
-                      scope="row"
-                      class="px-4 py-2 text-left font-bold text-ink-muted text-xs uppercase tracking-wider"
-                    >
+                @for (row of s.rows; track $index) {
+                  <tr [attr.data-testid]="'row-' + (row.kind === 'simple' ? row.key : 'maintenance-breakdown')">
+                    <th scope="row" class="px-4 py-2 text-left font-bold text-ink-muted text-xs uppercase tracking-wider">
                       {{ row.label }}
                     </th>
-                    @for (v of versions(); track v.id) {
-                      <td class="px-4 py-2 text-ink">
-                        {{ row.format(v) }}
-                      </td>
+                    @if (row.kind === 'simple') {
+                      @for (v of versions(); track v.id) {
+                        <td [class]="cellClass(row.key)" class="px-4 py-2 text-ink">
+                          {{ row.format(v) }}
+                        </td>
+                      }
+                    } @else {
+                      @for (v of versions(); track v.id) {
+                        <td class="px-4 py-2 text-ink relative">
+                          <button
+                            type="button"
+                            class="font-mono text-[11px] uppercase tracking-stamp text-engine hover:underline"
+                            (click)="openMaintPopover(v.id); $event.stopPropagation()"
+                            [attr.data-testid]="'maint-popover-btn-' + v.id"
+                          >
+                            Ver detalle ({{ (v.maintenanceCosts?.length ?? 0) }})
+                          </button>
+                          @if (maintPopoverFor() === v.id) {
+                            <div
+                              class="absolute z-30 left-0 top-full mt-1 bg-paper-cool border border-ink p-3 w-72 shadow-e2"
+                              [attr.data-testid]="'maint-popover-panel-' + v.id"
+                            >
+                              <p class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted mb-2">Mantención por kilometraje</p>
+                              @if (v.maintenanceCosts && v.maintenanceCosts.length > 0) {
+                                <table class="w-full text-xs">
+                                  @for (mc of [...(v.maintenanceCosts ?? [])].sort((a, b) => a.mileageTag - b.mileageTag); track mc.mileageTag) {
+                                    <tr>
+                                      <td class="py-0.5 text-ink-muted">{{ mc.mileageTag | number }} km</td>
+                                      <td class="py-0.5 text-right font-semibold">{{ formatPrice(mc.costClp) }}</td>
+                                    </tr>
+                                  }
+                                </table>
+                              } @else {
+                                <p class="text-xs text-ink-muted">Sin costos registrados.</p>
+                              }
+                            </div>
+                          }
+                        </td>
+                      }
                     }
                   </tr>
                 }

@@ -725,4 +725,154 @@ describe('CompareComponent', () => {
     favReq.flush({ data: [] });
     await fixture.whenStable();
   });
+
+  it('sección "Costos" se renderiza con 5 filas (mantenimiento + 4 simples)', async () => {
+    store.hydrateFromUrl('a,b');
+    const fixture = TestBed.createComponent(CompareComponent);
+    const ready = fixture.componentInstance.ready;
+    http.expectOne((r) => r.url.includes('/api/v1/compare')).flush({
+      data: {
+        versions: [
+          {
+            id: 'a',
+            name: 'XLS',
+            priceClp: 14990000,
+            year: 2026,
+            circulationPermitClp: 220000,
+            mandatoryInsuranceClp: 95000,
+            voluntaryInsuranceClp: 380000,
+            computedFillCostClp: 75000,
+            maintenanceCosts: [
+              { mileageTag: 10000, costClp: 180000 },
+              { mileageTag: 20000, costClp: 250000 },
+            ],
+            model: { name: 'Yaris', brand: { name: 'Toyota' } },
+          },
+          {
+            id: 'b',
+            name: 'Base',
+            priceClp: 11500000,
+            year: 2025,
+            circulationPermitClp: 200000,
+            mandatoryInsuranceClp: 90000,
+            voluntaryInsuranceClp: 350000,
+            computedFillCostClp: 70000,
+            model: { name: 'Yaris', brand: { name: 'Toyota' } },
+          },
+        ],
+        diffHighlights: {},
+      },
+    });
+    await ready;
+    fixture.detectChanges();
+
+    const sectionEl = fixture.nativeElement.querySelector('[data-testid="section-costos"]');
+    expect(sectionEl).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="row-maintenance-breakdown"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="row-circulationPermitClp"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="row-mandatoryInsuranceClp"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="row-voluntaryInsuranceClp"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="row-computedFillCostClp"]'),
+    ).not.toBeNull();
+  });
+
+  it('sub-tabla de mantención se expande al click', async () => {
+    store.hydrateFromUrl('a,b');
+    const fixture = TestBed.createComponent(CompareComponent);
+    const ready = fixture.componentInstance.ready;
+    http.expectOne((r) => r.url.includes('/api/v1/compare')).flush({
+      data: {
+        versions: [
+          {
+            id: 'a',
+            name: 'XLS',
+            priceClp: 14990000,
+            maintenanceCosts: [
+              { mileageTag: 10000, costClp: 180000 },
+              { mileageTag: 20000, costClp: 250000 },
+            ],
+            model: { name: 'Yaris', brand: { name: 'Toyota' } },
+          },
+          {
+            id: 'b',
+            name: 'Base',
+            priceClp: 11500000,
+            maintenanceCosts: [{ mileageTag: 10000, costClp: 160000 }],
+            model: { name: 'Yaris', brand: { name: 'Toyota' } },
+          },
+        ],
+        diffHighlights: {},
+      },
+    });
+    await ready;
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="maint-popover-panel-a"]'),
+    ).toBeNull();
+
+    const btn = fixture.nativeElement.querySelector(
+      '[data-testid="maint-popover-btn-a"]',
+    ) as HTMLButtonElement;
+    expect(btn).not.toBeNull();
+    btn.click();
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector(
+      '[data-testid="maint-popover-panel-a"]',
+    );
+    expect(panel).not.toBeNull();
+    expect(panel.textContent).toContain('10,000 km');
+    expect(panel.textContent).toContain('20,000 km');
+  });
+
+  it('recall badge aparece si v.hasRecall=true', async () => {
+    store.hydrateFromUrl('a,b');
+    const fixture = TestBed.createComponent(CompareComponent);
+    const ready = fixture.componentInstance.ready;
+    http.expectOne((r) => r.url.includes('/api/v1/compare')).flush({
+      data: {
+        versions: [
+          {
+            id: 'a',
+            name: 'RecallVersion',
+            priceClp: 14990000,
+            hasRecall: true,
+            recallUrl: 'https://example.com/recall/a',
+            model: { name: 'Yaris', brand: { name: 'Toyota' } },
+          },
+          {
+            id: 'b',
+            name: 'SafeVersion',
+            priceClp: 11500000,
+            hasRecall: false,
+            model: { name: 'Yaris', brand: { name: 'Toyota' } },
+          },
+        ],
+        diffHighlights: {},
+      },
+    });
+    await ready;
+    fixture.detectChanges();
+
+    const recallBadge = fixture.nativeElement.querySelector(
+      '[data-testid="recall-card-a"]',
+    );
+    expect(recallBadge).not.toBeNull();
+    expect(recallBadge.getAttribute('href')).toBe('https://example.com/recall/a');
+    expect(recallBadge.getAttribute('target')).toBe('_blank');
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="recall-card-b"]'),
+    ).toBeNull();
+  });
 });
