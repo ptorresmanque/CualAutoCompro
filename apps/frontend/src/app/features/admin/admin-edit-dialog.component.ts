@@ -193,13 +193,13 @@ export class AdminEditDialogComponent {
     for (const meta of metas) {
       const initial = meta.kind === 'gallery' || meta.kind === 'multiSelect' ? [] : null;
       const ctrl = new FormControl(initial);
-      if (
-        meta.kind !== 'foreignKey' &&
-        meta.kind !== 'imageUrl' &&
-        meta.kind !== 'array' &&
-        meta.kind !== 'gallery' &&
-        meta.kind !== 'multiSelect'
-      ) {
+      const isExemptKind =
+        meta.kind === 'foreignKey' ||
+        meta.kind === 'imageUrl' ||
+        meta.kind === 'array' ||
+        meta.kind === 'gallery' ||
+        meta.kind === 'multiSelect';
+      if (!meta.optional && !isExemptKind) {
         ctrl.addValidators([Validators.required]);
       }
       controls[meta.field] = ctrl;

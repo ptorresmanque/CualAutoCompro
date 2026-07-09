@@ -134,6 +134,7 @@ export interface FieldMeta {
   options?: string[];
   optionsApi?: string;
   optionLabel?: string;
+  optional?: boolean;
 }
 
 export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
@@ -171,13 +172,13 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'hasEsp', label: 'Control de estabilidad', kind: 'boolean' },
     { field: 'hasCruiseControl', label: 'Control de crucero', kind: 'boolean' },
     { field: 'equipment', label: 'Equipamiento', kind: 'multiSelect', optionsApi: '/admin/equipment', optionLabel: 'name' },
-    { field: 'circulationPermitClp', label: 'Permiso circulación CLP', kind: 'number' },
-    { field: 'mandatoryInsuranceClp', label: 'SOAP CLP', kind: 'number' },
-    { field: 'voluntaryInsuranceClp', label: 'Seguro automotriz CLP', kind: 'number' },
-    { field: 'fuelTankLiters', label: 'Capacidad estanque L', kind: 'number' },
-    { field: 'batteryCapacityKwh', label: 'Capacidad batería kWh', kind: 'number' },
-    { field: 'hasRecall', label: '¿Tiene recall?', kind: 'boolean' },
-    { field: 'recallUrl', label: 'URL del informe (si recall)', kind: 'text' },
+    { field: 'circulationPermitClp', label: 'Permiso circulación CLP', kind: 'number', optional: true },
+    { field: 'mandatoryInsuranceClp', label: 'SOAP CLP', kind: 'number', optional: true },
+    { field: 'voluntaryInsuranceClp', label: 'Seguro automotriz CLP', kind: 'number', optional: true },
+    { field: 'fuelTankLiters', label: 'Capacidad estanque L', kind: 'number', optional: true },
+    { field: 'batteryCapacityKwh', label: 'Capacidad batería kWh', kind: 'number', optional: true },
+    { field: 'hasRecall', label: '¿Tiene recall?', kind: 'boolean', optional: true },
+    { field: 'recallUrl', label: 'URL del informe (si recall)', kind: 'text', optional: true },
   ],
   equipment: [
     { field: 'name', label: 'Nombre', kind: 'text' },

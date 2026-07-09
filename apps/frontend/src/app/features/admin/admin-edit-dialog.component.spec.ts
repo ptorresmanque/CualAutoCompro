@@ -259,4 +259,41 @@ describe('AdminEditDialogComponent', () => {
     expect(formValue).toContain('appleCarPlay');
     expect(formValue.length).toBe(2);
   });
+
+  it('version form es válido con los nuevos campos opcionales en null (regression)', async () => {
+    const { fixture, http } = setup('version');
+    const req = http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version'));
+    req.flush({
+      data: {
+        modelId: '', name: '', year: 2026, priceClp: 0,
+        transmission: 'MANUAL', fuel: 'BENCINA',
+        engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
+        consumptionCityKmL: 0, consumptionHighwayKmL: 0,
+        lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
+        trunkLiters: 0, airbagCount: 0,
+        hasAbs: false, hasEsp: false, hasCruiseControl: false, hasRecall: false,
+        circulationPermitClp: null, mandatoryInsuranceClp: null, voluntaryInsuranceClp: null,
+        fuelTankLiters: null, batteryCapacityKwh: null, recallUrl: null,
+      },
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    fixture.componentRef.setInput('entity', {
+      id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000,
+      transmission: 'AUTOMATIC', fuel: 'BENCINA',
+      engineDisplacementCc: 2000, powerHp: 150, torqueNm: 200,
+      consumptionCityKmL: 12, consumptionHighwayKmL: 16,
+      lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300,
+      trunkLiters: 450, airbagCount: 6,
+      hasAbs: true, hasEsp: true, hasCruiseControl: true,
+      circulationPermitClp: null, mandatoryInsuranceClp: null, voluntaryInsuranceClp: null,
+      fuelTankLiters: null, batteryCapacityKwh: null,
+      hasRecall: false, recallUrl: null,
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const form = fixture.componentInstance.form();
+    expect(form.valid).toBe(true);
+  });
 });
