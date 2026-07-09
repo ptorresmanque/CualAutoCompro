@@ -16,6 +16,9 @@ export const setupTestPrisma = (): PrismaClient => {
 
 export const resetTestDb = async (prisma: PrismaClient) => {
   await prisma.$transaction([
+    prisma.brandDealer.deleteMany(),
+    prisma.dealer.deleteMany(),
+    prisma.fuelPrice.deleteMany(),
     prisma.comparisonItem.deleteMany(),
     prisma.comparison.deleteMany(),
     prisma.maintenanceCost.deleteMany(),

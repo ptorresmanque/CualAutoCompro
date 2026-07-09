@@ -22,12 +22,13 @@ datasource db {
 }
 
 model Brand {
-  id        String    @id @default(cuid())
-  name      String    @unique
+  id        String        @id @default(cuid())
+  name      String        @unique
   logoUrl   String?
   models    Model[]
+  dealers   BrandDealer[]
   deletedAt DateTime?
-  createdAt DateTime  @default(now())
+  createdAt DateTime      @default(now())
 
   @@index([deletedAt])
 }
@@ -77,6 +78,13 @@ model Version {
   hasAbs                Boolean
   hasEsp                Boolean
   hasCruiseControl      Boolean
+  circulationPermitClp  Int?
+  mandatoryInsuranceClp Int?
+  voluntaryInsuranceClp Int?
+  fuelTankLiters        Float?
+  batteryCapacityKwh    Float?
+  hasRecall             Boolean            @default(false)
+  recallUrl             String?
   model                 Model              @relation(fields: [modelId], references: [id], onDelete: Cascade)
   equipmentItems        VersionEquipment[]
   maintenanceCosts      MaintenanceCost[]
@@ -173,4 +181,37 @@ model Favorite {
   @@unique([userId, versionId])
   @@index([userId])
   @@index([modelId])
+}
+
+model Dealer {
+  id        String        @id @default(cuid())
+  name      String
+  url       String
+  logoUrl   String?
+  deletedAt DateTime?
+  createdAt DateTime      @default(now())
+  brands    BrandDealer[]
+
+  @@index([deletedAt])
+}
+
+model BrandDealer {
+  brandId  String
+  dealerId String
+  brand    Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  dealer   Dealer @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+
+  @@id([brandId, dealerId])
+  @@index([dealerId])
+}
+
+model FuelPrice {
+  id              String   @id @default(cuid())
+  fuelType        String
+  pricePerUnitClp Float
+  unit            String
+  effectiveFrom   DateTime @default(now())
+
+  @@unique([fuelType, effectiveFrom])
+  @@index([fuelType])
 }
