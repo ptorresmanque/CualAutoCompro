@@ -49,3 +49,25 @@ export const validation = (msg: string) => new AppError("VALIDATION", msg);
 export const badRequest = (msg: string) => new AppError("BAD_REQUEST", msg);
 export const cannotDemoteSelf = (msg = "No podés degradarte a vos mismo") =>
   new AppError("CANNOT_DEMOTE_SELF", msg);
+
+export class OAuthError extends Error {
+  constructor(
+    public readonly code:
+      | "OAUTH_NOT_CONFIGURED"
+      | "OAUTH_STATE_INVALID"
+      | "OAUTH_DENIED"
+      | "OAUTH_EMAIL_NOT_VERIFIED"
+      | "OAUTH_EMAIL_REQUIRED"
+      | "OAUTH_PROVIDER_ERROR"
+      | "OAUTH_INTERNAL",
+    message: string,
+  ) {
+    super(message);
+    this.name = "OAuthError";
+  }
+}
+
+export const oauthError = (
+  code: OAuthError["code"],
+  message: string,
+): OAuthError => new OAuthError(code, message);
