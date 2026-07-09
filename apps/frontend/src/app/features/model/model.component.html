@@ -127,88 +127,65 @@
       class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"
     >
       <div class="lg:col-span-2">
-        <mat-tab-group
-          [selectedIndex]="tab() === 'specs' ? 0 : 1"
-          (selectedIndexChange)="setTab($event === 0 ? 'specs' : 'equipment')"
-          mat-stretch-tabs="false"
-          class="!mb-6"
-        >
-          <mat-tab data-testid="tab-specs">
-            <ng-template mat-tab-label>Especificaciones</ng-template>
-            <div class="space-y-8 pt-2">
-              @for (entry of specGroupsByVersion(); track entry.version.id) {
-                <section
-                  class="space-y-4"
-                  [attr.data-testid]="'spec-version-' + entry.version.id"
-                >
-                  <header class="flex items-baseline justify-between gap-2 pb-2 border-b-2 border-ink">
-                    <h2 class="font-display text-2xl text-ink leading-none">
-                      {{ entry.version.name }}
-                    </h2>
+        @if (versions().length > 0) {
+          <mat-tab-group
+            [selectedIndex]="activeTabIndex()"
+            (selectedIndexChange)="setActiveTabIndex($event)"
+            mat-stretch-tabs="false"
+            class="!mb-6"
+            data-testid="version-tabs"
+          >
+            @for (v of versions(); track v.id; let idx = $index) {
+              <mat-tab>
+                <ng-template mat-tab-label>
+                  <span class="flex items-center gap-2" [attr.data-testid]="'tab-version-' + v.id">
+                    <span>{{ v.name }}</span>
+                    <span class="font-mono text-[10px] text-ink-muted">{{ v.year }}</span>
+                  </span>
+                </ng-template>
+                <div class="pt-2" [attr.data-testid]="'spec-version-' + v.id">
+                  <header class="flex items-baseline justify-between gap-2 pb-2 mb-4 border-b-2 border-ink">
+                    <h2 class="font-display text-2xl text-ink leading-none">{{ v.name }}</h2>
                     <p class="font-display text-xl text-engine leading-none">
-                      {{ formatPrice(entry.version.priceClp) }}
+                      {{ formatPrice(v.priceClp) }}
                     </p>
                   </header>
-                  @for (group of entry.groups; track group.title) {
-                    <article
-                      class="bg-paper-cool border border-ink overflow-hidden"
-                      [attr.data-testid]="'spec-group-' + entry.version.id + '-' + group.title"
-                    >
-                      <header
-                        class="bg-paper-warm px-4 py-3 flex items-center gap-2 font-mono text-[11px] uppercase tracking-stamp text-ink border-b border-rule"
-                      >
-                        <mat-icon class="spec-group-icon text-engine">{{ group.icon }}</mat-icon>
-                        {{ group.title }}
-                      </header>
-                      <dl class="divide-y divide-rule text-sm">
-                        @for (row of group.rows; track row.label) {
-                          <div
-                            class="flex justify-between items-center px-4 py-2.5"
-                            [class.bg-engine-50]="row.zebra"
-                            [attr.data-testid]="'spec-row-' + entry.version.id + '-' + group.title + '-' + row.label"
-                          >
-                            <dt class="font-mono text-[11px] uppercase tracking-stamp text-graphite">{{ row.label }}</dt>
-                            <dd class="font-semibold text-ink font-sans">{{ row.value }}</dd>
-                          </div>
-                        }
-                      </dl>
-                    </article>
-                  }
-                </section>
-              }
-              @if (specGroupsByVersion().length === 0) {
-                <p class="text-sm text-ink-muted">Sin datos de especificación.</p>
-              }
-            </div>
-          </mat-tab>
-          <mat-tab data-testid="tab-equipment">
-            <ng-template mat-tab-label>Equipamiento</ng-template>
-            <div class="space-y-8 pt-2">
-              @for (v of versions(); track v.id) {
-                @if ((v.equipmentItems ?? []).length > 0) {
-                  <section
-                    class="bg-paper-cool border border-ink p-6"
-                    [attr.data-testid]="'equipment-version-' + v.id"
-                  >
-                    <h2 class="font-semibold text-lg mb-4 text-ink">{{ v.name }}</h2>
-                    <ul class="flex flex-wrap gap-2">
-                      @for (ei of v.equipmentItems; track ei.equipmentItem.name) {
-                        <li
-                          class="font-mono text-[10px] uppercase tracking-stamp bg-engine-50 text-engine-dark px-3 py-1 border border-engine-200 font-semibold"
+                  @if (buildSpecGroups(v); as groups) {
+                    <div class="space-y-4">
+                      @for (group of groups; track group.title) {
+                        <article
+                          class="bg-paper-cool border border-ink overflow-hidden"
+                          [attr.data-testid]="'spec-group-' + v.id + '-' + group.title"
                         >
-                          {{ ei.equipmentItem.name }}
-                        </li>
+                          <header
+                            class="bg-paper-warm px-4 py-3 flex items-center gap-2 font-mono text-[11px] uppercase tracking-stamp text-ink border-b border-rule"
+                          >
+                            <mat-icon class="spec-group-icon text-engine">{{ group.icon }}</mat-icon>
+                            {{ group.title }}
+                          </header>
+                          <dl class="divide-y divide-rule text-sm">
+                            @for (row of group.rows; track row.label) {
+                              <div
+                                class="flex justify-between items-center px-4 py-2.5"
+                                [class.bg-engine-50]="row.zebra"
+                                [attr.data-testid]="'spec-row-' + v.id + '-' + group.title + '-' + row.label"
+                              >
+                                <dt class="font-mono text-[11px] uppercase tracking-stamp text-graphite">{{ row.label }}</dt>
+                                <dd class="font-semibold text-ink font-sans">{{ row.value }}</dd>
+                              </div>
+                            }
+                          </dl>
+                        </article>
                       }
-                    </ul>
-                  </section>
-                }
-              }
-              @if (versions().length === 0 || versions().every((v) => !(v.equipmentItems ?? []).length)) {
-                <p class="text-sm text-ink-muted">Sin equipamiento registrado.</p>
-              }
-            </div>
-          </mat-tab>
-        </mat-tab-group>
+                    </div>
+                  }
+                </div>
+              </mat-tab>
+            }
+          </mat-tab-group>
+        } @else {
+          <p class="text-sm text-ink-muted">Sin versiones publicadas.</p>
+        }
       </div>
 
       <aside class="space-y-3" data-testid="versions">

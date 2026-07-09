@@ -83,8 +83,6 @@ interface SpecGroup {
   rows: SpecRow[];
 }
 
-type TabKey = 'specs' | 'equipment';
-
 @Component({
   selector: 'app-model',
   templateUrl: './model.component.html',
@@ -115,7 +113,6 @@ export class ModelComponent {
   readonly galleryUrls = computed<string[]>(() => this.model()?.galleryUrls ?? []);
   readonly dealers = signal<BrandDealer[]>([]);
   readonly hasGallery = computed(() => this.galleryUrls().length > 0);
-  readonly tab = signal<TabKey>('specs');
 
   readonly selectedIds = this.compare.ids;
   readonly maxSelected = computed(() => this.selectedIds().length >= 3);
@@ -127,6 +124,12 @@ export class ModelComponent {
   });
   private readonly _hovered = signal(false);
   readonly hovered = this._hovered.asReadonly();
+
+  readonly activeTabIndex = signal(0);
+
+  setActiveTabIndex(i: number): void {
+    this.activeTabIndex.set(i);
+  }
 
   readonly segmentLabel = computed(() => {
     const seg = this.model()?.segment;
@@ -145,8 +148,8 @@ export class ModelComponent {
     return this.versions().map((v) => ({ version: v, groups: this.buildSpecGroups(v) }));
   });
 
-  private buildSpecGroups(v: ModelVersion): SpecGroup[] {
-    return [
+  buildSpecGroups(v: ModelVersion): SpecGroup[] {
+    const groups: SpecGroup[] = [
       {
         title: 'Motorización',
         icon: 'settings_suggest',
@@ -200,23 +203,30 @@ export class ModelComponent {
         ],
       },
     ];
-  }
 
-  readonly equipmentNames = computed<string[]>(() => {
-    const all = this.versions().flatMap((v) =>
-      (v.equipmentItems ?? []).map((ei) => ei.equipmentItem.name),
-    );
-    return [...new Set(all)].sort((a, b) => a.localeCompare(b));
-  });
+    const items = v.equipmentItems ?? [];
+    if (items.length > 0) {
+      const sorted = [...items].sort((a, b) =>
+        a.equipmentItem.name.localeCompare(b.equipmentItem.name),
+      );
+      groups.push({
+        title: 'Equipamiento',
+        icon: 'inventory_2',
+        rows: sorted.map((ei, idx) => ({
+          label: ei.equipmentItem.name,
+          value: ei.equipmentItem.category || '—',
+          zebra: idx % 2 === 1,
+        })),
+      });
+    }
+
+    return groups;
+  }
 
   readonly initialLoad: Promise<void>;
 
   constructor() {
     this.initialLoad = this.bootstrap();
-  }
-
-  setTab(t: TabKey): void {
-    this.tab.set(t);
   }
 
   prev(): void {

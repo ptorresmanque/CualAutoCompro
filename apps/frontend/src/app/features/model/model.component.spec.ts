@@ -271,21 +271,40 @@ describe('ModelComponent — recall badge + dealers', () => {
     ).toBeNull();
   });
 
-  it('renderiza spec groups separados para cada versión', () => {
+  it('crea una tab por versión con su contenido independiente', () => {
     const { cmp, fixture } = createWithVersions([
       { id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450, airbagCount: 6, hasAbs: true, hasEsp: true, hasCruiseControl: true },
       { id: 'v2', name: 'Limited', year: 2025, priceClp: 18000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 180, engineDisplacementCc: 2500, torqueNm: 250, consumptionCityKmL: 11, consumptionHighwayKmL: 15, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450, airbagCount: 8, hasAbs: true, hasEsp: true, hasCruiseControl: true },
     ]);
     fixture.detectChanges();
-    const sections = fixture.nativeElement.querySelectorAll('[data-testid^="spec-version-"]');
-    expect(sections.length).toBe(2);
-    expect(sections[0].getAttribute('data-testid')).toBe('spec-version-v1');
-    expect(sections[1].getAttribute('data-testid')).toBe('spec-version-v2');
-    const motorV1 = sections[0].querySelector('[data-testid="spec-group-v1-Motorización"]');
-    const motorV2 = sections[1].querySelector('[data-testid="spec-group-v2-Motorización"]');
+    const tabs = fixture.nativeElement.querySelectorAll('[data-testid^="tab-version-"]');
+    expect(tabs.length).toBe(2);
+    expect(tabs[0].getAttribute('data-testid')).toBe('tab-version-v1');
+    expect(tabs[1].getAttribute('data-testid')).toBe('tab-version-v2');
+
+    const motorV1 = fixture.nativeElement.querySelector('[data-testid="spec-group-v1-Motorización"]');
     expect(motorV1).not.toBeNull();
-    expect(motorV2).not.toBeNull();
     expect(motorV1?.textContent).toContain('150 HP');
-    expect(motorV2?.textContent).toContain('180 HP');
+
+    const groupsV1 = cmp.buildSpecGroups(cmp.versions()[0]);
+    const groupsV2 = cmp.buildSpecGroups(cmp.versions()[1]);
+    const motorV1FromMethod = groupsV1.find((g) => g.title === 'Motorización');
+    const motorV2FromMethod = groupsV2.find((g) => g.title === 'Motorización');
+    expect(motorV1FromMethod?.rows.find((r) => r.label === 'Potencia')?.value).toBe('150 HP');
+    expect(motorV2FromMethod?.rows.find((r) => r.label === 'Potencia')?.value).toBe('180 HP');
+  });
+
+  it('incluye el grupo Equipamiento en cada versión que tenga items', () => {
+    const { fixture } = createWithVersions([
+      { id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450, airbagCount: 6, hasAbs: true, hasEsp: true, hasCruiseControl: true, equipmentItems: [{ equipmentItem: { name: 'Apple CarPlay', category: 'Conectividad' } }, { equipmentItem: { name: 'Cámara 360°', category: 'Seguridad' } }] },
+      { id: 'v2', name: 'Base', year: 2025, priceClp: 12000000, transmission: 'MANUAL', fuel: 'BENCINA', powerHp: 120, engineDisplacementCc: 1600, torqueNm: 160, consumptionCityKmL: 14, consumptionHighwayKmL: 18, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450, airbagCount: 4, hasAbs: true, hasEsp: false, hasCruiseControl: false, equipmentItems: [] },
+    ]);
+    fixture.detectChanges();
+    const equipV1 = fixture.nativeElement.querySelector('[data-testid="spec-group-v1-Equipamiento"]');
+    expect(equipV1).not.toBeNull();
+    const rows = equipV1?.querySelectorAll('[data-testid^="spec-row-v1-Equipamiento-"]') ?? [];
+    expect(rows.length).toBe(2);
+    const equipV2 = fixture.nativeElement.querySelector('[data-testid="spec-group-v2-Equipamiento"]');
+    expect(equipV2).toBeNull();
   });
 });
