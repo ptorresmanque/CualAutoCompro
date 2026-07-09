@@ -106,6 +106,7 @@ describe("VersionsService + extendEnum", () => {
       hasAbs: false,
       hasEsp: false,
       hasCruiseControl: false,
+      hasRecall: false,
     });
     expect(created.fuel).toBe(newFuel);
     expect(created.transmission).toBe(newTrans);
@@ -135,6 +136,7 @@ describe("VersionsService + extendEnum", () => {
       hasAbs: false,
       hasEsp: false,
       hasCruiseControl: false,
+      hasRecall: false,
     });
     const newFuel = `TEST_UPD_FUEL_${Date.now()}`;
     const newTrans = `TEST_UPD_TRANS_${Date.now()}`;

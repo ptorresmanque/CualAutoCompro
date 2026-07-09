@@ -34,8 +34,10 @@ const versionObjectSchema = z.object({
   recallUrl: z.string().url().nullable().optional(),
 });
 
+type VersionObject = z.infer<typeof versionObjectSchema>;
+
 const validateRecall = (
-  data: { hasRecall?: boolean; recallUrl?: string | null },
+  data: Pick<z.input<typeof versionObjectSchema>, "hasRecall" | "recallUrl">,
   ctx: z.RefinementCtx,
 ) => {
   if (data.hasRecall && !data.recallUrl) {
