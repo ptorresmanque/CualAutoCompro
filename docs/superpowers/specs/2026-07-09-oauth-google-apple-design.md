@@ -178,7 +178,7 @@ apps/backend/src/modules/auth/
 // Payload: { csrf: string; nonce: string; provider: 'google'|'apple'; returnTo: string }
 // Firma: HS256 con JWT_SECRET
 // TTL: 10 minutos
-// Validaciones: csrf == state de la query, expira, returnTo matchea /^\\/[A-Za-z0-9/_\\-?&=]*$/ y NO empieza con //
+// Validaciones: csrf == state de la query, expira, returnTo matchea /^\/[A-Za-z0-9/_\-?&=,]*$/ y NO empieza con //
 ```
 
 **`oauth.service.ts`** — clase `OAuthService`:

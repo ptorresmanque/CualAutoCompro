@@ -279,7 +279,7 @@ export type OAuthStatePayload = {
   returnTo: string;
 };
 
-const RETURN_TO_RE = /^\/[A-Za-z0-9/_\-?&=]*$/;
+const RETURN_TO_RE = /^\/[A-Za-z0-9/_\-?&=,]*$/;
 
 export const sanitizeReturnTo = (raw: unknown): string => {
   if (typeof raw !== "string") return "/";
