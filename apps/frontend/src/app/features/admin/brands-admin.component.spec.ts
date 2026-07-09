@@ -67,4 +67,79 @@ describe('BrandsAdminComponent', () => {
     expect(cmp.sortDir()).toBe('desc');
     expect(cmp.displayed().map((b) => b.name)).toEqual(['Zoe', 'Mazda', 'Audi']);
   });
+
+  it('al editar marca, PATCH envía dealerIds al backend', async () => {
+    TestBed.configureTestingModule({
+      imports: [BrandsAdminComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(BrandsAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    for (const r of http.match(() => true)) {
+      r.flush({ data: [{ id: 'b1', name: 'Toyota', logoUrl: null }] });
+    }
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+
+    const cmp = fixture.componentInstance;
+    cmp.openEdit({ id: 'b1', name: 'Toyota', logoUrl: null });
+
+    void cmp.onSave({
+      name: 'Toyota Updated',
+      logoUrl: null,
+      dealerIds: ['d1', 'd2'],
+    });
+
+    const patchReqs = http.match((r) => r.method === 'PATCH' && r.url.endsWith('/admin/brands/b1'));
+    expect(patchReqs.length).toBe(1);
+    expect(patchReqs[0].request.body).toEqual({
+      name: 'Toyota Updated',
+      logoUrl: null,
+      dealerIds: ['d1', 'd2'],
+    });
+    for (const r of patchReqs) {
+      r.flush({ data: { id: 'b1', name: 'Toyota Updated', logoUrl: null } });
+    }
+
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+
+    for (const r of http.match(() => true)) r.flush({ data: [] });
+    await fixture.whenStable();
+  });
+
+  it('al crear marca, POST no envía dealerIds', async () => {
+    TestBed.configureTestingModule({
+      imports: [BrandsAdminComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(BrandsAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    for (const r of http.match(() => true)) {
+      r.flush({ data: [] });
+    }
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+
+    const cmp = fixture.componentInstance;
+    cmp.openCreate();
+
+    void cmp.onSave({ name: 'NuevaMarca', logoUrl: null, dealerIds: ['d1'] });
+
+    const postReqs = http.match((r) => r.method === 'POST' && r.url.endsWith('/admin/brands'));
+    expect(postReqs.length).toBe(1);
+    expect(postReqs[0].request.body).toEqual({ name: 'NuevaMarca', logoUrl: null });
+    expect((postReqs[0].request.body as Record<string, unknown>)['dealerIds']).toBeUndefined();
+    for (const r of postReqs) {
+      r.flush({ data: { id: 'bNew', name: 'NuevaMarca', logoUrl: null } });
+    }
+
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+
+    for (const r of http.match(() => true)) r.flush({ data: [] });
+    await fixture.whenStable();
+  });
 });

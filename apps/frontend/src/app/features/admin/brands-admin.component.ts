@@ -70,7 +70,8 @@ export class BrandsAdminComponent {
       if (e) {
         await this.api.patch(`/admin/brands/${e.id}`, value);
       } else {
-        await this.api.post(`/admin/brands`, value);
+        const { dealerIds: _ignore, ...createPayload } = value;
+        await this.api.post(`/admin/brands`, createPayload);
       }
       this.dialogEntity.set(undefined);
       await this.load();
