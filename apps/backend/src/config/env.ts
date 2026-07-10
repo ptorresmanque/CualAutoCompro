@@ -30,12 +30,39 @@ const schema = z.object({
   WEB_ORIGIN: z.string().url().default("http://localhost:4200"),
   ADMIN_EMAIL: z.string().email().default("admin@cualautocompro.cl"),
   ADMIN_INITIAL_PASSWORD: z.string().min(8).default("admin1234"),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  APPLE_CLIENT_ID: z.string().optional(),
+  APPLE_KEY_ID: z.string().optional(),
+  APPLE_TEAM_ID: z.string().optional(),
+  APPLE_PRIVATE_KEY: z.string().optional(),
 });
 
 export const env = schema.parse(process.env);
 
 if (process.env.NODE_ENV === "production" && env.ADMIN_INITIAL_PASSWORD === "admin1234") {
   throw new Error("ADMIN_INITIAL_PASSWORD must be overridden in production");
+}
+
+const googleCount = [env.GOOGLE_CLIENT_ID, env.GOOGLE_CLIENT_SECRET].filter(
+  Boolean,
+).length;
+if (googleCount > 0 && googleCount < 2) {
+  throw new Error(
+    "OAuth Google mal configurado: debe setear GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET juntos o ninguno.",
+  );
+}
+
+const appleCount = [
+  env.APPLE_CLIENT_ID,
+  env.APPLE_KEY_ID,
+  env.APPLE_TEAM_ID,
+  env.APPLE_PRIVATE_KEY,
+].filter(Boolean).length;
+if (appleCount > 0 && appleCount < 4) {
+  throw new Error(
+    "OAuth Apple mal configurado: requiere APPLE_CLIENT_ID, APPLE_KEY_ID, APPLE_TEAM_ID y APPLE_PRIVATE_KEY.",
+  );
 }
 
 export type Env = z.infer<typeof schema>;
