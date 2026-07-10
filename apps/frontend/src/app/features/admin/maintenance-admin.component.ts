@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
+import { AdminFeedbackService } from '../../core/admin-feedback.service';
 import { ApiService } from '../../core/api.service';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { sortItems, type SortDir } from './sort-utils';
@@ -28,6 +29,7 @@ type SortKey = 'versionId' | 'mileageTag' | 'costClp';
 })
 export class MaintenanceAdminComponent {
   private api = inject(ApiService);
+  private feedback = inject(AdminFeedbackService);
 
   readonly versions = signal<VersionOption[]>([]);
   readonly selectedVersion = signal<string>('');
@@ -103,19 +105,24 @@ export class MaintenanceAdminComponent {
 
   async onSave(value: Record<string, unknown>): Promise<void> {
     const e = this.dialogEntity();
-    const payload: Record<string, unknown> = e
-      ? value
-      : { ...value, versionId: this.selectedVersion() };
+    const versionId = e ? e.versionId : this.selectedVersion();
+    const payload: Record<string, unknown> = { ...value, versionId };
+    const mileage = payload['mileageTag'];
+    const mileageLabel = mileage !== undefined ? `${mileage} km` : '';
     try {
       if (e) {
         await this.api.patch(`/admin/maintenance/${e.id}`, payload);
+        this.feedback.success(`Mantención ${mileageLabel} actualizada`);
       } else {
         await this.api.post(`/admin/maintenance`, payload);
+        this.feedback.success(`Mantención ${mileageLabel} creada`);
       }
       this.dialogEntity.set(undefined);
       await this.loadMaintenance(this.selectedVersion());
     } catch (err) {
-      this.error.set((err as Error).message);
+      const msg = (err as Error).message;
+      this.error.set(msg);
+      this.feedback.error(msg);
     }
   }
 
@@ -123,9 +130,12 @@ export class MaintenanceAdminComponent {
     if (!confirm(`¿Eliminar registro de mantenimiento?`)) return;
     try {
       await this.api.delete(`/admin/maintenance/${row.id}`);
+      this.feedback.success(`Mantención ${row.mileageTag} km eliminada`);
       await this.loadMaintenance(this.selectedVersion());
     } catch (err) {
-      this.error.set((err as Error).message);
+      const msg = (err as Error).message;
+      this.error.set(msg);
+      this.feedback.error(msg);
     }
   }
 

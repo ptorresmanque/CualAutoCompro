@@ -117,7 +117,6 @@ describe('MaintenanceAdminComponent', () => {
     const savePromise = fixture.componentInstance.onSave({
       mileageTag: 11000,
       costClp: 99999,
-      versionId: 'v1',
     });
 
     const patchReq = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance/m1'));
@@ -130,6 +129,48 @@ describe('MaintenanceAdminComponent', () => {
     await new Promise((r) => setTimeout(r, 0));
 
     // The reload GET triggered by onSave for the currently-selected version (v2).
+    const reloadReq = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance'));
+    reloadReq.flush({ data: [] });
+    await savePromise;
+    await fixture.whenStable();
+  });
+
+  it('onSave en modo create inyecta versionId desde selectedVersion cuando el form no lo trae', async () => {
+    TestBed.configureTestingModule({
+      imports: [MaintenanceAdminComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(MaintenanceAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+
+    const versionsReq = http.expectOne((r) => r.url.includes('/api/v1/versions'));
+    versionsReq.flush({
+      data: { items: [{ id: 'v1', name: '1.6', model: { name: 'A' } }] },
+    });
+    await fixture.whenStable();
+
+    fixture.componentInstance.onVersionChange('v1');
+    fixture.detectChanges();
+    const adminReq1 = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance'));
+    adminReq1.flush({ data: [] });
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+
+    fixture.componentInstance.dialogEntity.set(null);
+    fixture.detectChanges();
+
+    const savePromise = fixture.componentInstance.onSave({
+      mileageTag: 15000,
+      costClp: 75000,
+    });
+
+    const postReq = http.expectOne((r) => r.url.endsWith('/api/v1/admin/maintenance'));
+    expect(postReq.request.method).toBe('POST');
+    expect(postReq.request.body.versionId).toBe('v1');
+    postReq.flush({ data: { id: 'm-new', versionId: 'v1', mileageTag: 15000, costClp: 75000 } });
+
+    await new Promise((r) => setTimeout(r, 0));
     const reloadReq = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance'));
     reloadReq.flush({ data: [] });
     await savePromise;
