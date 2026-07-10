@@ -19,6 +19,20 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+  // NOTA: el pool de Prisma se controla con parametros en DATABASE_URL
+  // (no hay setting en este schema). Por defecto Prisma usa
+  // num_cpus * 2 + 1 (~13 conexiones), lo que agota los Entry Processes del
+  // LVE en cPanel/CloudLinux (1 conexion TCP inactiva = 1 EP).
+  //
+  // Parametros configurados en DATABASE_URL (ver __tests__/env-connection-limit.spec.ts):
+  //   connection_limit=10              techo del pool
+  //   connect_timeout=10               timeout para abrir socket TCP
+  //   pool_timeout=10                  timeout para conseguir slot libre
+  //   socket_timeout=30                timeout para matar query colgada
+  //   max_idle_connection_lifetime=300 cerrar conexiones MySQL inactivas (Prisma 6+)
+  //
+  // Si los subis, justifica el EP headroom (limite tipico de shared host: 50-100 EPs)
+  // y el impacto en latencia de queries bajo carga.
 }
 
 model Brand {

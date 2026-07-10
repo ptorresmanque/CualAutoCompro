@@ -2,6 +2,41 @@
 
 Guía para levantar el entorno de desarrollo local de **cualautocompro**.
 
+## Pool de Prisma y timeouts (importante para cPanel/LVE)
+
+El proyecto se despliega en cPanel con **CloudLinux + LVE**, donde cada conexión
+TCP abierta consume un **Entry Process (EP)**. Los proveedores compartidos
+típicamente limitan EPs a 50-100. Por eso `DATABASE_URL` se construye con
+parámetros de pool y timeouts explícitos (ver
+`apps/backend/__tests__/env-connection-limit.spec.ts`):
+
+| Parámetro | Valor | Por qué |
+|---|---|---|
+| `connection_limit` | 10 | Sin esto, Prisma default = `num_cpus * 2 + 1` (~13). El techo bajo deja EP headroom. |
+| `connect_timeout` | 10s | Corta intentos de handshake TCP colgados. |
+| `pool_timeout` | 10s | Falla rápido en lugar de encolar cuando el pool está saturado. |
+| `socket_timeout` | 30s | Mata queries zombie que ocuparon un slot indefinidamente. |
+| `max_idle_connection_lifetime` | 300s | **Prisma 6+**. Cierra conexiones MySQL inactivas tras 5 min, evitando acumular EPs en shared hosting. Por default Prisma 6 ya cierra tras 5 min, lo dejamos explícito para tener contrato testeable. |
+
+**Detección de leaks en dev:** el script `npm run -w apps/backend db:check-connections`
+reporta cuántas conexiones `Sleep` existen para tu usuario MySQL y alerta cuando
+superan 120s (warn) o 600s (crítico). Útil para detectar `tsx watch` reloads que
+no desconectaron Prisma limpio, o `wait_timeout` muy alto del server.
+
+**Cierre automático de idle con Prisma 6 (feature clave):** desde que estamos
+en Prisma 6.19.x, `max_idle_connection_lifetime=300` en `DATABASE_URL` cierra
+automáticamente las conexiones MySQL que llevan 5 minutos sin usarse. Esto
+resuelve la acumulación de Sleep que dependía 100% del `wait_timeout` del
+server (default 8h en shared hosting, fuera de nuestro control).
+
+Si el script reporta CRITICAL igualmente (por una ventana de 5 minutos), las
+causas probables son:
+
+1. `tsx watch` reloads muy frecuentes que no alcanzan a desconectar Prisma.
+2. `prisma.$disconnect()` no se ejecuta en un crash (SIGKILL antes del
+   handler de SIGTERM en server.ts).
+3. Pool Prisma por encima de `connection_limit` (revisar el audit contract test).
+
 ## Requisitos
 
 - Node.js 20+ (incluye npm 10+)

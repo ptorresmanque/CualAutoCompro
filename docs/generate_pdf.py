@@ -448,10 +448,9 @@ story.append(code_block("~/cualauto-backend/\n"
                        "  +- .env.example          (plantilla, sin secretos)"))
 story.append(bullets([
     "<b>Que NO debe subirse</b>: <i>node_modules/</i> (se regenera en el "
-    "server), <i>dist/</i> (se compila en el server), <i>vendor/</i> "
-    "(se genera en el server con <i>prisma generate</i>), "
-    "<i>apps/backend/public/</i>, <i>.angular/cache/</i>, archivos "
-    "basura (.DS_Store, Thumbs.db).",
+    "server con <i>npm install</i>), <i>dist/</i> (se compila en el "
+    "server con <i>npm run build</i>), <i>apps/backend/public/</i>, "
+    "<i>.angular/cache/</i>, archivos basura (.DS_Store, Thumbs.db).",
 ]))
 story.append(Paragraph("Metodos de subida", styles["H3"]))
 story.append(bullets([
@@ -459,8 +458,8 @@ story.append(bullets([
     "repositorio directamente. Asi el deploy se reduce a <i>git pull</i> "
     "y luego los pasos de build.",
     "<b>SFTP</b>: use FileZilla o Cyberduck para subir la carpeta. "
-    "Excluya <i>node_modules/</i>, <i>dist/</i>, <i>vendor/</i>, "
-    "<i>.env</i> (subir aparte por canal seguro).",
+    "Excluya <i>node_modules/</i>, <i>dist/</i>, <i>.env</i> (subir aparte "
+    "por canal seguro).",
     "<b>Administrador de archivos de cPanel</b>: suba un <i>.zip</i> "
     "con solo lo esencial y descomprima en el server.",
 ]))
@@ -591,11 +590,11 @@ story.append(callout(
 story.append(callout(
     "Si <i>npx prisma generate</i> falla con "
     "<i>'WebAssembly.Instance(): Out of memory'</i> (limite LVE de "
-    "CloudLinux), pre-genere el cliente en una maquina local con RAM "
-    "suficiente (<i>npm run db:generate -w apps/backend && npm run "
-    "vendor:prisma -w apps/backend</i>) y suba la carpeta "
-    "<i>vendor/prisma-client/</i> junto al resto del codigo. Passenger "
-    "la recogera automaticamente al reiniciar.",
+    "CloudLinux), la primera linea de defensa es <b>'Ensure "
+    "dependencies'</b> del Paso 5.3 (Passenger corre <i>npm install</i> "
+    "en un sandbox con mas memoria). Si aun asi falla, contactar al "
+    "hosting para ajustar los limites LVE del proceso, o migrar a "
+    "VPS/Node dedicado para builds pesados.",
     kind="warn"))
 
 # -----------------------------------------------------------------------------
@@ -957,14 +956,12 @@ problemas = [
      "La BD o las tablas no estan en utf8mb4. Aplique ALTER DATABASE / ALTER TABLE del paso 4.2."),
     ("La aplicacion se cae sola despues de un tiempo",
      "Planes compartidos reciclan procesos. Considere migrar a VPS o plataforma gestionada."),
-    ("prisma generate falla con 'WebAssembly.Instance(): Out of memory' (limite LVE de CloudLinux)",
-     "En el nuevo flujo de deploy, <i>prisma generate</i> se corre en el server en el Paso 5.5. "
-     "Si el LVE de CloudLinux rechaza el WebAssembly de Prisma, la primera linea de defensa es "
-     "<b>'Ensure dependencies'</b> del Paso 5.3 (Passenger corre <i>npm install</i> en un sandbox "
-     "con mas memoria). Si aun asi falla, pre-genere el cliente en una maquina local con RAM "
-     "suficiente (<i>npm run db:generate -w apps/backend && npm run vendor:prisma -w apps/backend</i>), "
-     "suba la carpeta <i>vendor/prisma-client/</i> junto al resto del codigo y luego ejecute "
-     "<i>npx prisma generate</i> en el Paso 5.5 (Passenger la recogera al reiniciar)."),
+     ("prisma generate falla con 'WebAssembly.Instance(): Out of memory' (limite LVE de CloudLinux)",
+      "En el nuevo flujo de deploy, <i>prisma generate</i> se corre en el server en el Paso 5.5. "
+      "Si el LVE de CloudLinux rechaza el WebAssembly de Prisma, la primera linea de defensa es "
+      "<b>'Ensure dependencies'</b> del Paso 5.3 (Passenger corre <i>npm install</i> en un sandbox "
+      "con mas memoria). Si aun asi falla, contactar al hosting para ajustar los limites LVE del "
+      "proceso, o migrar a VPS/Node dedicado para builds pesados."),
      ("El backend arranca pero Prisma no conecta: 'P1001 Can't reach database server'",
       "Verifique que <i>DATABASE_URL</i> en <i>.env</i> apunta al host:puerto correcto, que el "
       "usuario MySQL existe, que la base de datos esta creada y que el charset es utf8mb4. "
