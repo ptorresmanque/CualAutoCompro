@@ -9,13 +9,17 @@ build/
 .angular/cache/
 .nx/cache/
 
-# Environment files
+# Environment files (NUNCA commitear secretos)
 .env
 .env.local
 .env.*.local
 .env.test
+# .env.development is the working local env (loaded by apps/backend/src/config/env.ts);
+# it gets secrets committed once accidentally — keep untracked but on disk.
+.env.development
 !.env.example
 !.env.test.example
+!.env.development.example
 
 # Logs
 *.log
