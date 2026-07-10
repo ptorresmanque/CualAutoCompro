@@ -184,3 +184,38 @@ mariadb -ucualauto -pcualauto -e "CREATE DATABASE cualautocompro_test CHARACTER 
 npm run db:migrate
 npm run db:seed
 ```
+
+## OAuth (Google + Apple)
+
+Login social es opcional. Si no se configuran las envs, los botones no aparecen
+en `/login` y `/register`; el login email/password sigue funcionando.
+
+### Google
+
+1. Crear OAuth Client tipo "Web application" en [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+2. Authorized redirect URI:
+   - Dev: `http://localhost:3000/api/v1/auth/google/callback`
+   - Prod: `https://cualautocompro.cl/api/v1/auth/google/callback`
+3. Setear en `.env`:
+   ```
+   GOOGLE_CLIENT_ID=...
+   GOOGLE_CLIENT_SECRET=...
+   ```
+
+### Apple
+
+1. En Apple Developer: App ID con capability "Sign in with Apple" + Service ID (cliente web) con Return URL `https://cualautocompro.cl/api/v1/auth/apple/callback`.
+2. Crear private key (.p8), guardar su contenido en `APPLE_PRIVATE_KEY` reemplazando saltos de línea por `\n` literal (los archivos `.env` no soportan multilínea).
+3. Setear en `.env`:
+   ```
+   APPLE_CLIENT_ID=...
+   APPLE_KEY_ID=...
+   APPLE_TEAM_ID=...
+   APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+   ```
+
+### Como verificar
+
+1. Reiniciar backend con las envs seteadas.
+2. `curl http://localhost:3000/api/v1/auth/providers` → debe devolver `{"data":{"google":true,"apple":true}}`.
+3. En el navegador, ir a `/login`: deben aparecer los botones "Continuar con Google" y "Continuar con Apple".
