@@ -28,6 +28,9 @@ const schema = z.object({
   JWT_EXPIRES_IN: z.string().default("7d"),
   PORT: z.coerce.number().int().positive().default(3000),
   WEB_ORIGIN: z.string().url().default("http://localhost:4200"),
+  // Origen del BACKEND (este servidor). Usado por passport como
+  // callbackURL hacia Google/Apple. Defaults al puerto actual.
+  BACKEND_ORIGIN: z.string().url().optional(),
   ADMIN_EMAIL: z.string().email().default("admin@cualautocompro.cl"),
   ADMIN_INITIAL_PASSWORD: z.string().min(8).default("admin1234"),
   GOOGLE_CLIENT_ID: z.string().optional(),
@@ -38,7 +41,12 @@ const schema = z.object({
   APPLE_PRIVATE_KEY: z.string().optional(),
 });
 
-export const env = schema.parse(process.env);
+// Default BACKEND_ORIGIN a la URL del backend actual (útil si se corre en otro puerto).
+const rawEnv = schema.parse(process.env);
+export const env: z.infer<typeof schema> & { BACKEND_ORIGIN: string } = {
+  ...rawEnv,
+  BACKEND_ORIGIN: rawEnv.BACKEND_ORIGIN ?? `http://localhost:${rawEnv.PORT}`,
+};
 
 if (process.env.NODE_ENV === "production" && env.ADMIN_INITIAL_PASSWORD === "admin1234") {
   throw new Error("ADMIN_INITIAL_PASSWORD must be overridden in production");

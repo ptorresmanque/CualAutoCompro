@@ -7,6 +7,8 @@ import AppleStrategy from "@nicokaiser/passport-apple";
 import { env } from "../../../config/env.js";
 import type { OAuthProvider } from "../oauth-state.js";
 
+const BACKEND_ORIGIN = env.BACKEND_ORIGIN ?? `http://localhost:${env.PORT}`;
+
 export const isGoogleConfigured = (): boolean =>
   Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
 
@@ -34,7 +36,7 @@ export const setupPassport = (): void => {
         {
           clientID: env.GOOGLE_CLIENT_ID!,
           clientSecret: env.GOOGLE_CLIENT_SECRET!,
-          callbackURL: `${env.WEB_ORIGIN}/api/v1/auth/google/callback`,
+          callbackURL: `${BACKEND_ORIGIN}/api/v1/auth/google/callback`,
           scope: ["openid", "email", "profile"],
           passReqToCallback: true,
         },
@@ -76,7 +78,7 @@ export const setupPassport = (): void => {
           teamID: env.APPLE_TEAM_ID!,
           keyID: env.APPLE_KEY_ID!,
           privateKey: readApplePrivateKey(),
-          callbackURL: `${env.WEB_ORIGIN}/api/v1/auth/apple/callback`,
+          callbackURL: `${BACKEND_ORIGIN}/api/v1/auth/apple/callback`,
           passReqToCallback: true,
         },
         async (
