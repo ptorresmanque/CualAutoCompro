@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { ApiService } from './api.service';
+import { ENV } from './env';
 
 export type User = { id: string; email: string; name: string; role: 'USER' | 'ADMIN' };
 
@@ -56,5 +57,11 @@ export class AuthService {
       {},
     );
     this.currentUser.set(null);
+  }
+
+  loginWithProvider(provider: 'google' | 'apple', returnTo?: string): void {
+    const url = new URL(`${ENV.apiBase}/auth/${provider}`);
+    if (returnTo) url.searchParams.set('returnTo', returnTo);
+    window.location.assign(url.toString());
   }
 }

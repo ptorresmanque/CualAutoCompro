@@ -4,6 +4,7 @@ import {
   provideHttpClientTesting,
   HttpTestingController,
 } from '@angular/common/http/testing';
+import { vi } from 'vitest';
 import { AuthService } from './auth.service';
 import { ENV } from './env';
 
@@ -66,5 +67,29 @@ describe('AuthService', () => {
     req.flush({ error: { code: 'UNAUTHENTICATED' } });
     await p;
     expect(svc.currentUser()).toBeNull();
+  });
+
+  it('loginWithProvider redirige a /auth/google con returnTo', () => {
+    const assignSpy = vi.fn();
+    vi.stubGlobal('location', {
+      assign: assignSpy,
+      href: 'http://localhost:3000/',
+    } as any);
+    svc.loginWithProvider('google', '/cuenta');
+    expect(assignSpy).toHaveBeenCalledWith(
+      `${ENV.apiBase}/auth/google?returnTo=%2Fcuenta`,
+    );
+    vi.unstubAllGlobals();
+  });
+
+  it('loginWithProvider redirige sin returnTo', () => {
+    const assignSpy = vi.fn();
+    vi.stubGlobal('location', {
+      assign: assignSpy,
+      href: 'http://localhost:3000/',
+    } as any);
+    svc.loginWithProvider('apple');
+    expect(assignSpy).toHaveBeenCalledWith(`${ENV.apiBase}/auth/apple`);
+    vi.unstubAllGlobals();
   });
 });
