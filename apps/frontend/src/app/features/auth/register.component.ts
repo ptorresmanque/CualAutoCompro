@@ -3,6 +3,7 @@ import {
   Component,
   inject,
   signal,
+  OnInit,
 } from '@angular/core';
 import {
   FormBuilder,
@@ -11,13 +12,14 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../core/auth.service';
+import { SocialButtonsComponent } from './social-buttons.component';
 
 @Component({
   selector: 'app-register',
@@ -31,13 +33,15 @@ import { AuthService } from '../../core/auth.service';
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
+    SocialButtonsComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   readonly form: FormGroup<{
     name: FormControl<string>;
@@ -51,6 +55,14 @@ export class RegisterComponent {
 
   submitting = signal(false);
   error = signal<string | null>(null);
+  readonly returnTo = signal<string | undefined>(undefined);
+
+  ngOnInit(): void {
+    this.route.queryParamMap.subscribe((p) => {
+      const ret = p.get('returnTo');
+      if (ret) this.returnTo.set(ret);
+    });
+  }
 
   async submit(): Promise<void> {
     if (this.form.invalid) {
