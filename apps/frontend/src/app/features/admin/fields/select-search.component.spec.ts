@@ -107,4 +107,116 @@ describe('SelectSearchComponent', () => {
     expect(fixture.componentInstance.activeIndex()).toBe(2);
     expect(input.getAttribute('aria-activedescendant')).toBe('option-2');
   });
+
+  it('renderiza el dropdown fuera del mat-form-field para evitar clipping/translucencia del MDC wrapper', () => {
+    TestBed.configureTestingModule({
+      imports: [SelectSearchComponent, ReactiveFormsModule],
+    });
+    const fixture = TestBed.createComponent(SelectSearchComponent);
+    const ctrl = new FormControl<string>('', { nonNullable: true });
+    fixture.componentRef.setInput('control', ctrl);
+    fixture.componentRef.setInput('options', ['SEDAN', 'SUV']);
+    fixture.detectChanges();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[role="combobox"]');
+    input.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+    const list = fixture.nativeElement.querySelector('ul.select-search-list');
+    expect(list).toBeTruthy();
+    const matFormField = fixture.nativeElement.querySelector('mat-form-field');
+    expect(list.closest('mat-form-field')).toBeNull();
+  });
+
+  it('click en una opción filtra el evento en el document handler y asigna el control', () => {
+    TestBed.configureTestingModule({
+      imports: [SelectSearchComponent, ReactiveFormsModule],
+    });
+    const fixture = TestBed.createComponent(SelectSearchComponent);
+    const ctrl = new FormControl<string>('', { nonNullable: true });
+    fixture.componentRef.setInput('control', ctrl);
+    fixture.componentRef.setInput('options', ['SEDAN', 'SUV']);
+    fixture.detectChanges();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[role="combobox"]');
+    input.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+    const option: HTMLLIElement = fixture.nativeElement.querySelector('li[role="option"]');
+    option.click();
+    fixture.detectChanges();
+    expect(ctrl.value).toBe('SEDAN');
+    const listAfter = fixture.nativeElement.querySelector('ul.select-search-list');
+    expect(listAfter).toBeNull();
+  });
+
+  it('click en opción estática actualiza el input con el label del valor seleccionado', () => {
+    TestBed.configureTestingModule({
+      imports: [SelectSearchComponent, ReactiveFormsModule],
+    });
+    const fixture = TestBed.createComponent(SelectSearchComponent);
+    const ctrl = new FormControl<string>('', { nonNullable: true });
+    fixture.componentRef.setInput('control', ctrl);
+    fixture.componentRef.setInput('options', ['SEDAN', 'SUV', 'PICKUP']);
+    fixture.detectChanges();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[role="combobox"]');
+    input.value = 'PI';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    const options = fixture.nativeElement.querySelectorAll('li[role="option"]') as NodeListOf<HTMLLIElement>;
+    expect(options.length).toBe(1);
+    options[0].click();
+    fixture.detectChanges();
+    expect(ctrl.value).toBe('PICKUP');
+    const inputAfter: HTMLInputElement = fixture.nativeElement.querySelector('input[role="combobox"]');
+    expect(inputAfter.value).toBe('PICKUP');
+  });
+
+  it('click en opción remota (FK) setea el control con el id y muestra el label en el input', async () => {
+    TestBed.configureTestingModule({
+      imports: [SelectSearchComponent, ReactiveFormsModule],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(SelectSearchComponent);
+    const ctrl = new FormControl<string>('', { nonNullable: true });
+    fixture.componentRef.setInput('control', ctrl);
+    fixture.componentRef.setInput('optionsApi', '/brands');
+    fixture.componentRef.setInput('optionLabel', 'name');
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    const req = http.expectOne((r) => r.url.includes('/api/v1/brands'));
+    req.flush({ data: [{ id: 'b1', name: 'Toyota' }, { id: 'b2', name: 'Ford' }] });
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[role="combobox"]');
+    input.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+    const options = fixture.nativeElement.querySelectorAll('li[role="option"]') as NodeListOf<HTMLLIElement>;
+    expect(options.length).toBe(2);
+    const toyotaOption = Array.from(options).find((o) => o.textContent?.includes('Toyota'))!;
+    toyotaOption.click();
+    fixture.detectChanges();
+    expect(ctrl.value).toBe('b1');
+    const inputAfter: HTMLInputElement = fixture.nativeElement.querySelector('input[role="combobox"]');
+    expect(inputAfter.value).toBe('Toyota');
+  });
+
+  it('al editar con FK ya seteado, el input muestra el label (no el id) tras cargar opciones', async () => {
+    TestBed.configureTestingModule({
+      imports: [SelectSearchComponent, ReactiveFormsModule],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(SelectSearchComponent);
+    const ctrl = new FormControl<string>('b1', { nonNullable: true });
+    fixture.componentRef.setInput('control', ctrl);
+    fixture.componentRef.setInput('optionsApi', '/brands');
+    fixture.componentRef.setInput('optionLabel', 'name');
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    const req = http.expectOne((r) => r.url.includes('/api/v1/brands'));
+    req.flush({ data: [{ id: 'b1', name: 'Toyota' }, { id: 'b2', name: 'Ford' }] });
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[role="combobox"]');
+    expect(input.value).toBe('Toyota');
+    expect(ctrl.value).toBe('b1');
+  });
 });

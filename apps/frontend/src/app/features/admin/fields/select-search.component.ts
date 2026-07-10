@@ -64,15 +64,25 @@ export class SelectSearchComponent implements OnInit {
   ngOnInit(): void {
     if (this.optionsApi()) {
       void this.loadRemote();
+    } else {
+      const current = this.control().value;
+      if (current) this.query.set(current);
     }
-    const current = this.control().value;
-    if (current) this.query.set(current);
   }
 
   private async loadRemote(): Promise<void> {
     try {
       const res = await this.api.get<{ data: { id: string }[] }>(this.optionsApi()!);
       this.remoteOptions.set(res.data as { id: string }[]);
+      const current = this.control().value;
+      if (current && !this.query()) {
+        const match = this.remoteOptions().find((o) => o.id === current);
+        if (match) {
+          this.query.set(String(match[this.optionLabel()] ?? ''));
+        } else {
+          this.query.set(current);
+        }
+      }
     } catch {
       this.remoteOptions.set([]);
     }
@@ -84,11 +94,20 @@ export class SelectSearchComponent implements OnInit {
   }
 
   pick(item: OptionItem): void {
+    let value: string;
+    let display: string;
     if (item.isOther) {
-      this.control().setValue(this.query().toUpperCase());
+      value = this.query().toUpperCase();
+      display = value;
+    } else if (item.id != null) {
+      value = item.id;
+      display = item.label;
     } else {
-      this.control().setValue(item.value ?? item.label);
+      value = item.value ?? item.label;
+      display = value;
     }
+    this.control().setValue(value);
+    this.query.set(display);
     this.open.set(false);
   }
 

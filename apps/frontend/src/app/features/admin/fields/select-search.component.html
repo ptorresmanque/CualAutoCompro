@@ -1,20 +1,23 @@
-<mat-form-field appearance="outline" class="select-search-field w-full" subscriptSizing="dynamic">
-  <input
-    #input
-    matInput
-    type="text"
-    role="combobox"
-    [attr.aria-expanded]="open()"
-    [attr.aria-activedescendant]="open() && filtered().length > 0 ? 'option-' + activeIndex() : null"
-    aria-autocomplete="list"
-    [value]="query()"
-    (input)="onInput($any($event.target).value)"
-    (focus)="open.set(true)"
-    (keydown.escape)="open.set(false)"
-    (keydown.arrowdown)="onArrowDown($event)"
-    (keydown.arrowup)="onArrowUp($event)"
-    (keydown.enter)="onEnter($event)"
-  />
+<div class="select-search-field">
+  <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+    <input
+      #input
+      matInput
+      type="text"
+      role="combobox"
+      [attr.aria-expanded]="open()"
+      [attr.aria-activedescendant]="open() && filtered().length > 0 ? 'option-' + activeIndex() : null"
+      aria-autocomplete="list"
+      [value]="query()"
+      (input)="onInput($any($event.target).value)"
+      (focus)="open.set(true)"
+      (keydown.escape)="open.set(false)"
+      (keydown.arrowdown)="onArrowDown($event)"
+      (keydown.arrowup)="onArrowUp($event)"
+      (keydown.enter)="onEnter($event)"
+    />
+  </mat-form-field>
+
   @if (open() && filtered().length > 0) {
     <ul role="listbox" class="select-search-list">
       @for (item of filtered(); track item.label; let i = $index) {
@@ -36,4 +39,4 @@
       }
     </ul>
   }
-</mat-form-field>
+</div>

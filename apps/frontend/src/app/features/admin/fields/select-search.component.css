@@ -1,7 +1,8 @@
-:host { display: block; width: 100%; }
+:host { display: block; width: 100%; position: relative; }
 
 .select-search-field {
   position: relative;
+  width: 100%;
 }
 
 .select-search-list {
@@ -18,7 +19,7 @@
   background: var(--mat-sys-surface);
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: 0.5rem;
-  box-shadow: 0 4px 12px rgba(0, 128, 128, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .select-search-list li {
