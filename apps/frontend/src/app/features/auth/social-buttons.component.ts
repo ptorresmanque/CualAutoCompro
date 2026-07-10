@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { AuthService } from '../../core/auth.service';
+import { ENV } from '../../core/env';
 
 type ProvidersResponse = { data?: { google: boolean; apple: boolean } };
 
@@ -28,7 +29,7 @@ export class SocialButtonsComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     try {
-      const res = await fetch('/api/v1/auth/providers', {
+      const res = await fetch(`${ENV.apiBase}/auth/providers`, {
         credentials: 'include',
       });
       if (!res.ok) return;

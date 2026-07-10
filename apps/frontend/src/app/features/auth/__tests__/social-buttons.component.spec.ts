@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { SocialButtonsComponent } from '../social-buttons.component';
+import { ENV } from '../../../core/env';
 
 describe('SocialButtonsComponent', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<SocialButtonsComponent>>;
@@ -26,7 +27,7 @@ describe('SocialButtonsComponent', () => {
 
   afterEach(() => {
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      '/api/v1/auth/providers',
+      `${ENV.apiBase}/auth/providers`,
       { credentials: 'include' },
     );
     vi.unstubAllGlobals();
