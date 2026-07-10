@@ -47,12 +47,16 @@ export const setupPassport = (): void => {
           done: VerifyCallback,
         ) => {
           try {
-            const email = profile.emails?.[0]?.value ?? null;
+            const emailEntry = profile.emails?.[0];
+            const email = emailEntry?.value ?? null;
             const identity = {
               provider: "google" as const,
               sub: profile.id,
               email,
-              emailVerified: email != null,
+              emailVerified:
+                emailEntry?.verified === true ||
+                (profile as unknown as { _json?: { email_verified?: boolean } })._json
+                  ?.email_verified === true,
               name: profile.displayName ?? null,
             };
             done(null, identity as never);
@@ -79,18 +83,16 @@ export const setupPassport = (): void => {
           _req: express.Request,
           _accessToken: string,
           _refreshToken: string,
-          idToken: { sub: string; email?: string; email_verified?: boolean | string; name?: string },
+          profile: { id: string; email?: string; emailVerified?: boolean; name?: string },
           done: VerifyCallback,
         ) => {
           try {
             const identity = {
               provider: "apple" as const,
-              sub: idToken.sub,
-              email: idToken.email ?? null,
-              emailVerified:
-                idToken.email_verified === true ||
-                idToken.email_verified === "true",
-              name: idToken.name ?? null,
+              sub: profile.id,
+              email: profile.email ?? null,
+              emailVerified: profile.emailVerified === true,
+              name: profile.name ?? null,
             };
             done(null, identity as never);
           } catch (e) {
@@ -107,7 +109,7 @@ export const setupPassport = (): void => {
 
 export const hasStrategy = (provider: OAuthProvider): boolean => {
   const strategies = (passport as unknown as {
-    _strategy: (n: string) => unknown;
-  })._strategy;
-  return typeof strategies(provider) === "object" && strategies(provider) !== null;
+    _strategies?: Record<string, unknown>;
+  })._strategies;
+  return Boolean(strategies && strategies[provider]);
 };

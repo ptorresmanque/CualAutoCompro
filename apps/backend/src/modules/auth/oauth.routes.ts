@@ -19,7 +19,6 @@ import { hasStrategy, setupPassport } from "./infra/passport-setup.js";
 import { isRateLimited } from "./oauth-rate-limit.js";
 import { AUTH_COOKIE_NAME, cookieOpts } from "./auth-cookie.js";
 import { oauthError, type OAuthError } from "../../shared/errors.js";
-import { simulateOAuthCallback } from "./oauth-test-helpers.js";
 
 setupPassport();
 
@@ -152,6 +151,7 @@ if (process.env.NODE_ENV !== "production") {
       name: string;
     };
     try {
+      const { simulateOAuthCallback } = await import("./oauth-test-helpers.js");
       const { cookie, user } = await simulateOAuthCallback({
         provider,
         sub,
