@@ -9,6 +9,16 @@
     </p>
   </header>
 
+  @if (oauthError(); as msg) {
+    <div
+      class="border border-engine bg-engine-50 px-4 py-3 text-sm text-engine-dark mb-4"
+      role="alert"
+      data-testid="oauth-error"
+    >
+      <span class="stamp-label mr-2">OAuth</span>{{ msg }}
+    </div>
+  }
+
   <mat-card class="auth-card" appearance="outlined">
     <mat-card-content>
       <form
@@ -70,6 +80,8 @@
       </form>
     </mat-card-content>
   </mat-card>
+
+  <app-social-buttons mode="login" [returnTo]="returnTo()" />
 
   <div class="auth-divider"><span>o continúa sin cuenta</span></div>
 
