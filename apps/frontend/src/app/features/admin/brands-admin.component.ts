@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { AdminFeedbackService } from '../../core/admin-feedback.service';
 import { ApiService } from '../../core/api.service';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
@@ -24,6 +25,7 @@ type SortKey = 'name';
 })
 export class BrandsAdminComponent {
   private api = inject(ApiService);
+  private feedback = inject(AdminFeedbackService);
 
   readonly items = signal<BrandRow[]>([]);
   readonly search = signal('');
@@ -76,14 +78,18 @@ export class BrandsAdminComponent {
     try {
       if (e) {
         await this.api.patch(`/admin/brands/${e.id}`, value);
+        this.feedback.success(`Marca "${value['name']}" actualizada`);
       } else {
         const { dealerIds: _ignore, ...createPayload } = value;
         await this.api.post(`/admin/brands`, createPayload);
+        this.feedback.success(`Marca "${createPayload['name']}" creada`);
       }
       this.dialogEntity.set(undefined);
       await this.load();
     } catch (err) {
-      this.error.set((err as Error).message);
+      const msg = (err as Error).message;
+      this.error.set(msg);
+      this.feedback.error(msg);
     }
   }
 
@@ -91,9 +97,12 @@ export class BrandsAdminComponent {
     if (!confirm(`¿Eliminar marca "${row.name}"?`)) return;
     try {
       await this.api.delete(`/admin/brands/${row.id}`);
+      this.feedback.success(`Marca "${row.name}" eliminada`);
       await this.load();
     } catch (err) {
-      this.error.set((err as Error).message);
+      const msg = (err as Error).message;
+      this.error.set(msg);
+      this.feedback.error(msg);
     }
   }
 

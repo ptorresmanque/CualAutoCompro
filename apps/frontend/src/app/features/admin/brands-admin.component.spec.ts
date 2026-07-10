@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { AdminFeedbackService } from '../../core/admin-feedback.service';
 import { BrandsAdminComponent } from './brands-admin.component';
 
 interface BrandRow {
@@ -177,5 +179,69 @@ describe('BrandsAdminComponent', () => {
 
     for (const r of http.match(() => true)) r.flush({ data: [] });
     await fixture.whenStable();
+  });
+
+  it('onSave en modo create llama feedback.success con "Marca <name> creada"', async () => {
+    TestBed.configureTestingModule({
+      imports: [BrandsAdminComponent, NoopAnimationsModule],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(BrandsAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    for (const r of http.match(() => true)) r.flush({ data: [] });
+    await fixture.whenStable();
+
+    const feedback = TestBed.inject(AdminFeedbackService);
+    const successSpy = vi.spyOn(feedback, 'success');
+
+    fixture.componentInstance.dialogEntity.set(null);
+    void fixture.componentInstance.onSave({
+      name: 'Toyota',
+      logoUrl: null,
+      dealerIds: ['d1'],
+    });
+
+    const postReq = http.expectOne((r) => r.url.endsWith('/api/v1/admin/brands'));
+    expect(postReq.request.method).toBe('POST');
+    postReq.flush({ data: { id: 'b1', name: 'Toyota', logoUrl: null } });
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(successSpy).toHaveBeenCalledWith('Marca "Toyota" creada');
+
+    // Cleanup: drain the load() reload so the test doesn't leak pending requests
+    for (const r of http.match(() => true)) r.flush({ data: [] });
+  });
+
+  it('confirmDelete llama feedback.success con "Marca <name> eliminada"', async () => {
+    TestBed.configureTestingModule({
+      imports: [BrandsAdminComponent, NoopAnimationsModule],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(BrandsAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    for (const r of http.match(() => true)) r.flush({ data: [] });
+    await fixture.whenStable();
+
+    const feedback = TestBed.inject(AdminFeedbackService);
+    const successSpy = vi.spyOn(feedback, 'success');
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    void fixture.componentInstance.confirmDelete({
+      id: 'b1',
+      name: 'Toyota',
+      logoUrl: null,
+    });
+
+    const delReq = http.expectOne((r) => r.url.endsWith('/api/v1/admin/brands/b1'));
+    expect(delReq.request.method).toBe('DELETE');
+    delReq.flush({ data: null });
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(successSpy).toHaveBeenCalledWith('Marca "Toyota" eliminada');
+
+    // Cleanup: drain the load() reload
+    for (const r of http.match(() => true)) r.flush({ data: [] });
   });
 });

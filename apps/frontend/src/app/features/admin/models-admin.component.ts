@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { AdminFeedbackService } from '../../core/admin-feedback.service';
 import { ApiService } from '../../core/api.service';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
@@ -19,6 +20,7 @@ type SortKey = 'name' | 'segment' | 'brandName';
 })
 export class ModelsAdminComponent {
   private api = inject(ApiService);
+  private feedback = inject(AdminFeedbackService);
 
   readonly items = signal<ModelRow[]>([]);
   readonly brands = signal<BrandOption[]>([]);
@@ -93,13 +95,17 @@ export class ModelsAdminComponent {
     try {
       if (e) {
         await this.api.patch(`/admin/models/${e.id}`, value);
+        this.feedback.success(`Modelo "${value['name']}" actualizado`);
       } else {
         await this.api.post(`/admin/models`, value);
+        this.feedback.success(`Modelo "${value['name']}" creado`);
       }
       this.dialogEntity.set(undefined);
       await this.load();
     } catch (err) {
-      this.error.set((err as Error).message);
+      const msg = (err as Error).message;
+      this.error.set(msg);
+      this.feedback.error(msg);
     }
   }
 
@@ -107,9 +113,12 @@ export class ModelsAdminComponent {
     if (!confirm(`¿Eliminar modelo "${row.name}"?`)) return;
     try {
       await this.api.delete(`/admin/models/${row.id}`);
+      this.feedback.success(`Modelo "${row.name}" eliminado`);
       await this.load();
     } catch (err) {
-      this.error.set((err as Error).message);
+      const msg = (err as Error).message;
+      this.error.set(msg);
+      this.feedback.error(msg);
     }
   }
 

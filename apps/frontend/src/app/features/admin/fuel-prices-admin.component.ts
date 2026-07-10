@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { AdminFeedbackService } from '../../core/admin-feedback.service';
 import { ApiService } from '../../core/api.service';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
@@ -31,6 +32,7 @@ type SortKey = 'fuelType' | 'pricePerUnitClp' | 'effectiveFrom';
 })
 export class FuelPricesAdminComponent {
   private api = inject(ApiService);
+  private feedback = inject(AdminFeedbackService);
 
   readonly items = signal<FuelPriceRow[]>([]);
   readonly search = signal('');
@@ -76,13 +78,17 @@ export class FuelPricesAdminComponent {
     try {
       if (e) {
         await this.api.patch(`/admin/fuel-prices/${e.id}`, value);
+        this.feedback.success(`Precio ${value['fuelType']} (${value['unit']}) actualizado`);
       } else {
         await this.api.post(`/admin/fuel-prices`, value);
+        this.feedback.success(`Precio ${value['fuelType']} (${value['unit']}) creado`);
       }
       this.dialogEntity.set(undefined);
       await this.load();
     } catch (err) {
-      this.error.set((err as Error).message);
+      const msg = (err as Error).message;
+      this.error.set(msg);
+      this.feedback.error(msg);
     }
   }
 
@@ -90,9 +96,12 @@ export class FuelPricesAdminComponent {
     if (!confirm(`¿Eliminar precio de ${row.fuelType}?`)) return;
     try {
       await this.api.delete(`/admin/fuel-prices/${row.id}`);
+      this.feedback.success(`Precio ${row.fuelType} (${row.unit}) eliminado`);
       await this.load();
     } catch (err) {
-      this.error.set((err as Error).message);
+      const msg = (err as Error).message;
+      this.error.set(msg);
+      this.feedback.error(msg);
     }
   }
 

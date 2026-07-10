@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { AdminFeedbackService } from '../../core/admin-feedback.service';
 import { ApiService } from '../../core/api.service';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
@@ -18,6 +19,7 @@ type SortKey = 'name' | 'category';
 })
 export class EquipmentAdminComponent {
   private api = inject(ApiService);
+  private feedback = inject(AdminFeedbackService);
 
   readonly items = signal<EquipmentRow[]>([]);
   readonly search = signal('');
@@ -73,13 +75,17 @@ export class EquipmentAdminComponent {
     try {
       if (e) {
         await this.api.patch(`/admin/equipment/${e.id}`, value);
+        this.feedback.success(`Equipo "${value['name']}" actualizado`);
       } else {
         await this.api.post(`/admin/equipment`, value);
+        this.feedback.success(`Equipo "${value['name']}" creado`);
       }
       this.dialogEntity.set(undefined);
       await this.load();
     } catch (err) {
-      this.error.set((err as Error).message);
+      const msg = (err as Error).message;
+      this.error.set(msg);
+      this.feedback.error(msg);
     }
   }
 
@@ -87,9 +93,12 @@ export class EquipmentAdminComponent {
     if (!confirm(`¿Eliminar equipamiento "${row.name}"?`)) return;
     try {
       await this.api.delete(`/admin/equipment/${row.id}`);
+      this.feedback.success(`Equipo "${row.name}" eliminado`);
       await this.load();
     } catch (err) {
-      this.error.set((err as Error).message);
+      const msg = (err as Error).message;
+      this.error.set(msg);
+      this.feedback.error(msg);
     }
   }
 

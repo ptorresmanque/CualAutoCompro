@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { AdminFeedbackService } from '../../core/admin-feedback.service';
 import { ApiService } from '../../core/api.service';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
@@ -29,6 +30,7 @@ type SortKey = 'name' | 'year' | 'priceClp' | 'modelName';
 })
 export class VersionsAdminComponent {
   private api = inject(ApiService);
+  private feedback = inject(AdminFeedbackService);
 
   readonly items = signal<VersionRow[]>([]);
   readonly models = signal<ModelOption[]>([]);
@@ -121,17 +123,20 @@ export class VersionsAdminComponent {
 
     // 1) Save the version (without the equipment field).
     const { equipment: _ignore, ...versionPayload } = value;
+    const versionName = String(versionPayload['name'] ?? '');
     let versionId: string;
     try {
       if (e) {
         versionId = e.id;
         await this.api.patch(`/admin/versions/${versionId}`, versionPayload);
+        this.feedback.success(`Versión "${versionName}" actualizada`);
       } else {
         const created = await this.api.post<{ data: { id: string } }>(
           `/admin/versions`,
           versionPayload,
         );
         versionId = created.data.id;
+        this.feedback.success(`Versión "${versionName}" creada`);
       }
 
       // 2) Sync equipment relations.
@@ -145,7 +150,9 @@ export class VersionsAdminComponent {
       this.dialogEntity.set(undefined);
       await this.load();
     } catch (err) {
-      this.error.set((err as Error).message);
+      const msg = (err as Error).message;
+      this.error.set(msg);
+      this.feedback.error(msg);
     }
   }
 
@@ -163,9 +170,12 @@ export class VersionsAdminComponent {
     if (!confirm(`¿Eliminar versión "${row.name}"?`)) return;
     try {
       await this.api.delete(`/admin/versions/${row.id}`);
+      this.feedback.success(`Versión "${row.name}" eliminada`);
       await this.load();
     } catch (err) {
-      this.error.set((err as Error).message);
+      const msg = (err as Error).message;
+      this.error.set(msg);
+      this.feedback.error(msg);
     }
   }
 

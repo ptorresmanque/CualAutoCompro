@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { AdminFeedbackService } from '../../core/admin-feedback.service';
 import { ApiService } from '../../core/api.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
@@ -19,6 +20,7 @@ type SortKey = 'name';
 })
 export class DealersAdminComponent {
   private api = inject(ApiService);
+  private feedback = inject(AdminFeedbackService);
 
   readonly items = signal<DealerRow[]>([]);
   readonly search = signal('');
@@ -70,13 +72,17 @@ export class DealersAdminComponent {
     try {
       if (e) {
         await this.api.patch(`/admin/dealers/${e.id}`, value);
+        this.feedback.success(`Concesionario "${value['name']}" actualizado`);
       } else {
         await this.api.post(`/admin/dealers`, value);
+        this.feedback.success(`Concesionario "${value['name']}" creado`);
       }
       this.dialogEntity.set(undefined);
       await this.load();
     } catch (err) {
-      this.error.set((err as Error).message);
+      const msg = (err as Error).message;
+      this.error.set(msg);
+      this.feedback.error(msg);
     }
   }
 
@@ -84,9 +90,12 @@ export class DealersAdminComponent {
     if (!confirm(`¿Eliminar concesionario "${row.name}"?`)) return;
     try {
       await this.api.delete(`/admin/dealers/${row.id}`);
+      this.feedback.success(`Concesionario "${row.name}" eliminado`);
       await this.load();
     } catch (err) {
-      this.error.set((err as Error).message);
+      const msg = (err as Error).message;
+      this.error.set(msg);
+      this.feedback.error(msg);
     }
   }
 

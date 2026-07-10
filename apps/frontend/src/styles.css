@@ -199,8 +199,14 @@ h1, .display {
   background-color: #F4D1CA;
   color: var(--engine-dark);
 }
+.mat-mdc-snack-bar-container.snack-success .mdc-snackbar__surface {
+  background-color: var(--paper-cool);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+}
 .mat-mdc-snack-bar-container.snack-warn .mat-mdc-snack-bar-action,
-.mat-mdc-snack-bar-container.snack-error .mat-mdc-snack-bar-action {
+.mat-mdc-snack-bar-container.snack-error .mat-mdc-snack-bar-action,
+.mat-mdc-snack-bar-container.snack-success .mat-mdc-snack-bar-action {
   color: inherit;
 }
 
