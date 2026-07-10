@@ -279,3 +279,104 @@ Si no se setea `BACKEND_ORIGIN`, el backend hace default a `http://localhost:300
 - **`redirect_uri_mismatch`** → registraste el redirect URI en Google Cloud con el puerto equivocado. Tenés que ser `localhost:3000/...`, NO `:4200/...`.
 - **Pantalla en blanco + error `NG04002`** → tu Google Cloud Console tiene el redirect URI con puerto 4200 (mal). Reemplazá por 3000.
 - **Después del callback, no estoy logueado** → probablemente no llegó el redirect al frontend. Verificá que `WEB_ORIGIN` en `.env.development` sea `http://localhost:4200`.
+---
+
+## Despliegue a producción (cPanel)
+
+Pasos adicionales al deploy estándar (`guia-despliegue-cpanel.pdf`) para que OAuth
+funcione en `https://cualautocompro.cl`.
+
+### 1. Variables de entorno en cPanel
+
+En **Setup Node.js App → Environment variables** del panel de cPanel, agregar:
+
+| Variable | Valor | Notas |
+|---|---|---|
+| `NODE_ENV` | `production` | Requerido. Activa salvaguarda del admin password |
+| `WEB_ORIGIN` | `https://cualautocompro.cl` | Frontend público |
+| `BACKEND_ORIGIN` | `https://cualautocompro.cl` | Backend público. Mismo host si están en el mismo virtual host. Si backend es subdominio distinto (ej `api.cualautocompro.cl`), setearlo ahí |
+| `GOOGLE_CLIENT_ID` | (de Google Cloud Console) | |
+| `GOOGLE_CLIENT_SECRET` | (de Google Cloud Console) | |
+| `APPLE_CLIENT_ID` | (Service ID de Apple Developer) | |
+| `APPLE_KEY_ID` | (de Apple) | |
+| `APPLE_TEAM_ID` | (de Apple) | |
+| `APPLE_PRIVATE_KEY` | (PEM del .p8 con `\n` escapados) | |
+| `JWT_SECRET` | (32 bytes aleatorios) | **Sobreescribir** el valor de `.env.example` por seguridad |
+| `ADMIN_INITIAL_PASSWORD` | (password fuerte, NO `admin1234`) | El backend tira error si queda `admin1234` con `NODE_ENV=production` |
+
+> **WEB_ORIGIN vs BACKEND_ORIGIN**: en prod suelen ser iguales (mismo dominio público).
+> La distinción existe para dev donde son puertos distintos. Ver sección OAuth arriba
+> para el detalle.
+
+### 2. Aplicar migración Prisma antes del primer deploy con OAuth
+
+```bash
+cd apps/backend && npx prisma migrate deploy
+```
+
+La migración `20260709120000_oauth_identity` crea la tabla `UserIdentity` y hace
+nullable `User.passwordHash`. Sin ella, `/auth/providers` devuelve 500.
+
+### 3. Registrar redirect URIs en los providers
+
+**Google Cloud Console** (https://console.cloud.google.com/apis/credentials) →
+tu OAuth client → Authorized redirect URIs:
+
+```
+https://cualautocompro.cl/api/v1/auth/google/callback
+```
+
+> NO uses `https://www.cualautocompro.cl/...` (con `www`) ni rutas con
+> `/oauth/callback` (el path de callback es `/api/v1/auth/google/callback`).
+
+**Apple Developer** (https://developer.apple.com/account/resources/identifiers) →
+tu Service ID → Web Authentication Configuration:
+
+| Web Domain | Return URL |
+|---|---|
+| `cualautocompro.cl` | `https://cualautocompro.cl/api/v1/auth/apple/callback` |
+
+Si no configuraste Apple todavía en dev, empezá solo con Google.
+
+### 4. Verificación post-deploy
+
+```bash
+curl https://cualautocompro.cl/api/v1/auth/providers
+```
+
+Esperado: `{"data":{"google":true,"apple":false},"error":null}`.
+
+- Si `google:false` → falta `GOOGLE_CLIENT_ID/SECRET` o consistencia parcial.
+- Si 404 → la migración no se aplicó (`prisma migrate deploy`).
+- Si 500 → revisar logs del backend.
+
+En el navegador, ir a `https://cualautocompro.cl/login`: deben aparecer los
+botones OAuth. Click → autorizar → volver al sitio y estar logueado.
+
+### 5. Cookies en producción
+
+`auth-cookie.ts` automáticamente omite `Domain=localhost` cuando
+`NODE_ENV=production`. El navegador usa la cookie en el dominio que la emitió,
+que es exactamente donde está el frontend si comparten dominio.
+
+> Si backend y frontend son **subdominios distintos** (`api.cualautocompro.cl`
+> vs `app.cualautocompro.cl`), necesitás editar
+> `apps/backend/src/modules/auth/auth-cookie.ts` y agregar
+> `domain: '.cualautocompro.cl'` (con punto inicial para incluir subdominios).
+> Esta es la única razón por la que el proyecto podría necesitar un cambio
+> de código específico al deploy más allá de las env vars.
+
+### 6. Seguridad post-deploy
+
+- **HTTPS obligatorio**: las cookies tienen `secure: true` en prod (solo se
+  envían sobre HTTPS). Si no hay HTTPS, el browser rechaza la cookie y el
+  flow falla silenciosamente.
+- **JWT_SECRET único**: random 32+ bytes. Nunca reutilizar el valor de
+  `.env.example`.
+- **No commitear `.env`** con secrets reales: `.env.development`,
+  `.env.production` y `.env.local` están todos en `.gitignore`.
+- Si el browser muestra `redirect_uri_mismatch`, tu `BACKEND_ORIGIN` y la URL
+  registrada en Google/Apple no coinciden carácter por carácter (chequear
+  protocolo https, sin `www`, sin trailing slash).
+- Si los usuarios reciben `OAUTH_EMAIL_NOT_VERIFIED`, su cuenta de Google/Apple
+  tiene email no verificado;让他们 usar otra cuenta o verificar primero.
