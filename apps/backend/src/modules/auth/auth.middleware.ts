@@ -5,13 +5,11 @@ import type { UserRole } from "../../shared/user-role.js";
 
 declare global {
   namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        email: string;
-        name: string;
-        role: UserRole;
-      };
+    interface User {
+      id: string;
+      email: string;
+      name: string;
+      role: UserRole;
     }
   }
 }
@@ -26,7 +24,7 @@ export const authenticate = (req: Request, _res: Response, next: NextFunction) =
       email: payload.email,
       name: payload.name,
       role: payload.role,
-    };
+    } as Express.User;
     next();
   } catch {
     next(unauthorized());
