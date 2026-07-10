@@ -1,0 +1,47 @@
+.auth-oauth {
+  margin-top: 1.5rem;
+}
+
+.auth-oauth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.auth-social {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.625rem 1rem;
+  border-radius: 0.375rem;
+  border: 1px solid theme('colors.ink.subtle');
+  background: #fff;
+  color: theme('colors.ink.DEFAULT');
+  font-family: theme('fontFamily.display');
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+
+.auth-social:hover {
+  border-color: theme('colors.engine.DEFAULT');
+}
+
+.auth-social:focus-visible {
+  outline: 2px solid theme('colors.engine.DEFAULT');
+  outline-offset: 2px;
+}
+
+.auth-social--apple {
+  background: theme('colors.ink.DEFAULT');
+  color: #fff;
+  border-color: theme('colors.ink.DEFAULT');
+}
+
+.auth-social--apple:hover {
+  border-color: theme('colors.engine.DEFAULT');
+}
