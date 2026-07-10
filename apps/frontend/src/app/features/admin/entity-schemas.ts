@@ -135,6 +135,7 @@ export interface FieldMeta {
   optionsApi?: string;
   optionLabel?: string;
   optional?: boolean;
+  hidden?: boolean;
 }
 
 export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
@@ -151,7 +152,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'galleryUrls', label: 'Galería', kind: 'gallery' },
   ],
   version: [
-    { field: 'modelId', label: 'Modelo', kind: 'foreignKey', optionsApi: '/models', optionLabel: 'name' },
+    { field: 'modelId', label: 'Modelo', kind: 'foreignKey', optionsApi: '/admin/models', optionLabel: 'name' },
     { field: 'name', label: 'Nombre', kind: 'text' },
     { field: 'year', label: 'Año', kind: 'number' },
     { field: 'priceClp', label: 'Precio CLP', kind: 'number' },
@@ -185,7 +186,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'category', label: 'Categoría', kind: 'text' },
   ],
   maintenance: [
-    { field: 'versionId', label: 'Versión', kind: 'foreignKey', optionsApi: '/versions', optionLabel: 'name' },
+    { field: 'versionId', label: 'Versión', kind: 'foreignKey', optionsApi: '/admin/versions', optionLabel: 'name', hidden: true },
     { field: 'mileageTag', label: 'Kilometraje', kind: 'number' },
     { field: 'costClp', label: 'Costo CLP', kind: 'number' },
   ],

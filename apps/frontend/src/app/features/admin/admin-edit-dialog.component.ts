@@ -27,12 +27,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { ENV } from '../../core/env';
-import {
-  entitySchemaByKey,
-  FIELD_METAS,
-  type EntityKey,
-  type FieldMeta,
-} from './entity-schemas';
+import { entitySchemaByKey, FIELD_METAS, type EntityKey, type FieldMeta } from './entity-schemas';
 import { TextFieldComponent } from './fields/text-field.component';
 import { NumberFieldComponent } from './fields/number-field.component';
 import { ToggleFieldComponent } from './fields/toggle-field.component';
@@ -98,11 +93,14 @@ export class AdminEditDialogComponent {
   readonly fieldMetas = computed<FieldMeta[]>(() => {
     const key = this.entityKey();
     const tpl = this.emptyTemplate();
-    const all = FIELD_METAS[key] ?? [];
+    const all = (FIELD_METAS[key] ?? []).filter((m) => !m.hidden);
     const known = new Set(all.map((m) => m.field));
+    const hiddenNames = new Set(
+      (FIELD_METAS[key] ?? []).filter((m) => m.hidden).map((m) => m.field),
+    );
     const extras: FieldMeta[] = [];
     for (const k of Object.keys(tpl)) {
-      if (!known.has(k) && !HIDDEN_KEYS.has(k)) {
+      if (!known.has(k) && !HIDDEN_KEYS.has(k) && !hiddenNames.has(k)) {
         extras.push({ field: k, label: k, kind: 'text' });
       }
     }
@@ -152,21 +150,26 @@ export class AdminEditDialogComponent {
       });
     });
 
-    effect(() => {
+effect(() => {
       const tpl = this.emptyTemplate();
       const e = this.entity();
       untracked(() => {
         if (Object.keys(tpl).length === 0) return;
         const form = this.form();
+        const hiddenNames = new Set(
+          (FIELD_METAS[this.entityKey()] ?? [])
+            .filter((m) => m.hidden)
+            .map((m) => m.field),
+        );
         const existing = new Set(Object.keys(form.controls));
         for (const k of Object.keys(tpl)) {
-          if (!existing.has(k) && !HIDDEN_KEYS.has(k)) {
+          if (!existing.has(k) && !HIDDEN_KEYS.has(k) && !hiddenNames.has(k)) {
             form.addControl(k, new FormControl(tpl[k]));
           }
         }
         const value = sanitize(e) ?? tpl;
         for (const [k, v] of Object.entries(value)) {
-          if (HIDDEN_KEYS.has(k)) continue;
+          if (HIDDEN_KEYS.has(k) || hiddenNames.has(k)) continue;
           const ctrl = form.get(k);
           if (!ctrl) continue;
           if (
@@ -188,10 +191,15 @@ export class AdminEditDialogComponent {
   }
 
   private buildInitialControls(key: EntityKey): Record<string, FormControl> {
-    const metas = FIELD_METAS[key] ?? [];
+    const metas = (FIELD_METAS[key] ?? []).filter((m) => !m.hidden);
     const controls: Record<string, FormControl> = {};
     for (const meta of metas) {
-      const initial = meta.kind === 'gallery' || meta.kind === 'multiSelect' ? [] : null;
+      let initial: unknown = null;
+      if (meta.kind === 'gallery' || meta.kind === 'multiSelect') {
+        initial = [];
+      } else if (meta.kind === 'boolean' && meta.optional) {
+        initial = false;
+      }
       const ctrl = new FormControl(initial);
       const isExemptKind =
         meta.kind === 'foreignKey' ||
@@ -222,7 +230,9 @@ export class AdminEditDialogComponent {
       const schema = entitySchemaByKey[this.entityKey()];
       const result = schema.safeParse(parsed);
       if (!result.success) {
-        this.jsonError.set(result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '));
+        this.jsonError.set(
+          result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '),
+        );
         return;
       }
       this.jsonError.set(null);

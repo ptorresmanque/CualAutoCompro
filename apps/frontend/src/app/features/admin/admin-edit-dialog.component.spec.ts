@@ -60,6 +60,48 @@ describe('AdminEditDialogComponent', () => {
     expect(sel).toBeTruthy();
   });
 
+  it('version con FK modelId carga TODOS los modelos desde /admin/models (no el endpoint público paginado)', async () => {
+    const { fixture, http } = setup('version');
+    const templateReq = http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version'));
+    templateReq.flush({
+      data: {
+        modelId: '', name: '', year: 2026, priceClp: 0,
+        transmission: 'MANUAL', fuel: 'BENCINA',
+        engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
+        consumptionCityKmL: 0, consumptionHighwayKmL: 0,
+        lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
+        trunkLiters: 0, airbagCount: 0,
+        hasAbs: false, hasEsp: false, hasCruiseControl: false,
+      },
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const modelsReq = http.expectOne((r) => r.url.endsWith('/api/v1/admin/models'));
+    modelsReq.flush({
+      data: [
+        { id: 'm1', name: 'Yaris' },
+        { id: 'm2', name: 'Corolla' },
+        { id: 'm3', name: 'RAV4' },
+      ],
+    });
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    const inputs = fixture.nativeElement.querySelectorAll('app-select-search input[role="combobox"]') as NodeListOf<HTMLInputElement>;
+    const modelInput = inputs[0];
+    modelInput.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+
+    const items = fixture.nativeElement.querySelectorAll('li[role="option"]');
+    expect(items.length).toBe(3);
+    const labels = Array.from(items as NodeListOf<Element>).map((i) => i.textContent?.trim());
+    expect(labels).toContain('Yaris');
+    expect(labels).toContain('Corolla');
+    expect(labels).toContain('RAV4');
+  });
+
   it('version con booleans renderiza app-toggle-field', async () => {
     const { fixture, http } = setup('version');
     const req = http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version'));
@@ -296,4 +338,47 @@ describe('AdminEditDialogComponent', () => {
     const form = fixture.componentInstance.form();
     expect(form.valid).toBe(true);
   });
+
+  it('hasRecall default false antes que llegue el template (no null)', async () => {
+  const { fixture, http } = setup('version');
+  // NO flusheamos el template todavía → simulamos la brecha inicial
+  const form = fixture.componentInstance.form();
+  expect(form.get('hasRecall')?.value).toBe(false);
+  // Limpia la request pendiente
+  http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version')).flush({
+    data: {
+      modelId: '', name: '', year: 2026, priceClp: 0,
+      transmission: 'MANUAL', fuel: 'BENCINA',
+      engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
+      consumptionCityKmL: 0, consumptionHighwayKmL: 0,
+      lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
+      trunkLiters: 0, airbagCount: 0,
+      hasAbs: false, hasEsp: false, hasCruiseControl: false,
+    },
+  });
+});
+
+it('maintenance: versionId es hidden → no se renderiza en el form ni se crea control', async () => {
+  const { fixture, http } = setup('maintenance');
+  const req = http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/maintenance'));
+  req.flush({ data: { versionId: '', mileageTag: 0, costClp: 0 } });
+  await fixture.whenStable();
+  fixture.detectChanges();
+
+  const form = fixture.componentInstance.form();
+  expect(form.contains('versionId')).toBe(false);
+  expect(form.contains('mileageTag')).toBe(true);
+  expect(form.contains('costClp')).toBe(true);
+
+  // Render: solo deben verse mileageTag y costClp
+  const labels = Array.from(
+    fixture.nativeElement.querySelectorAll('.dialog-field-label') as NodeListOf<Element>,
+  ).map((el) => el.textContent?.trim() ?? '');
+  expect(labels.some((l) => l.startsWith('Versión'))).toBe(false);
+  expect(labels.some((l) => l.startsWith('Kilometraje'))).toBe(true);
+  expect(labels.some((l) => l.startsWith('Costo CLP'))).toBe(true);
+
+  // No se llama a /admin/versions desde el dialog (hidden field → no se carga)
+  http.expectNone((r) => r.url.endsWith('/api/v1/admin/versions'));
+});
 });
