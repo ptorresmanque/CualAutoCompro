@@ -146,6 +146,53 @@ npm run dev:fe
 
 Disponible en `http://localhost:4200`.
 
+### Llamadas HTTP al backend desde componentes no-`ApiService`
+
+Por defecto, el `fetch()` del navegador ejecuta URLs **relativas** (`/api/v1/...`)
+contra el dev server (`localhost:4200`). El dev server de Angular **no tiene proxy
+configurado** hacia el backend, así que responde con el HTML del SPA como
+fallback y la llamada falla silenciosamente (no hay JSON que parsear).
+
+**Regla:** cualquier `fetch()` que NO use `ApiService` debe apuntar al backend
+con **URL absoluta** vía `ENV.apiBase` (`'../../core/env'`):
+
+```ts
+import { ENV } from '../../core/env';
+// ...
+const res = await fetch(`${ENV.apiBase}/auth/providers`, {
+  credentials: 'include',
+});
+```
+
+`api.service.ts` ya usa este patrón con `${ENV.apiBase}${path}`. Si necesitás
+que URLs relativas funcionen también, agregá un `proxy.conf.json` (ver más
+abajo).
+
+### (Opcional) Proxy del dev server hacia el backend
+
+Si preferís poder usar URLs relativas (ej. `fetch('/api/v1/...')`), creá
+`apps/frontend/proxy.conf.json`:
+
+```json
+{
+  "/api/*": {
+    "target": "http://localhost:3000",
+    "secure": false
+  }
+}
+```
+
+Y activá el proxy en `apps/frontend/angular.json` dentro de
+`projects.frontend.architect.serve.options`:
+
+```json
+"proxyConfig": "proxy.conf.json"
+```
+
+Luego reiniciá `ng serve`. Las llamadas a `/api/v1/...` se redirigirán
+transparentemente al backend. Útil si tenés varias llamadas a endpoints
+exóticos que no querés prefijar con `ENV.apiBase`.
+
 ## Tests
 
 ```bash
