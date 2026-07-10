@@ -1,5 +1,7 @@
 import passport from "passport";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import type express from "express";
+import { Strategy as GoogleStrategy, type Profile } from "passport-google-oauth20";
+import type { VerifyCallback } from "passport-oauth2";
 // @ts-expect-error — @nicokaiser/passport-apple no exporta tipos consistentes
 import AppleStrategy from "@nicokaiser/passport-apple";
 import { env } from "../../../config/env.js";
@@ -36,13 +38,13 @@ export const setupPassport = (): void => {
           scope: ["openid", "email", "profile"],
           passReqToCallback: true,
         },
-        // @ts-ignore — passport-google-oauth20 v2 types no aceptan passReqToCallback con 5 args
         async (
-          _req: unknown,
+          _req: express.Request,
           _accessToken: string,
           _refreshToken: string,
-          profile: { id: string; emails?: { value: string; verified?: boolean }[]; displayName?: string },
-          done: (err: Error | null, user?: unknown) => void,
+          _params: unknown,
+          profile: Profile,
+          done: VerifyCallback,
         ) => {
           try {
             const email = profile.emails?.[0]?.value ?? null;
@@ -53,9 +55,9 @@ export const setupPassport = (): void => {
               emailVerified: email != null,
               name: profile.displayName ?? null,
             };
-            done(null, identity);
+            done(null, identity as never);
           } catch (e) {
-            done(e as Error, undefined);
+            done(e as Error);
           }
         },
       ),
@@ -63,7 +65,6 @@ export const setupPassport = (): void => {
   }
 
   if (isAppleConfigured()) {
-    // @ts-ignore — AppleStrategy no tiene tipos consistentes
     passport.use(
       new AppleStrategy(
         {
@@ -75,11 +76,11 @@ export const setupPassport = (): void => {
           passReqToCallback: true,
         },
         async (
-          _req: unknown,
+          _req: express.Request,
           _accessToken: string,
           _refreshToken: string,
           idToken: { sub: string; email?: string; email_verified?: boolean | string; name?: string },
-          done: (err: Error | null, user?: unknown) => void,
+          done: VerifyCallback,
         ) => {
           try {
             const identity = {
@@ -91,9 +92,9 @@ export const setupPassport = (): void => {
                 idToken.email_verified === "true",
               name: idToken.name ?? null,
             };
-            done(null, identity);
+            done(null, identity as never);
           } catch (e) {
-            done(e as Error, undefined);
+            done(e as Error);
           }
         },
       ),
@@ -101,8 +102,7 @@ export const setupPassport = (): void => {
   }
 
   passport.serializeUser((user, done) => done(null, user));
-  // @ts-ignore — passport deserializeUser tipiza user como User, no como unknown
-  passport.deserializeUser((obj, done) => done(null, obj));
+  passport.deserializeUser((obj: unknown, done) => done(null, obj as never));
 };
 
 export const hasStrategy = (provider: OAuthProvider): boolean => {
