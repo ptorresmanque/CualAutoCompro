@@ -149,9 +149,9 @@ Disponible en `http://localhost:4200`.
 ### Llamadas HTTP al backend desde componentes no-`ApiService`
 
 Por defecto, el `fetch()` del navegador ejecuta URLs **relativas** (`/api/v1/...`)
-contra el dev server (`localhost:4200`). El dev server de Angular **no tiene proxy
-configurado** hacia el backend, así que responde con el HTML del SPA como
-fallback y la llamada falla silenciosamente (no hay JSON que parsear).
+contra el dev server (`localhost:4200`). El dev server de Angular no está configurado
+para proxyar al backend, así que responde con el HTML del SPA como fallback y la
+llamada falla silenciosamente (no hay JSON que parsear).
 
 **Regla:** cualquier `fetch()` que NO use `ApiService` debe apuntar al backend
 con **URL absoluta** vía `ENV.apiBase` (`'../../core/env'`):
@@ -164,34 +164,12 @@ const res = await fetch(`${ENV.apiBase}/auth/providers`, {
 });
 ```
 
-`api.service.ts` ya usa este patrón con `${ENV.apiBase}${path}`. Si necesitás
-que URLs relativas funcionen también, agregá un `proxy.conf.json` (ver más
-abajo).
+`api.service.ts` ya usa este patrón con `${ENV.apiBase}${path}`.
 
-### (Opcional) Proxy del dev server hacia el backend
-
-Si preferís poder usar URLs relativas (ej. `fetch('/api/v1/...')`), creá
-`apps/frontend/proxy.conf.json`:
-
-```json
-{
-  "/api/*": {
-    "target": "http://localhost:3000",
-    "secure": false
-  }
-}
-```
-
-Y activá el proxy en `apps/frontend/angular.json` dentro de
-`projects.frontend.architect.serve.options`:
-
-```json
-"proxyConfig": "proxy.conf.json"
-```
-
-Luego reiniciá `ng serve`. Las llamadas a `/api/v1/...` se redirigirán
-transparentemente al backend. Útil si tenés varias llamadas a endpoints
-exóticos que no querés prefijar con `ENV.apiBase`.
+> Nota: en versiones anteriores intentamos agregar `proxy.conf.json` para
+> proxy del dev server. **No funciona** con el nuevo builder
+> `@angular/build:dev-server` de Angular 22 (basado en Vite). Si querés
+> URLs relativas en algún momento, abrí un issue antes de reintroducirlo.
 
 ## Tests
 
@@ -237,11 +215,32 @@ npm run db:seed
 Login social es opcional. Si no se configuran las envs, los botones no aparecen
 en `/login` y `/register`; el login email/password sigue funcionando.
 
+### Por qué hay DOS `*_ORIGIN` envs (dev vs prod)
+
+Hay dos orígenes distintos: el **frontend** (donde está la app Angular) y el
+**backend** (donde corre el API). En producción suelen compartir dominio
+(`https://cualautocompro.cl`), pero en dev son puertos distintos:
+
+| Variable | Dev | Prod | Propósito |
+|---|---|---|---|
+| `WEB_ORIGIN` | `http://localhost:4200` | `https://cualautocompro.cl` | Frontend — a dónde redirigir tras login |
+| `BACKEND_ORIGIN` | `http://localhost:3000` | `https://api.cualautocompro.cl` | Backend — callback URL que passport pasa a Google/Apple |
+
+Por qué el dev no usa proxy:
+El nuevo builder de Angular 22 (`@angular/build:dev-server`) sobre Vite no
+interpreta `proxyConfig` en `angular.json` de forma confiable. En su lugar, el
+backend expone la cookie con `Domain=localhost`, lo que hace que sea legible
+desde cualquier puerto de localhost (4200 y 3000 comparten la cookie). Los
+redirects apuntan directo al backend (puerto 3000) sin intermediarios.
+
+Google registra `BACKEND_ORIGIN/api/v1/auth/google/callback` (no `WEB_ORIGIN`)
+porque Google redirige ahí después de autenticar.
+
 ### Google
 
 1. Crear OAuth Client tipo "Web application" en [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
 2. Authorized redirect URI:
-   - Dev: `http://localhost:3000/api/v1/auth/google/callback`
+   - Dev: `http://localhost:3000/api/v1/auth/google/callback` ← es `BACKEND_ORIGIN`
    - Prod: `https://cualautocompro.cl/api/v1/auth/google/callback`
 3. Setear en `.env`:
    ```
@@ -251,9 +250,10 @@ en `/login` y `/register`; el login email/password sigue funcionando.
 
 ### Apple
 
-1. En Apple Developer: App ID con capability "Sign in with Apple" + Service ID (cliente web) con Return URL `https://cualautocompro.cl/api/v1/auth/apple/callback`.
-2. Crear private key (.p8), guardar su contenido en `APPLE_PRIVATE_KEY` reemplazando saltos de línea por `\n` literal (los archivos `.env` no soportan multilínea).
-3. Setear en `.env`:
+1. En Apple Developer: App ID con capability "Sign in with Apple" + Service ID (cliente web) con Return URL.
+2. Dev: usar `ngrok` o similar (Apple solo acepta HTTPS). Prod: Return URL `https://cualautocompro.cl/api/v1/auth/apple/callback`.
+3. Crear private key (.p8), guardar su contenido en `APPLE_PRIVATE_KEY` reemplazando saltos de línea por `\n` literal.
+4. Setear en `.env`:
    ```
    APPLE_CLIENT_ID=...
    APPLE_KEY_ID=...
@@ -261,8 +261,21 @@ en `/login` y `/register`; el login email/password sigue funcionando.
    APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
    ```
 
+### Variables que la app agrega automáticamente
+
+Si no se setea `BACKEND_ORIGIN`, el backend hace default a `http://localhost:3000`
+(mismo que en dev). En prod hay que setearlo explícitamente al URL público del API.
+
 ### Como verificar
 
 1. Reiniciar backend con las envs seteadas.
-2. `curl http://localhost:3000/api/v1/auth/providers` → debe devolver `{"data":{"google":true,"apple":true}}`.
-3. En el navegador, ir a `/login`: deben aparecer los botones "Continuar con Google" y "Continuar con Apple".
+2. `curl http://localhost:3000/api/v1/auth/providers` → debe devolver `{"data":{"google":true,"apple":false}}` (o apple:true si configuraste Apple).
+3. En el navegador, ir a `/login`: debe aparecer el botón "Continuar con Google".
+4. Click → autorizar en Google → volver al sitio y estar logueado (sin pantalla en blanco ni errores NG04002).
+
+### Troubleshooting común
+
+- **Botón no aparece** → primero refrescá con `Cmd+Shift+R`. Si sigue, abrí DevTools → Network, buscá `/auth/providers` y verificá que devuelva `{"data":{"google":true,...}}`. Si devuelve HTML/SPA, hay otro bug.
+- **`redirect_uri_mismatch`** → registraste el redirect URI en Google Cloud con el puerto equivocado. Tenés que ser `localhost:3000/...`, NO `:4200/...`.
+- **Pantalla en blanco + error `NG04002`** → tu Google Cloud Console tiene el redirect URI con puerto 4200 (mal). Reemplazá por 3000.
+- **Después del callback, no estoy logueado** → probablemente no llegó el redirect al frontend. Verificá que `WEB_ORIGIN` en `.env.development` sea `http://localhost:4200`.
