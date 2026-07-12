@@ -1,13 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { VersionsAdminComponent } from './versions-admin.component';
+
+const dialogMock = {
+  open: () => ({ afterClosed: () => of(true) }),
+};
 
 describe('VersionsAdminComponent', () => {
   it('carga lista desde /admin/versions (fallback /versions en test)', async () => {
     TestBed.configureTestingModule({
       imports: [VersionsAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(VersionsAdminComponent);
     fixture.detectChanges();
@@ -29,7 +35,7 @@ describe('VersionsAdminComponent', () => {
   it('openEdit proyecta equipmentItems a equipment y preserva equipmentItems en el entity', async () => {
     TestBed.configureTestingModule({
       imports: [VersionsAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(VersionsAdminComponent);
     fixture.detectChanges();
@@ -71,7 +77,7 @@ describe('VersionsAdminComponent', () => {
   it('openCreate muestra dialog', async () => {
     TestBed.configureTestingModule({
       imports: [VersionsAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(VersionsAdminComponent);
     fixture.detectChanges();
@@ -86,7 +92,7 @@ describe('VersionsAdminComponent', () => {
   it('edit sincroniza equipment: detach removidos, attach agregados', async () => {
     TestBed.configureTestingModule({
       imports: [VersionsAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(VersionsAdminComponent);
     fixture.detectChanges();
@@ -184,7 +190,7 @@ describe('VersionsAdminComponent', () => {
     // already-attached ones, causing 409 Conflict on the backend.
     TestBed.configureTestingModule({
       imports: [VersionsAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(VersionsAdminComponent);
     fixture.detectChanges();

@@ -13,4 +13,5 @@ import { MatInputModule } from '@angular/material/input';
 export class TextFieldComponent {
   readonly control = input.required<FormControl<string | null>>();
   readonly multiline = input<boolean>(false);
+  readonly required = input<boolean>(false);
 }

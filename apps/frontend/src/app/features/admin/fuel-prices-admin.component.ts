@@ -1,9 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
+import { firstValueFrom } from 'rxjs';
 import { AdminFeedbackService } from '../../core/admin-feedback.service';
+import { ApiCallError } from '../../core/api-error';
 import { ApiService } from '../../core/api.service';
+import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { sortItems, type SortDir } from './sort-utils';
@@ -33,6 +37,9 @@ type SortKey = 'fuelType' | 'pricePerUnitClp' | 'effectiveFrom';
 export class FuelPricesAdminComponent {
   private api = inject(ApiService);
   private feedback = inject(AdminFeedbackService);
+  private dialog = inject(MatDialog);
+
+  readonly editDialog = viewChild<AdminEditDialogComponent>(AdminEditDialogComponent);
 
   readonly items = signal<FuelPriceRow[]>([]);
   readonly search = signal('');
@@ -86,6 +93,10 @@ export class FuelPricesAdminComponent {
       this.dialogEntity.set(undefined);
       await this.load();
     } catch (err) {
+      if (err instanceof ApiCallError && err.backend.code === 'VALIDATION' && err.backend.fields) {
+        this.editDialog()?.applyBackendErrors(err.backend.fields);
+        return;
+      }
       const msg = (err as Error).message;
       this.error.set(msg);
       this.feedback.error(msg);
@@ -93,7 +104,17 @@ export class FuelPricesAdminComponent {
   }
 
   async confirmDelete(row: FuelPriceRow): Promise<void> {
-    if (!confirm(`¿Eliminar precio de ${row.fuelType}?`)) return;
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      disableClose: true,
+      data: {
+        title: 'Eliminar precio',
+        message: `¿Eliminar el precio de ${row.fuelType} (${row.unit})?`,
+        confirmLabel: 'Eliminar',
+        danger: true,
+      },
+    });
+    const ok = await firstValueFrom(ref.afterClosed());
+    if (!ok) return;
     try {
       await this.api.delete(`/admin/fuel-prices/${row.id}`);
       this.feedback.success(`Precio ${row.fuelType} (${row.unit}) eliminado`);

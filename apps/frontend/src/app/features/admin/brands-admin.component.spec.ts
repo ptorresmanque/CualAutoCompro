@@ -2,8 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { AdminFeedbackService } from '../../core/admin-feedback.service';
 import { BrandsAdminComponent } from './brands-admin.component';
+
+const dialogMock = {
+  open: () => ({ afterClosed: () => of(true) }),
+};
 
 interface BrandRow {
   id: string;
@@ -216,7 +222,7 @@ describe('BrandsAdminComponent', () => {
   it('confirmDelete llama feedback.success con "Marca <name> eliminada"', async () => {
     TestBed.configureTestingModule({
       imports: [BrandsAdminComponent, NoopAnimationsModule],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(BrandsAdminComponent);
     fixture.detectChanges();
@@ -226,13 +232,14 @@ describe('BrandsAdminComponent', () => {
 
     const feedback = TestBed.inject(AdminFeedbackService);
     const successSpy = vi.spyOn(feedback, 'success');
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     void fixture.componentInstance.confirmDelete({
       id: 'b1',
       name: 'Toyota',
       logoUrl: null,
     });
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
 
     const delReq = http.expectOne((r) => r.url.endsWith('/api/v1/admin/brands/b1'));
     expect(delReq.request.method).toBe('DELETE');
@@ -243,5 +250,27 @@ describe('BrandsAdminComponent', () => {
 
     // Cleanup: drain the load() reload
     for (const r of http.match(() => true)) r.flush({ data: [] });
+  });
+
+  it('confirmDelete no llama al DELETE si el usuario cancela el dialog', async () => {
+    const cancelMock = { open: () => ({ afterClosed: () => of(false) }) };
+    TestBed.configureTestingModule({
+      imports: [BrandsAdminComponent, NoopAnimationsModule],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: cancelMock }],
+    });
+    const fixture = TestBed.createComponent(BrandsAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    for (const r of http.match(() => true)) r.flush({ data: [] });
+    await fixture.whenStable();
+
+    await fixture.componentInstance.confirmDelete({
+      id: 'b1',
+      name: 'Toyota',
+      logoUrl: null,
+    });
+
+    const delReqs = http.match((r) => r.method === 'DELETE');
+    expect(delReqs.length).toBe(0);
   });
 });

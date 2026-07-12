@@ -12,4 +12,5 @@ import { MatInputModule } from '@angular/material/input';
 })
 export class NumberFieldComponent {
   readonly control = input.required<FormControl<number | null>>();
+  readonly required = input<boolean>(false);
 }

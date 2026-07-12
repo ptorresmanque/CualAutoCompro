@@ -1,11 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
+import { firstValueFrom } from 'rxjs';
 import { AdminFeedbackService } from '../../core/admin-feedback.service';
+import { ApiCallError } from '../../core/api-error';
 import { ApiService } from '../../core/api.service';
+import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { sortItems, type SortDir } from './sort-utils';
 
@@ -30,6 +34,9 @@ type SortKey = 'versionId' | 'mileageTag' | 'costClp';
 export class MaintenanceAdminComponent {
   private api = inject(ApiService);
   private feedback = inject(AdminFeedbackService);
+  private dialog = inject(MatDialog);
+
+  readonly editDialog = viewChild<AdminEditDialogComponent>(AdminEditDialogComponent);
 
   readonly versions = signal<VersionOption[]>([]);
   readonly selectedVersion = signal<string>('');
@@ -120,6 +127,10 @@ export class MaintenanceAdminComponent {
       this.dialogEntity.set(undefined);
       await this.loadMaintenance(this.selectedVersion());
     } catch (err) {
+      if (err instanceof ApiCallError && err.backend.code === 'VALIDATION' && err.backend.fields) {
+        this.editDialog()?.applyBackendErrors(err.backend.fields);
+        return;
+      }
       const msg = (err as Error).message;
       this.error.set(msg);
       this.feedback.error(msg);
@@ -127,7 +138,17 @@ export class MaintenanceAdminComponent {
   }
 
   async confirmDelete(row: MaintenanceRow): Promise<void> {
-    if (!confirm(`¿Eliminar registro de mantenimiento?`)) return;
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      disableClose: true,
+      data: {
+        title: 'Eliminar mantención',
+        message: `¿Eliminar el registro de mantención a los ${row.mileageTag} km?`,
+        confirmLabel: 'Eliminar',
+        danger: true,
+      },
+    });
+    const ok = await firstValueFrom(ref.afterClosed());
+    if (!ok) return;
     try {
       await this.api.delete(`/admin/maintenance/${row.id}`);
       this.feedback.success(`Mantención ${row.mileageTag} km eliminada`);

@@ -23,7 +23,7 @@ export const comparisonsController = {
   createMine: ah(async (req: Request, res: Response) => {
     const u = req.user; if (!u) throw unauthorized();
     const parsed = createSchema.safeParse(req.body);
-    if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     const opts: { userId: string; versionIds: string[]; name?: string } = { userId: u.id, versionIds: parsed.data.versionIds };
     if (parsed.data.name !== undefined) opts.name = parsed.data.name;
     res.json(ok(await svc.create(opts)));

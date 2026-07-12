@@ -18,61 +18,101 @@
       <button
         mat-icon-button
         type="button"
-        (click)="onCancel()"
+        (click)="closeX()"
         aria-label="Cerrar"
       >
         <mat-icon>close</mat-icon>
       </button>
     </mat-toolbar>
 
-    <div class="dialog-body">
-      @if (loadError(); as err) {
-        <div class="dialog-error">
-          {{ err }}
-        </div>
-      }
-      @if (loading()) {
-        <p class="dialog-loading">Cargando plantilla…</p>
-      } @else if (tab() === 'form') {
-        <form [formGroup]="form()" class="dialog-grid">
-          @for (meta of fieldMetas(); track meta.field) {
-            <div class="dialog-field">
-              <span class="dialog-field-label">
-                {{ meta.label }} <span class="field-name">({{ meta.field }})</span>
-              </span>
-              @switch (meta.kind) {
-                @case ('text')          { <app-text-field          [control]="$any(controlFor(meta.field))" /> }
-                @case ('number')        { <app-number-field        [control]="$any(controlFor(meta.field))" /> }
-                @case ('boolean')       { <app-toggle-field        [control]="$any(controlFor(meta.field))" /> }
-                @case ('foreignKey')    { <app-select-search       [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi!" [optionLabel]="meta.optionLabel!" /> }
-                @case ('enumWithOther') { <app-select-search       [control]="$any(controlFor(meta.field))" [options]="meta.options!" [allowOther]="true" /> }
-                @case ('imageUrl')      { <app-image-upload-field  [control]="$any(controlFor(meta.field))" /> }
-                @case ('gallery')       { <app-gallery-upload-field [control]="$any(controlFor(meta.field))" /> }
-                @case ('multiSelect')   { <app-multi-select-field  [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi!" [optionLabel]="meta.optionLabel!" [placeholder]="'Buscar equipamiento…'" /> }
-                @case ('array')         { <app-text-field          [control]="$any(controlFor(meta.field))" [multiline]="true" /> }
-              }
-            </div>
+    <div class="dialog-body" [class.dialog-body-with-nav]="sections().length >= 3">
+      <div class="dialog-body-content">
+        @if (loadError(); as err) {
+          <div class="dialog-error">
+            {{ err }}
+          </div>
+        }
+        @if (loading()) {
+          <p class="dialog-loading">Cargando plantilla…</p>
+        } @else if (tab() === 'form') {
+          <form [formGroup]="form()" class="dialog-sections">
+            @for (section of sections(); track section.id; let isFirstSection = $first) {
+              <section [id]="section.id" #sectionEl class="dialog-section">
+                @if (section.label) {
+                  <h3 class="dialog-section-header">{{ section.label }}</h3>
+                }
+                <div class="dialog-section-grid">
+                  @for (meta of section.fields; track meta.field; let isFirst = $first) {
+                    <div
+                      class="dialog-field"
+                      [class.first-field-wrapper]="isFirstSection && isFirst"
+                      [attr.data-first-field]="isFirstSection && isFirst ? '' : null"
+                      [attr.data-section]="section.id"
+                      #firstField
+                    >
+                      <span class="dialog-field-label" [attr.id]="'lbl-' + meta.field">
+                        {{ meta.label }}
+                        @if (isFieldRequired(meta)) {
+                          <span class="required-marker" aria-label="requerido">*</span>
+                        } @else {
+                          <span class="optional-badge" aria-label="opcional">opcional</span>
+                        }
+                        <span class="field-name">({{ meta.field }})</span>
+                      </span>
+                      @if (meta.help) {
+                        <p class="dialog-field-help">{{ meta.help }}</p>
+                      }
+                      @switch (meta.kind) {
+                        @case ('text')          { <app-text-field          [control]="$any(controlFor(meta.field))" [required]="isFieldRequired(meta)"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-text-field> }
+                        @case ('number')        { <app-number-field        [control]="$any(controlFor(meta.field))" [required]="isFieldRequired(meta)"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-number-field> }
+                        @case ('boolean')       { <app-toggle-field        [control]="$any(controlFor(meta.field))" /> }
+                        @case ('foreignKey')    { <app-select-search       [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi!" [optionLabel]="meta.optionLabel!"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-select-search> }
+                        @case ('enumWithOther') { <app-select-search       [control]="$any(controlFor(meta.field))" [options]="meta.options!" [allowOther]="true"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-select-search> }
+                        @case ('imageUrl')      { <app-image-upload-field  [control]="$any(controlFor(meta.field))" /> }
+                        @case ('gallery')       { <app-gallery-upload-field [control]="$any(controlFor(meta.field))" /> }
+                        @case ('multiSelect')   { <app-multi-select-field  [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi!" [optionLabel]="meta.optionLabel!" [placeholder]="'Buscar equipamiento…'"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-multi-select-field> }
+                        @case ('array')         { <app-text-field          [control]="$any(controlFor(meta.field))" [multiline]="true"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-text-field> }
+                      }
+                    </div>
+                  }
+                </div>
+              </section>
+            }
+          </form>
+        } @else {
+          <div class="json-pane">
+            <textarea
+              class="json-editor"
+              [value]="jsonText()"
+              (input)="jsonText.set($any($event.target).value)"
+            ></textarea>
+            @if (jsonError(); as err) {
+              <p class="dialog-error">{{ err }}</p>
+            }
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              class="json-load"
+              (click)="loadJson()"
+              data-testid="dialog-load-json"
+            >Cargar</button>
+          </div>
+        }
+      </div>
+
+      @if (sections().length >= 3 && tab() === 'form') {
+        <nav class="dialog-section-nav" aria-label="Secciones del formulario">
+          @for (section of sections(); track section.id) {
+            <button
+              type="button"
+              class="dialog-section-nav-item"
+              [class.active]="activeSection() === section.id"
+              (click)="scrollToSection(section.id)"
+              [attr.data-testid]="'section-nav-' + section.id"
+            >{{ section.label || 'General' }}</button>
           }
-        </form>
-      } @else {
-        <div class="json-pane">
-          <textarea
-            class="json-editor"
-            [value]="jsonText()"
-            (input)="jsonText.set($any($event.target).value)"
-          ></textarea>
-          @if (jsonError(); as err) {
-            <p class="dialog-error">{{ err }}</p>
-          }
-          <button
-            mat-flat-button
-            color="primary"
-            type="button"
-            class="json-load"
-            (click)="loadJson()"
-            data-testid="dialog-load-json"
-          >Cargar</button>
-        </div>
+        </nav>
       }
     </div>
 

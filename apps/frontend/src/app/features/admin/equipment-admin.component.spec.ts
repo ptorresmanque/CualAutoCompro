@@ -1,13 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { EquipmentAdminComponent } from './equipment-admin.component';
+
+const dialogMock = {
+  open: () => ({ afterClosed: () => of(true) }),
+};
 
 describe('EquipmentAdminComponent', () => {
   it('carga lista desde /admin/equipment (fallback /equipment en test)', async () => {
     TestBed.configureTestingModule({
       imports: [EquipmentAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(EquipmentAdminComponent);
     fixture.detectChanges();
@@ -23,7 +29,7 @@ describe('EquipmentAdminComponent', () => {
   it('openCreate muestra dialog', async () => {
     TestBed.configureTestingModule({
       imports: [EquipmentAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(EquipmentAdminComponent);
     fixture.detectChanges();

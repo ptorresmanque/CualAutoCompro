@@ -1,13 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { DealersAdminComponent } from './dealers-admin.component';
+
+const dialogMock = {
+  open: () => ({ afterClosed: () => of(true) }),
+};
 
 describe('DealersAdminComponent', () => {
   it('carga lista desde /admin/dealers (fallback /dealers en test)', async () => {
     TestBed.configureTestingModule({
       imports: [DealersAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(DealersAdminComponent);
     fixture.detectChanges();
@@ -30,7 +36,7 @@ describe('DealersAdminComponent', () => {
   it('openCreate muestra dialog', async () => {
     TestBed.configureTestingModule({
       imports: [DealersAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(DealersAdminComponent);
     fixture.detectChanges();
@@ -45,7 +51,7 @@ describe('DealersAdminComponent', () => {
   it('ordena por nombre asc/desc', async () => {
     TestBed.configureTestingModule({
       imports: [DealersAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(DealersAdminComponent);
     fixture.detectChanges();
@@ -78,7 +84,7 @@ describe('DealersAdminComponent', () => {
   it('logoSrc resuelve path relativo /uploads/... a URL absoluta del backend', async () => {
     TestBed.configureTestingModule({
       imports: [DealersAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(DealersAdminComponent);
     fixture.detectChanges();

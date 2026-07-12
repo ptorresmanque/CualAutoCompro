@@ -1,13 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { MaintenanceAdminComponent } from './maintenance-admin.component';
+
+const dialogMock = {
+  open: () => ({ afterClosed: () => of(true) }),
+};
 
 describe('MaintenanceAdminComponent', () => {
   it('carga lista de versiones y permite crear tras seleccionar', async () => {
     TestBed.configureTestingModule({
       imports: [MaintenanceAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(MaintenanceAdminComponent);
     fixture.detectChanges();
@@ -33,7 +39,7 @@ describe('MaintenanceAdminComponent', () => {
   it('al cambiar de versión filtra los items por versionId', async () => {
     TestBed.configureTestingModule({
       imports: [MaintenanceAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(MaintenanceAdminComponent);
     fixture.detectChanges();
@@ -72,7 +78,7 @@ describe('MaintenanceAdminComponent', () => {
   it('onSave en modo edit NO sobrescribe versionId con el del dropdown', async () => {
     TestBed.configureTestingModule({
       imports: [MaintenanceAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(MaintenanceAdminComponent);
     fixture.detectChanges();
@@ -138,7 +144,7 @@ describe('MaintenanceAdminComponent', () => {
   it('onSave en modo create inyecta versionId desde selectedVersion cuando el form no lo trae', async () => {
     TestBed.configureTestingModule({
       imports: [MaintenanceAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(MaintenanceAdminComponent);
     fixture.detectChanges();

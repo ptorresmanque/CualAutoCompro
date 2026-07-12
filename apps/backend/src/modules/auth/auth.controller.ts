@@ -13,7 +13,7 @@ const svc = new AuthService(prisma);
 export const authController = {
   register: ah(async (req: Request, res: Response) => {
     const parsed = registerSchema.safeParse(req.body);
-    if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     const safe = await svc.register(parsed.data);
     const token = sign({ sub: safe.id, email: safe.email, name: safe.name, role: safe.role });
     res.cookie(AUTH_COOKIE_NAME, token, cookieOpts);
@@ -22,7 +22,7 @@ export const authController = {
 
   login: ah(async (req: Request, res: Response) => {
     const parsed = loginSchema.safeParse(req.body);
-    if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     const r = await svc.login(parsed.data);
     res.cookie(AUTH_COOKIE_NAME, r.token, cookieOpts);
     return res.json(ok(r.user));

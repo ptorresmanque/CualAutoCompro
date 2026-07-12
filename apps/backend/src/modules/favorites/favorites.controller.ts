@@ -30,7 +30,7 @@ export const favoritesController = {
   add: ah(async (req: Request, res: Response) => {
     const u = req.user; if (!u) throw unauthorized();
     const parsed = addSchema.safeParse(req.body);
-    if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     const { created, versionId } = await svc.add(u.id, parsed.data);
     res.json(ok({ versionId, created }));
   }),
@@ -38,7 +38,7 @@ export const favoritesController = {
   updateVersion: ah(async (req: Request, res: Response) => {
     const u = req.user; if (!u) throw unauthorized();
     const parsed = updateVersionSchema.safeParse(req.body);
-    if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     const currentVersionId = req.params.versionId ?? "";
     if (!currentVersionId) throw validation("versionId requerido");
     await svc.updateVersion(u.id, {

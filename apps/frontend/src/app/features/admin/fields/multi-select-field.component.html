@@ -32,6 +32,7 @@
       (keydown.escape)="open.set(false)"
       [placeholder]="placeholder()"
     />
+    <ng-content select="[matError]" />
   </mat-form-field>
 
   @if (open() && available().length > 0) {

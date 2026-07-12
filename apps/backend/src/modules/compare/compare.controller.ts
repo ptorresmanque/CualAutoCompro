@@ -16,7 +16,7 @@ const svc = new CompareService(prisma, fuelPriceSvc);
 export const compareController = {
   post: ah(async (req, res) => {
     const parsed = postBodySchema.safeParse(req.body ?? {});
-    if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     res.json(ok(await svc.compare(parsed.data.versionIds)));
   }),
   get: ah(async (req, res) => {

@@ -16,6 +16,7 @@
       (keydown.arrowup)="onArrowUp($event)"
       (keydown.enter)="onEnter($event)"
     />
+    <ng-content select="[matError]" />
   </mat-form-field>
 
   @if (open() && filtered().length > 0) {

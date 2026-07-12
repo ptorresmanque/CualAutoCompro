@@ -1,13 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { ModelsAdminComponent } from './models-admin.component';
+
+const dialogMock = {
+  open: () => ({ afterClosed: () => of(true) }),
+};
 
 describe('ModelsAdminComponent', () => {
   it('carga lista desde /admin/models (fallback /models en test)', async () => {
     TestBed.configureTestingModule({
       imports: [ModelsAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(ModelsAdminComponent);
     fixture.detectChanges();
@@ -26,7 +32,7 @@ describe('ModelsAdminComponent', () => {
   it('openCreate muestra dialog', async () => {
     TestBed.configureTestingModule({
       imports: [ModelsAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(ModelsAdminComponent);
     fixture.detectChanges();

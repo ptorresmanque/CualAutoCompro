@@ -1,15 +1,21 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
   effect,
+  ElementRef,
   EventEmitter,
+  HostListener,
   inject,
   input,
+  OnDestroy,
   Output,
   signal,
   untracked,
+  viewChild,
+  viewChildren,
 } from '@angular/core';
 import {
   FormBuilder,
@@ -23,11 +29,15 @@ import { Subject, takeUntil } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
+import { MatDialog } from '@angular/material/dialog';
+import { MatError } from '@angular/material/form-field';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { ENV } from '../../core/env';
-import { entitySchemaByKey, FIELD_METAS, type EntityKey, type FieldMeta } from './entity-schemas';
+import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
+import { applyBackendErrors, type BackendFieldError } from '../../shared/ui/admin-form-errors';
+import { entitySchemaByKey, FIELD_METAS, isFieldRequired, type EntityKey, type FieldMeta } from './entity-schemas';
 import { TextFieldComponent } from './fields/text-field.component';
 import { NumberFieldComponent } from './fields/number-field.component';
 import { ToggleFieldComponent } from './fields/toggle-field.component';
@@ -38,6 +48,22 @@ import { MultiSelectFieldComponent } from './fields/multi-select-field.component
 
 type Tab = 'form' | 'json';
 const HIDDEN_KEYS = new Set(['id', 'createdAt', 'updatedAt', 'deletedAt']);
+
+interface Section {
+  id: string;
+  label: string;
+  fields: FieldMeta[];
+}
+
+function sectionId(label: string): string {
+  if (!label) return 'general';
+  return label
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
 
 function sanitize(value: Record<string, unknown> | null): Record<string, unknown> {
   if (!value) return {};
@@ -56,6 +82,7 @@ function sanitize(value: Record<string, unknown> | null): Record<string, unknown
     MatButtonModule,
     MatButtonToggleModule,
     MatCardModule,
+    MatError,
     MatFormFieldModule,
     MatIconModule,
     MatToolbarModule,
@@ -67,13 +94,17 @@ function sanitize(value: Record<string, unknown> | null): Record<string, unknown
     GalleryUploadFieldComponent,
     MultiSelectFieldComponent,
   ],
+  host: {
+    '[class.with-nav]': 'sections().length >= 3',
+  },
   templateUrl: './admin-edit-dialog.component.html',
   styleUrl: './admin-edit-dialog.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AdminEditDialogComponent {
+export class AdminEditDialogComponent implements AfterViewInit, OnDestroy {
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
+  private dialog = inject(MatDialog);
 
   readonly entityKey = input.required<EntityKey>();
   readonly entity = input<Record<string, unknown> | null>(null);
@@ -107,7 +138,60 @@ export class AdminEditDialogComponent {
     return [...all, ...extras];
   });
 
+  readonly firstField = viewChild<ElementRef<HTMLElement>>('firstField');
+
+  readonly sectionElements = viewChildren<ElementRef<HTMLElement>>('sectionEl');
+
+  readonly sections = computed<Section[]>(() => {
+    const map = new Map<string, FieldMeta[]>();
+    const order: string[] = [];
+    for (const meta of this.fieldMetas()) {
+      const g = meta.group ?? '';
+      if (!map.has(g)) {
+        map.set(g, []);
+        order.push(g);
+      }
+      map.get(g)!.push(meta);
+    }
+    return order.map((g) => ({
+      id: sectionId(g),
+      label: g,
+      fields: map.get(g)!,
+    }));
+  });
+
+  private readonly activeSectionId = signal<string | null>(null);
+  readonly activeSection = computed(() => this.activeSectionId());
+
+  private intersectionObserver?: IntersectionObserver;
+
+  ngAfterViewInit(): void {
+    if (typeof IntersectionObserver === 'undefined') return;
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.target.id) {
+            this.activeSectionId.set(entry.target.id);
+          }
+        }
+      },
+      { rootMargin: '-20% 0px -60% 0px', threshold: 0 },
+    );
+    for (const ref of this.sectionElements()) {
+      this.intersectionObserver.observe(ref.nativeElement);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.intersectionObserver?.disconnect();
+  }
+
+  scrollToSection(id: string): void {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   private fetchAbort = new Subject<void>();
+  private autofocusDone = false;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => {
@@ -121,6 +205,21 @@ export class AdminEditDialogComponent {
         if (Object.keys(this.form().controls).length === 0) {
           this.form.set(this.fb.group(this.buildInitialControls(key)));
         }
+      });
+    });
+
+    effect(() => {
+      if (this.autofocusDone) return;
+      if (this.loading()) return;
+      const wrapper = this.firstField()?.nativeElement;
+      if (!wrapper) return;
+      this.autofocusDone = true;
+      queueMicrotask(() => {
+        if (!wrapper.isConnected) return;
+        const focusable = wrapper.querySelector<HTMLElement>(
+          'input, textarea, select, [tabindex]:not([tabindex="-1"]), button',
+        );
+        (focusable ?? wrapper).focus();
       });
     });
 
@@ -185,6 +284,7 @@ effect(() => {
             ctrl.setValue(v);
           }
         }
+        form.markAsPristine();
         this.jsonText.set(JSON.stringify(value, null, 2));
       });
     });
@@ -219,9 +319,46 @@ effect(() => {
     return this.form().get(field) as FormControl;
   }
 
+  isFieldRequired(meta: FieldMeta): boolean {
+    return isFieldRequired(meta);
+  }
+
+  /**
+   * Public method invoked by the parent admin component when the backend
+   * returns a VALIDATION error. Applies each field's error to the
+   * corresponding FormControl.
+   */
+  applyBackendErrors(fields: BackendFieldError[]): void {
+    applyBackendErrors(this.form(), fields);
+  }
+
+  errorMessage(field: string): string {
+    const ctrl = this.controlFor(field);
+    const errors = ctrl.errors;
+    if (!errors) return '';
+    if (typeof errors['backend'] === 'string') return errors['backend'];
+    if (errors['required']) return 'Este campo es requerido';
+    if (errors['min']) return `Valor mínimo: ${errors['min'].min}`;
+    if (errors['max']) return `Valor máximo: ${errors['max'].max}`;
+    if (errors['minlength']) return `Mínimo ${errors['minlength'].requiredLength} caracteres`;
+    if (errors['maxlength']) return `Máximo ${errors['maxlength'].requiredLength} caracteres`;
+    if (errors['pattern']) return 'Formato inválido';
+    return 'Valor inválido';
+  }
+
   switchTab(t: Tab): void {
     this.tab.set(t);
     this.jsonError.set(null);
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEsc(event: Event): void {
+    event.preventDefault();
+    void this.onCancel();
+  }
+
+  closeX(): void {
+    void this.onCancel();
   }
 
   loadJson(): void {
@@ -257,7 +394,26 @@ effect(() => {
     this.save.emit(form.getRawValue() as Record<string, unknown>);
   }
 
-  onCancel(): void {
-    this.cancel.emit();
+  onCancel(): Promise<void> {
+    if (!this.form().dirty) {
+      this.cancel.emit();
+      return Promise.resolve();
+    }
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      disableClose: true,
+      data: {
+        title: 'Descartar cambios',
+        message: 'Tienes cambios sin guardar. ¿Cerrar de todas formas?',
+        confirmLabel: 'Descartar',
+        cancelLabel: 'Seguir editando',
+        danger: true,
+      },
+    });
+    return new Promise<void>((resolve) => {
+      ref.afterClosed().subscribe((ok) => {
+        if (ok) this.cancel.emit();
+        resolve();
+      });
+    });
   }
 }

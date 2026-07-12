@@ -24,6 +24,10 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
 }
 
+:host.with-nav .dialog-card {
+  max-width: 56rem;
+}
+
 .dialog-toolbar {
   display: flex;
   align-items: center;
@@ -53,8 +57,108 @@
 .dialog-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 1rem;
   background: var(--mat-sys-surface);
+  min-width: 0;
+}
+
+.dialog-body.dialog-body-with-nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 960px) {
+  .dialog-body.dialog-body-with-nav {
+    grid-template-columns: minmax(0, 1fr) 11rem;
+  }
+}
+
+.dialog-body-content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dialog-sections {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.dialog-section {
+  scroll-margin-top: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.dialog-section-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.dialog-section-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 1280px) {
+  .dialog-body.dialog-body-with-nav .dialog-section-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.dialog-section-nav {
+  display: none;
+  position: sticky;
+  top: 1rem;
+  align-self: start;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: var(--mat-sys-surface-container);
+  border-radius: 0.5rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  max-height: calc(100vh - 12rem);
+  overflow-y: auto;
+  min-width: 0;
+  width: 100%;
+}
+
+@media (min-width: 960px) {
+  .dialog-body.dialog-body-with-nav .dialog-section-nav {
+    display: flex;
+  }
+}
+
+.dialog-section-nav-item {
+  font-size: 0.75rem;
+  text-align: left;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.25rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--mat-sys-on-surface-variant);
+  font-family: inherit;
+}
+
+.dialog-section-nav-item:hover {
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface);
+}
+
+.dialog-section-nav-item.active {
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  font-weight: 600;
 }
 
 .dialog-grid {
@@ -74,6 +178,7 @@
   flex-direction: column;
   font-size: 0.75rem;
   width: 100%;
+  min-width: 0;
 }
 
 .dialog-field-label {
@@ -86,6 +191,28 @@
   font-weight: 400;
   color: var(--mat-sys-on-surface-variant);
   margin-left: 0.5rem;
+}
+
+.required-marker {
+  color: var(--mat-sys-error);
+  margin-left: 0.25rem;
+  font-weight: 700;
+}
+
+.optional-badge {
+  font-weight: 400;
+  font-size: 0.625rem;
+  color: var(--mat-sys-on-surface-variant);
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dialog-field-help {
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0 0 0.25rem 0;
+  line-height: 1.3;
 }
 
 .dialog-error {

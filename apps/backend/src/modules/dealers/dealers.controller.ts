@@ -18,13 +18,13 @@ export const dealersController = {
   }),
   create: ah(async (req: Request, res: Response) => {
     const parsed = createDealerSchema.safeParse(req.body);
-    if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     res.status(201).json(ok(await svc.create(parsed.data)));
   }),
   update: ah(async (req: Request, res: Response) => {
     const id = req.params.id ?? "";
     const parsed = updateDealerSchema.safeParse(req.body);
-    if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     res.json(ok(await svc.update(id, parsed.data)));
   }),
   softDelete: ah(async (req: Request, res: Response) => {

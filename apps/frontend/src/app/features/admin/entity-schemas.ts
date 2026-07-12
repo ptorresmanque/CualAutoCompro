@@ -136,6 +136,22 @@ export interface FieldMeta {
   optionLabel?: string;
   optional?: boolean;
   hidden?: boolean;
+  help?: string;
+  group?: string;
+}
+
+const EXEMPT_KINDS: ReadonlySet<FieldKind> = new Set<FieldKind>([
+  'foreignKey',
+  'imageUrl',
+  'array',
+  'gallery',
+  'multiSelect',
+]);
+
+export function isFieldRequired(meta: FieldMeta): boolean {
+  if (meta.optional) return false;
+  if (EXEMPT_KINDS.has(meta.kind)) return false;
+  return true;
 }
 
 export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
@@ -152,34 +168,34 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'galleryUrls', label: 'Galería', kind: 'gallery' },
   ],
   version: [
-    { field: 'modelId', label: 'Modelo', kind: 'foreignKey', optionsApi: '/admin/models', optionLabel: 'name' },
-    { field: 'name', label: 'Nombre', kind: 'text' },
-    { field: 'year', label: 'Año', kind: 'number' },
-    { field: 'priceClp', label: 'Precio CLP', kind: 'number' },
-    { field: 'transmission', label: 'Transmisión', kind: 'enumWithOther', options: [...TRANSMISSIONS] },
-    { field: 'fuel', label: 'Combustible', kind: 'enumWithOther', options: [...FUELS] },
-    { field: 'engineDisplacementCc', label: 'Cilindrada cc', kind: 'number' },
-    { field: 'powerHp', label: 'Potencia hp', kind: 'number' },
-    { field: 'torqueNm', label: 'Torque Nm', kind: 'number' },
-    { field: 'consumptionCityKmL', label: 'Consumo ciudad km/L', kind: 'number' },
-    { field: 'consumptionHighwayKmL', label: 'Consumo carretera km/L', kind: 'number' },
-    { field: 'lengthMm', label: 'Largo mm', kind: 'number' },
-    { field: 'widthMm', label: 'Ancho mm', kind: 'number' },
-    { field: 'heightMm', label: 'Alto mm', kind: 'number' },
-    { field: 'weightKg', label: 'Peso kg', kind: 'number' },
-    { field: 'trunkLiters', label: 'Maleta L', kind: 'number' },
-    { field: 'airbagCount', label: 'Airbags', kind: 'number' },
-    { field: 'hasAbs', label: 'Frenos ABS', kind: 'boolean' },
-    { field: 'hasEsp', label: 'Control de estabilidad', kind: 'boolean' },
-    { field: 'hasCruiseControl', label: 'Control de crucero', kind: 'boolean' },
-    { field: 'equipment', label: 'Equipamiento', kind: 'multiSelect', optionsApi: '/admin/equipment', optionLabel: 'name' },
-    { field: 'circulationPermitClp', label: 'Permiso circulación CLP', kind: 'number', optional: true },
-    { field: 'mandatoryInsuranceClp', label: 'SOAP CLP', kind: 'number', optional: true },
-    { field: 'voluntaryInsuranceClp', label: 'Seguro automotriz CLP', kind: 'number', optional: true },
-    { field: 'fuelTankLiters', label: 'Capacidad estanque L', kind: 'number', optional: true },
-    { field: 'batteryCapacityKwh', label: 'Capacidad batería kWh', kind: 'number', optional: true },
-    { field: 'hasRecall', label: '¿Tiene recall?', kind: 'boolean', optional: true },
-    { field: 'recallUrl', label: 'URL del informe (si recall)', kind: 'text', optional: true },
+    { field: 'modelId', label: 'Modelo', kind: 'foreignKey', optionsApi: '/admin/models', optionLabel: 'name', group: 'Identificación' },
+    { field: 'name', label: 'Nombre', kind: 'text', group: 'Identificación' },
+    { field: 'year', label: 'Año', kind: 'number', group: 'Identificación' },
+    { field: 'priceClp', label: 'Precio CLP', kind: 'number', group: 'Identificación' },
+    { field: 'transmission', label: 'Transmisión', kind: 'enumWithOther', options: [...TRANSMISSIONS], group: 'Motor' },
+    { field: 'fuel', label: 'Combustible', kind: 'enumWithOther', options: [...FUELS], group: 'Motor' },
+    { field: 'engineDisplacementCc', label: 'Cilindrada cc', kind: 'number', group: 'Motor' },
+    { field: 'powerHp', label: 'Potencia hp', kind: 'number', group: 'Motor' },
+    { field: 'torqueNm', label: 'Torque Nm', kind: 'number', group: 'Motor' },
+    { field: 'consumptionCityKmL', label: 'Consumo ciudad km/L', kind: 'number', group: 'Consumo' },
+    { field: 'consumptionHighwayKmL', label: 'Consumo carretera km/L', kind: 'number', group: 'Consumo' },
+    { field: 'lengthMm', label: 'Largo mm', kind: 'number', group: 'Dimensiones' },
+    { field: 'widthMm', label: 'Ancho mm', kind: 'number', group: 'Dimensiones' },
+    { field: 'heightMm', label: 'Alto mm', kind: 'number', group: 'Dimensiones' },
+    { field: 'weightKg', label: 'Peso kg', kind: 'number', group: 'Dimensiones' },
+    { field: 'trunkLiters', label: 'Maleta L', kind: 'number', group: 'Dimensiones' },
+    { field: 'airbagCount', label: 'Airbags', kind: 'number', group: 'Seguridad' },
+    { field: 'hasAbs', label: 'Frenos ABS', kind: 'boolean', group: 'Seguridad' },
+    { field: 'hasEsp', label: 'Control de estabilidad', kind: 'boolean', group: 'Seguridad' },
+    { field: 'hasCruiseControl', label: 'Control de crucero', kind: 'boolean', group: 'Seguridad' },
+    { field: 'equipment', label: 'Equipamiento', kind: 'multiSelect', optionsApi: '/admin/equipment', optionLabel: 'name', group: 'Equipamiento' },
+    { field: 'circulationPermitClp', label: 'Permiso circulación CLP', kind: 'number', optional: true, help: 'Permiso de circulación anual del vehículo en pesos chilenos', group: 'Seguros y permisos' },
+    { field: 'mandatoryInsuranceClp', label: 'SOAP CLP', kind: 'number', optional: true, help: 'Seguro Obligatorio de Accidentes Personales (SOAP) en pesos chilenos', group: 'Seguros y permisos' },
+    { field: 'voluntaryInsuranceClp', label: 'Seguro automotriz CLP', kind: 'number', optional: true, group: 'Seguros y permisos' },
+    { field: 'fuelTankLiters', label: 'Capacidad estanque L', kind: 'number', optional: true, help: 'Capacidad del estanque de combustible en litros', group: 'Tanque y batería' },
+    { field: 'batteryCapacityKwh', label: 'Capacidad batería kWh', kind: 'number', optional: true, help: 'Capacidad de la batería en kWh (solo vehículos eléctricos o híbridos enchufables)', group: 'Tanque y batería' },
+    { field: 'hasRecall', label: '¿Tiene recall?', kind: 'boolean', optional: true, group: 'Recalls' },
+    { field: 'recallUrl', label: 'URL del informe (si recall)', kind: 'text', optional: true, help: 'URL pública del informe de recall publicado por el fabricante o la autoridad', group: 'Recalls' },
   ],
   equipment: [
     { field: 'name', label: 'Nombre', kind: 'text' },

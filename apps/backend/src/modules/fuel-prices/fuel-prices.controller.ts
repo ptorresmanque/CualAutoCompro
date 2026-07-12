@@ -16,7 +16,7 @@ export const fuelPricesController = {
   }),
   create: ah(async (req, res) => {
     const parsed = createFuelPriceSchema.safeParse(req.body);
-    if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     res.status(201).json(ok(await svc.create(parsed.data)));
   }),
   softDelete: ah(async (req, res) => {

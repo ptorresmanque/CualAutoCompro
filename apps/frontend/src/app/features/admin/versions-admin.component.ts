@@ -1,8 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
+import { firstValueFrom } from 'rxjs';
 import { AdminFeedbackService } from '../../core/admin-feedback.service';
+import { ApiCallError } from '../../core/api-error';
 import { ApiService } from '../../core/api.service';
+import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { sortItems, type SortDir } from './sort-utils';
@@ -31,6 +35,9 @@ type SortKey = 'name' | 'year' | 'priceClp' | 'modelName';
 export class VersionsAdminComponent {
   private api = inject(ApiService);
   private feedback = inject(AdminFeedbackService);
+  private dialog = inject(MatDialog);
+
+  readonly editDialog = viewChild<AdminEditDialogComponent>(AdminEditDialogComponent);
 
   readonly items = signal<VersionRow[]>([]);
   readonly models = signal<ModelOption[]>([]);
@@ -150,6 +157,10 @@ export class VersionsAdminComponent {
       this.dialogEntity.set(undefined);
       await this.load();
     } catch (err) {
+      if (err instanceof ApiCallError && err.backend.code === 'VALIDATION' && err.backend.fields) {
+        this.editDialog()?.applyBackendErrors(err.backend.fields);
+        return;
+      }
       const msg = (err as Error).message;
       this.error.set(msg);
       this.feedback.error(msg);
@@ -167,12 +178,26 @@ export class VersionsAdminComponent {
   }
 
   async confirmDelete(row: VersionRow): Promise<void> {
-    if (!confirm(`¿Eliminar versión "${row.name}"?`)) return;
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      disableClose: true,
+      data: {
+        title: 'Eliminar versión',
+        message: `¿Eliminar versión "${row.name}"?`,
+        confirmLabel: 'Eliminar',
+        danger: true,
+      },
+    });
+    const ok = await firstValueFrom(ref.afterClosed());
+    if (!ok) return;
     try {
       await this.api.delete(`/admin/versions/${row.id}`);
       this.feedback.success(`Versión "${row.name}" eliminada`);
       await this.load();
     } catch (err) {
+      if (err instanceof ApiCallError && err.backend.code === 'VALIDATION' && err.backend.fields) {
+        this.editDialog()?.applyBackendErrors(err.backend.fields);
+        return;
+      }
       const msg = (err as Error).message;
       this.error.set(msg);
       this.feedback.error(msg);

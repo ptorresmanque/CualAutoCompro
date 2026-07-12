@@ -31,7 +31,7 @@ export const brandsController = {
   create: ah(async (req: Request, res: Response) => {
     const parsed = createBrandSchema.safeParse(req.body);
     if (!parsed.success) {
-      throw validation(parsed.error.issues.map((i) => i.message).join("; "));
+      throw validation("Datos inválidos", parsed.error.issues);
     }
     res.status(201).json(ok(await svc.create(parsed.data)));
   }),
@@ -40,7 +40,7 @@ export const brandsController = {
     const id = req.params.id ?? "";
     const parsed = updateBrandSchema.safeParse(req.body);
     if (!parsed.success) {
-      throw validation(parsed.error.issues.map((i) => i.message).join("; "));
+      throw validation("Datos inválidos", parsed.error.issues);
     }
     res.json(ok(await svc.update(id, parsed.data)));
   }),

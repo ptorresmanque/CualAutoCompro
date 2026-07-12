@@ -1,20 +1,23 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { Subject } from 'rxjs';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 
+function setup(entityKey: 'brand' | 'model' | 'version' | 'equipment' | 'maintenance') {
+  TestBed.configureTestingModule({
+    imports: [AdminEditDialogComponent],
+    providers: [provideHttpClient(), provideHttpClientTesting()],
+  });
+  const fixture = TestBed.createComponent(AdminEditDialogComponent);
+  fixture.componentRef.setInput('entityKey', entityKey);
+  fixture.componentRef.setInput('apiPath', entityKey === 'maintenance' ? 'maintenance' : `${entityKey}s`);
+  fixture.detectChanges();
+  return { fixture, http: TestBed.inject(HttpTestingController) };
+}
+
 describe('AdminEditDialogComponent', () => {
-  function setup(entityKey: 'brand' | 'model' | 'version' | 'equipment' | 'maintenance') {
-    TestBed.configureTestingModule({
-      imports: [AdminEditDialogComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
-    });
-    const fixture = TestBed.createComponent(AdminEditDialogComponent);
-    fixture.componentRef.setInput('entityKey', entityKey);
-    fixture.componentRef.setInput('apiPath', entityKey === 'maintenance' ? 'maintenance' : `${entityKey}s`);
-    fixture.detectChanges();
-    return { fixture, http: TestBed.inject(HttpTestingController) };
-  }
 
   it('carga el template y arma el form (brand)', async () => {
     const { fixture, http } = setup('brand');
@@ -381,4 +384,478 @@ it('maintenance: versionId es hidden → no se renderiza en el form ni se crea c
   // No se llama a /admin/versions desde el dialog (hidden field → no se carga)
   http.expectNone((r) => r.url.endsWith('/api/v1/admin/versions'));
 });
+});
+
+describe('Required/optional markers', () => {
+  function fieldLabelByName(fixture: any, fieldName: string): Element | null {
+    const labels = Array.from(
+      fixture.nativeElement.querySelectorAll('.dialog-field-label') as NodeListOf<Element>,
+    ) as Element[];
+    return labels.find((l) => l.textContent?.includes(`(${fieldName})`) ?? false) ?? null;
+  }
+
+  it('brand: name muestra asterisco requerido, logoUrl muestra badge opcional', async () => {
+    const { fixture, http } = setup('brand');
+    const req = http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/brand'));
+    req.flush({ data: { name: '', logoUrl: null } });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const nameLabel = fieldLabelByName(fixture, 'name');
+    expect(nameLabel).toBeTruthy();
+    expect(nameLabel!.querySelector('.required-marker')).toBeTruthy();
+    expect(nameLabel!.querySelector('.optional-badge')).toBeFalsy();
+
+    const logoLabel = fieldLabelByName(fixture, 'logoUrl');
+    expect(logoLabel).toBeTruthy();
+    expect(logoLabel!.querySelector('.optional-badge')).toBeTruthy();
+    expect(logoLabel!.querySelector('.required-marker')).toBeFalsy();
+  });
+
+  it('brand: campo text required propaga aria-required="true" al input', async () => {
+    const { fixture, http } = setup('brand');
+    const req = http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/brand'));
+    req.flush({ data: { name: '', logoUrl: null } });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const nameInput = fixture.nativeElement.querySelector('app-text-field input');
+    expect(nameInput).toBeTruthy();
+    expect(nameInput!.getAttribute('aria-required')).toBe('true');
+  });
+
+  it('brand: logoUrl opcional NO tiene aria-required en su wrapper', async () => {
+    const { fixture, http } = setup('brand');
+    const req = http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/brand'));
+    req.flush({ data: { name: '', logoUrl: null } });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const label = fieldLabelByName(fixture, 'logoUrl');
+    expect(label).toBeTruthy();
+    // logoUrl es opcional → el badge "opcional" reemplaza al asterisco.
+    expect(label!.querySelector('.optional-badge')).toBeTruthy();
+    expect(label!.querySelector('.required-marker')).toBeFalsy();
+  });
+
+  it('version: circulationPermitClp (optional) muestra badge opcional', async () => {
+    const { fixture, http } = setup('version');
+    const req = http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version'));
+    req.flush({
+      data: {
+        modelId: '', name: '', year: 2026, priceClp: 0,
+        transmission: 'MANUAL', fuel: 'BENCINA',
+        engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
+        consumptionCityKmL: 0, consumptionHighwayKmL: 0,
+        lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
+        trunkLiters: 0, airbagCount: 0,
+        hasAbs: false, hasEsp: false, hasCruiseControl: false,
+      },
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const label = fieldLabelByName(fixture, 'circulationPermitClp');
+    expect(label).toBeTruthy();
+    expect(label!.querySelector('.optional-badge')).toBeTruthy();
+    expect(label!.querySelector('.required-marker')).toBeFalsy();
+  });
+});
+
+describe('Unsaved-changes guard', () => {
+  function setupWithDialogMock(dialogMock: { open: () => any }) {
+    TestBed.configureTestingModule({
+      imports: [AdminEditDialogComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: MatDialog, useValue: dialogMock },
+      ],
+    });
+    const fixture = TestBed.createComponent(AdminEditDialogComponent);
+    fixture.componentRef.setInput('entityKey', 'brand');
+    fixture.componentRef.setInput('apiPath', 'brands');
+    fixture.detectChanges();
+    return { fixture, http: TestBed.inject(HttpTestingController) };
+  }
+
+  it('cierra sin prompt si el form está pristine', async () => {
+    const openSpy = vi.fn(() => ({ afterClosed: () => new Subject<boolean>() }));
+    const { fixture, http } = setupWithDialogMock({ open: openSpy });
+    http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/brand'))
+      .flush({ data: { name: '', logoUrl: null } });
+    await fixture.whenStable();
+
+    const emitted: unknown[] = [];
+    fixture.componentInstance.cancel.subscribe(() => emitted.push('cancel'));
+
+    await fixture.componentInstance.onCancel();
+
+    expect(openSpy).not.toHaveBeenCalled();
+    expect(emitted).toEqual(['cancel']);
+  });
+
+  it('abre ConfirmDialog si el form está dirty', () => {
+    const openSpy = vi.fn(() => ({ afterClosed: () => new Subject<boolean>() }));
+    const { fixture, http } = setupWithDialogMock({ open: openSpy });
+    http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/brand'))
+      .flush({ data: { name: '', logoUrl: null } });
+
+    fixture.componentInstance.form().get('name')?.markAsDirty();
+
+    void fixture.componentInstance.onCancel();
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    const callArg = openSpy.mock.calls[0] as unknown as [unknown, { disableClose: boolean; data: { danger: boolean } }];
+    expect(callArg[1].disableClose).toBe(true);
+    expect(callArg[1].data.danger).toBe(true);
+  });
+
+  it('emite cancel si el usuario confirma el discard', async () => {
+    const subject = new Subject<boolean>();
+    const openSpy = vi.fn(() => ({ afterClosed: () => subject.asObservable() }));
+    const { fixture, http } = setupWithDialogMock({ open: openSpy });
+    http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/brand'))
+      .flush({ data: { name: '', logoUrl: null } });
+    await fixture.whenStable();
+
+    fixture.componentInstance.form().get('name')?.markAsDirty();
+
+    const emitted: unknown[] = [];
+    fixture.componentInstance.cancel.subscribe(() => emitted.push('cancel'));
+
+    const promise = fixture.componentInstance.onCancel();
+    subject.next(true);
+    subject.complete();
+    await promise;
+
+    expect(emitted).toEqual(['cancel']);
+  });
+
+  it('NO emite cancel si el usuario cancela el discard', async () => {
+    const subject = new Subject<boolean>();
+    const openSpy = vi.fn(() => ({ afterClosed: () => subject.asObservable() }));
+    const { fixture, http } = setupWithDialogMock({ open: openSpy });
+    http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/brand'))
+      .flush({ data: { name: '', logoUrl: null } });
+    await fixture.whenStable();
+
+    fixture.componentInstance.form().get('name')?.markAsDirty();
+
+    const emitted: unknown[] = [];
+    fixture.componentInstance.cancel.subscribe(() => emitted.push('cancel'));
+
+    const promise = fixture.componentInstance.onCancel();
+    subject.next(false);
+    subject.complete();
+    await promise;
+
+    expect(emitted).toEqual([]);
+  });
+
+  it('hidrata el form sin dejarlo dirty aunque vengan valores del entity', async () => {
+    const { fixture, http } = setupWithDialogMock({
+      open: () => ({ afterClosed: () => new Subject<boolean>() }),
+    });
+    http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/brand'))
+      .flush({ data: { name: '', logoUrl: null } });
+    await fixture.whenStable();
+    fixture.componentRef.setInput('entity', { name: 'Toyota', logoUrl: null });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.componentInstance.form().dirty).toBe(false);
+  });
+
+  it('closeX dispara el mismo flujo que onCancel (abre confirm si dirty)', async () => {
+    const openSpy = vi.fn(() => ({ afterClosed: () => new Subject<boolean>() }));
+    const { fixture, http } = setupWithDialogMock({ open: openSpy });
+    http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/brand'))
+      .flush({ data: { name: '', logoUrl: null } });
+    await fixture.whenStable();
+
+    fixture.componentInstance.form().get('name')?.markAsDirty();
+    void fixture.componentInstance.closeX();
+
+    expect(openSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('ESC dispara el mismo flujo que onCancel (abre confirm si dirty)', async () => {
+    const openSpy = vi.fn(() => ({ afterClosed: () => new Subject<boolean>() }));
+    const { fixture, http } = setupWithDialogMock({ open: openSpy });
+    http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/brand'))
+      .flush({ data: { name: '', logoUrl: null } });
+    await fixture.whenStable();
+
+    fixture.componentInstance.form().get('name')?.markAsDirty();
+
+    const event = new Event('keydown', { cancelable: true });
+    fixture.componentInstance.onEsc(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(openSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Autofocus on first field', () => {
+  it('enfoca el primer input después de que loading pasa a false', async () => {
+    TestBed.configureTestingModule({
+      imports: [AdminEditDialogComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(AdminEditDialogComponent);
+    fixture.componentRef.setInput('entityKey', 'brand');
+    fixture.componentRef.setInput('apiPath', 'brands');
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/brand'))
+      .flush({ data: { name: '', logoUrl: null } });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 0));
+
+    const focused = document.activeElement as HTMLElement | null;
+    const focusedInDialog = focused && fixture.nativeElement.contains(focused);
+    expect(focusedInDialog).toBe(true);
+  });
+
+  it('NO enfoca mientras loading() es true', () => {
+    TestBed.configureTestingModule({
+      imports: [AdminEditDialogComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(AdminEditDialogComponent);
+    fixture.componentRef.setInput('entityKey', 'brand');
+    fixture.componentRef.setInput('apiPath', 'brands');
+    fixture.detectChanges();
+    // No flusheamos el template → loading sigue true. NO debe haber focus.
+    const focused = document.activeElement as HTMLElement | null;
+    const focusedInDialog = focused && fixture.nativeElement.contains(focused);
+    expect(focusedInDialog).toBe(false);
+  });
+});
+
+describe('Sections layout', () => {
+  function setupSectioned(entityKey: 'brand' | 'version') {
+    TestBed.configureTestingModule({
+      imports: [AdminEditDialogComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(AdminEditDialogComponent);
+    fixture.componentRef.setInput('entityKey', entityKey);
+    fixture.componentRef.setInput('apiPath', entityKey === 'version' ? 'versions' : 'brands');
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    const templateUrl =
+      entityKey === 'version'
+        ? '/api/v1/admin/seed/template/version'
+        : '/api/v1/admin/seed/template/brand';
+    const templateBody =
+      entityKey === 'version'
+        ? {
+            data: {
+              modelId: '', name: '', year: 2026, priceClp: 0,
+              transmission: 'MANUAL', fuel: 'BENCINA',
+              engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
+              consumptionCityKmL: 0, consumptionHighwayKmL: 0,
+              lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
+              trunkLiters: 0, airbagCount: 0,
+              hasAbs: false, hasEsp: false, hasCruiseControl: false,
+            },
+          }
+        : { data: { name: '', logoUrl: null } };
+    http.expectOne((r) => r.url.includes(templateUrl)).flush(templateBody);
+    return { fixture, http };
+  }
+
+  it('version: deriva 9 secciones en orden de primera aparición', async () => {
+    const { fixture, http } = setupSectioned('version');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.match(() => true).forEach((r) => r.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const sections = fixture.componentInstance.sections();
+    expect(sections.length).toBe(9);
+    expect(sections.map((s) => s.label)).toEqual([
+      'Identificación',
+      'Motor',
+      'Consumo',
+      'Dimensiones',
+      'Seguridad',
+      'Equipamiento',
+      'Seguros y permisos',
+      'Tanque y batería',
+      'Recalls',
+    ]);
+  });
+
+  it('version: cada sección contiene los campos esperados (no cross-contamination)', async () => {
+    const { fixture, http } = setupSectioned('version');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.match(() => true).forEach((r) => r.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const sections = fixture.componentInstance.sections();
+    const byId = new Map(sections.map((s) => [s.id, s]));
+    expect(byId.get('identificacion')?.fields.map((f) => f.field)).toEqual([
+      'modelId', 'name', 'year', 'priceClp',
+    ]);
+    expect(byId.get('motor')?.fields.map((f) => f.field)).toEqual([
+      'transmission', 'fuel', 'engineDisplacementCc', 'powerHp', 'torqueNm',
+    ]);
+    expect(byId.get('consumo')?.fields.length).toBe(2);
+    expect(byId.get('dimensiones')?.fields.length).toBe(5);
+    expect(byId.get('seguridad')?.fields.length).toBe(4);
+    expect(byId.get('equipamiento')?.fields.length).toBe(1);
+    expect(byId.get('seguros-y-permisos')?.fields.length).toBe(3);
+    expect(byId.get('tanque-y-bateria')?.fields.length).toBe(2);
+    expect(byId.get('recalls')?.fields.length).toBe(2);
+  });
+
+  it('version: renderiza headers h3 con los labels de cada sección', async () => {
+    const { fixture, http } = setupSectioned('version');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.match(() => true).forEach((r) => r.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const headers = Array.from(
+      fixture.nativeElement.querySelectorAll('.dialog-section-header') as NodeListOf<Element>,
+    ).map((el) => el.textContent?.trim());
+    expect(headers).toEqual([
+      'Identificación',
+      'Motor',
+      'Consumo',
+      'Dimensiones',
+      'Seguridad',
+      'Equipamiento',
+      'Seguros y permisos',
+      'Tanque y batería',
+      'Recalls',
+    ]);
+  });
+
+  it('version: renderiza el sticky nav con 9 botones', async () => {
+    const { fixture, http } = setupSectioned('version');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.match(() => true).forEach((r) => r.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const navItems = fixture.nativeElement.querySelectorAll('.dialog-section-nav-item');
+    expect(navItems.length).toBe(9);
+  });
+
+  it('brand: sin grupos, sections() devuelve una sola sección con label vacío', async () => {
+    const { fixture, http } = setupSectioned('brand');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.match(() => true).forEach((r) => r.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const sections = fixture.componentInstance.sections();
+    expect(sections.length).toBe(1);
+    expect(sections[0].label).toBe('');
+    expect(sections[0].id).toBe('general');
+    expect(sections[0].fields.length).toBeGreaterThan(0);
+  });
+
+  it('brand: NO renderiza headers (la sección sin label no tiene h3)', async () => {
+    const { fixture, http } = setupSectioned('brand');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.match(() => true).forEach((r) => r.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const headers = fixture.nativeElement.querySelectorAll('.dialog-section-header');
+    expect(headers.length).toBe(0);
+  });
+
+  it('brand: NO renderiza el sticky nav (solo 1 sección)', async () => {
+    const { fixture, http } = setupSectioned('brand');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.match(() => true).forEach((r) => r.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const nav = fixture.nativeElement.querySelector('.dialog-section-nav');
+    expect(nav).toBeNull();
+  });
+
+  it('version: todos los fields son alcanzables con selector dialog-field (28)', async () => {
+    const { fixture, http } = setupSectioned('version');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.match(() => true).forEach((r) => r.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const fields = fixture.nativeElement.querySelectorAll('.dialog-field');
+    // 28 fields en FIELD_METAS.version + equipment (1) = 29. Aceptamos >=28
+    expect(fields.length).toBeGreaterThanOrEqual(28);
+  });
+
+  it('scrollToSection: llama document.getElementById(id).scrollIntoView', async () => {
+    const { fixture, http } = setupSectioned('version');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.match(() => true).forEach((r) => r.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const scrollSpy = vi.fn();
+    const motorSection = fixture.nativeElement.querySelector('#motor');
+    if (motorSection) {
+      motorSection.scrollIntoView = scrollSpy;
+    }
+    fixture.componentInstance.scrollToSection('motor');
+    expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+  });
+
+  it('version: section IDs están slugificados en el DOM (#motor, #tanque-y-bateria)', async () => {
+    const { fixture, http } = setupSectioned('version');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.match(() => true).forEach((r) => r.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('#motor')).toBeTruthy();
+    expect(root.querySelector('#tanque-y-bateria')).toBeTruthy();
+    expect(root.querySelector('#identificacion')).toBeTruthy();
+  });
+
+  it('host tiene clase with-nav cuando sections() >= 3 (version)', async () => {
+    const { fixture, http } = setupSectioned('version');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.match(() => true).forEach((r) => r.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.classList.contains('with-nav')).toBe(true);
+  });
+
+  it('host NO tiene clase with-nav cuando sections() < 3 (brand)', async () => {
+    const { fixture, http } = setupSectioned('brand');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.match(() => true).forEach((r) => r.flush({ data: [] }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.classList.contains('with-nav')).toBe(false);
+  });
 });

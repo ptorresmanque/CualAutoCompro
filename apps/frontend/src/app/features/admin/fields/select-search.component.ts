@@ -49,10 +49,13 @@ export class SelectSearchComponent implements OnInit {
   readonly filtered = computed<OptionItem[]>(() => {
     const q = this.query().toLowerCase();
     const staticOpts: OptionItem[] = (this.options() ?? []).map((v) => ({ value: v, label: v }));
-    const remoteOpts: OptionItem[] = this.remoteOptions().map((o) => ({
-      id: o['id'] as string,
-      label: String(o[this.optionLabel()] ?? ''),
-    }));
+    const remote = this.remoteOptions();
+    const remoteOpts: OptionItem[] = Array.isArray(remote)
+      ? remote.map((o) => ({
+          id: o['id'] as string,
+          label: String(o[this.optionLabel()] ?? ''),
+        }))
+      : [];
     const all = [...staticOpts, ...remoteOpts];
     const matches = q ? all.filter((o) => o.label.toLowerCase().includes(q)) : all;
     if (this.allowOther() && q && !matches.some((m) => m.label.toLowerCase() === q)) {

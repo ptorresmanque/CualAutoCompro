@@ -1,3 +1,5 @@
+import type { ZodIssue } from "zod";
+
 export type ErrorCode =
   | "VALIDATION"
   | "NOT_FOUND"
@@ -45,7 +47,15 @@ export const forbidden = (msg = "Sin permisos") =>
   new AppError("FORBIDDEN", msg);
 export const conflict = (msg: string, details?: Record<string, unknown>) =>
   new AppError("CONFLICT", msg, details);
-export const validation = (msg: string) => new AppError("VALIDATION", msg);
+export const validation = (
+  msg: string,
+  fields?: ZodIssue[],
+): AppError => {
+  if (!fields || fields.length === 0) {
+    return new AppError("VALIDATION", msg);
+  }
+  return new AppError("VALIDATION", msg, { fields });
+};
 export const badRequest = (msg: string) => new AppError("BAD_REQUEST", msg);
 export const cannotDemoteSelf = (msg = "No podés degradarte a vos mismo") =>
   new AppError("CANNOT_DEMOTE_SELF", msg);

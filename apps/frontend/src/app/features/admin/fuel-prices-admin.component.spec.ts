@@ -1,7 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { FuelPricesAdminComponent } from './fuel-prices-admin.component';
+
+const dialogMock = {
+  open: () => ({ afterClosed: () => of(true) }),
+};
 
 describe('FuelPricesAdminComponent', () => {
   it('smoke: carga lista de precios y abre dialog al pulsar Nuevo', async () => {
@@ -76,7 +82,7 @@ describe('FuelPricesAdminComponent', () => {
   it('confirmDelete lanza DELETE a /admin/fuel-prices/:id', async () => {
     TestBed.configureTestingModule({
       imports: [FuelPricesAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
     });
     const fixture = TestBed.createComponent(FuelPricesAdminComponent);
     fixture.detectChanges();
@@ -87,8 +93,6 @@ describe('FuelPricesAdminComponent', () => {
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
 
-    window.confirm = () => true;
-
     const deletePromise = fixture.componentInstance.confirmDelete({
       id: 'fp1',
       fuelType: 'gasoline_93',
@@ -96,6 +100,8 @@ describe('FuelPricesAdminComponent', () => {
       unit: 'litro',
       effectiveFrom: '2026-01-01',
     });
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
 
     const delReq = http.expectOne((r) => r.url.includes('/api/v1/admin/fuel-prices/fp1'));
     expect(delReq.request.method).toBe('DELETE');

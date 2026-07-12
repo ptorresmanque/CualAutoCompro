@@ -19,14 +19,14 @@ export const equipmentController = {
 
   create: ah(async (req: Request, res: Response) => {
     const parsed = createEquipmentSchema.safeParse(req.body);
-    if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     res.status(201).json(ok(await svc.create(parsed.data)));
   }),
 
   update: ah(async (req: Request, res: Response) => {
     const id = req.params.id ?? "";
     const parsed = updateEquipmentSchema.safeParse(req.body);
-    if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     res.json(ok(await svc.update(id, parsed.data)));
   }),
 
@@ -37,7 +37,7 @@ export const equipmentController = {
 
   attach: ah(async (req: Request, res: Response) => {
     const parsed = attachEquipmentSchema.safeParse(req.body);
-    if (!parsed.success) throw validation(parsed.error.issues.map((i) => i.message).join("; "));
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     res.json(ok(await svc.attach(parsed.data.versionId, parsed.data.itemId)));
   }),
 
