@@ -61,3 +61,4 @@ apps/backend/.claude-audit/
 # Python bytecode (auto-created when running .py scripts)
 __pycache__/
 *.pyc
+docs/marcas-autos-chile.xlsx
