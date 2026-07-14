@@ -1,0 +1,104 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/backend/**'
+      - 'package.json'
+      - 'package-lock.json'
+
+concurrency:
+  group: deploy-be
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm -w apps/backend run db:generate
+
+      - name: Build backend
+        run: npm -w apps/backend run build
+
+      - name: Stage deploy artifacts
+        run: |
+          mkdir -p deploy-staging
+          cp -r apps/backend/dist deploy-staging/dist
+          cp -r apps/backend/prisma deploy-staging/prisma
+          cp apps/backend/package.json deploy-staging/
+          cp apps/backend/package-lock.json deploy-staging/
+
+      - name: Upload artifacts to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_SSH_USER }}
+          key: ${{ secrets.CPANEL_SSH_KEY }}
+          port: ${{ secrets.CPANEL_PORT }}
+          source: "deploy-staging"
+          target: "/home/rfkusewb/be-staging"
+          overwrite: true
+
+      - name: Install deps, migrate, restart
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_SSH_USER }}
+          key: ${{ secrets.CPANEL_SSH_KEY }}
+          port: ${{ secrets.CPANEL_PORT }}
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            source /home/rfkusewb/nodevenv/cualauto-backend/20/bin/activate
+
+            BACKEND=/home/rfkusewb/cualauto-backend
+            STAGING=/home/rfkusewb/be-staging
+
+            cd $BACKEND
+
+            # Limpieza controlada de lo que reemplazamos
+            rm -rf dist
+            rm -rf prisma
+            rm -f package.json package-lock.json
+
+            # Mover staging a su lugar
+            mv $STAGING/dist ./dist
+            mv $STAGING/prisma ./prisma
+            mv $STAGING/package.json ./
+            mv $STAGING/package-lock.json ./
+            rmdir $STAGING 2>/dev/null || rm -rf $STAGING
+
+            # Asegurar tmp/ existe (Passenger)
+            mkdir -p tmp
+
+            # Instalar dependencias de producción
+            npm ci --omit=dev --no-audit --no-fund
+
+            # Regenerar Prisma client (porque node_modules es nuevo)
+            npx prisma generate
+
+            # Aplicar migraciones pendientes
+            npx prisma migrate deploy
+
+            # Reiniciar Passenger (lee tmp/restart.txt y recicla workers)
+            touch tmp/restart.txt
+
+            echo "BE DEPLOY OK"
+
+      - name: Health check (backend)
+        run: |
+          sleep 5
+          curl -fsS --retry 5 --retry-delay 3 https://cualautocompro.cl/health

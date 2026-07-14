@@ -1,0 +1,73 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/frontend/**'
+      - 'package.json'
+      - 'package-lock.json'
+
+concurrency:
+  group: deploy-fe
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend (production)
+        run: npm -w apps/frontend run build -- --configuration production
+
+      - name: Upload build to staging dir on cPanel
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_SSH_USER }}
+          key: ${{ secrets.CPANEL_SSH_KEY }}
+          port: ${{ secrets.CPANEL_PORT }}
+          source: "apps/frontend/dist/frontend/browser"
+          target: "/home/rfkusewb/fe-staging"
+          overwrite: true
+
+      - name: Swap staging into public_html (atomic-ish via rsync)
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_SSH_USER }}
+          key: ${{ secrets.CPANEL_SSH_KEY }}
+          port: ${{ secrets.CPANEL_PORT }}
+          command_timeout: 5m
+          script: |
+            set -euo pipefail
+
+            # rsync local: borra de public_html lo que no esté en fe-staging,
+            # preservando archivos protegidos por el filtro.
+            rsync -a --delete \
+              --filter='P .htaccess' \
+              --filter='P .user.ini' \
+              --filter='P .well-known' \
+              --filter='P .well-known/**' \
+              /home/rfkusewb/fe-staging/ \
+              /home/rfkusewb/public_html/
+
+            rm -rf /home/rfkusewb/fe-staging
+
+            echo "FE DEPLOY OK"
+            ls -la /home/rfkusewb/public_html/ | head -15
+
+      - name: Health check
+        run: |
+          sleep 3
+          curl -fsS --retry 5 --retry-delay 3 https://cualautocompro.cl/ | head -c 300
