@@ -59,7 +59,8 @@ jobs:
           cp -r apps/backend/dist deploy-staging/dist
           cp -r apps/backend/prisma deploy-staging/prisma
           cp apps/backend/package.json deploy-staging/
-          cp apps/backend/package-lock.json deploy-staging/
+          # No copiamos package-lock.json: el del root tiene workspaces de todo el monorepo
+          # y haría fallar npm ci en el server. Usamos npm install --omit=dev (ver más abajo).
           tar czf - -C deploy-staging . > be-build.tgz
           rm -rf deploy-staging
           ls -la be-build.tgz
@@ -105,19 +106,18 @@ jobs:
             cd $BACKEND
 
             rm -rf dist prisma
-            rm -f package.json package-lock.json
+            rm -f package.json
 
             mv /home/rfkusewb/be-staging/dist ./dist
             mv /home/rfkusewb/be-staging/prisma ./prisma
             mv /home/rfkusewb/be-staging/package.json ./
-            mv /home/rfkusewb/be-staging/package-lock.json ./
             rmdir /home/rfkusewb/be-staging 2>/dev/null || rm -rf /home/rfkusewb/be-staging
 
             # 3. Asegurar tmp/ existe (Passenger)
             mkdir -p tmp
 
             # 4. Instalar dependencias de producción
-            npm ci --omit=dev --no-audit --no-fund
+            npm install --omit=dev --no-audit --no-fund --no-save
 
             # 5. Regenerar Prisma client (porque node_modules es nuevo)
             npx prisma generate
