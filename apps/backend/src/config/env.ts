@@ -7,6 +7,7 @@ import { z } from "zod";
 //   - NODE_ENV === "test"        -> no tocamos nada (setup.ts carga .env.test)
 //   - .env.development existe    -> .env.development (preferido para local dev)
 //   - sino                       -> .env (compatibilidad)
+// este es un comentario para probar
 const envFile =
   process.env.NODE_ENV === "production"
     ? ".env"
