@@ -4,74 +4,74 @@
 @tailwind utilities;
 
 /* ============================================================
- * Tokens "Ficha Técnica" / Plano de taller
+ * Tokens "Carbón + Lima"
  *
- * El sistema trata el sitio como una pila de fichas técnicas
- * sobre el escritorio de un mecánico: papel cálido, tinta casi
- * negra, engine-red como acento, IBM Plex para texto y Archivo
- * Black para display. Material 3 recibe overrides completos para
- * que ningún color azul del prebuilt theme se filtre.
+ * Neutros zinc casi-grises, fondo blanco roto, separadores hairline
+ * quietos, acento lima único reservado para CTAs y estados activos.
+ * IBM Plex para texto, Archivo Black para display. Material 3
+ * recibe overrides completos para que ningún azul del prebuilt
+ * theme se filtre.
  * ============================================================ */
 :root {
-  /* Paleta base — ficha técnica */
-  --paper:        #F2EEE3;
-  --paper-warm:   #EBE5D6;
-  --paper-cool:   #FAFAF7;
-  --ink:          #0E1116;
-  --ink-muted:    #3F4A52;
-  --graphite:     #6E7984;
-  --rule:         #D9D2BF;
-  --engine:       #C8341B;
-  --engine-dark:  #7A1A0B;
-  --blueprint:    #1B4F72;
-  --blueprint-light: #D4E1EB;
-  --caution:      #F2C12E;
-  --caution-light:#FBE9B0;
-  --caution-dark: #7A5B0B;
+  /* Paleta base — Carbón + Lima */
+  --paper:        #FAFAF9;
+  --paper-warm:   #F4F4F1;
+  --paper-cool:   #FFFFFF;
+  --ink:          #18181B;
+  --ink-muted:    #3F3F46;
+  --graphite:     #52525B;
+  --rule:         #E4E4E7;
+  --engine:       #65A30D;
+  --engine-dark:  #4D7C0F;
+  --blueprint:    #65A30D;
+  --blueprint-light: #ECFCCB;
+  --caution:      #A16207;
+  --caution-light:#FEF9C3;
+  --caution-dark: #713F12;
 
   /* ---- Override M3 — todos los tokens visibles apuntan al nuevo sistema ---- */
 
-  /* Primary (engine-red) */
-  --mat-sys-primary:                   #C8341B;
-  --mat-sys-surface-tint:              #7A1A0B;
-  --mat-sys-on-primary:                #F2EEE3;
-  --mat-sys-on-primary-container:      #260500;
-  --mat-sys-primary-container:         #F4D1CA;
-  --mat-sys-secondary-container:       #F4D1CA;
-  --mat-sys-tertiary-container:        #D4E1EB;
-  --mat-sys-primary-fixed:             #F4D1CA;
-  --mat-sys-primary-fixed-dim:         #E69E91;
+  /* Primary (lime) */
+  --mat-sys-primary:                   #65A30D;
+  --mat-sys-surface-tint:              #4D7C0F;
+  --mat-sys-on-primary:                #FAFAF9;
+  --mat-sys-on-primary-container:      #365314;
+  --mat-sys-primary-container:         #ECFCCB;
+  --mat-sys-secondary-container:       #ECFCCB;
+  --mat-sys-tertiary-container:        #ECFCCB;
+  --mat-sys-primary-fixed:             #ECFCCB;
+  --mat-sys-primary-fixed-dim:         #BEF264;
 
   /* Surfaces (papel) */
-  --mat-sys-background:                #F2EEE3;
-  --mat-sys-surface:                   #FAFAF7;
-  --mat-sys-surface-container-lowest:  #FAFAF7;
-  --mat-sys-surface-container-low:     #F2EEE3;
-  --mat-sys-surface-container:         #EBE5D6;
-  --mat-sys-surface-container-high:    #E4DCC8;
-  --mat-sys-surface-container-highest: #D9D2BF;
-  --mat-sys-surface-dim:               #EBE5D6;
-  --mat-sys-surface-bright:            #FAFAF7;
+  --mat-sys-background:                #FAFAF9;
+  --mat-sys-surface:                   #FFFFFF;
+  --mat-sys-surface-container-lowest:  #FFFFFF;
+  --mat-sys-surface-container-low:     #FAFAF9;
+  --mat-sys-surface-container:         #F4F4F1;
+  --mat-sys-surface-container-high:    #E4E4E7;
+  --mat-sys-surface-container-highest: #D4D4D8;
+  --mat-sys-surface-dim:               #F4F4F1;
+  --mat-sys-surface-bright:            #FFFFFF;
 
   /* Texto */
-  --mat-sys-on-surface:                #0E1116;
-  --mat-sys-on-surface-variant:        #3F4A52;
-  --mat-sys-on-background:             #0E1116;
+  --mat-sys-on-surface:                #18181B;
+  --mat-sys-on-surface-variant:        #3F3F46;
+  --mat-sys-on-background:             #18181B;
 
   /* Outline / divider (hairlines) */
-  --mat-sys-outline:                   #6E7984;
-  --mat-sys-outline-variant:           #D9D2BF;
+  --mat-sys-outline:                   #52525B;
+  --mat-sys-outline-variant:           #E4E4E7;
 
-  /* Error (destructivo: lo dejamos distinguible pero en engine) */
-  --mat-sys-error:                     #7A1A0B;
-  --mat-sys-on-error:                  #F2EEE3;
-  --mat-sys-error-container:           #F4D1CA;
-  --mat-sys-on-error-container:        #260500;
+  /* Error (destructivo: rojo distinguible del acento lima) */
+  --mat-sys-error:                     #B91C1C;
+  --mat-sys-on-error:                  #FAFAF9;
+  --mat-sys-error-container:           #FEE2E2;
+  --mat-sys-on-error-container:        #7F1D1D;
 
   /* Inversos */
-  --mat-sys-inverse-primary:           #D86E5D;
+  --mat-sys-inverse-primary:           #BEF264;
 
-  /* ---- Tokens de botón M3 → engine + paper ---- */
+  /* ---- Tokens de botón M3 → ink + paper ---- */
   --mdc-outlined-button-label-text-color:        var(--ink);
   --mdc-outlined-button-outline-color:           var(--rule);
   --mdc-outlined-button-hover-label-text-color:  var(--engine);
@@ -82,23 +82,23 @@
   --mdc-text-button-label-text-color:            var(--ink);
 
   /* ---- Tokens de la app (compatibilidad) ---- */
-  --color-engine:        #C8341B;
-  --color-engine-dark:   #7A1A0B;
-  --color-engine-light:  #F4D1CA;
-  --color-on-primary:    #F2EEE3;
-  --color-on-primary-container: #260500;
-  --color-bg:            #F2EEE3;
-  --color-surface:       #FAFAF7;
-  --color-surface-container:       #EBE5D6;
-  --color-surface-container-low:   #F2EEE3;
-  --color-surface-container-high:  #E4DCC8;
-  --color-fg:            #0E1116;
-  --color-muted:         #3F4A52;
-  --color-subtle:        #6E7984;
-  --color-accent:        #C8341B;
-  --color-warn-bg:       #FBE9B0;
-  --color-warn-fg:       #7A5B0B;
-  --color-border:        #D9D2BF;
+  --color-engine:        #65A30D;
+  --color-engine-dark:   #4D7C0F;
+  --color-engine-light:  #ECFCCB;
+  --color-on-primary:    #FAFAF9;
+  --color-on-primary-container: #365314;
+  --color-bg:            #FAFAF9;
+  --color-surface:       #FFFFFF;
+  --color-surface-container:       #F4F4F1;
+  --color-surface-container-low:   #FAFAF9;
+  --color-surface-container-high:  #E4E4E7;
+  --color-fg:            #18181B;
+  --color-muted:         #3F3F46;
+  --color-subtle:        #52525B;
+  --color-accent:        #65A30D;
+  --color-warn-bg:       #FEF9C3;
+  --color-warn-fg:       #713F12;
+  --color-border:        #E4E4E7;
   --radius:              2px;
 
   /* ---- Tipografía ---- */
@@ -196,8 +196,8 @@ h1, .display {
   color: var(--caution-dark);
 }
 .mat-mdc-snack-bar-container.snack-error .mdc-snackbar__surface {
-  background-color: #F4D1CA;
-  color: var(--engine-dark);
+  background-color: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
 }
 .mat-mdc-snack-bar-container.snack-success .mdc-snackbar__surface {
   background-color: var(--paper-cool);
@@ -213,28 +213,28 @@ h1, .display {
 /* ============================================================
  * Botones de acción destructivos (Eliminar en admin).
  * Override de los tokens internos de mat-stroked / flat button
- * para que `.action-danger` se pinte engine-dark en lugar del
- * azul que el prebuilt theme define.
+ * para que `.action-danger` se pinte en rojo destructivo en
+ * lugar del azul que el prebuilt theme define.
  * ============================================================ */
 .mat-mdc-outlined-button.action-danger,
 .mat-mdc-button.action-danger {
-  --mdc-outlined-button-label-text-color: var(--engine-dark);
-  --mdc-outlined-button-outline-color:    var(--engine-dark);
-  --mdc-outlined-button-hover-label-text-color:  var(--engine-dark);
-  --mdc-outlined-button-pressed-label-text-color:var(--engine-dark);
-  --mdc-outlined-button-focus-label-text-color:  var(--engine-dark);
-  --mdc-protected-button-label-text-color: var(--engine-dark);
-  --mdc-protected-button-container-color: var(--caution-light);
-  --mat-button-outlined-label-text-color:  var(--engine-dark);
-  --mat-button-outlined-outline-color:    var(--engine-dark);
-  --mat-button-protected-label-text-color: var(--engine-dark);
-  --mat-button-protected-container-color: var(--caution-light);
-  color: var(--engine-dark);
+  --mdc-outlined-button-label-text-color: var(--mat-sys-error);
+  --mdc-outlined-button-outline-color:    var(--mat-sys-error);
+  --mdc-outlined-button-hover-label-text-color:  var(--mat-sys-error);
+  --mdc-outlined-button-pressed-label-text-color:var(--mat-sys-error);
+  --mdc-outlined-button-focus-label-text-color:  var(--mat-sys-error);
+  --mdc-protected-button-label-text-color: var(--mat-sys-error);
+  --mdc-protected-button-container-color: var(--mat-sys-error-container);
+  --mat-button-outlined-label-text-color:  var(--mat-sys-error);
+  --mat-button-outlined-outline-color:    var(--mat-sys-error);
+  --mat-button-protected-label-text-color: var(--mat-sys-error);
+  --mat-button-protected-container-color: var(--mat-sys-error-container);
+  color: var(--mat-sys-error);
 }
 
 .mat-mdc-outlined-button.action-danger mat-icon,
 .mat-mdc-button.action-danger mat-icon,
-button.action-danger mat-icon { color: var(--engine-dark); }
+button.action-danger mat-icon { color: var(--mat-sys-error); }
 
 .mat-mdc-outlined-button.action-danger:disabled,
 .mat-mdc-button.action-danger:disabled {
@@ -243,11 +243,11 @@ button.action-danger mat-icon { color: var(--engine-dark); }
 }
 
 .mat-mdc-flat-button.action-danger {
-  --mdc-filled-button-container-color: var(--engine-dark);
+  --mdc-filled-button-container-color: var(--mat-sys-error);
   --mdc-filled-button-label-text-color: var(--paper);
   --mdc-filled-button-icon-color: var(--paper);
   color: var(--paper);
-  background-color: var(--engine-dark);
+  background-color: var(--mat-sys-error);
 }
 
 /* ============================================================
@@ -580,7 +580,7 @@ button.action-danger mat-icon { color: var(--engine-dark); }
   border-radius: 2px;
   background: var(--ink);
   color: var(--paper);
-  box-shadow: 0 6px 0 -2px rgba(14, 17, 22, 0.18);
+  box-shadow: 0 6px 0 -2px rgba(24, 24, 27, 0.18);
   border: 1px solid var(--ink);
 }
 

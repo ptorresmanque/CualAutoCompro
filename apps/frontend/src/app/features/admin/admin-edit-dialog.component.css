@@ -217,11 +217,11 @@
 
 .dialog-error {
   border-radius: 0.5rem;
-  border: 1px solid #f59e0b;
-  background: #fef3c7;
+  border: 1px solid var(--caution);
+  background: var(--caution-light);
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
-  color: #92400e;
+  color: var(--caution-dark);
   margin-bottom: 0.75rem;
 }
 

@@ -19,7 +19,7 @@
 
 .ficha:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 0 -2px rgba(14, 17, 22, 0.12);
+  box-shadow: 0 6px 0 -2px rgba(24, 24, 27, 0.12);
 }
 
 .ficha-added {
@@ -113,7 +113,7 @@
   height: 32px !important;
   padding: 0 !important;
   border-radius: 2px !important;
-  background: rgba(242, 238, 227, 0.92) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
   color: var(--ink-muted);
 }
 

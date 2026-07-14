@@ -17,7 +17,7 @@
 }
 
 .sort-header:hover {
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .sort-header:focus-visible {

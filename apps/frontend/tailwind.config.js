@@ -1,13 +1,14 @@
 /**
  * cualautocompro — design tokens.
  *
- * Sistema "Ficha Técnica" / Plano de taller.
- * Asimétrico, papel cálido, tinta casi-negra, engine-red como acento,
+ * Sistema "Carbón + Lima" — neutros zinc casi-grises, acento lima único,
+ * fondo blanco roto, separadores hairline. Lectura limpia, jerarquía por
+ * contraste, sin el creep cálido de la paleta ficha-técnica anterior.
  * IBM Plex (Sans + Mono) para texto, Archivo Black para display.
  *
- * Las clases `engine-*` reemplazan a `brand-*` (la paleta teal anterior).
- * Los nombres de las escalas se preservaron para que un find/replace o
- * un componente suelto siga funcionando con la nueva paleta.
+ * Los nombres de las escalas (`engine-*`, `paper-*`, `ink-*`) se preservaron
+ * para que un find/replace o un componente suelto siga funcionando con la
+ * nueva paleta — solo cambian los hex.
  */
 
 /** @type {import('tailwindcss').Config} */
@@ -17,54 +18,54 @@ module.exports = {
     extend: {
       colors: {
         paper: {
-          DEFAULT: '#F2EEE3',
-          warm:    '#EBE5D6',
-          cool:    '#FAFAF7',
+          DEFAULT: '#FAFAF9',
+          warm:    '#F4F4F1',
+          cool:    '#FFFFFF',
         },
         ink: {
-          DEFAULT: '#0E1116',
-          muted:   '#3F4A52',
-          subtle:  '#6E7984',
+          DEFAULT: '#18181B',
+          muted:   '#3F3F46',
+          subtle:  '#52525B',
         },
-        graphite: '#6E7984',
-        rule:     '#D9D2BF',
+        graphite: '#52525B',
+        rule:     '#E4E4E7',
         engine: {
-          DEFAULT: '#C8341B',
-          50:  '#FBE9E5',
-          100: '#F4D1CA',
-          200: '#E69E91',
-          300: '#D86E5D',
-          400: '#D04E3A',
-          500: '#C8341B',
-          600: '#A62713',
-          700: '#7A1A0B',
-          800: '#4D0E05',
-          900: '#260500',
+          DEFAULT: '#65A30D',
+          50:  '#F7FEE7',
+          100: '#ECFCCB',
+          200: '#D9F99D',
+          300: '#BEF264',
+          400: '#A3E635',
+          500: '#84CC16',
+          600: '#65A30D',
+          700: '#4D7C0F',
+          800: '#3F6212',
+          900: '#365314',
         },
         blueprint: {
-          DEFAULT: '#1B4F72',
-          light:   '#D4E1EB',
+          DEFAULT: '#65A30D',
+          light:   '#ECFCCB',
         },
         caution: {
-          DEFAULT: '#F2C12E',
-          light:   '#FBE9B0',
-          dark:    '#7A5B0B',
+          DEFAULT: '#A16207',
+          light:   '#FEF9C3',
+          dark:    '#713F12',
         },
         warn: {
-          light: '#FBE9B0',
-          DEFAULT: '#F2C12E',
-          dark: '#7A5B0B',
+          light: '#FEF9C3',
+          DEFAULT: '#A16207',
+          dark: '#713F12',
         },
         border: {
-          DEFAULT: '#D9D2BF',
-          strong: '#0E1116',
+          DEFAULT: '#E4E4E7',
+          strong: '#18181B',
         },
         surface: {
           DEFAULT: '#FFFFFF',
-          muted:   '#F2EEE3',
-          container:   '#EBE5D6',
-          'container-low': '#F2EEE3',
-          'container-high': '#E4DCC8',
+          muted:   '#FAFAF9',
+          container:   '#F4F4F1',
+          'container-low': '#FAFAF9',
+          'container-high': '#E4E4E7',
         },
       },
       fontFamily: {
@@ -86,11 +87,11 @@ module.exports = {
         stamp: '0.08em',
       },
       boxShadow: {
-        stamp:   '0 1px 0 rgba(14, 17, 22, 0.18), 0 0 0 3px rgba(200, 52, 27, 0.10)',
-        'card-lift': '0 2px 0 rgba(14, 17, 22, 0.08)',
-        e1: '0 1px 0 rgba(14, 17, 22, 0.08)',
-        e2: '0 2px 0 rgba(14, 17, 22, 0.12)',
-        e3: '0 8px 24px rgba(14, 17, 22, 0.10)',
+        stamp:   '0 1px 0 rgba(24, 24, 27, 0.18), 0 0 0 3px rgba(101, 163, 13, 0.10)',
+        'card-lift': '0 2px 0 rgba(24, 24, 27, 0.08)',
+        e1: '0 1px 0 rgba(24, 24, 27, 0.08)',
+        e2: '0 2px 0 rgba(24, 24, 27, 0.12)',
+        e3: '0 8px 24px rgba(24, 24, 27, 0.10)',
       },
       keyframes: {
         stampIn: {
