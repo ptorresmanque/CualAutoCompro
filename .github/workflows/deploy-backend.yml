@@ -86,8 +86,10 @@ jobs:
           script: |
             set -euo pipefail
             # En SSH no-interactivo, el `source activate` de cPanel falla porque referencia
-            # CL_VIRTUAL_ENV (set -u). Seteamos PATH directamente al nodevenv bin.
-            export PATH=/home/rfkusewb/nodevenv/cualauto-backend/20/bin:$PATH
+            # CL_VIRTUAL_ENV (set -u). Seteamos PATH manualmente:
+            #   - nodevenv bin: provee node y npm vinculados a la versión 20.x
+            #   - alt-nodejs20 bin: provee npx (que tu server tiene acá, no en el nodevenv)
+            export PATH=/home/rfkusewb/nodevenv/cualauto-backend/20/bin:/opt/alt/alt-nodejs20/root/usr/bin:$PATH
 
             cd /home/rfkusewb
 
