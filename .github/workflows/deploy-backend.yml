@@ -92,7 +92,8 @@ jobs:
             ls -la /home/rfkusewb/be-build.tgz
 
             # 0. Limpiar restos de un deploy anterior que haya quedado a medias
-            rm -rf be-staging be-build.tgz
+            #    (NO incluir be-build.tgz porque lo necesitamos para extraer)
+            rm -rf be-staging
 
             # 1. Extraer tarball en staging limpio
             mkdir -p be-staging

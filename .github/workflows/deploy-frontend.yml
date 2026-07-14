@@ -81,7 +81,8 @@ jobs:
             ls -la /home/rfkusewb/fe-build.tgz
 
             # 0. Limpiar restos de un deploy anterior que haya quedado a medias
-            rm -rf public_html.old fe-staging fe-build.tgz
+            #    (NO incluir fe-build.tgz porque lo necesitamos para extraer)
+            rm -rf public_html.old fe-staging
 
             # 1. Extraer tarball en staging limpio
             mkdir -p fe-staging
