@@ -30,42 +30,24 @@ jobs:
       - name: Build frontend (production)
         run: npm -w apps/frontend run build -- --configuration production
 
-      - name: Upload build to staging dir on cPanel
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_SSH_USER }}
-          key: ${{ secrets.CPANEL_SSH_KEY }}
-          port: ${{ secrets.CPANEL_PORT }}
-          source: "apps/frontend/dist/frontend/browser"
-          target: "/home/rfkusewb/fe-staging"
-          overwrite: true
+      - name: Setup SSH key for rsync
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.CPANEL_SSH_KEY }}" > ~/.ssh/cpanel_deploy
+          chmod 600 ~/.ssh/cpanel_deploy
 
-      - name: Swap staging into public_html (atomic-ish via rsync)
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_SSH_USER }}
-          key: ${{ secrets.CPANEL_SSH_KEY }}
-          port: ${{ secrets.CPANEL_PORT }}
-          command_timeout: 5m
-          script: |
-            set -euo pipefail
-
-            # rsync local: borra de public_html lo que no esté en fe-staging,
-            # preservando archivos protegidos por el filtro.
-            rsync -a --delete \
-              --filter='P .htaccess' \
-              --filter='P .user.ini' \
-              --filter='P .well-known' \
-              --filter='P .well-known/**' \
-              /home/rfkusewb/fe-staging/ \
-              /home/rfkusewb/public_html/
-
-            rm -rf /home/rfkusewb/fe-staging
-
-            echo "FE DEPLOY OK"
-            ls -la /home/rfkusewb/public_html/ | head -15
+      - name: Sync FE build to public_html (delete orphans, protect configs)
+        run: |
+          rsync -avz --delete \
+            --filter='P .htaccess' \
+            --filter='P .user.ini' \
+            --filter='P .well-known' \
+            --filter='P .well-known/**' \
+            --filter='P cgi-bin' \
+            --filter='P cgi-bin/**' \
+            -e "ssh -i ~/.ssh/cpanel_deploy -p ${{ secrets.CPANEL_PORT }} -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null" \
+            apps/frontend/dist/frontend/browser/ \
+            ${{ secrets.CPANEL_SSH_USER }}@${{ secrets.CPANEL_HOST }}:/home/rfkusewb/public_html/
 
       - name: Health check
         run: |
