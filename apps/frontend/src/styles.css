@@ -4,72 +4,72 @@
 @tailwind utilities;
 
 /* ============================================================
- * Tokens "Carbón + Lima"
+ * Tokens "Pizarra Digital"
  *
- * Neutros zinc casi-grises, fondo blanco roto, separadores hairline
- * quietos, acento lima único reservado para CTAs y estados activos.
- * IBM Plex para texto, Archivo Black para display. Material 3
- * recibe overrides completos para que ningún azul del prebuilt
- * theme se filtre.
+ * Neutros slate, fondo blanco frío casi-puro, separadores hairline
+ * quietos, acento steel-blue reservado para CTAs y estados activos.
+ * Máxima legibilidad por contraste. IBM Plex para texto, Archivo
+ * Black para display. Material 3 recibe overrides completos para
+ * que ningún azul del prebuilt theme se filtre.
  * ============================================================ */
 :root {
-  /* Paleta base — Carbón + Lima */
-  --paper:        #FAFAF9;
-  --paper-warm:   #F4F4F1;
+  /* Paleta base — Pizarra Digital */
+  --paper:        #F7F9FC;
+  --paper-warm:   #EEF2F7;
   --paper-cool:   #FFFFFF;
-  --ink:          #18181B;
-  --ink-muted:    #3F3F46;
-  --graphite:     #52525B;
-  --rule:         #E4E4E7;
-  --engine:       #65A30D;
-  --engine-dark:  #4D7C0F;
-  --blueprint:    #65A30D;
-  --blueprint-light: #ECFCCB;
-  --caution:      #A16207;
-  --caution-light:#FEF9C3;
-  --caution-dark: #713F12;
+  --ink:          #0F172A;
+  --ink-muted:    #475569;
+  --graphite:     #64748B;
+  --rule:         #E2E8F0;
+  --engine:       #1E40AF;
+  --engine-dark:  #1D4ED8;
+  --blueprint:    #1E40AF;
+  --blueprint-light: #DBEAFE;
+  --caution:      #B45309;
+  --caution-light:#FEF3C7;
+  --caution-dark: #78350F;
 
   /* ---- Override M3 — todos los tokens visibles apuntan al nuevo sistema ---- */
 
-  /* Primary (lime) */
-  --mat-sys-primary:                   #65A30D;
-  --mat-sys-surface-tint:              #4D7C0F;
-  --mat-sys-on-primary:                #FAFAF9;
-  --mat-sys-on-primary-container:      #365314;
-  --mat-sys-primary-container:         #ECFCCB;
-  --mat-sys-secondary-container:       #ECFCCB;
-  --mat-sys-tertiary-container:        #ECFCCB;
-  --mat-sys-primary-fixed:             #ECFCCB;
-  --mat-sys-primary-fixed-dim:         #BEF264;
+  /* Primary (steel-blue) */
+  --mat-sys-primary:                   #1E40AF;
+  --mat-sys-surface-tint:              #1D4ED8;
+  --mat-sys-on-primary:                #F7F9FC;
+  --mat-sys-on-primary-container:      #1E3A8A;
+  --mat-sys-primary-container:         #DBEAFE;
+  --mat-sys-secondary-container:       #DBEAFE;
+  --mat-sys-tertiary-container:        #DBEAFE;
+  --mat-sys-primary-fixed:             #DBEAFE;
+  --mat-sys-primary-fixed-dim:         #93C5FD;
 
   /* Surfaces (papel) */
-  --mat-sys-background:                #FAFAF9;
+  --mat-sys-background:                #F7F9FC;
   --mat-sys-surface:                   #FFFFFF;
   --mat-sys-surface-container-lowest:  #FFFFFF;
-  --mat-sys-surface-container-low:     #FAFAF9;
-  --mat-sys-surface-container:         #F4F4F1;
-  --mat-sys-surface-container-high:    #E4E4E7;
-  --mat-sys-surface-container-highest: #D4D4D8;
-  --mat-sys-surface-dim:               #F4F4F1;
+  --mat-sys-surface-container-low:     #F7F9FC;
+  --mat-sys-surface-container:         #EEF2F7;
+  --mat-sys-surface-container-high:    #E2E8F0;
+  --mat-sys-surface-container-highest: #CBD5E1;
+  --mat-sys-surface-dim:               #EEF2F7;
   --mat-sys-surface-bright:            #FFFFFF;
 
   /* Texto */
-  --mat-sys-on-surface:                #18181B;
-  --mat-sys-on-surface-variant:        #3F3F46;
-  --mat-sys-on-background:             #18181B;
+  --mat-sys-on-surface:                #0F172A;
+  --mat-sys-on-surface-variant:        #475569;
+  --mat-sys-on-background:             #0F172A;
 
   /* Outline / divider (hairlines) */
-  --mat-sys-outline:                   #52525B;
-  --mat-sys-outline-variant:           #E4E4E7;
+  --mat-sys-outline:                   #64748B;
+  --mat-sys-outline-variant:           #E2E8F0;
 
-  /* Error (destructivo: rojo distinguible del acento lima) */
+  /* Error (destructivo: rojo distinguible del acento steel-blue) */
   --mat-sys-error:                     #B91C1C;
-  --mat-sys-on-error:                  #FAFAF9;
+  --mat-sys-on-error:                  #F7F9FC;
   --mat-sys-error-container:           #FEE2E2;
   --mat-sys-on-error-container:        #7F1D1D;
 
   /* Inversos */
-  --mat-sys-inverse-primary:           #BEF264;
+  --mat-sys-inverse-primary:           #93C5FD;
 
   /* ---- Tokens de botón M3 → ink + paper ---- */
   --mdc-outlined-button-label-text-color:        var(--ink);
@@ -82,23 +82,23 @@
   --mdc-text-button-label-text-color:            var(--ink);
 
   /* ---- Tokens de la app (compatibilidad) ---- */
-  --color-engine:        #65A30D;
-  --color-engine-dark:   #4D7C0F;
-  --color-engine-light:  #ECFCCB;
-  --color-on-primary:    #FAFAF9;
-  --color-on-primary-container: #365314;
-  --color-bg:            #FAFAF9;
+  --color-engine:        #1E40AF;
+  --color-engine-dark:   #1D4ED8;
+  --color-engine-light:  #DBEAFE;
+  --color-on-primary:    #F7F9FC;
+  --color-on-primary-container: #1E3A8A;
+  --color-bg:            #F7F9FC;
   --color-surface:       #FFFFFF;
-  --color-surface-container:       #F4F4F1;
-  --color-surface-container-low:   #FAFAF9;
-  --color-surface-container-high:  #E4E4E7;
-  --color-fg:            #18181B;
-  --color-muted:         #3F3F46;
-  --color-subtle:        #52525B;
-  --color-accent:        #65A30D;
-  --color-warn-bg:       #FEF9C3;
-  --color-warn-fg:       #713F12;
-  --color-border:        #E4E4E7;
+  --color-surface-container:       #EEF2F7;
+  --color-surface-container-low:   #F7F9FC;
+  --color-surface-container-high:  #E2E8F0;
+  --color-fg:            #0F172A;
+  --color-muted:         #475569;
+  --color-subtle:        #64748B;
+  --color-accent:        #1E40AF;
+  --color-warn-bg:       #FEF3C7;
+  --color-warn-fg:       #78350F;
+  --color-border:        #E2E8F0;
   --radius:              2px;
 
   /* ---- Tipografía ---- */
@@ -580,7 +580,7 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   border-radius: 2px;
   background: var(--ink);
   color: var(--paper);
-  box-shadow: 0 6px 0 -2px rgba(24, 24, 27, 0.18);
+  box-shadow: 0 6px 0 -2px rgba(15, 23, 42, 0.18);
   border: 1px solid var(--ink);
 }
 

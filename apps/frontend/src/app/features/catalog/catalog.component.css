@@ -42,7 +42,6 @@
   }
   .catalog-filters-drawer.mat-drawer-side {
     border-right: 1px solid var(--rule);
-    height: calc(100vh - 4rem);
   }
 }
 

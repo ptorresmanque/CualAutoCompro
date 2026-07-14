@@ -1,9 +1,9 @@
 /**
  * cualautocompro — design tokens.
  *
- * Sistema "Carbón + Lima" — neutros zinc casi-grises, acento lima único,
- * fondo blanco roto, separadores hairline. Lectura limpia, jerarquía por
- * contraste, sin el creep cálido de la paleta ficha-técnica anterior.
+ * Sistema "Pizarra Digital" — neutros slate, fondo blanco frío casi-puro,
+ * acento steel-blue reservado para CTAs y estados activos. Máxima
+ * legibilidad por contraste, sin el creep cálido de paletas anteriores.
  * IBM Plex (Sans + Mono) para texto, Archivo Black para display.
  *
  * Los nombres de las escalas (`engine-*`, `paper-*`, `ink-*`) se preservaron
@@ -18,54 +18,54 @@ module.exports = {
     extend: {
       colors: {
         paper: {
-          DEFAULT: '#FAFAF9',
-          warm:    '#F4F4F1',
+          DEFAULT: '#F7F9FC',
+          warm:    '#EEF2F7',
           cool:    '#FFFFFF',
         },
         ink: {
-          DEFAULT: '#18181B',
-          muted:   '#3F3F46',
-          subtle:  '#52525B',
+          DEFAULT: '#0F172A',
+          muted:   '#475569',
+          subtle:  '#64748B',
         },
-        graphite: '#52525B',
-        rule:     '#E4E4E7',
+        graphite: '#64748B',
+        rule:     '#E2E8F0',
         engine: {
-          DEFAULT: '#65A30D',
-          50:  '#F7FEE7',
-          100: '#ECFCCB',
-          200: '#D9F99D',
-          300: '#BEF264',
-          400: '#A3E635',
-          500: '#84CC16',
-          600: '#65A30D',
-          700: '#4D7C0F',
-          800: '#3F6212',
-          900: '#365314',
+          DEFAULT: '#1E40AF',
+          50:  '#EFF6FF',
+          100: '#DBEAFE',
+          200: '#BFDBFE',
+          300: '#93C5FD',
+          400: '#60A5FA',
+          500: '#3B82F6',
+          600: '#2563EB',
+          700: '#1D4ED8',
+          800: '#1E40AF',
+          900: '#1E3A8A',
         },
         blueprint: {
-          DEFAULT: '#65A30D',
-          light:   '#ECFCCB',
+          DEFAULT: '#1E40AF',
+          light:   '#DBEAFE',
         },
         caution: {
-          DEFAULT: '#A16207',
-          light:   '#FEF9C3',
-          dark:    '#713F12',
+          DEFAULT: '#B45309',
+          light:   '#FEF3C7',
+          dark:    '#78350F',
         },
         warn: {
-          light: '#FEF9C3',
-          DEFAULT: '#A16207',
-          dark: '#713F12',
+          light: '#FEF3C7',
+          DEFAULT: '#B45309',
+          dark: '#78350F',
         },
         border: {
-          DEFAULT: '#E4E4E7',
-          strong: '#18181B',
+          DEFAULT: '#E2E8F0',
+          strong: '#0F172A',
         },
         surface: {
           DEFAULT: '#FFFFFF',
-          muted:   '#FAFAF9',
-          container:   '#F4F4F1',
-          'container-low': '#FAFAF9',
-          'container-high': '#E4E4E7',
+          muted:   '#F7F9FC',
+          container:   '#EEF2F7',
+          'container-low': '#F7F9FC',
+          'container-high': '#E2E8F0',
         },
       },
       fontFamily: {
@@ -87,11 +87,11 @@ module.exports = {
         stamp: '0.08em',
       },
       boxShadow: {
-        stamp:   '0 1px 0 rgba(24, 24, 27, 0.18), 0 0 0 3px rgba(101, 163, 13, 0.10)',
-        'card-lift': '0 2px 0 rgba(24, 24, 27, 0.08)',
-        e1: '0 1px 0 rgba(24, 24, 27, 0.08)',
-        e2: '0 2px 0 rgba(24, 24, 27, 0.12)',
-        e3: '0 8px 24px rgba(24, 24, 27, 0.10)',
+        stamp:   '0 1px 0 rgba(15, 23, 42, 0.18), 0 0 0 3px rgba(30, 64, 175, 0.10)',
+        'card-lift': '0 2px 0 rgba(15, 23, 42, 0.08)',
+        e1: '0 1px 0 rgba(15, 23, 42, 0.08)',
+        e2: '0 2px 0 rgba(15, 23, 42, 0.12)',
+        e3: '0 8px 24px rgba(15, 23, 42, 0.10)',
       },
       keyframes: {
         stampIn: {
