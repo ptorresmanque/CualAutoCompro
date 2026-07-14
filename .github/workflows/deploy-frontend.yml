@@ -30,24 +30,46 @@ jobs:
       - name: Build frontend (production)
         run: npm -w apps/frontend run build -- --configuration production
 
-      - name: Setup SSH key for rsync
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.CPANEL_SSH_KEY }}" > ~/.ssh/cpanel_deploy
-          chmod 600 ~/.ssh/cpanel_deploy
+      - name: Upload build to staging dir on cPanel
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_SSH_USER }}
+          key: ${{ secrets.CPANEL_SSH_KEY }}
+          port: ${{ secrets.CPANEL_PORT }}
+          source: "apps/frontend/dist/frontend/browser"
+          target: "/home/rfkusewb/fe-staging"
+          overwrite: true
 
-      - name: Sync FE build to public_html (delete orphans, protect configs)
-        run: |
-          rsync -avz --delete \
-            --filter='P .htaccess' \
-            --filter='P .user.ini' \
-            --filter='P .well-known' \
-            --filter='P .well-known/**' \
-            --filter='P cgi-bin' \
-            --filter='P cgi-bin/**' \
-            -e "ssh -i ~/.ssh/cpanel_deploy -p ${{ secrets.CPANEL_PORT }} -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null" \
-            apps/frontend/dist/frontend/browser/ \
-            ${{ secrets.CPANEL_SSH_USER }}@${{ secrets.CPANEL_HOST }}:/home/rfkusewb/public_html/
+      - name: Atomic swap with protected file preservation
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_SSH_USER }}
+          key: ${{ secrets.CPANEL_SSH_KEY }}
+          port: ${{ secrets.CPANEL_PORT }}
+          command_timeout: 5m
+          script: |
+            set -euo pipefail
+            cd /home/rfkusewb
+
+            # 1. Preservar archivos protegidos copiándolos al staging antes del swap
+            for protected in .htaccess .user.ini .well-known cgi-bin; do
+              if [ -e "public_html/$protected" ]; then
+                cp -r "public_html/$protected" "fe-staging/$protected"
+                echo "preserved: $protected"
+              fi
+            done
+
+            # 2. Swap atómico: rename del directorio (operación de filesystem, microsegundos)
+            mv public_html public_html.old
+            mv fe-staging public_html
+
+            # 3. Limpiar el viejo (con los huérfanos del build anterior)
+            rm -rf public_html.old
+
+            echo "FE DEPLOY OK"
+            ls -la /home/rfkusewb/public_html/ | head -20
 
       - name: Health check
         run: |
