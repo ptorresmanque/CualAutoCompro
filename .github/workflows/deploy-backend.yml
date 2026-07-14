@@ -33,31 +33,46 @@ jobs:
       - name: Build backend
         run: npm -w apps/backend run build
 
-      - name: Tar backend artifacts
+      - name: Setup SSH key on runner
         run: |
+          mkdir -p ~/.ssh
+          printf "%s" "${{ secrets.CPANEL_SSH_KEY }}" > ~/.ssh/cpanel_deploy
+          chmod 600 ~/.ssh/cpanel_deploy
+          echo "=== Key file created ==="
+          ls -la ~/.ssh/cpanel_deploy
+
+      - name: Test SSH connection to server
+        run: |
+          ssh -i ~/.ssh/cpanel_deploy \
+              -p ${{ secrets.CPANEL_PORT }} \
+              -o StrictHostKeyChecking=no \
+              -o BatchMode=yes \
+              -o PreferredAuthentications=publickey \
+              ${{ secrets.CPANEL_SSH_USER }}@${{ secrets.CPANEL_HOST }} \
+              "echo 'SSH OK'; whoami; pwd"
+
+      - name: Tar backend artifacts and upload via SSH pipe
+        run: |
+          set -euxo pipefail
+          echo "=== Building tarball locally ==="
           mkdir -p deploy-staging
           cp -r apps/backend/dist deploy-staging/dist
           cp -r apps/backend/prisma deploy-staging/prisma
           cp apps/backend/package.json deploy-staging/
           cp apps/backend/package-lock.json deploy-staging/
-          tar czf be-build.tgz -C deploy-staging .
-          ls -la be-build.tgz
+          tar czf - -C deploy-staging . > be-build.tgz
           rm -rf deploy-staging
+          ls -la be-build.tgz
 
-      - name: Setup SSH key on runner
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.CPANEL_SSH_KEY }}" > ~/.ssh/cpanel_deploy
-          chmod 600 ~/.ssh/cpanel_deploy
-
-      - name: Upload tarball via scp
-        run: |
-          scp -P ${{ secrets.CPANEL_PORT }} \
-            -i ~/.ssh/cpanel_deploy \
-            -o StrictHostKeyChecking=accept-new \
-            -o UserKnownHostsFile=/dev/null \
-            be-build.tgz \
-            ${{ secrets.CPANEL_SSH_USER }}@${{ secrets.CPANEL_HOST }}:be-build.tgz
+          echo "=== Uploading via SSH pipe ==="
+          cat be-build.tgz | ssh -i ~/.ssh/cpanel_deploy \
+              -p ${{ secrets.CPANEL_PORT }} \
+              -o StrictHostKeyChecking=no \
+              -o BatchMode=yes \
+              -o PreferredAuthentications=publickey \
+              ${{ secrets.CPANEL_SSH_USER }}@${{ secrets.CPANEL_HOST }} \
+              "cat > /home/rfkusewb/be-build.tgz && echo '=== UPLOAD DONE ===' && ls -la /home/rfkusewb/be-build.tgz"
+          rm be-build.tgz
 
       - name: Extract, install, migrate, restart
         uses: appleboy/ssh-action@v1
@@ -72,6 +87,9 @@ jobs:
             source /home/rfkusewb/nodevenv/cualauto-backend/20/bin/activate
 
             cd /home/rfkusewb
+
+            echo "=== Tarball check ==="
+            ls -la /home/rfkusewb/be-build.tgz
 
             # 0. Limpiar restos de un deploy anterior que haya quedado a medias
             rm -rf be-staging be-build.tgz
