@@ -35,16 +35,20 @@ jobs:
           tar czf fe-build.tgz -C apps/frontend/dist/frontend/browser .
           ls -la fe-build.tgz
 
-      - name: Upload tarball to cPanel
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_SSH_USER }}
-          key: ${{ secrets.CPANEL_SSH_KEY }}
-          port: ${{ secrets.CPANEL_PORT }}
-          source: "fe-build.tgz"
-          target: "/home/rfkusewb/fe-build.tgz"
-          overwrite: true
+      - name: Setup SSH key on runner
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.CPANEL_SSH_KEY }}" > ~/.ssh/cpanel_deploy
+          chmod 600 ~/.ssh/cpanel_deploy
+
+      - name: Upload tarball via scp
+        run: |
+          scp -P ${{ secrets.CPANEL_PORT }} \
+            -i ~/.ssh/cpanel_deploy \
+            -o StrictHostKeyChecking=accept-new \
+            -o UserKnownHostsFile=/dev/null \
+            fe-build.tgz \
+            ${{ secrets.CPANEL_SSH_USER }}@${{ secrets.CPANEL_HOST }}:fe-build.tgz
 
       - name: Extract and atomic swap with protected file preservation
         uses: appleboy/ssh-action@v1

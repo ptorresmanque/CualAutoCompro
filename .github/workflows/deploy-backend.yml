@@ -44,16 +44,20 @@ jobs:
           ls -la be-build.tgz
           rm -rf deploy-staging
 
-      - name: Upload tarball to cPanel
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.CPANEL_HOST }}
-          username: ${{ secrets.CPANEL_SSH_USER }}
-          key: ${{ secrets.CPANEL_SSH_KEY }}
-          port: ${{ secrets.CPANEL_PORT }}
-          source: "be-build.tgz"
-          target: "/home/rfkusewb/be-build.tgz"
-          overwrite: true
+      - name: Setup SSH key on runner
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.CPANEL_SSH_KEY }}" > ~/.ssh/cpanel_deploy
+          chmod 600 ~/.ssh/cpanel_deploy
+
+      - name: Upload tarball via scp
+        run: |
+          scp -P ${{ secrets.CPANEL_PORT }} \
+            -i ~/.ssh/cpanel_deploy \
+            -o StrictHostKeyChecking=accept-new \
+            -o UserKnownHostsFile=/dev/null \
+            be-build.tgz \
+            ${{ secrets.CPANEL_SSH_USER }}@${{ secrets.CPANEL_HOST }}:be-build.tgz
 
       - name: Extract, install, migrate, restart
         uses: appleboy/ssh-action@v1
