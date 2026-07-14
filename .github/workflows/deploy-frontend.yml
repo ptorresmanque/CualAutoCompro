@@ -30,18 +30,23 @@ jobs:
       - name: Build frontend (production)
         run: npm -w apps/frontend run build -- --configuration production
 
-      - name: Upload build to staging dir on cPanel
+      - name: Tar build for upload
+        run: |
+          tar czf fe-build.tgz -C apps/frontend/dist/frontend/browser .
+          ls -la fe-build.tgz
+
+      - name: Upload tarball to cPanel
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.CPANEL_HOST }}
           username: ${{ secrets.CPANEL_SSH_USER }}
           key: ${{ secrets.CPANEL_SSH_KEY }}
           port: ${{ secrets.CPANEL_PORT }}
-          source: "apps/frontend/dist/frontend/browser"
-          target: "/home/rfkusewb/fe-staging"
+          source: "fe-build.tgz"
+          target: "/home/rfkusewb/fe-build.tgz"
           overwrite: true
 
-      - name: Atomic swap with protected file preservation
+      - name: Extract and atomic swap with protected file preservation
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.CPANEL_HOST }}
@@ -53,7 +58,15 @@ jobs:
             set -euo pipefail
             cd /home/rfkusewb
 
-            # 1. Preservar archivos protegidos copiándolos al staging antes del swap
+            # 0. Limpiar restos de un deploy anterior que haya quedado a medias
+            rm -rf public_html.old fe-staging fe-build.tgz
+
+            # 1. Extraer tarball en staging limpio
+            mkdir -p fe-staging
+            tar xzf fe-build.tgz -C fe-staging
+            rm fe-build.tgz
+
+            # 2. Preservar archivos protegidos copiándolos al staging antes del swap
             for protected in .htaccess .user.ini .well-known cgi-bin; do
               if [ -e "public_html/$protected" ]; then
                 cp -r "public_html/$protected" "fe-staging/$protected"
@@ -61,11 +74,11 @@ jobs:
               fi
             done
 
-            # 2. Swap atómico: rename del directorio (operación de filesystem, microsegundos)
+            # 3. Swap atómico: rename del directorio (operación de filesystem, microsegundos)
             mv public_html public_html.old
             mv fe-staging public_html
 
-            # 3. Limpiar el viejo (con los huérfanos del build anterior)
+            # 4. Limpiar el viejo (con los huérfanos del build anterior)
             rm -rf public_html.old
 
             echo "FE DEPLOY OK"

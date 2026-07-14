@@ -33,26 +33,29 @@ jobs:
       - name: Build backend
         run: npm -w apps/backend run build
 
-      - name: Stage deploy artifacts
+      - name: Tar backend artifacts
         run: |
           mkdir -p deploy-staging
           cp -r apps/backend/dist deploy-staging/dist
           cp -r apps/backend/prisma deploy-staging/prisma
           cp apps/backend/package.json deploy-staging/
           cp apps/backend/package-lock.json deploy-staging/
+          tar czf be-build.tgz -C deploy-staging .
+          ls -la be-build.tgz
+          rm -rf deploy-staging
 
-      - name: Upload artifacts to server
+      - name: Upload tarball to cPanel
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.CPANEL_HOST }}
           username: ${{ secrets.CPANEL_SSH_USER }}
           key: ${{ secrets.CPANEL_SSH_KEY }}
           port: ${{ secrets.CPANEL_PORT }}
-          source: "deploy-staging"
-          target: "/home/rfkusewb/be-staging"
+          source: "be-build.tgz"
+          target: "/home/rfkusewb/be-build.tgz"
           overwrite: true
 
-      - name: Install deps, migrate, restart
+      - name: Extract, install, migrate, restart
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.CPANEL_HOST }}
@@ -64,36 +67,42 @@ jobs:
             set -euo pipefail
             source /home/rfkusewb/nodevenv/cualauto-backend/20/bin/activate
 
-            BACKEND=/home/rfkusewb/cualauto-backend
-            STAGING=/home/rfkusewb/be-staging
+            cd /home/rfkusewb
 
+            # 0. Limpiar restos de un deploy anterior que haya quedado a medias
+            rm -rf be-staging be-build.tgz
+
+            # 1. Extraer tarball en staging limpio
+            mkdir -p be-staging
+            tar xzf be-build.tgz -C be-staging
+            rm be-build.tgz
+
+            # 2. Swap staging sobre el app root
+            BACKEND=/home/rfkusewb/cualauto-backend
             cd $BACKEND
 
-            # Limpieza controlada de lo que reemplazamos
-            rm -rf dist
-            rm -rf prisma
+            rm -rf dist prisma
             rm -f package.json package-lock.json
 
-            # Mover staging a su lugar
-            mv $STAGING/dist ./dist
-            mv $STAGING/prisma ./prisma
-            mv $STAGING/package.json ./
-            mv $STAGING/package-lock.json ./
-            rmdir $STAGING 2>/dev/null || rm -rf $STAGING
+            mv /home/rfkusewb/be-staging/dist ./dist
+            mv /home/rfkusewb/be-staging/prisma ./prisma
+            mv /home/rfkusewb/be-staging/package.json ./
+            mv /home/rfkusewb/be-staging/package-lock.json ./
+            rmdir /home/rfkusewb/be-staging 2>/dev/null || rm -rf /home/rfkusewb/be-staging
 
-            # Asegurar tmp/ existe (Passenger)
+            # 3. Asegurar tmp/ existe (Passenger)
             mkdir -p tmp
 
-            # Instalar dependencias de producción
+            # 4. Instalar dependencias de producción
             npm ci --omit=dev --no-audit --no-fund
 
-            # Regenerar Prisma client (porque node_modules es nuevo)
+            # 5. Regenerar Prisma client (porque node_modules es nuevo)
             npx prisma generate
 
-            # Aplicar migraciones pendientes
+            # 6. Aplicar migraciones pendientes
             npx prisma migrate deploy
 
-            # Reiniciar Passenger (lee tmp/restart.txt y recicla workers)
+            # 7. Reiniciar Passenger (lee tmp/restart.txt y recicla workers)
             touch tmp/restart.txt
 
             echo "BE DEPLOY OK"
