@@ -85,7 +85,9 @@ jobs:
           command_timeout: 15m
           script: |
             set -euo pipefail
-            source /home/rfkusewb/nodevenv/cualauto-backend/20/bin/activate
+            # En SSH no-interactivo, el `source activate` de cPanel falla porque referencia
+            # CL_VIRTUAL_ENV (set -u). Seteamos PATH directamente al nodevenv bin.
+            export PATH=/home/rfkusewb/nodevenv/cualauto-backend/20/bin:$PATH
 
             cd /home/rfkusewb
 
