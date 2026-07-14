@@ -1,0 +1,29 @@
+name: SSH Smoke Test
+on:
+  workflow_dispatch:
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test SSH connection to cPanel
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_SSH_USER }}
+          key: ${{ secrets.CPANEL_SSH_KEY }}
+          port: ${{ secrets.CPANEL_PORT }}
+          script: |
+            echo "=== pwd ==="
+            pwd
+            echo "=== whoami ==="
+            whoami
+            echo "=== which node ==="
+            which node || echo "node NOT in PATH"
+            echo "=== which npm ==="
+            which npm || echo "npm NOT in PATH"
+            echo "=== ls home ==="
+            ls -la ~ | head -30
+            echo "=== write test ==="
+            touch ~/cpanel_smoke_test.tmp && echo "WRITE OK" || echo "WRITE FAILED"
+            rm -f ~/cpanel_smoke_test.tmp
+            echo "=== DONE ==="
