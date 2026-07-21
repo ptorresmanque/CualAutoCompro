@@ -28,6 +28,8 @@ export const resetTestDb = async (prisma: PrismaClient) => {
     prisma.equipmentItem.deleteMany(),
     prisma.version.deleteMany(),
     prisma.model.deleteMany(),
+    prisma.popularityEvent.deleteMany(),
+    prisma.popularityCounter.deleteMany(),
     prisma.brand.deleteMany(),
     prisma.user.deleteMany(),
   ]);

@@ -14,6 +14,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ApiService } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
+import { PopularityService } from '../../core/popularity.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { DisclaimerComponent } from '../../shared/ui/disclaimer.component';
@@ -105,6 +106,7 @@ interface SpecGroup {
 export class ModelComponent {
   private api = inject(ApiService);
   private compare = inject(CompareStore);
+  private popularity = inject(PopularityService);
   readonly favorites = inject(FavoritesStore);
   private route = inject(ActivatedRoute);
 
@@ -272,7 +274,7 @@ export class ModelComponent {
 
   toggleVersion(id: string): void {
     if (this.isSelected(id)) this.compare.remove(id);
-    else this.compare.add(id);
+    else { this.compare.add(id); this.popularity.recordAdd(id); }
   }
 
   async toggleFavorite(versionId: string): Promise<void> {

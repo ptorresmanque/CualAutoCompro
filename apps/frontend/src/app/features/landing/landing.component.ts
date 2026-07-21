@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { CompareStore } from '../../core/compare-store.service';
+import { PopularityService } from '../../core/popularity.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
 import {
   VehicleCardComponent,
@@ -28,8 +29,6 @@ interface LiveComparisonEntry {
   version: VehicleVersion;
 }
 
-const FEATURED_ON_LANDING = new Set(['Corolla', 'Tucson', 'CX-5']);
-
 @Component({
   selector: 'app-landing',
   templateUrl: './landing.component.html',
@@ -41,10 +40,16 @@ export class LandingComponent {
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private compare = inject(CompareStore);
+  private popularity = inject(PopularityService);
   readonly favorites = inject(FavoritesStore);
   readonly user = this.auth.currentUser;
 
-  readonly featured = signal<VehicleCardInput[]>([]);
+  private readonly allItems = signal<VehicleCardInput[]>([]);
+  readonly featured = computed<VehicleCardInput[]>(() => {
+    const top = this.popularity.topIds();
+    if (top.size === 0) return [];
+    return this.allItems().filter((i) => top.has(i.id));
+  });
   readonly liveComparison = signal<LiveComparisonEntry[]>([]);
   readonly loading = signal(true);
   readonly loadError = signal<string | null>(null);
@@ -78,6 +83,7 @@ export class LandingComponent {
       this.compare.remove(version.id);
     } else {
       this.compare.add(version.id);
+      this.popularity.recordAdd(version.id);
     }
   }
 
@@ -154,7 +160,7 @@ export class LandingComponent {
           .filter((item): item is LiveComparisonEntry => item.version !== null)
           .slice(0, 2),
       );
-      this.featured.set(items.filter((i) => FEATURED_ON_LANDING.has(i.name)));
+      this.allItems.set(items);
       const brandSet = new Set(items.map((i) => i.brand.name));
       const versions = items.reduce((acc, i) => acc + (i.versions?.length ?? 0), 0);
       this.stats.set({

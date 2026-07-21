@@ -10,6 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { ApiService, QueryParams } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
+import { PopularityService } from '../../core/popularity.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
 import {
   VehicleCardComponent,
@@ -48,8 +49,6 @@ export interface CatalogFilters {
   pageSize?: number;
 }
 
-const FEATURED_MODEL_NAMES = new Set(['Corolla', 'Tucson', 'CX-5']);
-
 const PRICE_BOUNDS = { min: 0, max: 100_000_000, step: 500_000 };
 const POWER_BOUNDS = { min: 0, max: 1000, step: 10 };
 const CONSUMPTION_BOUNDS = { min: 0, max: 40, step: 0.5 };
@@ -74,6 +73,7 @@ const CONSUMPTION_BOUNDS = { min: 0, max: 40, step: 0.5 };
 export class CatalogComponent {
   private api = inject(ApiService);
   private compare = inject(CompareStore);
+  readonly popularity = inject(PopularityService);
   private route = inject(ActivatedRoute);
   readonly favorites = inject(FavoritesStore);
 
@@ -175,11 +175,7 @@ export class CatalogComponent {
     return item.versions[0]?.id ?? item.defaultVersion?.id ?? null;
   }
 
-  isFeatured(name: string): boolean {
-    return FEATURED_MODEL_NAMES.has(name);
-  }
-
-  readonly initialLoad: Promise<unknown>;
+readonly initialLoad: Promise<unknown>;
 
   private async loadBrands(): Promise<void> {
     try {
@@ -231,6 +227,7 @@ export class CatalogComponent {
       this.compare.remove(versionId);
     } else {
       this.compare.add(versionId);
+      this.popularity.recordAdd(versionId);
     }
   }
 

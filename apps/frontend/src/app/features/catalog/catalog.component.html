@@ -255,7 +255,7 @@
           <li>
             <app-vehicle-card
               [model]="m"
-              [featured]="isFeatured(m.name)"
+              [featured]="popularity.isPopular(m.id)"
               [added]="isAdded(m)"
               [maxReached]="maxReached()"
               [selectedVersionId]="selectedVersionId(m)"

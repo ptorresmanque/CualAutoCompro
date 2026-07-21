@@ -13,6 +13,7 @@ import { modelsAdminRouter, modelsRouter } from "./modules/models/models.routes.
 import { versionsAdminRouter, versionsRouter } from "./modules/versions/versions.routes.js";
 import { compareRouter } from "./modules/compare/compare.routes.js";
 import { comparisonsRouter, meComparisonsRouter } from "./modules/comparisons/comparisons.routes.js";
+import { popularityRouter } from "./modules/popularity/popularity.routes.js";
 import { meFavoritesRouter } from "./modules/favorites/favorites.routes.js";
 import { equipmentAdminRouter, equipmentRouter } from "./modules/equipment/equipment.routes.js";
 import { maintenanceAdminRouter, maintenanceRouter } from "./modules/maintenance/maintenance.routes.js";
@@ -60,6 +61,7 @@ export const createApp = () => {
   app.use("/api/v1/admin/versions", versionsAdminRouter);
   app.use("/api/v1/compare", compareRouter);
   app.use("/api/v1/comparisons", comparisonsRouter);
+  app.use("/api/v1/popular", popularityRouter);
   app.use("/api/v1/me/comparisons", meComparisonsRouter);
   app.use("/api/v1/me/favorites", meFavoritesRouter);
   app.use("/api/v1/equipment", equipmentRouter);

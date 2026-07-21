@@ -18,6 +18,16 @@ class FavoritesStoreStub {
   load(): Promise<void> { return Promise.resolve(); }
 }
 
+import { PopularityService } from '../../core/popularity.service';
+
+class PopularityServiceStub {
+  topIds = signal<ReadonlySet<string>>(new Set<string>());
+  loading = signal(false);
+  refresh = async () => { /* noop */ };
+  isPopular = (modelId: string): boolean => this.topIds().has(modelId);
+  recordAdd = (_versionId: string): void => { /* noop */ };
+}
+
 describe('LandingComponent', () => {
   let http: HttpTestingController;
   let compare: CompareStore;
@@ -33,6 +43,7 @@ describe('LandingComponent', () => {
         provideRouter([]),
         { provide: AuthService, useClass: AuthServiceStub },
         { provide: FavoritesStore, useClass: FavoritesStoreStub },
+        { provide: PopularityService, useClass: PopularityServiceStub },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -217,12 +228,14 @@ describe('LandingComponent', () => {
     expect(strip?.textContent).toContain('4'); // 2+1+1=4 versions
   });
 
-  it('muestra el featured-grid sólo con modelos de la lista FEATURED_ON_LANDING', async () => {
+  it('muestra el featured-grid sólo con los modelos populares segun PopularityService', async () => {
+    const pop = TestBed.inject(PopularityService) as unknown as PopularityServiceStub;
+    pop.topIds.set(new Set(['a', 'b', 'c']));
     const fixture = TestBed.createComponent(LandingComponent);
     fixture.detectChanges();
     http.expectOne((r) => r.url.includes('/api/v1/models')).flush({
       data: {
-        total: 3,
+        total: 4,
         items: [
           { id: 'a', name: 'Corolla', brand: { name: 'Toyota' }, segment: 'SEDAN', versions: [{ id: 'a1' }] },
           { id: 'b', name: 'Tucson', brand: { name: 'Hyundai' }, segment: 'SUV', versions: [{ id: 'b1' }] },
@@ -240,9 +253,37 @@ describe('LandingComponent', () => {
     );
     expect(grid).not.toBeNull();
     expect(grid?.querySelectorAll('app-vehicle-card').length).toBe(3);
+    // El id 'd' (Yaris) NO es popular -> debe quedar fuera
+    const cards = grid?.querySelectorAll('app-vehicle-card');
+    expect(cards?.[0]?.textContent).toContain('Corolla');
+  });
+
+  it('featured-grid queda vacio si PopularityService.topIds esta vacio', async () => {
+    const pop = TestBed.inject(PopularityService) as unknown as PopularityServiceStub;
+    pop.topIds.set(new Set()); // sin populares
+    const fixture = TestBed.createComponent(LandingComponent);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/api/v1/models')).flush({
+      data: {
+        total: 1,
+        items: [
+          { id: 'a', name: 'Corolla', brand: { name: 'Toyota' }, segment: 'SEDAN', versions: [{ id: 'a1' }] },
+        ],
+        page: 1,
+        pageSize: 30,
+      },
+    });
+    await fixture.componentInstance.ready;
+    fixture.detectChanges();
+    const grid = fixture.nativeElement.querySelector('[data-testid="featured-grid"]');
+    expect(grid).toBeNull();
   });
 
   it('agrega a comparación la versión seleccionada desde fichas del mes', async () => {
+    // El featured-grid depende de PopularityService.topIds; seteamos 'm1'
+    // para que el modelo se muestre y la version-chip-v2 exista en el DOM.
+    const pop = TestBed.inject(PopularityService) as unknown as PopularityServiceStub;
+    pop.topIds.set(new Set(['m1']));
     const fixture = TestBed.createComponent(LandingComponent);
     fixture.detectChanges();
     http.expectOne((r) => r.url.includes('/api/v1/models')).flush({

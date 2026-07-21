@@ -54,9 +54,10 @@ model Model {
   segment     String
   imageUrl    String?
   galleryUrls Json      @default("[]")
-  brand       Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  versions  Version[]
-  favorites Favorite[]
+  brand        Brand             @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  versions   Version[]
+  favorites  Favorite[]
+  popularity PopularityCounter?
   deletedAt   DateTime?
   createdAt DateTime  @default(now())
 
@@ -263,4 +264,40 @@ model UserIdentity {
   @@unique([provider, providerSub])
   @@index([userId])
   @@index([email])
+}
+
+// ----------------------------------------------------------------------------
+// Popularity tracking
+//
+// Tabla de eventos: cada vez que un usuario (anonimo o autenticado) hace click
+// en "Comparar" en una ficha, se inserta un PopularityEvent. La cookie
+// `cmp_uid` sirve como identificador de navegador para deduplicar duplicados
+// dentro de la ventana de 30 dias (configurable en servicio).
+//
+// Counter cumulativo: contador all-time por modelo, util para auditoria y
+// admin. NO se usa para calcular el top -- el top siempre se recalcula sobre
+// eventos respetando la ventana de 30 dias (ver `popularity.service.ts`).
+//
+// Cascade: si se borra (soft o hard) un Model, ambos registros se eliminan
+// para no dejar ids huerfanos en `/popular/models`.
+// ----------------------------------------------------------------------------
+model PopularityCounter {
+  modelId       String   @id
+  count         Int      @default(0)
+  lastUpdatedAt DateTime @updatedAt
+  model         Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@index([count])
+}
+
+model PopularityEvent {
+  id        String   @id @default(cuid())
+  modelId   String
+  versionId String
+  cookieId  String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([modelId, createdAt])
+  @@index([cookieId, createdAt])
 }

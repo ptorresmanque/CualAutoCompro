@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import {
   provideHttpClientTesting,
@@ -16,6 +17,16 @@ class FavoritesStoreStub {
   load(): Promise<void> { return Promise.resolve(); }
 }
 
+import { PopularityService } from '../../core/popularity.service';
+
+class PopularityServiceStub {
+  topIds = signal<ReadonlySet<string>>(new Set<string>());
+  loading = signal(false);
+  refresh = async () => { /* noop */ };
+  isPopular = (id: string): boolean => this.topIds().has(id);
+  recordAdd = (_versionId: string): void => { /* noop */ };
+}
+
 describe('CatalogComponent', () => {
   let http: HttpTestingController;
   let store: CompareStore;
@@ -30,6 +41,7 @@ describe('CatalogComponent', () => {
         provideRouter([]),
         CompareStore,
         { provide: FavoritesStore, useClass: FavoritesStoreStub },
+        { provide: PopularityService, useClass: PopularityServiceStub },
       ],
     });
     http = TestBed.inject(HttpTestingController);
