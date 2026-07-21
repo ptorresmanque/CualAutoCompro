@@ -1,43 +1,128 @@
-<section class="mx-auto max-w-3xl px-4 py-8 md:px-8">
-  <header class="mb-8">
-    <p class="stamp-label mb-2">Cuenta</p>
-    <h1 class="font-display text-3xl md:text-5xl text-ink">Configuración</h1>
-    <p class="mt-2 text-sm text-ink-muted">Actualiza tus datos y controla tu acceso.</p>
+<section class="mx-auto max-w-3xl px-4 md:px-8 py-10">
+  <header class="mb-8 border-b border-ink pb-6">
+    <p class="stamp-label mb-2">N° 006 · Cuenta</p>
+    <h1 class="font-display text-3xl md:text-5xl text-ink leading-[1.05]">
+      Configuración
+    </h1>
+    <p class="mt-2 text-sm md:text-base text-ink-muted max-w-xl">
+      Actualiza tus datos y controla tu acceso.
+    </p>
   </header>
 
-  @if (error(); as message) { <div class="mb-4 border border-warn bg-warn-light px-4 py-3 text-sm text-warn-dark" role="alert">{{ message }}</div> }
+  @if (error(); as message) {
+    <div
+      class="mb-6 border border-engine bg-engine-50 px-4 py-3 text-sm text-engine-dark"
+      role="alert"
+      data-testid="settings-error"
+    >
+      <span class="stamp-label mr-2">Error</span>{{ message }}
+    </div>
+  }
 
   <div class="grid gap-5 md:grid-cols-2">
-    <mat-card appearance="outlined">
-      <mat-card-header><mat-card-title>Perfil</mat-card-title></mat-card-header>
-      <mat-card-content>
-        <form [formGroup]="profileForm" (ngSubmit)="updateProfile()" class="pt-4">
-          <mat-form-field appearance="outline" class="w-full"><mat-label>Nombre</mat-label><input matInput formControlName="name" /></mat-form-field>
-          <p class="text-sm text-ink-muted mb-4">{{ user()?.email }}</p>
-          @if (profileMessage(); as message) { <p class="text-sm text-green-700 mb-3">{{ message }}</p> }
-          <button mat-flat-button color="primary" type="submit" [disabled]="saving()">Guardar perfil</button>
+    <article class="ficha ficha--static">
+      <header class="ficha-head">
+        <span class="ficha-brand">Perfil</span>
+      </header>
+      <div class="ficha-body">
+        <form [formGroup]="profileForm" (ngSubmit)="updateProfile()" class="settings-form">
+          <label class="settings-field-label" for="settings-name">Nombre</label>
+          <div class="settings-field">
+            <input
+              id="settings-name"
+              type="text"
+              formControlName="name"
+              class="settings-input"
+              autocomplete="name"
+              data-testid="settings-name"
+            />
+          </div>
+          <p class="settings-helper" data-testid="settings-email">{{ user()?.email }}</p>
+          @if (profileMessage(); as message) {
+            <p class="settings-message" data-testid="settings-profile-message">
+              <span class="stamp-label mr-2">Listo</span>{{ message }}
+            </p>
+          }
+          <button
+            type="submit"
+            class="ficha-compare settings-submit"
+            [disabled]="saving()"
+            data-testid="settings-profile-submit"
+          >
+            <span>{{ saving() ? 'Guardando…' : 'Guardar perfil' }}</span>
+          </button>
         </form>
-      </mat-card-content>
-    </mat-card>
+      </div>
+    </article>
 
-    <mat-card appearance="outlined">
-      <mat-card-header><mat-card-title>Contraseña</mat-card-title></mat-card-header>
-      <mat-card-content>
-        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="pt-4 space-y-1">
-          <mat-form-field appearance="outline" class="w-full"><mat-label>Contraseña actual</mat-label><input matInput type="password" formControlName="currentPassword" /></mat-form-field>
-          <mat-form-field appearance="outline" class="w-full"><mat-label>Nueva contraseña</mat-label><input matInput type="password" formControlName="newPassword" /></mat-form-field>
-          @if (passwordMessage(); as message) { <p class="text-sm text-green-700 mb-3">{{ message }}</p> }
-          <button mat-flat-button color="primary" type="submit" [disabled]="saving()">Cambiar contraseña</button>
+    <article class="ficha ficha--static">
+      <header class="ficha-head">
+        <span class="ficha-brand">Contraseña</span>
+      </header>
+      <div class="ficha-body">
+        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="settings-form">
+          <label class="settings-field-label" for="settings-current">Contraseña actual</label>
+          <div class="settings-field">
+            <input
+              id="settings-current"
+              type="password"
+              formControlName="currentPassword"
+              class="settings-input"
+              autocomplete="current-password"
+              data-testid="settings-current-password"
+            />
+          </div>
+          <label class="settings-field-label" for="settings-new">Nueva contraseña</label>
+          <div class="settings-field">
+            <input
+              id="settings-new"
+              type="password"
+              formControlName="newPassword"
+              class="settings-input"
+              autocomplete="new-password"
+              data-testid="settings-new-password"
+            />
+          </div>
+          @if (passwordMessage(); as message) {
+            <p class="settings-message" data-testid="settings-password-message">
+              <span class="stamp-label mr-2">Listo</span>{{ message }}
+            </p>
+          }
+          <button
+            type="submit"
+            class="ficha-compare settings-submit"
+            [disabled]="saving()"
+            data-testid="settings-password-submit"
+          >
+            <span>{{ saving() ? 'Guardando…' : 'Cambiar contraseña' }}</span>
+          </button>
         </form>
-      </mat-card-content>
-    </mat-card>
+      </div>
+    </article>
   </div>
 
-  <mat-card appearance="outlined" class="mt-5 border-warn">
-    <mat-card-header><mat-card-title>Cerrar cuenta</mat-card-title></mat-card-header>
-    <mat-card-content class="pt-4">
-      <p class="text-sm text-ink-muted mb-4">Se eliminarán tus favoritos y comparaciones guardadas.</p>
-      <button mat-stroked-button color="warn" type="button" (click)="deleteAccount()">Eliminar mi cuenta</button>
-    </mat-card-content>
-  </mat-card>
+  <article class="ficha ficha--static ficha--danger mt-6">
+    <header class="ficha-head">
+      <span class="ficha-brand">Cerrar cuenta</span>
+      <span class="stamp-label">Zona peligrosa</span>
+    </header>
+    <div class="ficha-body">
+      <p class="settings-helper">
+        Se eliminarán tus favoritos y comparaciones guardadas.
+      </p>
+      <button
+        type="button"
+        class="settings-btn-danger"
+        (click)="deleteAccount()"
+        data-testid="settings-delete-account"
+      >
+        <mat-icon>delete_outline</mat-icon>
+        <span>Eliminar mi cuenta</span>
+      </button>
+    </div>
+  </article>
+
+  <p class="settings-footer">
+    Cambios sensibles se confirman con tu contraseña. Si ves algo raro, escribinos.
+  </p>
 </section>

@@ -36,41 +36,61 @@
 
         <!-- Preview ficha comparativa -->
         <aside class="md:col-span-5" aria-label="Vista previa de comparación">
-          <div class="bg-paper-cool border border-ink p-5 relative">
+          <div class="bg-paper-cool border border-ink p-5 relative" data-testid="live-comparison">
             <span class="absolute -top-3 left-4 px-2 bg-paper stamp-label">Comparación en vivo</span>
-            <header class="flex items-center justify-between mb-4 pb-3 border-b border-rule">
-              <span class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted">2 modelos · CLP</span>
-              <span class="stamp-label font-display">VS</span>
-            </header>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <p class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted">Modelo A</p>
-                <p class="font-semibold text-ink leading-tight">Toyota Corolla</p>
-                <p class="font-display text-2xl text-ink mt-2">$ 18.490.000</p>
-                <ul class="mt-3 space-y-1 font-mono text-[11px] text-ink-muted">
-                  <li>1.8 Híbrido · 122 CV</li>
-                  <li>Aut · 5.4 L/100km</li>
-                  <li>Garantía 5 años</li>
-                </ul>
+            @if (loading()) {
+              <div class="live-comparison-state" data-testid="live-comparison-loading">
+                <mat-icon>database</mat-icon>
+                <span>Cargando modelos del catálogo…</span>
               </div>
-              <div class="border-l border-rule pl-4">
-                <p class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted">Modelo B</p>
-                <p class="font-semibold text-ink leading-tight">Mazda CX-5</p>
-                <p class="font-display text-2xl text-engine mt-2">$ 22.990.000</p>
-                <ul class="mt-3 space-y-1 font-mono text-[11px] text-ink-muted">
-                  <li>2.5 SKYACTIV-G · 187 CV</li>
-                  <li>Aut · 7.2 L/100km</li>
-                  <li>Garantía 3 años</li>
-                </ul>
+            } @else if (liveComparison().length === 2) {
+              <header class="flex items-center justify-between mb-4 pb-3 border-b border-rule">
+                <span class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted">2 modelos · CLP</span>
+                <span class="stamp-label font-display">VS</span>
+              </header>
+              <div class="live-comparison-grid">
+                @for (item of liveComparison(); track item.version.id; let index = $index) {
+                  <article class="live-comparison-model" [attr.data-testid]="'live-model-' + index">
+                    <p class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted">Modelo {{ index === 0 ? 'A' : 'B' }}</p>
+                    <p class="font-semibold text-ink leading-tight">
+                      {{ item.model.brand.name }} {{ item.model.name }}
+                    </p>
+                    <p class="font-mono text-[10px] text-ink-muted mt-1">
+                      {{ item.version.name }} · {{ item.version.year }}
+                    </p>
+                    <p class="font-display text-2xl mt-2" [class.text-engine]="index === 1" [class.text-ink]="index === 0">
+                      {{ formatClp(item.version.priceClp) }}
+                    </p>
+                    <ul class="mt-3 space-y-1 font-mono text-[11px] text-ink-muted">
+                      <li>{{ engineLabel(item.version) }}</li>
+                      <li>{{ drivingLabel(item.version) }}</li>
+                    </ul>
+                  </article>
+                }
               </div>
-            </div>
-            <footer class="mt-4 pt-3 border-t border-rule flex items-center justify-between">
-              <span class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted">Δ precio</span>
-              <span class="font-display text-engine text-lg">+ $ 4.500.000</span>
-            </footer>
+              <footer class="mt-4 pt-3 border-t border-rule flex items-center justify-between gap-3">
+                <div>
+                  <span class="block font-mono text-[11px] uppercase tracking-stamp text-ink-muted">Diferencia de precio</span>
+                  <span class="font-display text-engine text-lg">{{ formatClp(priceDifference() ?? 0) }}</span>
+                </div>
+                <a
+                  routerLink="/compare"
+                  [queryParams]="{ ids: liveComparisonIds() }"
+                  class="live-comparison-link"
+                  data-testid="live-comparison-link"
+                >
+                  Comparar <mat-icon>arrow_forward</mat-icon>
+                </a>
+              </footer>
+            } @else {
+              <div class="live-comparison-state" data-testid="live-comparison-empty">
+                <mat-icon>directions_car</mat-icon>
+                <span>Aún no hay dos versiones disponibles para comparar.</span>
+              </div>
+            }
           </div>
           <p class="mt-2 font-mono text-[10px] uppercase tracking-stamp text-ink-muted text-right">
-            Datos del mercado chileno 2026
+            Datos cargados desde el catálogo
           </p>
         </aside>
       </div>
@@ -210,25 +230,27 @@
   }
 
   <!-- ============================================ FINAL CTA -->
-  <div class="mx-auto max-w-7xl px-4 md:px-8 py-16 md:py-24">
-    <div class="max-w-3xl">
-      <p class="stamp-label mb-4">N° 004 · siguiente paso</p>
-      <h2 class="font-display text-3xl md:text-5xl text-ink mb-5 leading-tight">
-        Tu próxima ficha<br />empieza acá.
-      </h2>
-      <p class="text-ink-muted max-w-xl mb-7 leading-relaxed">
-        Crea una cuenta gratis para guardar comparaciones, retomar donde las
-        dejaste y acceder desde cualquier dispositivo.
-      </p>
-      <a
-        routerLink="/register"
-        class="inline-flex items-center justify-center h-12 px-6 bg-engine text-paper font-semibold text-sm uppercase tracking-stamp hover:bg-engine-dark transition-colors"
-        data-testid="final-cta-register"
-      >
-        Crear cuenta gratis
-      </a>
+  @if (!user()) {
+    <div class="mx-auto max-w-7xl px-4 md:px-8 py-16 md:py-24" data-testid="guest-register-section">
+      <div class="max-w-3xl">
+        <p class="stamp-label mb-4">N° 004 · siguiente paso</p>
+        <h2 class="font-display text-3xl md:text-5xl text-ink mb-5 leading-tight">
+          Tu próxima ficha<br />empieza acá.
+        </h2>
+        <p class="text-ink-muted max-w-xl mb-7 leading-relaxed">
+          Crea una cuenta gratis para guardar comparaciones, retomar donde las
+          dejaste y acceder desde cualquier dispositivo.
+        </p>
+        <a
+          routerLink="/register"
+          class="inline-flex items-center justify-center h-12 px-6 bg-engine text-paper font-semibold text-sm uppercase tracking-stamp hover:bg-engine-dark transition-colors"
+          data-testid="final-cta-register"
+        >
+          Crear cuenta gratis
+        </a>
+      </div>
     </div>
-  </div>
+  }
 
   <div class="mx-auto max-w-7xl px-4 md:px-8 pb-12">
     <hr class="hairline mb-6" />

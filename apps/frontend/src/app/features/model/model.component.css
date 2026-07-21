@@ -287,3 +287,21 @@
   .version-card, .spec-row, .carousel-image { transition: none !important; }
   .version-card:hover { transform: none; }
 }
+
+.model-gallery-counter {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  background: var(--paper-cool);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 2;
+}

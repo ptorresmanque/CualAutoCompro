@@ -471,6 +471,35 @@ export class CompareComponent {
     return new Intl.NumberFormat('es-CL').format(value);
   }
 
+  favoriteSegmentLabel(m: VehicleCardInput): string {
+    return this.segmentToLabel(m.segment ?? '');
+  }
+
+  favoriteVersionSummary(
+    m: VehicleCardInput,
+  ): { name: string; year: number; fuel: string | null; transmission: string | null } | null {
+    const version = m.defaultVersion ?? m.versions[0] ?? null;
+    if (!version) return null;
+    return {
+      name: version.name,
+      year: version.year,
+      fuel: version.fuel ?? null,
+      transmission: version.transmission ?? null,
+    };
+  }
+
+  private segmentToLabel(s: string): string {
+    const map: Record<string, string> = {
+      SEDAN: 'Sedán',
+      SUV: 'SUV',
+      HATCHBACK: 'Hatchback',
+      PICKUP: 'Pickup',
+      CROSSOVER: 'Crossover',
+      COMMERCIAL: 'Comercial',
+    };
+    return map[s] ?? s;
+  }
+
   fullName(v: CompareVersion): string {
     const brand = v.model?.brand?.name ?? '';
     const model = v.model?.name ?? '';
@@ -488,9 +517,7 @@ export class CompareComponent {
   }
 
   cellClass(key: DiffKey): string {
-    return this.isDiff(key)
-      ? 'bg-amber-50 ring-1 ring-amber-200'
-      : '';
+    return this.isDiff(key) ? 'row-diff' : '';
   }
 
   sectionIcon(name: string): string {

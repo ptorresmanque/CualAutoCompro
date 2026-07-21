@@ -21,6 +21,7 @@ class FavoritesStoreStub {
 describe('LandingComponent', () => {
   let http: HttpTestingController;
   let compare: CompareStore;
+  let auth: AuthServiceStub;
 
   beforeEach(() => {
     TestBed.resetTestingModule();
@@ -36,6 +37,7 @@ describe('LandingComponent', () => {
     });
     http = TestBed.inject(HttpTestingController);
     compare = TestBed.inject(CompareStore);
+    auth = TestBed.inject(AuthService) as unknown as AuthServiceStub;
   });
 
   afterEach(() => {
@@ -91,6 +93,102 @@ describe('LandingComponent', () => {
     expect(html.querySelector('[data-testid="value-card-1"]')).not.toBeNull();
     expect(html.querySelector('[data-testid="value-card-2"]')).not.toBeNull();
     expect(html.querySelector('[data-testid="value-card-3"]')).not.toBeNull();
+  });
+
+  it('arma la comparación en vivo con modelos y versiones del backend', async () => {
+    const fixture = TestBed.createComponent(LandingComponent);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/api/v1/models')).flush({
+      data: {
+        total: 2,
+        items: [
+          {
+            id: 'm1',
+            name: 'Rio',
+            brand: { name: 'Kia' },
+            segment: 'HATCHBACK',
+            minPrice: 14990000,
+            versions: [{
+              id: 'v1',
+              name: 'EX',
+              year: 2025,
+              priceClp: 14990000,
+              transmission: 'AUTOMATIC',
+              fuel: 'BENCINA',
+              engineDisplacementCc: 1400,
+              powerHp: 100,
+              consumptionCityKmL: 12.5,
+            }],
+          },
+          {
+            id: 'm2',
+            name: 'Swift',
+            brand: { name: 'Suzuki' },
+            segment: 'HATCHBACK',
+            minPrice: 12990000,
+            versions: [{
+              id: 'v2',
+              name: 'GLX',
+              year: 2026,
+              priceClp: 12990000,
+              transmission: 'CVT',
+              fuel: 'HYBRID',
+              engineDisplacementCc: 1200,
+              powerHp: 82,
+              consumptionCityKmL: 18.2,
+            }],
+          },
+        ],
+        page: 1,
+        pageSize: 30,
+      },
+    });
+    await fixture.componentInstance.ready;
+    fixture.detectChanges();
+
+    const preview = fixture.nativeElement.querySelector(
+      '[data-testid="live-comparison"]',
+    ) as HTMLElement;
+    expect(preview.textContent).toContain('Kia Rio');
+    expect(preview.textContent).toContain('Suzuki Swift');
+    expect(preview.textContent).toContain('$ 14.990.000');
+    expect(preview.textContent).toContain('$ 12.990.000');
+    expect(preview.textContent).toContain('$ 2.000.000');
+    expect(preview.textContent).not.toContain('Toyota Corolla');
+
+    const link = preview.querySelector(
+      '[data-testid="live-comparison-link"]',
+    ) as HTMLAnchorElement;
+    const href = link.getAttribute('href') ?? '';
+    expect(href.startsWith('/compare?ids=')).toBe(true);
+    expect(href).toContain('v1');
+    expect(href).toContain('v2');
+  });
+
+  it('oculta la invitación a crear cuenta cuando el usuario inicia sesión', async () => {
+    const fixture = TestBed.createComponent(LandingComponent);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.includes('/api/v1/models')).flush({
+      data: { total: 0, items: [], page: 1, pageSize: 30 },
+    });
+    await fixture.componentInstance.ready;
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="guest-register-section"]'),
+    ).not.toBeNull();
+
+    auth.currentUser.set({
+      id: 'u1',
+      email: 'persona@test.cl',
+      name: 'Persona',
+      role: 'USER',
+    });
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="guest-register-section"]'),
+    ).toBeNull();
   });
 
   it('stats strip se muestra con totales del backend', async () => {

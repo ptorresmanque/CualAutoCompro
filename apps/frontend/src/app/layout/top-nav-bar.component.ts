@@ -62,22 +62,25 @@ export class TopNavBarComponent {
     return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase();
   });
 
-  readonly navLinks = computed<NavLink[]>(() => {
+  readonly navLinks: NavLink[] = [
+    { path: '/', label: 'Inicio', exact: true },
+    { path: '/catalogo', label: 'Catálogo' },
+    { path: '/compare', label: 'Comparar' },
+  ];
+
+  readonly accountLinks = computed<NavLink[]>(() => {
     const u = this.user();
-    const base: NavLink[] = [
-      { path: '/', label: 'Inicio', icon: 'home', exact: true },
-      { path: '/catalogo', label: 'Catálogo', icon: 'directions_car' },
-      { path: '/compare', label: 'Comparar', icon: 'compare_arrows' },
+    if (!u) return [];
+
+    const links: NavLink[] = [
+      { path: '/favoritos', label: 'Favoritos', icon: 'favorite' },
+      { path: '/account/comparisons', label: 'Mis comparaciones', icon: 'bookmarks' },
+      { path: '/account/settings', label: 'Configuración', icon: 'settings' },
     ];
-    if (u) {
-      base.splice(2, 0, { path: '/favoritos', label: 'Favoritos', icon: 'favorite' });
-      base.push({ path: '/account/comparisons', label: 'Mis comparaciones', icon: 'bookmarks' });
-      base.push({ path: '/account/settings', label: 'Configuración', icon: 'settings' });
-    }
     if (u?.role === 'ADMIN') {
-      base.push({ path: '/admin', label: 'Admin', icon: 'admin_panel_settings' });
+      links.push({ path: '/admin', label: 'Administración', icon: 'admin_panel_settings' });
     }
-    return base;
+    return links;
   });
 
   onSearchInput(value: string): void {

@@ -53,13 +53,13 @@
             [style.background-image]="'url(' + currentUrl() + ')'"
             data-testid="carousel-image"
           ></div>
-          <div
-            class="absolute top-4 right-4 rounded-full bg-ink/60 backdrop-blur-md text-white px-3 py-1 text-xs font-bold pointer-events-none"
+          <span
+            class="model-gallery-counter"
             aria-live="polite"
             data-testid="carousel-counter"
           >
             Imagen {{ currentIndex() + 1 }} / {{ galleryUrls().length }}
-          </div>
+          </span>
           @if (galleryUrls().length > 1) {
             <button
               mat-icon-button

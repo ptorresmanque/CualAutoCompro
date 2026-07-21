@@ -1,3 +1,4 @@
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
@@ -7,7 +8,19 @@ import {
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { CompareComponent } from './compare.component';
 import { CompareStore } from '../../core/compare-store.service';
-import { AuthService } from '../../core/auth.service';
+import { AuthService, type User } from '../../core/auth.service';
+
+class AuthServiceStub {
+  currentUser = signal<User | null>(null);
+}
+
+@Component({
+  selector: 'app-test-host',
+  standalone: true,
+  imports: [CompareComponent],
+  template: `<app-compare />`,
+})
+class TestHostComponent {}
 
 describe('CompareComponent', () => {
   let http: HttpTestingController;
@@ -481,6 +494,17 @@ describe('CompareComponent', () => {
     expect(item).not.toBeNull();
     expect(item.textContent).toContain('Yaris');
     expect(item.textContent).toContain('Toyota');
+    const ficha = item.querySelector('article.ficha.ficha--compact');
+    expect(ficha).not.toBeNull();
+    expect(ficha.querySelector('.ficha-brand')?.textContent).toContain('Toyota');
+    expect(ficha.querySelector('.ficha-segment')?.textContent).toContain('Hatchback');
+    expect(ficha.querySelector('.ficha-price')?.textContent).toContain('14.000.000');
+    expect(ficha.querySelector('.ficha-unit')?.textContent).toContain('CLP');
+    const compareBtn = item.querySelector(
+      '[data-testid="favorite-carousel-btn-m1"]',
+    );
+    expect(compareBtn).not.toBeNull();
+    expect(compareBtn.classList.contains('ficha-compare')).toBe(true);
   });
 
   it('carrusel oculta modelos cuyas versiones ya están en compare', async () => {
@@ -874,5 +898,89 @@ describe('CompareComponent', () => {
     expect(
       fixture.nativeElement.querySelector('[data-testid="recall-card-b"]'),
     ).toBeNull();
+  });
+});
+
+describe('CompareComponent carrusel — estilo ficha', () => {
+  it('renderiza cada favorito con la misma estructura de "ficha" del catálogo', () => {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+    const auth = new AuthServiceStub();
+    auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
+    TestBed.configureTestingModule({
+      imports: [TestHostComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        CompareStore,
+        { provide: AuthService, useValue: auth },
+      ],
+    });
+    const localHttp = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(TestHostComponent);
+    fixture.detectChanges();
+    // Responder la llamada a favoritos disparada por el effect
+    const pending = localHttp.match(
+      (r: { url: string }) => r.url.includes('/me/favorites/models'),
+    );
+    pending.forEach((req) => req.flush({ data: [] } as unknown as object));
+    fixture.detectChanges();
+
+    const comp = fixture.debugElement.children[0].componentInstance as CompareComponent;
+    comp.favoriteModels.set([
+      {
+        id: 'm1',
+        name: 'Yaris',
+        brand: { name: 'Toyota' },
+        segment: 'HATCHBACK',
+        minPrice: 14000000,
+        imageUrl: 'https://example.com/yaris.jpg',
+        versions: [
+          {
+            id: 'v1',
+            name: 'XLS',
+            year: 2026,
+            priceClp: 14990000,
+            transmission: 'AUTOMATIC',
+            fuel: 'BENCINA',
+          },
+        ],
+      },
+    ]);
+    fixture.detectChanges();
+
+    const item = fixture.nativeElement.querySelector(
+      '[data-testid="favorite-carousel-item-m1"]',
+    );
+    expect(item).not.toBeNull();
+    const ficha = item.querySelector('article.ficha.ficha--compact');
+    expect(ficha).not.toBeNull();
+    // Header mono con la marca (sin chip de segmento)
+    expect(ficha.querySelector('.ficha-head .ficha-brand')?.textContent).toContain('Toyota');
+    // Corazón de favoritos en la esquina de la imagen
+    const fav = ficha.querySelector('[data-testid="favorite-carousel-fav-m1"]');
+    expect(fav).not.toBeNull();
+    // Fila de nombre con el chip de segmento a la derecha
+    const nameRow = ficha.querySelector('.ficha-name-row');
+    expect(nameRow).not.toBeNull();
+    expect(nameRow.querySelector('.ficha-name')?.textContent).toContain('Yaris');
+    expect(nameRow.querySelector('.ficha-segment')?.textContent).toContain('Hatchback');
+    // Datos tabulares: precio + año + combustible + transmisión
+    const dataRows = ficha.querySelectorAll('.ficha-data .ficha-row');
+    expect(dataRows.length).toBe(4);
+    const labels = Array.from(dataRows as unknown as Element[]).map((row) =>
+      row.querySelector('dt')?.textContent?.trim(),
+    );
+    expect(labels).toEqual(['Precio', 'Año', 'Combustible', 'Transmisión']);
+    expect(dataRows[0].querySelector('.ficha-price')?.textContent).toContain('14.000.000');
+    expect(dataRows[0].querySelector('.ficha-unit')?.textContent).toContain('CLP');
+    expect(dataRows[1].querySelector('.ficha-row-value')?.textContent).toContain('2026');
+    expect(dataRows[2].querySelector('.ficha-row-value')?.textContent).toContain('BENCINA');
+    expect(dataRows[3].querySelector('.ficha-row-value')?.textContent).toContain('AUTOMATIC');
+    // Botón rectangular con la misma clase que la ficha del catálogo
+    const btn = item.querySelector('[data-testid="favorite-carousel-btn-m1"]');
+    expect(btn).not.toBeNull();
+    expect(btn.classList.contains('ficha-compare')).toBe(true);
   });
 });

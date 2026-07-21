@@ -1,40 +1,45 @@
 <section class="mx-auto max-w-7xl px-4 md:px-8">
   @if (loadError()) {
-    <div
-      class="rounded-xl border border-warn bg-warn-light p-8 text-center shadow-sm"
-      data-testid="load-error"
-    >
-      <p class="font-bold text-lg text-warn-dark">{{ loadError() }}</p>
-      <p class="mt-2 text-sm text-ink-muted">
-        Es posible que el enlace haya expirado o que la comparación haya sido
-        eliminada.
-      </p>
-      <a
-        routerLink="/"
-        data-testid="back-home"
-        class="mt-4 inline-block rounded-full bg-engine px-5 py-2 text-sm font-bold text-white hover:bg-engine-dark transition-colors"
-      >
-        Volver al catálogo
-      </a>
-    </div>
+    <article class="ficha ficha--static" data-testid="load-error">
+      <header class="ficha-head">
+        <span class="ficha-brand">No pudimos abrir la comparación</span>
+        <span class="stamp-label">Error</span>
+      </header>
+      <div class="ficha-body">
+        <p class="font-display text-2xl text-ink">{{ loadError() }}</p>
+        <p class="settings-helper">
+          Es posible que el enlace haya expirado o que la comparación haya sido eliminada.
+        </p>
+        <a
+          routerLink="/"
+          data-testid="back-home"
+          class="ficha-compare settings-submit"
+        >
+          <span>Volver al catálogo</span>
+        </a>
+      </div>
+    </article>
   } @else if (empty()) {
-    <div
-      class="rounded-xl border border-border bg-surface p-12 text-center shadow-sm"
-      data-testid="empty"
-    >
-      <p class="font-bold text-lg text-ink">
-        No has seleccionado ningún auto todavía
-      </p>
-      <p class="mt-2 text-sm text-ink-muted">
-        Agregá hasta 3 versiones desde el catálogo y comparálas acá.
-      </p>
-      <a
-        routerLink="/"
-        class="mt-4 inline-block rounded-full bg-engine px-5 py-2 text-sm font-bold text-white hover:bg-engine-dark transition-colors"
-      >
-        Ir al catálogo
-      </a>
-    </div>
+    <article class="ficha ficha--static" data-testid="empty">
+      <header class="ficha-head">
+        <span class="ficha-brand">Comparativa</span>
+        <span class="stamp-label">Vacía</span>
+      </header>
+      <div class="ficha-body">
+        <h2 class="font-display text-2xl text-ink">
+          No has seleccionado ningún auto todavía
+        </h2>
+        <p class="settings-helper">
+          Agregá hasta 3 versiones desde el catálogo y comparálas acá.
+        </p>
+        <a
+          routerLink="/"
+          class="ficha-compare settings-submit"
+        >
+          <span>Ir al catálogo</span>
+        </a>
+      </div>
+    </article>
   } @else {
     @if (user() && favoriteModels().length > 0) {
       <section class="mb-8" data-testid="favorites-carousel">
@@ -43,60 +48,115 @@
             Tus favoritos · Agregá uno a la comparación
           </h2>
         </header>
-        <ul
-          class="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2"
-          role="list"
-        >
-          @for (m of favoriteModels(); track m.id) {
-            @if (!isModelInCompare(m)) {
-              <li
-                class="snap-start shrink-0 w-56 bg-surface border border-border rounded-xl p-3 relative"
-                [attr.data-testid]="'favorite-carousel-item-' + m.id"
-              >
+      <ul
+        class="favorite-carousel"
+        role="list"
+      >
+        @for (m of favoriteModels(); track m.id) {
+          @if (!isModelInCompare(m)) {
+            <li
+              class="favorite-carousel-item"
+              [attr.data-testid]="'favorite-carousel-item-' + m.id"
+            >
+              <article class="ficha ficha--compact">
+                <header class="ficha-head">
+                  <span class="ficha-brand">{{ m.brand.name }}</span>
+                </header>
                 <div
-                  class="aspect-video rounded-lg bg-cover bg-center mb-2 bg-surface-muted"
+                  class="ficha-image"
                   [style.background-image]="thumbStyle(m.imageUrl ?? null)"
-                ></div>
-                <p class="text-xs text-ink-muted">{{ m.brand.name }}</p>
-                <h3 class="font-bold text-sm">{{ m.name }}</h3>
-                <p class="text-xs text-engine mt-1">
-                  @if (m.minPrice != null) {
-                    $ {{ formatPricePlain(m.minPrice) }}
-                  } @else {
-                    Sin precio publicado
-                  }
-                </p>
-                <button
-                  type="button"
-                  [matMenuTriggerFor]="versionsMenu"
-                  [matMenuTriggerData]="{ modelId: m.id }"
-                  [attr.data-testid]="'favorite-carousel-btn-' + m.id"
-                  class="mt-2 w-full text-xs font-bold bg-engine text-white rounded-full py-1.5 hover:bg-engine-dark"
+                  role="img"
+                  [attr.aria-label]="m.brand.name + ' ' + m.name"
                 >
-                  Agregar versión
-                </button>
-                <mat-menu #versionsMenu="matMenu" class="compare-versions-menu">
-                  <ng-template matMenuContent let-modelId="modelId">
-                    @for (v of versionsForModel(modelId); track v.id) {
-                      <button
-                        mat-menu-item
-                        type="button"
-                        (click)="addFavoriteVersionToCompare(modelId, v.id)"
-                        [attr.data-testid]="'favorite-carousel-opt-' + v.id"
-                      >
-                        <span class="font-semibold">{{ v.name }} {{ v.year }}</span>
-                        @if (v.priceClp != null) {
-                          <span class="text-ink-muted">
-                            · ${{ formatPricePlain(v.priceClp) }}</span>
+                  @if (!m.imageUrl) {
+                    <div class="ficha-image-fallback">
+                      <mat-icon class="text-5xl">directions_car</mat-icon>
+                    </div>
+                  }
+                </div>
+                <div class="ficha-body">
+                  <span
+                    class="ficha-fav"
+                    aria-hidden="true"
+                    [attr.data-testid]="'favorite-carousel-fav-' + m.id"
+                    [attr.aria-label]="m.brand.name + ' ' + m.name + ' ya está en tus favoritos'"
+                  >
+                    <mat-icon color="warn">favorite</mat-icon>
+                  </span>
+                  <div class="ficha-name-row">
+                    <h3 class="ficha-name">{{ m.name }}</h3>
+                    <span class="ficha-segment">{{ favoriteSegmentLabel(m) }}</span>
+                  </div>
+                  <hr class="ficha-rule" />
+                  <dl class="ficha-data">
+                    <div class="ficha-row">
+                      <dt>Precio</dt>
+                      <dd class="ficha-row-value">
+                        @if (m.minPrice != null) {
+                          <span class="ficha-price">
+                            <span class="ficha-price-symbol">$</span>
+                            {{ formatPricePlain(m.minPrice ?? 0) }}
+                          </span>
+                          <span class="ficha-unit">CLP</span>
+                        } @else {
+                          <span class="ficha-empty">Sin precio publicado</span>
                         }
-                      </button>
+                      </dd>
+                    </div>
+                    @if (favoriteVersionSummary(m); as summary) {
+                      <div class="ficha-row">
+                        <dt>Año</dt>
+                        <dd class="ficha-row-value">{{ summary.year }}</dd>
+                      </div>
+                      @if (summary.fuel) {
+                        <div class="ficha-row">
+                          <dt>Combustible</dt>
+                          <dd class="ficha-row-value">{{ summary.fuel }}</dd>
+                        </div>
+                      }
+                      @if (summary.transmission) {
+                        <div class="ficha-row">
+                          <dt>Transmisión</dt>
+                          <dd class="ficha-row-value">{{ summary.transmission }}</dd>
+                        </div>
+                      }
                     }
-                  </ng-template>
-                </mat-menu>
-              </li>
-            }
+                  </dl>
+                  <button
+                    type="button"
+                    class="ficha-compare"
+                    [matMenuTriggerFor]="versionsMenu"
+                    [matMenuTriggerData]="{ modelId: m.id }"
+                    [attr.data-testid]="'favorite-carousel-btn-' + m.id"
+                    [attr.aria-label]="'Agregar versión de ' + m.brand.name + ' ' + m.name + ' a la comparación'"
+                  >
+                    <mat-icon>add</mat-icon>
+                    <span>Agregar versión</span>
+                  </button>
+                </div>
+              </article>
+              <mat-menu #versionsMenu="matMenu" class="compare-versions-menu">
+                <ng-template matMenuContent let-modelId="modelId">
+                  @for (v of versionsForModel(modelId); track v.id) {
+                    <button
+                      mat-menu-item
+                      type="button"
+                      (click)="addFavoriteVersionToCompare(modelId, v.id)"
+                      [attr.data-testid]="'favorite-carousel-opt-' + v.id"
+                    >
+                      <span class="font-semibold">{{ v.name }} {{ v.year }}</span>
+                      @if (v.priceClp != null) {
+                        <span class="text-ink-muted">
+                          · ${{ formatPricePlain(v.priceClp) }}</span>
+                      }
+                    </button>
+                  }
+                </ng-template>
+              </mat-menu>
+            </li>
           }
-        </ul>
+        }
+      </ul>
       </section>
     }
 
@@ -386,29 +446,27 @@
   }
   }
 
-  <!-- Floating action button: guardar comparación -->
+  <!-- Barra fija: guardar comparación (estilo "ficha" del sitio) -->
   @if (user() && !savedSlug()) {
-    <div class="!fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-paper-cool border border-ink p-2 shadow-e2">
+    <div class="compare-save-bar" data-testid="save-bar">
       <label class="sr-only" for="comparison-name">Nombre de comparación</label>
       <input
         id="comparison-name"
-        class="w-44 px-3 py-2 text-sm border border-border bg-paper"
+        class="compare-save-input"
         maxlength="80"
         placeholder="Nombre opcional"
         [value]="saveName()"
         (input)="saveName.set($any($event.target).value)"
       />
       <button
-        mat-fab
-        extended
-        color="primary"
         type="button"
         (click)="saveComparison()"
         [disabled]="saving()"
         data-testid="save-fab"
+        class="compare-save-btn"
       >
-        {{ saving() ? 'Guardando…' : 'Guardar' }}
         <mat-icon>save</mat-icon>
+        <span>{{ saving() ? 'Guardando…' : 'Guardar' }}</span>
       </button>
     </div>
   }

@@ -1,8 +1,12 @@
 <section class="admin-stat-grid">
   @for (c of cards(); track c.path) {
-    <mat-card class="admin-stat-card" appearance="outlined">
+    <article class="ficha ficha--static admin-stat-card">
       <a [routerLink]="c.path" class="admin-stat-link">
-        <mat-card-content class="admin-stat-body">
+        <header class="ficha-head">
+          <span class="ficha-brand">N° {{ $index + 1 }}</span>
+          <span class="stamp-label">Admin</span>
+        </header>
+        <div class="ficha-body admin-stat-body">
           <h2 class="admin-stat-label">{{ c.label }}</h2>
           <p class="admin-stat-value">
             @if (c.loading) {
@@ -14,8 +18,8 @@
             }
           </p>
           <p class="admin-stat-cta">Administrar →</p>
-        </mat-card-content>
+        </div>
       </a>
-    </mat-card>
+    </article>
   }
 </section>

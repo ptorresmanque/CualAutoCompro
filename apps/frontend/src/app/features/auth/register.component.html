@@ -9,8 +9,8 @@
     </p>
   </header>
 
-  <mat-card class="auth-card">
-    <mat-card-content>
+  <article class="ficha ficha--static">
+    <div class="ficha-body">
       <form
         [formGroup]="form"
         (ngSubmit)="submit()"
@@ -84,8 +84,8 @@
           {{ submitting() ? 'Creando…' : 'Crear cuenta' }}
         </button>
       </form>
-    </mat-card-content>
-  </mat-card>
+    </div>
+  </article>
 
   <app-social-buttons mode="register" [returnTo]="returnTo()" />
 

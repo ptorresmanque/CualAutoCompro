@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { TopNavBarComponent } from './top-nav-bar.component';
 import { AuthService, type User } from '../core/auth.service';
@@ -44,6 +45,7 @@ describe('TopNavBarComponent', () => {
     expect(html.textContent).toContain('cualautocompro');
     expect(html.textContent).toContain('Catálogo');
     expect(html.textContent).toContain('Comparar');
+    expect(html.querySelectorAll('.nav-primary .nav-link mat-icon').length).toBe(0);
   });
 
   it('muestra Iniciar sesión y Crear cuenta cuando no hay user', () => {
@@ -63,7 +65,7 @@ describe('TopNavBarComponent', () => {
     expect(html.textContent).toContain('Crear cuenta');
   });
 
-  it('muestra link Favoritos cuando hay user', () => {
+  it('incluye Favoritos en el menú de cuenta cuando hay user', () => {
     TestBed.configureTestingModule({
       imports: [TestHostComponent],
       providers: [
@@ -76,11 +78,13 @@ describe('TopNavBarComponent', () => {
     authStub.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
     f.detectChanges();
 
-    const favLink = f.nativeElement.querySelector('a[href="/favoritos"]');
-    expect(favLink).not.toBeNull();
+    const component = f.debugElement.query(
+      By.directive(TopNavBarComponent),
+    ).componentInstance as TopNavBarComponent;
+    expect(component.accountLinks().some((link) => link.path === '/favoritos')).toBe(true);
   });
 
-  it('oculta link Favoritos cuando no hay user', () => {
+  it('no crea destinos de cuenta cuando no hay user', () => {
     TestBed.configureTestingModule({
       imports: [TestHostComponent],
       providers: [
@@ -93,11 +97,13 @@ describe('TopNavBarComponent', () => {
     authStub.currentUser.set(null);
     f.detectChanges();
 
-    const favLink = f.nativeElement.querySelector('a[href="/favoritos"]');
-    expect(favLink).toBeNull();
+    const component = f.debugElement.query(
+      By.directive(TopNavBarComponent),
+    ).componentInstance as TopNavBarComponent;
+    expect(component.accountLinks()).toEqual([]);
   });
 
-  it('muestra link Admin cuando role es ADMIN', () => {
+  it('incluye Administración en el menú de cuenta para ADMIN', () => {
     TestBed.configureTestingModule({
       imports: [TestHostComponent],
       providers: [
@@ -110,11 +116,13 @@ describe('TopNavBarComponent', () => {
     authStub.currentUser.set({ id: 'u1', email: 'admin@test.cl', name: 'Admin', role: 'ADMIN' });
     f.detectChanges();
 
-    const adminLink = f.nativeElement.querySelector('a[href="/admin"]');
-    expect(adminLink).not.toBeNull();
+    const component = f.debugElement.query(
+      By.directive(TopNavBarComponent),
+    ).componentInstance as TopNavBarComponent;
+    expect(component.accountLinks().some((link) => link.path === '/admin')).toBe(true);
   });
 
-  it('oculta link Admin cuando role es USER', () => {
+  it('oculta Administración en el menú de cuenta para USER', () => {
     TestBed.configureTestingModule({
       imports: [TestHostComponent],
       providers: [
@@ -127,12 +135,14 @@ describe('TopNavBarComponent', () => {
     authStub.currentUser.set({ id: 'u1', email: 'user@test.cl', name: 'User', role: 'USER' });
     f.detectChanges();
 
-    const adminLink = f.nativeElement.querySelector('a[href="/admin"]');
-    expect(adminLink).toBeNull();
+    const component = f.debugElement.query(
+      By.directive(TopNavBarComponent),
+    ).componentInstance as TopNavBarComponent;
+    expect(component.accountLinks().some((link) => link.path === '/admin')).toBe(false);
   });
 
   describe('responsive visibility', () => {
-    it('expone data-testid en ambas variantes (mobile + desktop) de los botones auth', () => {
+    it('usa un solo acceso de cuenta en móvil y acciones claras en desktop', () => {
       TestBed.configureTestingModule({
         imports: [TestHostComponent],
         providers: [
@@ -146,8 +156,10 @@ describe('TopNavBarComponent', () => {
 
       const loginBtns = f.nativeElement.querySelectorAll('[data-testid="nav-login-btn"]');
       const registerBtns = f.nativeElement.querySelectorAll('[data-testid="nav-register-btn"]');
-      expect(loginBtns.length).toBeGreaterThanOrEqual(2);
-      expect(registerBtns.length).toBeGreaterThanOrEqual(2);
+      const mobileAccountBtns = f.nativeElement.querySelectorAll('[data-testid="nav-account-btn"]');
+      expect(loginBtns.length).toBe(1);
+      expect(registerBtns.length).toBe(1);
+      expect(mobileAccountBtns.length).toBe(1);
     });
   });
 

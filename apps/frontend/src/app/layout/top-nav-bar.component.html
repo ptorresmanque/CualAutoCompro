@@ -20,8 +20,8 @@
       <span class="brand-text">cualautocompro</span>
     </a>
 
-    <nav class="hidden md:flex items-center gap-7">
-      @for (link of navLinks(); track link.path) {
+    <nav class="nav-primary hidden md:flex" aria-label="Navegación principal">
+      @for (link of navLinks; track link.path) {
         <a
           [routerLink]="link.path"
           routerLinkActive
@@ -29,9 +29,6 @@
           class="nav-link"
           activeClass="nav-link-active"
         >
-          @if (link.icon) {
-            <mat-icon class="text-base">{{ link.icon }}</mat-icon>
-          }
           {{ link.label }}
           @if (link.path === '/compare' && compareCount() > 0) {
             <span
@@ -45,7 +42,7 @@
       }
     </nav>
 
-    <div class="hidden lg:flex flex-1 max-w-sm">
+    <div class="nav-search-wrap hidden xl:flex">
       <form
         class="nav-search-form"
         role="search"
@@ -71,32 +68,26 @@
       </form>
     </div>
 
-    <div class="flex items-center gap-2">
+    <div class="nav-actions">
       @if (user(); as u) {
-        <a
-          routerLink="/account/comparisons"
-          class="hidden md:block text-xs uppercase tracking-stamp text-ink hover:text-engine transition-colors"
-        >
-          {{ u.name.split(' ')[0] }}
-        </a>
         <button
-          mat-mini-fab
-          color="primary"
           type="button"
           [matMenuTriggerFor]="userMenu"
           [attr.aria-label]="'Menú de ' + u.name"
-          class="user-button"
+          class="account-trigger"
+          data-testid="account-menu-trigger"
         >
-          {{ initials() || '?' }}
+          <span class="account-avatar" aria-hidden="true">{{ initials() || '?' }}</span>
+          <span class="account-name">{{ u.name.split(' ')[0] }}</span>
+          <mat-icon class="account-chevron">expand_more</mat-icon>
         </button>
         <mat-menu #userMenu="matMenu" class="user-menu" data-testid="user-menu">
-          <a
-            mat-menu-item
-            routerLink="/account/comparisons"
-          >
-            <mat-icon>bookmarks</mat-icon>
-            <span>Mis comparaciones</span>
-          </a>
+          @for (link of accountLinks(); track link.path) {
+            <a mat-menu-item [routerLink]="link.path">
+              <mat-icon>{{ link.icon }}</mat-icon>
+              <span>{{ link.label }}</span>
+            </a>
+          }
           <button
             mat-menu-item
             type="button"
@@ -109,24 +100,15 @@
           </button>
         </mat-menu>
       } @else {
-        <div class="flex md:hidden items-center gap-2">
+        <div class="flex md:hidden items-center">
           <a
             mat-icon-button
             routerLink="/login"
-            matTooltip="Iniciar sesión"
-            aria-label="Iniciar sesión"
-            data-testid="nav-login-btn"
+            matTooltip="Acceder a tu cuenta"
+            aria-label="Acceder a tu cuenta"
+            data-testid="nav-account-btn"
           >
-            <mat-icon>login</mat-icon>
-          </a>
-          <a
-            mat-icon-button
-            routerLink="/register"
-            matTooltip="Crear cuenta"
-            aria-label="Crear cuenta"
-            data-testid="nav-register-btn"
-          >
-            <mat-icon>person_add</mat-icon>
+            <mat-icon>account_circle</mat-icon>
           </a>
         </div>
         <div class="hidden md:flex items-center gap-2">

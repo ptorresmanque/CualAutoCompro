@@ -19,8 +19,8 @@
     </div>
   }
 
-  <mat-card class="auth-card" appearance="outlined">
-    <mat-card-content>
+  <article class="ficha ficha--static">
+    <div class="ficha-body">
       <form
         [formGroup]="form"
         (ngSubmit)="submit()"
@@ -78,8 +78,8 @@
           {{ submitting() ? 'Ingresando…' : 'Iniciar sesión' }}
         </button>
       </form>
-    </mat-card-content>
-  </mat-card>
+    </div>
+  </article>
 
   <app-social-buttons mode="login" [returnTo]="returnTo()" />
 
