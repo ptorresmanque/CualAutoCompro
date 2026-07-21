@@ -48,6 +48,37 @@ Definidos en `src/styles.css`. Reusá; no reinventes.
 | `.ficha--static`  | Variante sin hover (formularios, settings)    |
 | `.ficha--danger`  | Variante con paleta engine (zonas peligrosas)  |
 
+## 3. Jerarquía de color de los CTAs
+
+El sistema usa **dos colores deliberadamente**. No es una inconsistencia, es
+la jerarquía visual:
+
+- **CTA primario** = `var(--ink)` (#0F172A, casi negro slate)
+  Fondo negro, texto paper, mayúsculas IBM Plex Sans 600.
+  En **hover** vira a `var(--engine)`.
+  Se usa para la acción principal de la pantalla: "Comparar", "Iniciar
+  sesión", "Crear cuenta", "Guardar perfil", "Guardar comparación",
+  "Cambiar contraseña".
+
+- **Acento** = `var(--engine)` (#1E40AF, azul steel)
+  Se usa para **cuatro cosas** y solo esas cuatro:
+  1. Links inline ("Ver todos", "Ver enlace público", "Comparar autos").
+  2. Hover de los CTAs primarios.
+  3. Mensajes informativos (caja `bg-engine-50` con `text-engine-dark`).
+  4. Sello "POPULAR" rotado sobre cards destacadas.
+  5. CTAs secundarios outline (`mat-stroked-button color="primary"`,
+     "Limpiar" en filtros, "Iniciar sesión" en la navbar cuando no hay
+     sesión).
+
+- **No se hace**: un CTA primario en azul steel. Eso borra la jerarquía
+  porque el azul deja de ser acento y compite con el badge POPULAR y los
+  links.
+
+Para verificarlo: si abrís la app y el único azul visible en una pantalla
+es un link, un sello, un mensaje o un botón secundario, el sistema está
+correcto. Si un botón "Guardar" / "Comparar" / "Iniciar sesión" se ve azul
+en estado normal (no en hover), hay que arreglarlo.
+
 ## 3. Lo que NO se hace
 
 - ❌ `rounded-xl`, `rounded-2xl`, `rounded-3xl`, `rounded-full` (radio es 2px o 0)
