@@ -9,4 +9,7 @@ export const createFuelPriceSchema = z.object({
   unit: z.enum(UNITS),
 });
 
+export const updateFuelPriceSchema = createFuelPriceSchema.partial();
+
 export type CreateFuelPriceInput = z.infer<typeof createFuelPriceSchema>;
+export type UpdateFuelPriceInput = z.infer<typeof updateFuelPriceSchema>;

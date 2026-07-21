@@ -10,6 +10,16 @@ interface Card {
   loading: boolean;
 }
 
+interface Summary {
+  brands: number;
+  models: number;
+  versions: number;
+  equipment: number;
+  maintenance: number;
+  dealers: number;
+  fuelPrices: number;
+}
+
 @Component({
   selector: 'app-admin-dashboard',
   imports: [RouterLink, MatCardModule],
@@ -35,30 +45,12 @@ export class AdminDashboardComponent {
   }
 
   private async loadCounts(): Promise<void> {
-    await Promise.all([
-      this.load('/brands',                       0),
-      this.load('/models?pageSize=1',            1),
-      this.load('/versions?pageSize=1',          2),
-      this.load('/equipment',                    3),
-      this.load('/admin/maintenance',            4),
-      this.load('/admin/dealers',                5),
-      this.load('/admin/fuel-prices',            6),
-    ]);
-  }
-
-  private async load(path: string, idx: number): Promise<void> {
     try {
-      const res = await this.api.get<{ data: unknown } | { data: { total?: number; items?: unknown[] } }>(path);
-      const data = (res as { data: unknown }).data;
-      let count = 0;
-      if (Array.isArray(data)) count = data.length;
-      else if (data && typeof data === 'object') {
-        const d = data as { total?: number; items?: unknown[] };
-        count = d.total ?? d.items?.length ?? 0;
-      }
-      this.cards.update((cs) => cs.map((c, i) => (i === idx ? { ...c, count, loading: false } : c)));
+      const res = await this.api.get<{ data: Summary }>('/admin/summary');
+      const counts = [res.data.brands, res.data.models, res.data.versions, res.data.equipment, res.data.maintenance, res.data.dealers, res.data.fuelPrices];
+      this.cards.update((cards) => cards.map((card, index) => ({ ...card, count: counts[index] ?? 0, loading: false })));
     } catch {
-      this.cards.update((cs) => cs.map((c, i) => (i === idx ? { ...c, count: null, loading: false } : c)));
+      this.cards.update((cards) => cards.map((card) => ({ ...card, count: null, loading: false })));
     }
   }
 }

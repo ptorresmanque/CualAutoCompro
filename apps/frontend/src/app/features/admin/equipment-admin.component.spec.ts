@@ -9,8 +9,18 @@ const dialogMock = {
   open: () => ({ afterClosed: () => of(true) }),
 };
 
+const flushPaged = (http: HttpTestingController, rows: unknown[]) => {
+  for (const r of http.match(() => true)) {
+    r.flush({
+      data: rows,
+      pagination: { page: 1, pageSize: 25, total: rows.length, totalPages: 1 },
+      error: null,
+    });
+  }
+};
+
 describe('EquipmentAdminComponent', () => {
-  it('carga lista desde /admin/equipment (fallback /equipment en test)', async () => {
+  it('carga lista paginada desde /admin/equipment', async () => {
     TestBed.configureTestingModule({
       imports: [EquipmentAdminComponent],
       providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
@@ -18,12 +28,11 @@ describe('EquipmentAdminComponent', () => {
     const fixture = TestBed.createComponent(EquipmentAdminComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    const reqs = http.match(() => true);
-    expect(reqs.length).toBeGreaterThan(0);
-    for (const r of reqs) r.flush({ data: [{ id: 'e1', name: 'Climatizador', category: 'Confort' }] });
+    flushPaged(http, [{ id: 'e1', name: 'Climatizador', category: 'Confort' }]);
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
-    expect(fixture.componentInstance.items().length).toBeGreaterThan(0);
+    expect(fixture.componentInstance.items().length).toBe(1);
+    expect(fixture.componentInstance.pagination().total).toBe(1);
   });
 
   it('openCreate muestra dialog', async () => {
@@ -34,8 +43,7 @@ describe('EquipmentAdminComponent', () => {
     const fixture = TestBed.createComponent(EquipmentAdminComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    const reqs = http.match(() => true);
-    for (const r of reqs) r.flush({ data: [] });
+    flushPaged(http, []);
     await fixture.whenStable();
     fixture.componentInstance.openCreate();
     expect(fixture.componentInstance.dialogEntity()).toBeNull();

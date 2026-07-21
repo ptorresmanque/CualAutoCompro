@@ -8,6 +8,8 @@ import { ApiCallError } from '../../core/api-error';
 import { ApiService } from '../../core/api.service';
 import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
+import { PaginationComponent } from '../../shared/ui/pagination.component';
+import type { PagedResponse } from '../../shared/ui/pagination.types';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { sortItems, type SortDir } from './sort-utils';
 
@@ -16,7 +18,7 @@ type SortKey = 'name' | 'category';
 
 @Component({
   selector: 'app-equipment-admin',
-  imports: [AdminEditDialogComponent, SearchInputComponent, MatButtonModule, MatIconModule],
+  imports: [AdminEditDialogComponent, SearchInputComponent, PaginationComponent, MatButtonModule, MatIconModule],
   templateUrl: './equipment-admin.component.html',
   styleUrl: './equipment-admin.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,6 +32,9 @@ export class EquipmentAdminComponent {
 
   readonly items = signal<EquipmentRow[]>([]);
   readonly search = signal('');
+  readonly pagination = signal({ page: 1, pageSize: 25, total: 0, totalPages: 1 });
+  readonly page = signal(1);
+  readonly pageSize = signal(25);
   readonly dialogEntity = signal<EquipmentRow | null | undefined>(undefined);
   readonly dialogMode = computed(() => (this.dialogEntity() === undefined ? 'closed' : 'open'));
   readonly error = signal<string | null>(null);
@@ -55,11 +60,12 @@ export class EquipmentAdminComponent {
   private async load(): Promise<void> {
     this.loading.set(true);
     try {
-      const res = await this.api.get<{ data: EquipmentRow[] }>('/admin/equipment').catch(async () => {
-        const pub = await this.api.get<{ data: EquipmentRow[] }>('/equipment');
-        return pub;
-      });
+      const params: Record<string, string | number> = { page: this.page(), pageSize: this.pageSize() };
+      const q = this.search().trim();
+      if (q.length > 0) params['q'] = q;
+      const res = await this.api.get<PagedResponse<EquipmentRow[]>>('/admin/equipment', params);
       this.items.set(res.data);
+      this.pagination.set(res.pagination);
     } catch (e) {
       this.error.set((e as Error).message);
     } finally {
@@ -125,6 +131,24 @@ export class EquipmentAdminComponent {
 
   onSearch(value: string): void {
     this.search.set(value);
+    this.page.set(1);
+    void this.load();
+  }
+
+  onPageChange(page: number): void {
+    this.page.set(page);
+    void this.load();
+  }
+
+  onPageSizeChange(pageSize: number): void {
+    this.pageSize.set(pageSize);
+    this.page.set(1);
+    void this.load();
+  }
+
+  retry(): void {
+    this.error.set(null);
+    void this.load();
   }
 
   toggleSort(key: SortKey): void {

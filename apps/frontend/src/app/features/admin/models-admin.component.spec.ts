@@ -10,7 +10,7 @@ const dialogMock = {
 };
 
 describe('ModelsAdminComponent', () => {
-  it('carga lista desde /admin/models (fallback /models en test)', async () => {
+  it('carga lista paginada desde /admin/models', async () => {
     TestBed.configureTestingModule({
       imports: [ModelsAdminComponent],
       providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
@@ -18,15 +18,21 @@ describe('ModelsAdminComponent', () => {
     const fixture = TestBed.createComponent(ModelsAdminComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    const reqs = http.match(() => true);
-    expect(reqs.length).toBeGreaterThan(0);
-    for (const r of reqs) {
-      if (r.request.url.includes('/brands')) r.flush({ data: [] });
-      else r.flush({ data: { total: 1, items: [{ id: 'm1', name: 'Corolla', segment: 'SEDAN', brand: { name: 'Toyota' } }], page: 1, pageSize: 50 } });
+    for (const r of http.match(() => true)) {
+      if (r.request.url.includes('/brands')) {
+        r.flush({ data: [] });
+      } else {
+        r.flush({
+          data: [{ id: 'm1', name: 'Corolla', segment: 'SEDAN', brand: { name: 'Toyota' } }],
+          pagination: { page: 1, pageSize: 25, total: 1, totalPages: 1 },
+          error: null,
+        });
+      }
     }
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
-    expect(fixture.componentInstance.items().length).toBeGreaterThan(0);
+    expect(fixture.componentInstance.items().length).toBe(1);
+    expect(fixture.componentInstance.pagination().total).toBe(1);
   });
 
   it('openCreate muestra dialog', async () => {
@@ -37,8 +43,10 @@ describe('ModelsAdminComponent', () => {
     const fixture = TestBed.createComponent(ModelsAdminComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    const reqs = http.match(() => true);
-    for (const r of reqs) r.flush({ data: [] });
+    for (const r of http.match(() => true)) {
+      if (r.request.url.includes('/brands')) r.flush({ data: [] });
+      else r.flush({ data: [], pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 }, error: null });
+    }
     await fixture.whenStable();
     fixture.componentInstance.openCreate();
     expect(fixture.componentInstance.dialogEntity()).toBeNull();

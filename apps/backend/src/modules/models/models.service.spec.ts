@@ -245,3 +245,44 @@ describe("ModelsService + extendEnum", () => {
     expect(v.equipmentItems?.[0]?.equipmentItem.name).toBe("Cámara 360°");
   });
 });
+describe("ModelsService.detailBySlug", () => {
+  beforeEach(async () => {
+    setupTestPrisma();
+    await resetTestDb(prisma);
+  });
+  afterEach(async () => {
+    await prisma.$disconnect();
+  });
+
+  it("encuentra un modelo por brand+model slug case-insensitive y con acentos", async () => {
+    const svc = new ModelsService(prisma);
+    const brand = await prisma.brand.create({ data: { name: "Toyota" } });
+    const model = await prisma.model.create({
+      data: { name: "Corolla", brandId: brand.id, segment: "SEDAN" },
+    });
+    const detail = await svc.detailBySlug("toyota", "corolla");
+    expect(detail).not.toBeNull();
+    expect(detail!.id).toBe(model.id);
+  });
+
+  it("normaliza acentos y espacios", async () => {
+    const svc = new ModelsService(prisma);
+    const brand = await prisma.brand.create({ data: { name: "Mañé" } });
+    await prisma.model.create({
+      data: { name: "Compacto X", brandId: brand.id, segment: "HATCHBACK" },
+    });
+    const detail = await svc.detailBySlug("mane", "compacto-x");
+    expect(detail).not.toBeNull();
+    expect(detail!.name).toBe("Compacto X");
+  });
+
+  it("retorna null si el slug no coincide", async () => {
+    const svc = new ModelsService(prisma);
+    const brand = await prisma.brand.create({ data: { name: "Toyota" } });
+    await prisma.model.create({
+      data: { name: "Corolla", brandId: brand.id, segment: "SEDAN" },
+    });
+    expect(await svc.detailBySlug("toyota", "yaris")).toBeNull();
+    expect(await svc.detailBySlug("honda", "corolla")).toBeNull();
+  });
+});

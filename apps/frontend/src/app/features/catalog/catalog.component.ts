@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -43,6 +44,8 @@ export interface CatalogFilters {
   consumptionHighwayMax?: number;
   sort?: Sort;
   order?: Order;
+  page?: number;
+  pageSize?: number;
 }
 
 const FEATURED_MODEL_NAMES = new Set(['Corolla', 'Tucson', 'CX-5']);
@@ -109,11 +112,11 @@ export class CatalogComponent {
 
   readonly brands = signal<Array<{ id: string; name: string }>>([]);
 
-  filters = signal<CatalogFilters>({ sort: 'name', order: 'asc' });
+  filters = signal<CatalogFilters>({ sort: 'name', order: 'asc', page: 1, pageSize: 20 });
   items = signal<VehicleCardInput[]>([]);
   total = signal(0);
   loading = signal(false);
-  currentQuery = signal<string>('');
+  loadError = signal<string | null>(null);
 
   readonly selectedVersions = signal<Record<string, string>>({});
 
@@ -126,6 +129,14 @@ export class CatalogComponent {
     this.isHandset() ? 'over' : 'side',
   );
   readonly filtersOpen = signal(false);
+  readonly pageCount = computed(() =>
+    Math.max(1, Math.ceil(this.total() / (this.filters().pageSize ?? 20))),
+  );
+  readonly hasPreviousPage = computed(() => (this.filters().page ?? 1) > 1);
+  readonly hasNextPage = computed(() => (this.filters().page ?? 1) < this.pageCount());
+
+  private router = inject(Router);
+  private lastWrittenQueryKey: string | null = null;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -138,9 +149,18 @@ export class CatalogComponent {
         }
       });
     }
-    const q = this.route.snapshot.queryParamMap.get('q')?.trim() ?? '';
-    this.currentQuery.set(q);
-    if (q) this.filters.update((f) => ({ ...f, q }));
+    this.filters.set(this.filtersFromParams(this.route.snapshot.queryParamMap));
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const next = this.filtersFromParams(params);
+      const queryKey = this.queryKey(next);
+      if (queryKey === this.lastWrittenQueryKey) {
+        this.lastWrittenQueryKey = null;
+        return;
+      }
+      if (JSON.stringify(next) === JSON.stringify(this.filters())) return;
+      this.filters.set(next);
+      void this.load();
+    });
     this.initialLoad = Promise.all([this.loadBrands(), this.load()]);
   }
 
@@ -172,20 +192,36 @@ export class CatalogComponent {
 
   async load(): Promise<void> {
     this.loading.set(true);
+    this.loadError.set(null);
     try {
       const res = await this.api.get<{
         data: { items: VehicleCardInput[]; total: number };
       }>('/models', this.cleanParams(this.filters()));
       this.items.set(res.data.items);
       this.total.set(res.data.total);
+    } catch {
+      this.loadError.set('No se pudo cargar el catálogo. Intenta nuevamente.');
     } finally {
       this.loading.set(false);
     }
   }
 
   updateFilter(patch: Partial<CatalogFilters>): Promise<void> {
-    this.filters.update((f) => ({ ...f, ...patch }));
+    const next = { ...this.filters(), ...patch, page: patch.page ?? 1 };
+    this.filters.set(next);
+    this.lastWrittenQueryKey = this.queryKey(next);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: this.cleanParams(next),
+      replaceUrl: true,
+    });
     return this.load();
+  }
+
+  goToPage(page: number): Promise<void> {
+    const target = Math.min(Math.max(1, page), this.pageCount());
+    if (target === (this.filters().page ?? 1)) return Promise.resolve();
+    return this.updateFilter({ page: target });
   }
 
   addToCompare(item: VehicleCardInput): void {
@@ -211,8 +247,10 @@ export class CatalogComponent {
   }
 
   async clearFilters(): Promise<void> {
-    this.filters.set({ sort: 'name', order: 'asc' });
+    this.filters.set({ sort: 'name', order: 'asc', page: 1, pageSize: 20 });
     this.selectedVersions.set({});
+    this.lastWrittenQueryKey = this.queryKey(this.filters());
+    void this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
     await this.load();
     if (this.isHandset()) {
       this.filtersOpen.set(false);
@@ -282,5 +320,44 @@ export class CatalogComponent {
       }
     }
     return out;
+  }
+
+  private filtersFromParams(params: import('@angular/router').ParamMap): CatalogFilters {
+    const numberParam = (key: string): number | undefined => {
+      const value = params.get(key);
+      if (value === null || value === '') return undefined;
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    };
+    const sort = params.get('sort');
+    const order = params.get('order');
+    const next: CatalogFilters = {
+      sort: sort === 'minPrice' || sort === 'minConsumption' ? sort : 'name',
+      order: order === 'desc' ? 'desc' : 'asc',
+      page: Math.max(1, Math.trunc(numberParam('page') ?? 1)),
+      pageSize: Math.min(50, Math.max(1, Math.trunc(numberParam('pageSize') ?? 20))),
+    };
+    const text = params.get('q')?.trim();
+    if (text) next.q = text;
+    const brand = params.get('brand');
+    if (brand) next.brand = brand;
+    const segment = params.get('segment');
+    if (segment) next.segment = segment as Segment;
+    const transmission = params.get('transmission');
+    if (transmission) next.transmission = transmission as Transmission;
+    const fuel = params.get('fuel');
+    if (fuel) next.fuel = fuel as Fuel;
+    for (const key of ['priceMin', 'priceMax', 'powerMin', 'consumptionMax', 'consumptionHighwayMax'] as const) {
+      const value = numberParam(key);
+      if (value !== undefined) next[key] = value;
+    }
+    return next;
+  }
+
+  private queryKey(filters: CatalogFilters): string {
+    return Object.entries(this.cleanParams(filters))
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, value]) => `${key}=${value}`)
+      .join('&');
   }
 }

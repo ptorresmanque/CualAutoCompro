@@ -5,6 +5,8 @@ import { prisma } from "../../infra/prisma.js";
 import { MaintenanceService } from "./maintenance.service.js";
 import { createMaintenanceSchema, updateMaintenanceSchema } from "./maintenance.dto.admin.js";
 import { validation } from "../../shared/errors.js";
+import { toCsv } from "../../shared/csv.js";
+import { parsePagination, sendPaged } from "../../shared/pagination.js";
 
 const svc = new MaintenanceService(prisma);
 
@@ -16,6 +18,13 @@ export const maintenanceController = {
 
   listAllPublic: ah(async (_req: Request, res: Response) => {
     res.json(ok(await svc.listAllPublic()));
+  }),
+
+  listPaged: ah(async (req: Request, res: Response) => {
+    const params = parsePagination(req.query.page, req.query.pageSize);
+    const q = typeof req.query.q === "string" ? req.query.q.trim() : undefined;
+    const { rows, total } = await svc.listPaged(q, params);
+    sendPaged(res, rows, total, params);
   }),
 
   listAll: ah(async (_req: Request, res: Response) => {
@@ -38,5 +47,28 @@ export const maintenanceController = {
   softDelete: ah(async (req: Request, res: Response) => {
     const id = req.params.id ?? "";
     res.json(ok(await svc.softDelete(id)));
+  }),
+  restore: ah(async (req: Request, res: Response) => {
+    const id = req.params.id ?? "";
+    res.json(ok(await svc.restore(id)));
+  }),
+
+  bulkDelete: ah(async (req: Request, res: Response) => {
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter((x: unknown) => typeof x === "string") : [];
+    if (ids.length === 0) {
+      throw validation("Debes seleccionar al menos un elemento", []);
+    }
+    res.json(ok(await svc.bulkDelete(ids)));
+  }),
+
+  exportCsv: ah(async (_req: Request, res: Response) => {
+    const rows = await svc.listAll();
+    const csv = toCsv(
+      ['id', 'versionId', 'mileageTag', 'costClp'],
+      rows.map(m => [m.id, m.versionId, m.mileageTag, m.costClp]),
+    );
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="maintenance.csv"');
+    res.send(csv);
   }),
 };

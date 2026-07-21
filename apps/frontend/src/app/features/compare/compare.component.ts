@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -128,6 +129,7 @@ interface ComparisonBySlugResponse {
   styleUrl: './compare.component.css',
   imports: [
     RouterLink,
+    FormsModule,
     MatButtonModule,
     MatCardModule,
     MatExpansionModule,
@@ -152,6 +154,7 @@ export class CompareComponent {
   diffHighlights = signal<Partial<Record<DiffKey, boolean>>>({});
   loading = signal(false);
   saving = signal(false);
+  saveName = signal('');
   savedSlug = signal<string | null>(null);
   duplicateSlug = signal<string | null>(null);
   sharedMeta = signal<{ slug: string; createdAt: string; userId: string } | null>(null);
@@ -369,7 +372,7 @@ export class CompareComponent {
 
   private async bootstrapInner(): Promise<void> {
     const qp = this.route.snapshot.queryParamMap;
-    const slug = qp.get('slug');
+    const slug = qp.get('slug') ?? this.route.snapshot.paramMap.get('slug');
     if (slug) {
       await this.loadBySlug(slug);
       return;
@@ -615,9 +618,10 @@ export class CompareComponent {
     this.saving.set(true);
     this.saveError.set(null);
     try {
+      const name = this.saveName().trim();
       const res = await this.api.post<{
         data: { slug: string };
-      }>('/me/comparisons', { versionIds: ids });
+      }>('/me/comparisons', { versionIds: ids, ...(name ? { name } : {}) });
       this.savedSlug.set(res.data.slug);
       this.duplicateSlug.set(null);
     } catch (e) {

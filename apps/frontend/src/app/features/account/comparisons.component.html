@@ -72,9 +72,22 @@
           }
 
           <div>
-            <h3 class="comparison-title">
-              {{ displayName(c) }}
-            </h3>
+            @if (editingId() === c.id) {
+              <div class="flex items-center gap-2">
+                <label class="sr-only" [for]="'comparison-name-' + c.id">Nombre</label>
+                <input
+                  class="border border-border px-2 py-1 text-sm"
+                  [id]="'comparison-name-' + c.id"
+                  [value]="editingName()"
+                  (input)="editingName.set($any($event.target).value)"
+                />
+                <button mat-button type="button" color="primary" (click)="saveRename(c)">Guardar</button>
+                <button mat-button type="button" (click)="cancelRename()">Cancelar</button>
+              </div>
+            } @else {
+              <h3 class="comparison-title">{{ displayName(c) }}</h3>
+              <button mat-button type="button" color="primary" (click)="startRename(c)">Renombrar</button>
+            }
             <p class="comparison-meta">
               Guardada el {{ formatSharedDate(c.createdAt) }} ·
               {{ c.items.length }} versión(es)

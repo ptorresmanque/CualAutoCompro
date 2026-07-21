@@ -220,6 +220,16 @@
             <p class="mt-2 font-display text-3xl text-ink leading-none">
               {{ formatPrice(v.priceClp) }}
             </p>
+            <button
+              type="button"
+              class="mt-3 inline-flex items-center gap-2 text-sm text-engine hover:underline"
+              (click)="toggleFavorite(v.id)"
+              [attr.aria-pressed]="favorites.isFavorite(v.id)"
+              [attr.data-testid]="'favorite-' + v.id"
+            >
+              <mat-icon class="text-base">{{ favorites.isFavorite(v.id) ? 'favorite' : 'favorite_border' }}</mat-icon>
+              {{ favorites.isFavorite(v.id) ? 'En favoritos' : 'Guardar favorito' }}
+            </button>
             @if (v.hasRecall) {
               <a
                 [href]="v.recallUrl"
@@ -241,6 +251,9 @@
             >
               Agregar a comparación
             </mat-checkbox>
+            <div class="mt-4">
+              <app-annual-cost-card [versionId]="v.id" />
+            </div>
           </article>
         }
         @if (maxSelected()) {

@@ -29,6 +29,8 @@ export class AdminShellComponent {
     { path: '/admin/maintenance', label: 'Mantención' },
     { path: '/admin/dealers', label: 'Concesionarios' },
     { path: '/admin/fuel-prices', label: 'Precios combustible' },
+    { path: '/admin/users', label: 'Usuarios' },
+    { path: '/admin/trash', label: 'Papelera' },
   ];
 
   private readonly currentUrl = toSignal(

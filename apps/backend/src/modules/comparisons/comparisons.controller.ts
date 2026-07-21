@@ -8,6 +8,7 @@ import { unauthorized, validation } from "../../shared/errors.js";
 
 const svc = new ComparisonsService(prisma);
 const createSchema = z.object({ versionIds: z.array(z.string()).min(1).max(3), name: z.string().max(80).optional() });
+const renameSchema = z.object({ name: z.string().max(80) });
 
 export const comparisonsController = {
   bySlug: ah(async (req: Request, res: Response) => {
@@ -27,6 +28,13 @@ export const comparisonsController = {
     const opts: { userId: string; versionIds: string[]; name?: string } = { userId: u.id, versionIds: parsed.data.versionIds };
     if (parsed.data.name !== undefined) opts.name = parsed.data.name;
     res.json(ok(await svc.create(opts)));
+  }),
+
+  renameMine: ah(async (req: Request, res: Response) => {
+    const u = req.user; if (!u) throw unauthorized();
+    const parsed = renameSchema.safeParse(req.body);
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
+    res.json(ok(await svc.rename(req.params.id ?? "", u.id, parsed.data.name)));
   }),
 
   deleteMine: ah(async (req: Request, res: Response) => {

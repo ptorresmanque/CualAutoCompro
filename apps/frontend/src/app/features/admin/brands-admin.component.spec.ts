@@ -19,8 +19,18 @@ interface BrandRow {
   dealerIds?: string[];
 }
 
+const flushPaged = (http: HttpTestingController, rows: BrandRow[]) => {
+  for (const r of http.match(() => true)) {
+    r.flush({
+      data: rows,
+      pagination: { page: 1, pageSize: 25, total: rows.length, totalPages: 1 },
+      error: null,
+    });
+  }
+};
+
 describe('BrandsAdminComponent', () => {
-  it('carga lista desde /admin/brands (fallback /brands en test)', async () => {
+  it('carga lista paginada desde /admin/brands', async () => {
     TestBed.configureTestingModule({
       imports: [BrandsAdminComponent],
       providers: [provideHttpClient(), provideHttpClientTesting()],
@@ -28,12 +38,13 @@ describe('BrandsAdminComponent', () => {
     const fixture = TestBed.createComponent(BrandsAdminComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    const reqs = http.match(() => true);
+    const reqs = http.match((r) => r.url.endsWith('/admin/brands'));
     expect(reqs.length).toBeGreaterThan(0);
-    for (const r of reqs) r.flush({ data: [{ id: 'b1', name: 'Toyota', logoUrl: null }] });
+    flushPaged(http, [{ id: 'b1', name: 'Toyota', logoUrl: null }]);
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
-    expect(fixture.componentInstance.items().length).toBeGreaterThan(0);
+    expect(fixture.componentInstance.items().length).toBe(1);
+    expect(fixture.componentInstance.pagination().total).toBe(1);
   });
 
   it('openCreate muestra dialog', async () => {
@@ -44,8 +55,7 @@ describe('BrandsAdminComponent', () => {
     const fixture = TestBed.createComponent(BrandsAdminComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    const reqs = http.match(() => true);
-    for (const r of reqs) r.flush({ data: [] });
+    flushPaged(http, []);
     await fixture.whenStable();
     fixture.componentInstance.openCreate();
     expect(fixture.componentInstance.dialogEntity()).toBeNull();
@@ -59,15 +69,11 @@ describe('BrandsAdminComponent', () => {
     const fixture = TestBed.createComponent(BrandsAdminComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    for (const r of http.match(() => true)) {
-      r.flush({
-        data: [
-          { id: 'b1', name: 'Zoe', logoUrl: null },
-          { id: 'b2', name: 'Audi', logoUrl: null },
-          { id: 'b3', name: 'Mazda', logoUrl: null },
-        ],
-      });
-    }
+    flushPaged(http, [
+      { id: 'b1', name: 'Zoe', logoUrl: null },
+      { id: 'b2', name: 'Audi', logoUrl: null },
+      { id: 'b3', name: 'Mazda', logoUrl: null },
+    ]);
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
     const cmp = fixture.componentInstance;
@@ -92,9 +98,7 @@ describe('BrandsAdminComponent', () => {
     const fixture = TestBed.createComponent(BrandsAdminComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    for (const r of http.match(() => true)) {
-      r.flush({ data: [{ id: 'b1', name: 'Toyota', logoUrl: null }] });
-    }
+    flushPaged(http, [{ id: 'b1', name: 'Toyota', logoUrl: null }]);
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
 
@@ -115,13 +119,13 @@ describe('BrandsAdminComponent', () => {
       dealerIds: ['d1', 'd2'],
     });
     for (const r of patchReqs) {
-      r.flush({ data: { id: 'b1', name: 'Toyota Updated', logoUrl: null } });
+      r.flush({ data: { id: 'b1', name: 'Toyota Updated', logoUrl: null }, error: null });
     }
 
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
 
-    for (const r of http.match(() => true)) r.flush({ data: [] });
+    flushPaged(http, []);
     await fixture.whenStable();
   });
 
@@ -133,11 +137,8 @@ describe('BrandsAdminComponent', () => {
     const fixture = TestBed.createComponent(BrandsAdminComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    for (const r of http.match(() => true)) {
-      r.flush({ data: [] });
-    }
+    flushPaged(http, []);
     await fixture.whenStable();
-    await new Promise((r) => setTimeout(r, 0));
 
     const cmp = fixture.componentInstance;
     const row: BrandRow = {
@@ -161,9 +162,7 @@ describe('BrandsAdminComponent', () => {
     const fixture = TestBed.createComponent(BrandsAdminComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    for (const r of http.match(() => true)) {
-      r.flush({ data: [] });
-    }
+    flushPaged(http, []);
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
 
@@ -177,13 +176,13 @@ describe('BrandsAdminComponent', () => {
     expect(postReqs[0].request.body).toEqual({ name: 'NuevaMarca', logoUrl: null });
     expect((postReqs[0].request.body as Record<string, unknown>)['dealerIds']).toBeUndefined();
     for (const r of postReqs) {
-      r.flush({ data: { id: 'bNew', name: 'NuevaMarca', logoUrl: null } });
+      r.flush({ data: { id: 'bNew', name: 'NuevaMarca', logoUrl: null }, error: null });
     }
 
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
 
-    for (const r of http.match(() => true)) r.flush({ data: [] });
+    flushPaged(http, []);
     await fixture.whenStable();
   });
 
@@ -195,7 +194,7 @@ describe('BrandsAdminComponent', () => {
     const fixture = TestBed.createComponent(BrandsAdminComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    for (const r of http.match(() => true)) r.flush({ data: [] });
+    flushPaged(http, []);
     await fixture.whenStable();
 
     const feedback = TestBed.inject(AdminFeedbackService);
@@ -210,13 +209,12 @@ describe('BrandsAdminComponent', () => {
 
     const postReq = http.expectOne((r) => r.url.endsWith('/api/v1/admin/brands'));
     expect(postReq.request.method).toBe('POST');
-    postReq.flush({ data: { id: 'b1', name: 'Toyota', logoUrl: null } });
+    postReq.flush({ data: { id: 'b1', name: 'Toyota', logoUrl: null }, error: null });
     await new Promise((r) => setTimeout(r, 0));
 
     expect(successSpy).toHaveBeenCalledWith('Marca "Toyota" creada');
 
-    // Cleanup: drain the load() reload so the test doesn't leak pending requests
-    for (const r of http.match(() => true)) r.flush({ data: [] });
+    flushPaged(http, []);
   });
 
   it('confirmDelete llama feedback.success con "Marca <name> eliminada"', async () => {
@@ -227,7 +225,7 @@ describe('BrandsAdminComponent', () => {
     const fixture = TestBed.createComponent(BrandsAdminComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    for (const r of http.match(() => true)) r.flush({ data: [] });
+    flushPaged(http, []);
     await fixture.whenStable();
 
     const feedback = TestBed.inject(AdminFeedbackService);
@@ -243,13 +241,12 @@ describe('BrandsAdminComponent', () => {
 
     const delReq = http.expectOne((r) => r.url.endsWith('/api/v1/admin/brands/b1'));
     expect(delReq.request.method).toBe('DELETE');
-    delReq.flush({ data: null });
+    delReq.flush({ data: null, error: null });
     await new Promise((r) => setTimeout(r, 0));
 
     expect(successSpy).toHaveBeenCalledWith('Marca "Toyota" eliminada');
 
-    // Cleanup: drain the load() reload
-    for (const r of http.match(() => true)) r.flush({ data: [] });
+    flushPaged(http, []);
   });
 
   it('confirmDelete no llama al DELETE si el usuario cancela el dialog', async () => {
@@ -261,7 +258,7 @@ describe('BrandsAdminComponent', () => {
     const fixture = TestBed.createComponent(BrandsAdminComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
-    for (const r of http.match(() => true)) r.flush({ data: [] });
+    flushPaged(http, []);
     await fixture.whenStable();
 
     await fixture.componentInstance.confirmDelete({
@@ -272,5 +269,31 @@ describe('BrandsAdminComponent', () => {
 
     const delReqs = http.match((r) => r.method === 'DELETE');
     expect(delReqs.length).toBe(0);
+  });
+
+  it('onPageChange actualiza page y vuelve a llamar al endpoint con page=<n>', async () => {
+    TestBed.configureTestingModule({
+      imports: [BrandsAdminComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(BrandsAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    flushPaged(http, [{ id: 'b1', name: 'Toyota', logoUrl: null }]);
+    await fixture.whenStable();
+
+    fixture.componentInstance.onPageChange(2);
+    await fixture.whenStable();
+    const req = http.expectOne(
+      (r) => r.url.endsWith('/admin/brands') && r.params.get('page') === '2',
+    );
+    req.flush({
+      data: [{ id: 'b1', name: 'Toyota', logoUrl: null }],
+      pagination: { page: 2, pageSize: 25, total: 50, totalPages: 2 },
+      error: null,
+    });
+    await fixture.whenStable();
+    expect(fixture.componentInstance.pagination().page).toBe(2);
+    expect(fixture.componentInstance.pagination().total).toBe(50);
   });
 });

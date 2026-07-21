@@ -1,5 +1,5 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
-import { badRequest, cannotDemoteSelf, notFound } from "../../shared/errors.js";
+import { cannotDemoteSelf, notFound } from "../../shared/errors.js";
 
 export class AdminUsersService {
   constructor(private readonly prisma: PrismaClient) {}

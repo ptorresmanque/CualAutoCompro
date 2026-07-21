@@ -8,6 +8,7 @@ import {
   type CreateVersionInput,
   type UpdateVersionInput,
 } from "./versions.dto.admin.js";
+import type { PaginationParams } from "../../shared/pagination.js";
 
 type VersionRow = {
   id: string;
@@ -87,6 +88,41 @@ export class VersionsService {
     });
   }
 
+  async listPaged(q: string | undefined, params: PaginationParams) {
+    const where: Prisma.VersionWhereInput = {
+      deletedAt: null,
+      model: { deletedAt: null, brand: { deletedAt: null } },
+    };
+    if (q) {
+      const term = q.trim();
+      if (term.length > 0) {
+        where.OR = [
+          { name: { contains: term } },
+          { model: { name: { contains: term } } },
+          { model: { brand: { name: { contains: term } } } },
+        ];
+      }
+    }
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.version.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: params.skip,
+        take: params.take,
+        include: {
+          model: { select: { id: true, name: true } },
+          equipmentItems: {
+            include: {
+              equipmentItem: { select: { id: true, name: true, category: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.version.count({ where }),
+    ]);
+    return { rows, total };
+  }
+
   async detail(id: string) {
     const v = await this.prisma.version.findFirst({
       where: {
@@ -115,9 +151,13 @@ export class VersionsService {
       input.transmission as (typeof TRANSMISSIONS)[number],
     );
     if (knownFuel && knownTrans) {
-      return this.prisma.version.create({
+      const version = await this.prisma.version.create({
         data: input as Prisma.VersionUncheckedCreateInput,
       });
+      await this.prisma.versionPriceHistory.create({
+        data: { versionId: version.id, priceClp: version.priceClp, note: "Versión creada" },
+      });
+      return version;
     }
 
     if (!knownFuel) {
@@ -186,7 +226,18 @@ export class VersionsService {
       `SELECT ${VERSION_RETURNING} FROM \`Version\` WHERE id = ?`,
       id,
     );
-    return rows[0]!;
+    const created = rows[0]!;
+    await this.prisma.versionPriceHistory.create({
+      data: { versionId: id, priceClp: created.priceClp, note: "Versión creada" },
+    });
+    return created;
+  }
+
+  async listPriceHistory(versionId: string) {
+    return this.prisma.versionPriceHistory.findMany({
+      where: { versionId },
+      orderBy: { effectiveFrom: "asc" },
+    });
   }
 
   async update(id: string, input: UpdateVersionInput) {
@@ -318,10 +369,26 @@ export class VersionsService {
       // SCHEMA-DRIFT NOTE: raw UPDATE porque extendEnum agrega un valor
       // nuevo al enum runtime. En MariaDB no hay RETURNING para UPDATE,
       // así que hacemos SELECT después para devolver la fila actualizada.
+      const oldRow = await this.prisma.$queryRawUnsafe<Array<{ priceClp: number }>>(
+        `SELECT \`priceClp\` FROM \`Version\` WHERE id = ? AND \`deletedAt\` IS NULL`,
+        id,
+      );
+      if (oldRow.length === 0) throw notFound("Versión no encontrada");
+      const oldPriceClp = oldRow[0]!.priceClp;
+      const newPriceClp = input.priceClp;
       const updateResult = await this.prisma.$executeRawUnsafe(
         `UPDATE \`Version\` SET ${setClauses.join(", ")} WHERE id = ? AND \`deletedAt\` IS NULL`,
         ...values,
       );
+      if (newPriceClp !== undefined && newPriceClp !== oldPriceClp) {
+        await this.prisma.versionPriceHistory.create({
+          data: {
+            versionId: id,
+            priceClp: newPriceClp,
+            note: typeof input.priceNote === "string" ? input.priceNote : null,
+          },
+        });
+      }
       if (updateResult === 0) throw notFound("Versión no encontrada");
       const rows = await this.prisma.$queryRawUnsafe<VersionRow[]>(
         `SELECT ${VERSION_RETURNING} FROM \`Version\` WHERE id = ? AND \`deletedAt\` IS NULL`,
@@ -331,13 +398,28 @@ export class VersionsService {
     }
 
     const data = Object.fromEntries(
-      Object.entries(input).filter(([, v]) => v !== undefined),
+      Object.entries(input).filter(([k, v]) => v !== undefined && k !== "priceNote"),
     ) as Prisma.VersionUpdateInput;
+    const existing = await this.prisma.version.findUnique({
+      where: { id, deletedAt: null },
+      select: { priceClp: true },
+    });
+    if (!existing) throw notFound("Versión no encontrada");
     try {
-      return await this.prisma.version.update({
+      const updated = await this.prisma.version.update({
         where: { id, deletedAt: null },
         data,
       });
+      if (input.priceClp !== undefined && input.priceClp !== existing.priceClp) {
+        await this.prisma.versionPriceHistory.create({
+          data: {
+            versionId: id,
+            priceClp: input.priceClp,
+            note: typeof input.priceNote === "string" ? input.priceNote : null,
+          },
+        });
+      }
+      return updated;
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
         throw notFound("Versión no encontrada");
@@ -359,5 +441,31 @@ export class VersionsService {
       }
       throw e;
     }
+  }
+
+  async restore(id: string) {
+    const version = await this.prisma.version.findUnique({ where: { id }, select: { modelId: true } });
+    if (!version) throw notFound("Versión no encontrada");
+    const model = await this.prisma.model.findFirst({
+      where: { id: version.modelId, deletedAt: null, brand: { deletedAt: null } },
+      select: { id: true },
+    });
+    if (!model) throw notFound("No se puede restaurar: el modelo o la marca está eliminado");
+    return this.prisma.version.update({ where: { id }, data: { deletedAt: null } });
+  }
+
+  async bulkDelete(ids: string[]) {
+    const failed: Array<{ id: string; reason: string }> = [];
+    let deleted = 0;
+    for (const id of ids) {
+      try {
+        await this.softDelete(id);
+        deleted += 1;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        failed.push({ id, reason: msg });
+      }
+    }
+    return { deleted, failed };
   }
 }

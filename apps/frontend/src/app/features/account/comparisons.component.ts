@@ -56,6 +56,8 @@ export class ComparisonsComponent {
   error = signal<string | null>(null);
   deletingId = signal<string | null>(null);
   copiedId = signal<string | null>(null);
+  editingId = signal<string | null>(null);
+  editingName = signal('');
 
   readonly hasItems = computed(() => this.comparisons().length > 0);
 
@@ -84,8 +86,8 @@ export class ComparisonsComponent {
 
   shareUrl(slug: string | null): string {
     if (!slug) return '';
-    if (typeof window === 'undefined') return `/c/${slug}`;
-    return `${window.location.origin}/c/${slug}`;
+    if (typeof window === 'undefined') return `/c/${encodeURIComponent(slug)}`;
+    return `${window.location.origin}/c/${encodeURIComponent(slug)}`;
   }
 
   async copyUrl(c: Comparison): Promise<void> {
@@ -123,6 +125,29 @@ export class ComparisonsComponent {
       this.error.set('No se pudo eliminar la comparación.');
     } finally {
       this.deletingId.set(null);
+    }
+  }
+
+  startRename(c: Comparison): void {
+    this.editingId.set(c.id);
+    this.editingName.set(c.name ?? '');
+  }
+
+  cancelRename(): void {
+    this.editingId.set(null);
+    this.editingName.set('');
+  }
+
+  async saveRename(c: Comparison): Promise<void> {
+    try {
+      const res = await this.api.patch<{ data: { id: string; name: string | null } }>(
+        `/me/comparisons/${c.id}`,
+        { name: this.editingName() },
+      );
+      this.comparisons.update((items) => items.map((item) => item.id === c.id ? { ...item, name: res.data.name } : item));
+      this.cancelRename();
+    } catch {
+      this.error.set('No se pudo renombrar la comparación.');
     }
   }
 

@@ -21,7 +21,11 @@ describe('MaintenanceAdminComponent', () => {
     const reqs = http.match(() => true);
     expect(reqs.length).toBeGreaterThan(0);
     for (const r of reqs) {
-      r.flush({ data: { total: 1, items: [{ id: 'v1', name: 'XLI', model: { name: 'Corolla' } }], page: 1, pageSize: 50 } });
+      r.flush({
+        data: [{ id: 'v1', name: 'XLI', model: { name: 'Corolla' } }],
+        pagination: { page: 1, pageSize: 50, total: 1, totalPages: 1 },
+        error: null,
+      });
     }
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
@@ -29,7 +33,11 @@ describe('MaintenanceAdminComponent', () => {
     fixture.componentInstance.onVersionChange('v1');
     await fixture.whenStable();
     const mainReqs = http.match(() => true);
-    for (const r of mainReqs) r.flush({ data: [] });
+    for (const r of mainReqs) r.flush({
+        data: [],
+        pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 },
+        error: null,
+      });
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
     fixture.componentInstance.openCreate();

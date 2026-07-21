@@ -70,10 +70,11 @@ export class ApiService {
     return unwrap(response);
   }
 
-  delete<T>(path: string): Promise<T> {
+  delete<T>(path: string, body?: unknown): Promise<T> {
     return firstValueFrom(
       this.http.delete<T>(`${ENV.apiBase}${path}`, {
         withCredentials: true,
+        ...(body === undefined ? {} : { body }),
       }),
     );
   }

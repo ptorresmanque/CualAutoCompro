@@ -11,6 +11,8 @@ import { ApiCallError } from '../../core/api-error';
 import { ApiService } from '../../core/api.service';
 import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
+import { PaginationComponent } from '../../shared/ui/pagination.component';
+import type { PagedResponse } from '../../shared/ui/pagination.types';
 import { sortItems, type SortDir } from './sort-utils';
 
 interface MaintenanceRow { id: string; versionId: string; mileageTag: number; costClp: number; }
@@ -22,6 +24,7 @@ type SortKey = 'versionId' | 'mileageTag' | 'costClp';
   imports: [
     AdminEditDialogComponent,
     DecimalPipe,
+    PaginationComponent,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -41,6 +44,10 @@ export class MaintenanceAdminComponent {
   readonly versions = signal<VersionOption[]>([]);
   readonly selectedVersion = signal<string>('');
   readonly items = signal<MaintenanceRow[]>([]);
+  readonly pagination = signal({ page: 1, pageSize: 25, total: 0, totalPages: 1 });
+  readonly page = signal(1);
+  readonly pageSize = signal(25);
+  readonly search = signal('');
   readonly dialogEntity = signal<MaintenanceRow | null | undefined>(undefined);
   readonly dialogMode = computed(() => (this.dialogEntity() === undefined ? 'closed' : 'open'));
   readonly error = signal<string | null>(null);
@@ -76,15 +83,12 @@ export class MaintenanceAdminComponent {
   private async loadMaintenance(versionId: string): Promise<void> {
     this.loading.set(true);
     try {
-      const res = await this.api
-        .get<{ data: MaintenanceRow[] }>(`/admin/maintenance`)
-        .catch(async () => {
-          const pub = await this.api.get<{ data: MaintenanceRow[] }>(
-            `/maintenance/version/${versionId}`,
-          );
-          return pub;
-        });
-      this.items.set(res.data.filter((m) => m.versionId === versionId));
+      const params: Record<string, string | number> = { page: this.page(), pageSize: this.pageSize() };
+      const q = this.search().trim();
+      if (q.length > 0) params['q'] = q;
+      const res = await this.api.get<PagedResponse<MaintenanceRow[]>>('/admin/maintenance', params);
+      this.items.set(res.data);
+      this.pagination.set(res.pagination);
     } catch (e) {
       this.error.set((e as Error).message);
     } finally {
@@ -158,6 +162,28 @@ export class MaintenanceAdminComponent {
       this.error.set(msg);
       this.feedback.error(msg);
     }
+  }
+
+  onSearch(value: string): void {
+    this.search.set(value);
+    this.page.set(1);
+    if (this.selectedVersion()) void this.loadMaintenance(this.selectedVersion());
+  }
+
+  onPageChange(page: number): void {
+    this.page.set(page);
+    if (this.selectedVersion()) void this.loadMaintenance(this.selectedVersion());
+  }
+
+  onPageSizeChange(pageSize: number): void {
+    this.pageSize.set(pageSize);
+    this.page.set(1);
+    if (this.selectedVersion()) void this.loadMaintenance(this.selectedVersion());
+  }
+
+  retry(): void {
+    this.error.set(null);
+    if (this.selectedVersion()) void this.loadMaintenance(this.selectedVersion());
   }
 
   toggleSort(key: SortKey): void {

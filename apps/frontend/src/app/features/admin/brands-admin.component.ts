@@ -4,10 +4,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { AdminFeedbackService } from '../../core/admin-feedback.service';
-import { ApiCallError } from '../../core/api-error';
+import { ApiCallError, unwrap } from '../../core/api-error';
 import { ApiService } from '../../core/api.service';
 import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
+import { PaginationComponent } from '../../shared/ui/pagination.component';
+import type { PageMeta, PagedResponse } from '../../shared/ui/pagination.types';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { sortItems, type SortDir } from './sort-utils';
 
@@ -22,7 +24,7 @@ type SortKey = 'name';
 
 @Component({
   selector: 'app-brands-admin',
-  imports: [AdminEditDialogComponent, SearchInputComponent, MatButtonModule, MatIconModule],
+  imports: [AdminEditDialogComponent, SearchInputComponent, PaginationComponent, MatButtonModule, MatIconModule],
   templateUrl: './brands-admin.component.html',
   styleUrl: './brands-admin.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,7 +37,10 @@ export class BrandsAdminComponent {
   readonly editDialog = viewChild<AdminEditDialogComponent>(AdminEditDialogComponent);
 
   readonly items = signal<BrandRow[]>([]);
+  readonly pagination = signal<PageMeta>({ page: 1, pageSize: 25, total: 0, totalPages: 1 });
   readonly search = signal('');
+  readonly page = signal(1);
+  readonly pageSize = signal(25);
   readonly dialogEntity = signal<BrandRow | null | undefined>(undefined);
   readonly dialogMode = computed(() => (this.dialogEntity() === undefined ? 'closed' : 'open'));
   readonly error = signal<string | null>(null);
@@ -57,11 +62,15 @@ export class BrandsAdminComponent {
   private async load(): Promise<void> {
     this.loading.set(true);
     try {
-      const res = await this.api.get<{ data: BrandRow[] }>('/admin/brands').catch(async () => {
-        const pub = await this.api.get<{ data: BrandRow[] }>('/brands');
-        return pub;
-      });
+      const params: Record<string, string | number> = {
+        page: this.page(),
+        pageSize: this.pageSize(),
+      };
+      const q = this.search().trim();
+      if (q.length > 0) params['q'] = q;
+      const res = await this.api.get<PagedResponse<BrandRow[]>>('/admin/brands', params);
       this.items.set(res.data);
+      this.pagination.set(res.pagination);
     } catch (e) {
       this.error.set((e as Error).message);
     } finally {
@@ -127,8 +136,21 @@ export class BrandsAdminComponent {
     }
   }
 
-  onSearch(value: string): void {
-    this.search.set(value);
+  onSearch(q: string): void {
+    this.search.set(q);
+    this.page.set(1);
+    void this.load();
+  }
+
+  onPageChange(page: number): void {
+    this.page.set(page);
+    void this.load();
+  }
+
+  onPageSizeChange(pageSize: number): void {
+    this.pageSize.set(pageSize);
+    this.page.set(1);
+    void this.load();
   }
 
   toggleSort(key: SortKey): void {
@@ -139,4 +161,12 @@ export class BrandsAdminComponent {
       this.sortDir.set('asc');
     }
   }
+
+  retry(): void {
+    this.error.set(null);
+    void this.load();
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private _unwrap = unwrap;
 }

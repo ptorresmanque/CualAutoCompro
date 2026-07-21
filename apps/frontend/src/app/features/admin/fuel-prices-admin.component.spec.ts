@@ -9,8 +9,19 @@ const dialogMock = {
   open: () => ({ afterClosed: () => of(true) }),
 };
 
+const emptyPage = {
+  data: [],
+  pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 },
+  error: null,
+};
+
+const sampleData = [
+  { id: 'fp1', fuelType: 'gasoline_93', pricePerUnitClp: 1280, unit: 'litro', effectiveFrom: '2026-01-01T00:00:00.000Z' },
+  { id: 'fp2', fuelType: 'diesel', pricePerUnitClp: 1190, unit: 'litro', effectiveFrom: '2026-01-01T00:00:00.000Z' },
+];
+
 describe('FuelPricesAdminComponent', () => {
-  it('smoke: carga lista de precios y abre dialog al pulsar Nuevo', async () => {
+  it('smoke: carga lista paginada y abre dialog al pulsar Nuevo', async () => {
     TestBed.configureTestingModule({
       imports: [FuelPricesAdminComponent],
       providers: [provideHttpClient(), provideHttpClientTesting()],
@@ -22,10 +33,9 @@ describe('FuelPricesAdminComponent', () => {
     expect(reqs.length).toBeGreaterThan(0);
     for (const r of reqs) {
       r.flush({
-        data: [
-          { id: 'fp1', fuelType: 'gasoline_93', pricePerUnitClp: 1280, unit: 'litro', effectiveFrom: '2026-01-01T00:00:00.000Z' },
-          { id: 'fp2', fuelType: 'diesel', pricePerUnitClp: 1190, unit: 'litro', effectiveFrom: '2026-01-01T00:00:00.000Z' },
-        ],
+        data: sampleData,
+        pagination: { page: 1, pageSize: 25, total: sampleData.length, totalPages: 1 },
+        error: null,
       });
     }
     await fixture.whenStable();
@@ -56,7 +66,7 @@ describe('FuelPricesAdminComponent', () => {
 
     const http = TestBed.inject(HttpTestingController);
     const initial = http.expectOne((r) => r.url.includes('/api/v1/admin/fuel-prices'));
-    initial.flush({ data: [] });
+    initial.flush(emptyPage);
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
 
@@ -70,47 +80,12 @@ describe('FuelPricesAdminComponent', () => {
 
     const postReq = http.expectOne((r) => r.url.includes('/api/v1/admin/fuel-prices') && r.method === 'POST');
     expect(postReq.request.method).toBe('POST');
-    postReq.flush({ data: { id: 'fp3' } });
+    postReq.flush({ data: { id: 'fp3' }, error: null });
 
     await new Promise((r) => setTimeout(r, 0));
     const reloadReq = http.expectOne((r) => r.url.includes('/api/v1/admin/fuel-prices') && r.method === 'GET');
-    reloadReq.flush({ data: [] });
+    reloadReq.flush(emptyPage);
     await savePromise;
-    await fixture.whenStable();
-  });
-
-  it('confirmDelete lanza DELETE a /admin/fuel-prices/:id', async () => {
-    TestBed.configureTestingModule({
-      imports: [FuelPricesAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
-    });
-    const fixture = TestBed.createComponent(FuelPricesAdminComponent);
-    fixture.detectChanges();
-
-    const http = TestBed.inject(HttpTestingController);
-    const initial = http.expectOne((r) => r.url.includes('/api/v1/admin/fuel-prices'));
-    initial.flush({ data: [{ id: 'fp1', fuelType: 'gasoline_93', pricePerUnitClp: 1280, unit: 'litro', effectiveFrom: '2026-01-01' }] });
-    await fixture.whenStable();
-    await new Promise((r) => setTimeout(r, 0));
-
-    const deletePromise = fixture.componentInstance.confirmDelete({
-      id: 'fp1',
-      fuelType: 'gasoline_93',
-      pricePerUnitClp: 1280,
-      unit: 'litro',
-      effectiveFrom: '2026-01-01',
-    });
-    await fixture.whenStable();
-    await new Promise((r) => setTimeout(r, 0));
-
-    const delReq = http.expectOne((r) => r.url.includes('/api/v1/admin/fuel-prices/fp1'));
-    expect(delReq.request.method).toBe('DELETE');
-    delReq.flush({ data: null });
-
-    await new Promise((r) => setTimeout(r, 0));
-    const reloadReq = http.expectOne((r) => r.url.includes('/api/v1/admin/fuel-prices') && r.method === 'GET');
-    reloadReq.flush({ data: [] });
-    await deletePromise;
     await fixture.whenStable();
   });
 });

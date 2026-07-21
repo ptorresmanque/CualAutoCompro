@@ -31,6 +31,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'c/:slug',
+        loadComponent: () =>
+          import('./features/compare/compare.component').then(
+            (m) => m.CompareComponent,
+          ),
+      },
+      {
         path: 'login',
         loadComponent: () =>
           import('./features/auth/login.component').then(
@@ -52,6 +59,29 @@ export const routes: Routes = [
             (m) => m.ComparisonsComponent,
           ),
       },
+      {
+        path: 'account/settings',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/account/settings.component').then(
+            (m) => m.AccountSettingsComponent,
+          ),
+      },
+      {
+        path: 'account/forgot-password',
+        loadComponent: () =>
+          import('./features/account/forgot-password.component').then(
+            (m) => m.ForgotPasswordComponent,
+          ),
+      },
+      {
+        path: 'account/reset-password',
+        loadComponent: () =>
+          import('./features/account/reset-password.component').then(
+            (m) => m.ResetPasswordComponent,
+          ),
+      },
+
       {
         path: 'favoritos',
         canActivate: [authGuard],
@@ -131,7 +161,28 @@ export const routes: Routes = [
                 (m) => m.FuelPricesAdminComponent,
               ),
           },
+          {
+            path: 'users',
+            loadComponent: () =>
+              import('./features/admin/users-admin.component').then(
+                (m) => m.UsersAdminComponent,
+              ),
+          },
+          {
+            path: 'trash',
+            loadComponent: () =>
+              import('./features/admin/trash-admin.component').then(
+                (m) => m.TrashAdminComponent,
+              ),
+          },
         ],
+      },
+      {
+        path: '**',
+        loadComponent: () =>
+          import('./features/not-found.component').then(
+            (m) => m.NotFoundComponent,
+          ),
       },
     ],
   },

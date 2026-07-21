@@ -23,6 +23,7 @@ export const resetTestDb = async (prisma: PrismaClient) => {
     prisma.comparisonItem.deleteMany(),
     prisma.comparison.deleteMany(),
     prisma.maintenanceCost.deleteMany(),
+    prisma.versionPriceHistory.deleteMany(),
     prisma.versionEquipment.deleteMany(),
     prisma.equipmentItem.deleteMany(),
     prisma.version.deleteMany(),

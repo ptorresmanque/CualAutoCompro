@@ -8,9 +8,12 @@ equipmentRouter.get("/", equipmentController.list);
 
 export const equipmentAdminRouter = Router();
 equipmentAdminRouter.use(authenticate, requireRole("ADMIN"));
-equipmentAdminRouter.get("/", equipmentController.listAll);
+equipmentAdminRouter.get("/", equipmentController.listPaged);
 equipmentAdminRouter.post("/", equipmentController.create);
+equipmentAdminRouter.post("/bulk-delete", equipmentController.bulkDelete);
+equipmentAdminRouter.get("/export", equipmentController.exportCsv);
 equipmentAdminRouter.patch("/:id", equipmentController.update);
 equipmentAdminRouter.delete("/:id", equipmentController.softDelete);
+equipmentAdminRouter.post("/:id/restore", equipmentController.restore);
 equipmentAdminRouter.post("/attach", equipmentController.attach);
 equipmentAdminRouter.delete("/version/:versionId/item/:itemId", equipmentController.detach);

@@ -104,6 +104,7 @@ model Version {
   maintenanceCosts      MaintenanceCost[]
   comparisonItems       ComparisonItem[]
   favorites             Favorite[]
+  priceHistory          VersionPriceHistory[]
   deletedAt             DateTime?
   createdAt             DateTime           @default(now())
 
@@ -132,6 +133,19 @@ model VersionEquipment {
   @@id([versionId, equipmentItemId])
 }
 
+model VersionPriceHistory {
+  id           String   @id @default(cuid())
+  versionId    String
+  priceClp     Int
+  effectiveFrom DateTime @default(now())
+  note         String?
+  version      Version  @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@index([versionId])
+  @@index([effectiveFrom])
+}
+
+
 model MaintenanceCost {
   id         String   @id @default(cuid())
   versionId  String
@@ -146,15 +160,17 @@ model MaintenanceCost {
 }
 
 model User {
-  id           String         @id @default(cuid())
-  email        String         @unique
-  passwordHash String?
-  name         String
-  role         String         @default("USER")
-  createdAt    DateTime       @default(now())
-  comparisons  Comparison[]
-  favorites    Favorite[]
-  identities   UserIdentity[]
+  id                       String         @id @default(cuid())
+  email                    String         @unique
+  passwordHash             String?
+  name                     String
+  role                     String         @default("USER")
+  createdAt                DateTime       @default(now())
+  resetPasswordToken       String?        @unique
+  resetPasswordExpiresAt   DateTime?
+  comparisons              Comparison[]
+  favorites                Favorite[]
+  identities               UserIdentity[]
 }
 
 model Comparison {

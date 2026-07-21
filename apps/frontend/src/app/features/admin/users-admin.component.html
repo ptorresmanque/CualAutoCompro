@@ -1,0 +1,40 @@
+<section>
+  <header class="flex items-center justify-between mb-4 gap-2">
+    <div>
+      <h2 class="text-xl font-bold">Usuarios</h2>
+      <p class="text-sm text-ink-muted">Administra permisos de acceso al panel.</p>
+    </div>
+    <button mat-stroked-button type="button" (click)="load()" [disabled]="loading()">Actualizar</button>
+  </header>
+
+  @if (error(); as message) {
+    <div class="mb-3 rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark" role="alert">{{ message }}</div>
+  }
+  @if (loading()) {
+    <p class="text-sm text-ink-muted">Cargando…</p>
+  } @else if (items().length === 0) {
+    <p class="text-sm text-ink-muted">No hay usuarios.</p>
+  } @else {
+    <div class="admin-table-scroll">
+      <table class="admin-table w-full text-sm">
+        <thead class="text-left text-xs text-ink-muted">
+          <tr><th class="py-2">Nombre</th><th class="py-2">Email</th><th class="py-2">Rol</th><th class="py-2">Acciones</th></tr>
+        </thead>
+        <tbody>
+          @for (user of items(); track user.id) {
+            <tr class="border-t border-border">
+              <td class="py-2">{{ user.name }}</td>
+              <td class="py-2">{{ user.email }}</td>
+              <td class="py-2"><span class="font-mono text-xs">{{ user.role }}</span></td>
+              <td class="py-2">
+                <button mat-stroked-button type="button" [disabled]="workingId() === user.id" (click)="changeRole(user)">
+                  {{ user.role === 'ADMIN' ? 'Degradar' : 'Promover' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

@@ -52,6 +52,7 @@ export const createVersionSchema = versionObjectSchema.superRefine(validateRecal
 export const updateVersionSchema = versionObjectSchema
   .partial()
   .omit({ modelId: true })
+  .extend({ priceNote: z.string().max(120).optional() })
   .superRefine(validateRecall);
 
 export type CreateVersionInput = z.infer<typeof createVersionSchema>;

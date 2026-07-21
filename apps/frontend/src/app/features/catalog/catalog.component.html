@@ -233,6 +233,13 @@
         <p class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted" data-testid="loading">Cargando…</p>
       }
 
+      @if (loadError(); as error) {
+        <div class="border border-warn bg-warn-light px-4 py-3 text-sm text-warn-dark" role="alert">
+          {{ error }}
+          <button type="button" class="ml-3 underline" (click)="load()">Reintentar</button>
+        </div>
+      }
+
       @if (items().length === 0 && !loading()) {
         <div class="empty-card">
           <p class="font-semibold text-ink mb-2">No se encontraron modelos</p>
@@ -260,6 +267,26 @@
           </li>
         }
       </ul>
+
+      @if (pageCount() > 1) {
+        <nav class="mt-8 flex items-center justify-center gap-4" aria-label="Paginación del catálogo">
+          <button
+            type="button"
+            class="px-4 py-2 border border-border text-sm disabled:opacity-40"
+            [disabled]="!hasPreviousPage() || loading()"
+            (click)="goToPage((filters().page ?? 1) - 1)"
+          >Anterior</button>
+          <span class="font-mono text-xs uppercase tracking-stamp text-ink-muted">
+            Página {{ filters().page ?? 1 }} de {{ pageCount() }}
+          </span>
+          <button
+            type="button"
+            class="px-4 py-2 border border-border text-sm disabled:opacity-40"
+            [disabled]="!hasNextPage() || loading()"
+            (click)="goToPage((filters().page ?? 1) + 1)"
+          >Siguiente</button>
+        </nav>
+      }
 
       @if (selectionCount() > 0) {
         <div class="selection-bar" data-testid="selection-bar">

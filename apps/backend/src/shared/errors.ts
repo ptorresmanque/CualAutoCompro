@@ -9,7 +9,8 @@ export type ErrorCode =
   | "BAD_REQUEST"
   | "BRAND_HAS_MODELS"
   | "MODEL_HAS_VERSIONS"
-  | "CANNOT_DEMOTE_SELF";
+  | "CANNOT_DEMOTE_SELF"
+  | "TOO_MANY_REQUESTS";
 
 const STATUS: Record<ErrorCode, number> = {
   VALIDATION: 400,
@@ -21,6 +22,7 @@ const STATUS: Record<ErrorCode, number> = {
   BRAND_HAS_MODELS: 409,
   MODEL_HAS_VERSIONS: 409,
   CANNOT_DEMOTE_SELF: 400,
+  TOO_MANY_REQUESTS: 429,
 };
 
 export class AppError extends Error {
@@ -59,6 +61,8 @@ export const validation = (
 export const badRequest = (msg: string) => new AppError("BAD_REQUEST", msg);
 export const cannotDemoteSelf = (msg = "No podés degradarte a vos mismo") =>
   new AppError("CANNOT_DEMOTE_SELF", msg);
+export const tooManyRequests = (msg = "Demasiados intentos. Intenta nuevamente más tarde.") =>
+  new AppError("TOO_MANY_REQUESTS", msg);
 
 export class OAuthError extends Error {
   constructor(

@@ -148,3 +148,102 @@ describe("VersionsService + extendEnum", () => {
     expect(updated.transmission).toBe(newTrans);
   });
 });
+
+
+describe("VersionsService price history", () => {
+  beforeEach(async () => {
+    setupTestPrisma();
+    await resetTestDb(prisma);
+  });
+  afterEach(async () => {
+    await prisma.$disconnect();
+  });
+
+  it("create inserta el precio inicial en VersionPriceHistory", async () => {
+    const svc = new VersionsService(prisma);
+    const brand = await prisma.brand.create({ data: { name: "Toyota" } });
+    const model = await prisma.model.create({
+      data: { name: "Corolla", brandId: brand.id, segment: "SEDAN" },
+    });
+    const version = await svc.create({
+      modelId: model.id,
+      name: "XLI",
+      year: 2025,
+      priceClp: 15_000_000,
+      transmission: "AUTOMATIC",
+      fuel: "BENCINA",
+      engineDisplacementCc: 1800,
+      powerHp: 140,
+      torqueNm: 180,
+      consumptionCityKmL: 14,
+      consumptionHighwayKmL: 18,
+      lengthMm: 4630, widthMm: 1780, heightMm: 1455,
+      weightKg: 1300, trunkLiters: 470, airbagCount: 6,
+      hasAbs: true, hasEsp: true, hasCruiseControl: true,
+      hasRecall: false,
+      recallUrl: null,
+    });
+    const history = await svc.listPriceHistory(version.id);
+    expect(history.length).toBe(1);
+    expect(history[0]!.priceClp).toBe(15_000_000);
+    expect(history[0]!.note).toBe("Versión creada");
+  });
+
+  it("update registra un nuevo VersionPriceHistory al cambiar priceClp", async () => {
+    const svc = new VersionsService(prisma);
+    const brand = await prisma.brand.create({ data: { name: "Mazda" } });
+    const model = await prisma.model.create({
+      data: { name: "3", brandId: brand.id, segment: "SEDAN" },
+    });
+    const version = await svc.create({
+      modelId: model.id,
+      name: "Touring",
+      year: 2025,
+      priceClp: 18_000_000,
+      transmission: "AUTOMATIC",
+      fuel: "BENCINA",
+      engineDisplacementCc: 2000,
+      powerHp: 150, torqueNm: 200,
+      consumptionCityKmL: 12, consumptionHighwayKmL: 16,
+      lengthMm: 4660, widthMm: 1800, heightMm: 1440,
+      weightKg: 1400, trunkLiters: 450, airbagCount: 6,
+      hasAbs: true, hasEsp: true, hasCruiseControl: true,
+      hasRecall: false,
+      recallUrl: null,
+    });
+    await svc.update(version.id, { priceClp: 19_500_000, priceNote: "Ajuste Q1" });
+
+    const history = await svc.listPriceHistory(version.id);
+    expect(history.length).toBe(2);
+    expect(history[1]!.priceClp).toBe(19_500_000);
+    expect(history[1]!.note).toBe("Ajuste Q1");
+  });
+
+  it("update NO registra history si priceClp no cambia", async () => {
+    const svc = new VersionsService(prisma);
+    const brand = await prisma.brand.create({ data: { name: "Kia" } });
+    const model = await prisma.model.create({
+      data: { name: "Rio", brandId: brand.id, segment: "SEDAN" },
+    });
+    const version = await svc.create({
+      modelId: model.id,
+      name: "LX",
+      year: 2025,
+      priceClp: 13_000_000,
+      transmission: "MANUAL",
+      fuel: "BENCINA",
+      engineDisplacementCc: 1400,
+      powerHp: 100, torqueNm: 130,
+      consumptionCityKmL: 15, consumptionHighwayKmL: 19,
+      lengthMm: 4060, widthMm: 1725, heightMm: 1450,
+      weightKg: 1050, trunkLiters: 325, airbagCount: 4,
+      hasAbs: true, hasEsp: true, hasCruiseControl: false,
+      hasRecall: false,
+      recallUrl: null,
+    });
+    await svc.update(version.id, { name: "LX Plus" });
+
+    const history = await svc.listPriceHistory(version.id);
+    expect(history.length).toBe(1);
+  });
+});

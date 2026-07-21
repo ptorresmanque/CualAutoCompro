@@ -22,9 +22,17 @@ describe('VersionsAdminComponent', () => {
     expect(reqs.length).toBeGreaterThan(0);
     for (const r of reqs) {
       if (r.request.url.includes('/models')) {
-        r.flush({ data: { total: 0, items: [], page: 1, pageSize: 50 } });
+        r.flush({
+        data: [],
+        pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 },
+        error: null,
+      });
       } else {
-        r.flush({ data: { total: 1, items: [{ id: 'v1', name: 'XLI', year: 2024, priceClp: 15000000, model: { name: 'Corolla' } }], page: 1, pageSize: 50 } });
+        r.flush({
+        data: [{ id: 'v1', name: 'XLI', year: 2024, priceClp: 15000000, model: { name: 'Corolla' } }],
+        pagination: { page: 1, pageSize: 25, total: 1, totalPages: 1 },
+        error: null,
+      });
       }
     }
     await fixture.whenStable();
@@ -43,7 +51,11 @@ describe('VersionsAdminComponent', () => {
 
     // Drain initial load() requests.
     for (const r of http.match(() => true)) {
-      r.flush({ data: { items: [] } });
+      r.flush({
+        data: [],
+        pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 },
+        error: null,
+      });
     }
     await fixture.whenStable();
 
@@ -83,7 +95,11 @@ describe('VersionsAdminComponent', () => {
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
     const reqs = http.match(() => true);
-    for (const r of reqs) r.flush({ data: [] });
+    for (const r of reqs) r.flush({
+        data: [],
+        pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 },
+        error: null,
+      });
     await fixture.whenStable();
     fixture.componentInstance.openCreate();
     expect(fixture.componentInstance.dialogEntity()).toBeNull();
@@ -101,7 +117,11 @@ describe('VersionsAdminComponent', () => {
     // Seed initial load.
     const seedReqs = http.match(() => true);
     for (const r of seedReqs) {
-      r.flush({ data: { items: [] } });
+      r.flush({
+        data: [],
+        pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 },
+        error: null,
+      });
     }
     await fixture.whenStable();
 
@@ -128,7 +148,11 @@ describe('VersionsAdminComponent', () => {
 
     http.expectOne(
       (r) => r.url.includes('/admin/equipment') && !r.url.includes('/attach') && !r.url.includes('/version/'),
-    ).flush({ data: [] });
+    ).flush({
+        data: [],
+        pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 },
+        error: null,
+      });
     http.expectOne((r) => r.url.includes('/models')).flush({ data: { items: [] } });
     await fixture.whenStable();
 

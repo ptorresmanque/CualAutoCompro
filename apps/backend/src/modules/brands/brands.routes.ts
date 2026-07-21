@@ -9,7 +9,10 @@ brandsRouter.get("/:id/models", brandsController.models);
 
 export const brandsAdminRouter = Router();
 brandsAdminRouter.use(authenticate, requireRole("ADMIN"));
-brandsAdminRouter.get("/", brandsController.listAll);
+brandsAdminRouter.get("/", brandsController.listPaged);
 brandsAdminRouter.post("/", brandsController.create);
+brandsAdminRouter.post("/bulk-delete", brandsController.bulkDelete);
+brandsAdminRouter.get("/export", brandsController.exportCsv);
 brandsAdminRouter.patch("/:id", brandsController.update);
 brandsAdminRouter.delete("/:id", brandsController.softDelete);
+brandsAdminRouter.post("/:id/restore", brandsController.restore);

@@ -71,4 +71,14 @@ export class ComparisonsService {
     if (!cmp || cmp.userId !== userId) throw notFound("Comparación no encontrada");
     await this.prisma.comparison.delete({ where: { id } });
   }
+
+  async rename(id: string, userId: string, name: string) {
+    const comparison = await this.prisma.comparison.findUnique({ where: { id }, select: { userId: true } });
+    if (!comparison || comparison.userId !== userId) throw notFound("Comparación no encontrada");
+    return this.prisma.comparison.update({
+      where: { id },
+      data: { name: name.trim() || null },
+      select: { id: true, name: true },
+    });
+  }
 }

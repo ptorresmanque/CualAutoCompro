@@ -72,6 +72,7 @@ export class TopNavBarComponent {
     if (u) {
       base.splice(2, 0, { path: '/favoritos', label: 'Favoritos', icon: 'favorite' });
       base.push({ path: '/account/comparisons', label: 'Mis comparaciones', icon: 'bookmarks' });
+      base.push({ path: '/account/settings', label: 'Configuración', icon: 'settings' });
     }
     if (u?.role === 'ADMIN') {
       base.push({ path: '/admin', label: 'Admin', icon: 'admin_panel_settings' });

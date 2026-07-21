@@ -7,12 +7,17 @@ import { conflict, notFound } from "../../shared/errors.js";
 import { extendEnum } from "../../shared/enum-extension.js";
 import { toGalleryUrls } from "../../shared/json.js";
 import { SEGMENTS, type CreateModelInput, type UpdateModelInput } from "./models.dto.admin.js";
+import type { PaginationParams } from "../../shared/pagination.js";
+import { slugify } from "../../shared/slug.js";
 
 export class ModelsService {
   constructor(private readonly prisma: PrismaClient) {}
 
   async list(q: z.infer<typeof listModelsQuerySchema>) {
-    const where: Prisma.ModelWhereInput = { deletedAt: null };
+    const where: Prisma.ModelWhereInput = {
+      deletedAt: null,
+      brand: { deletedAt: null },
+    };
     if (q.q) {
       const term = q.q.trim();
       if (term.length > 0) {
@@ -38,19 +43,24 @@ export class ModelsService {
     if (q.consumptionMax !== undefined) vWhere.consumptionCityKmL = { lte: q.consumptionMax };
     if (q.consumptionHighwayMax !== undefined) vWhere.consumptionHighwayKmL = { lte: q.consumptionHighwayMax };
 
-    if (Object.keys(vWhere).length > 0) {
+    const hasVersionFilters = Object.keys(vWhere).length > 0;
+    if (hasVersionFilters) {
       vWhere.deletedAt = null;
       where.versions = { some: vWhere };
     }
 
-    const [total, items] = await this.prisma.$transaction([
+    const versionIncludeWhere: Prisma.VersionWhereInput = hasVersionFilters
+      ? { ...vWhere, deletedAt: null }
+      : { deletedAt: null };
+
+    const [total, items] = await Promise.all([
       this.prisma.model.count({ where }),
       this.prisma.model.findMany({
         where,
         include: {
           brand: true,
           versions: {
-            where: { deletedAt: null },
+            where: versionIncludeWhere,
             orderBy: { priceClp: "asc" },
             include: {
               equipmentItems: {
@@ -59,8 +69,6 @@ export class ModelsService {
             },
           },
         },
-        skip: (q.page - 1) * q.pageSize,
-        take: q.pageSize,
         orderBy: { name: "asc" },
       }),
     ]);
@@ -126,7 +134,13 @@ export class ModelsService {
       return cmp * dir;
     });
 
-    return { total, items: enriched, page: q.page, pageSize: q.pageSize };
+    const start = (q.page - 1) * q.pageSize;
+    return {
+      total: enriched.length,
+      items: enriched.slice(start, start + q.pageSize),
+      page: q.page,
+      pageSize: q.pageSize,
+    };
   }
 
   async listAll() {
@@ -137,6 +151,50 @@ export class ModelsService {
     });
     return rows.map((m) => ({ ...m, galleryUrls: toGalleryUrls(m.galleryUrls) }));
   }
+
+  async listPaged(q: string | undefined, params: PaginationParams) {
+    const where: Prisma.ModelWhereInput = {
+      deletedAt: null,
+      brand: { deletedAt: null },
+    };
+    if (q) {
+      const term = q.trim();
+      if (term.length > 0) {
+        where.OR = [
+          { name: { contains: term } },
+          { brand: { name: { contains: term } } },
+        ];
+      }
+    }
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.model.findMany({
+        where,
+        orderBy: { name: "asc" },
+        skip: params.skip,
+        take: params.take,
+        include: { brand: { select: { id: true, name: true } } },
+      }),
+      this.prisma.model.count({ where }),
+    ]);
+    const data = rows.map((m) => ({ ...m, galleryUrls: toGalleryUrls(m.galleryUrls) }));
+    return { rows: data, total };
+  }
+
+  async detailBySlug(brandSlug: string, modelSlug: string) {
+    // Load all active models with brand; pick the one whose combined
+    // brand+name slugs match. Limited to active set so the lookup is
+    // bounded; for production-scale catalogs we'd cache or store slug.
+    const rows = await this.prisma.model.findMany({
+      where: { deletedAt: null, brand: { deletedAt: null } },
+      include: { brand: { select: { id: true, name: true } } },
+    });
+    const target = rows.find((m) => {
+      return slugify(m.brand.name) === brandSlug && slugify(m.name) === modelSlug;
+    });
+    if (!target) return null;
+    return this.detail(target.id);
+  }
+
 
   async detail(id: string) {
     const m = await this.prisma.model.findFirst({
@@ -298,5 +356,28 @@ export class ModelsService {
       data: { deletedAt: new Date() },
     });
     return { deleted: true };
+  }
+
+  async restore(id: string) {
+    const model = await this.prisma.model.findUnique({ where: { id }, select: { brandId: true } });
+    if (!model) throw notFound("Modelo no encontrado");
+    const brand = await this.prisma.brand.findFirst({ where: { id: model.brandId, deletedAt: null } });
+    if (!brand) throw conflict("No se puede restaurar: la marca está eliminada", { code: "BRAND_DELETED" });
+    return this.prisma.model.update({ where: { id }, data: { deletedAt: null } });
+  }
+
+  async bulkDelete(ids: string[]) {
+    const failed: Array<{ id: string; reason: string }> = [];
+    let deleted = 0;
+    for (const id of ids) {
+      try {
+        await this.softDelete(id);
+        deleted += 1;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        failed.push({ id, reason: msg });
+      }
+    }
+    return { deleted, failed };
   }
 }

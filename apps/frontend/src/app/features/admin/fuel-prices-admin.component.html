@@ -7,7 +7,10 @@
   <app-search-input placeholder="Buscar por tipo…" [value]="search()" (changed)="onSearch($event)" />
 
   @if (error(); as err) {
-    <div class="mb-3 rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark">{{ err }}</div>
+    <div class="mb-3 flex items-center justify-between gap-2 rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark">
+      <span>{{ err }}</span>
+      <button mat-button type="button" (click)="retry()">Reintentar</button>
+    </div>
   }
 
   @if (loading()) {
@@ -67,6 +70,12 @@
         </tbody>
       </table>
     </div>
+    <app-pagination
+      [meta]="pagination()"
+      [loading]="loading()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    />
   }
 
   @if (dialogMode() === 'open') {

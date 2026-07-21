@@ -8,6 +8,8 @@ import { ApiCallError } from '../../core/api-error';
 import { ApiService } from '../../core/api.service';
 import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
+import { PaginationComponent } from '../../shared/ui/pagination.component';
+import type { PagedResponse } from '../../shared/ui/pagination.types';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { sortItems, type SortDir } from './sort-utils';
 
@@ -17,7 +19,7 @@ type SortKey = 'name' | 'segment' | 'brandName';
 
 @Component({
   selector: 'app-models-admin',
-  imports: [AdminEditDialogComponent, SearchInputComponent, MatButtonModule, MatIconModule],
+  imports: [AdminEditDialogComponent, SearchInputComponent, PaginationComponent, MatButtonModule, MatIconModule],
   templateUrl: './models-admin.component.html',
   styleUrl: './models-admin.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,6 +34,9 @@ export class ModelsAdminComponent {
   readonly items = signal<ModelRow[]>([]);
   readonly brands = signal<BrandOption[]>([]);
   readonly search = signal('');
+  readonly pagination = signal({ page: 1, pageSize: 25, total: 0, totalPages: 1 });
+  readonly page = signal(1);
+  readonly pageSize = signal(25);
   readonly dialogEntity = signal<ModelRow | null | undefined>(undefined);
   readonly dialogMode = computed(() => (this.dialogEntity() === undefined ? 'closed' : 'open'));
   readonly error = signal<string | null>(null);
@@ -65,20 +70,15 @@ export class ModelsAdminComponent {
   private async load(): Promise<void> {
     this.loading.set(true);
     try {
+      const params: Record<string, string | number> = { page: this.page(), pageSize: this.pageSize() };
+      const q = this.search().trim();
+      if (q.length > 0) params['q'] = q;
       const [itemsRes, brandsRes] = await Promise.all([
-        this.api
-          .get<{ data: ModelRow[] | { items: ModelRow[] } }>('/admin/models')
-          .catch(async () => {
-            const pub = await this.api.get<{ data: { items: ModelRow[] } }>(
-              '/models',
-              { pageSize: 50 },
-            );
-            return pub;
-          }),
+        this.api.get<PagedResponse<ModelRow[]>>('/admin/models', params),
         this.api.get<{ data: BrandOption[] }>('/brands').catch(() => ({ data: [] as BrandOption[] })),
       ]);
-      const data = itemsRes.data;
-      this.items.set(Array.isArray(data) ? data : data.items);
+      this.items.set(itemsRes.data);
+      this.pagination.set(itemsRes.pagination);
       this.brands.set(brandsRes.data);
     } catch (e) {
       this.error.set((e as Error).message);
@@ -145,6 +145,24 @@ export class ModelsAdminComponent {
 
   onSearch(value: string): void {
     this.search.set(value);
+    this.page.set(1);
+    void this.load();
+  }
+
+  onPageChange(page: number): void {
+    this.page.set(page);
+    void this.load();
+  }
+
+  onPageSizeChange(pageSize: number): void {
+    this.pageSize.set(pageSize);
+    this.page.set(1);
+    void this.load();
+  }
+
+  retry(): void {
+    this.error.set(null);
+    void this.load();
   }
 
   toggleSort(key: SortKey): void {

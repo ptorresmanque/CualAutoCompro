@@ -388,18 +388,28 @@
 
   <!-- Floating action button: guardar comparación -->
   @if (user() && !savedSlug()) {
-    <button
-      mat-fab
-      extended
-      color="primary"
-      type="button"
-      (click)="saveComparison()"
-      [disabled]="saving()"
-      data-testid="save-fab"
-      class="!fixed bottom-6 right-6 z-40"
-    >
-      {{ saving() ? 'Guardando…' : 'Guardar' }}
-      <mat-icon>save</mat-icon>
-    </button>
+    <div class="!fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-paper-cool border border-ink p-2 shadow-e2">
+      <label class="sr-only" for="comparison-name">Nombre de comparación</label>
+      <input
+        id="comparison-name"
+        class="w-44 px-3 py-2 text-sm border border-border bg-paper"
+        maxlength="80"
+        placeholder="Nombre opcional"
+        [value]="saveName()"
+        (input)="saveName.set($any($event.target).value)"
+      />
+      <button
+        mat-fab
+        extended
+        color="primary"
+        type="button"
+        (click)="saveComparison()"
+        [disabled]="saving()"
+        data-testid="save-fab"
+      >
+        {{ saving() ? 'Guardando…' : 'Guardar' }}
+        <mat-icon>save</mat-icon>
+      </button>
+    </div>
   }
 </section>

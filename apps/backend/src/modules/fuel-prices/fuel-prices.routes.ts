@@ -8,6 +8,8 @@ fuelPricesRouter.get("/current", fuelPricesController.current);
 
 export const fuelPricesAdminRouter = Router();
 fuelPricesAdminRouter.use(authenticate, requireRole("ADMIN"));
-fuelPricesAdminRouter.get("/", fuelPricesController.listAll);
+fuelPricesAdminRouter.get("/", fuelPricesController.listPaged);
 fuelPricesAdminRouter.post("/", fuelPricesController.create);
+fuelPricesAdminRouter.patch("/:id", fuelPricesController.update);
 fuelPricesAdminRouter.delete("/:id", fuelPricesController.softDelete);
+fuelPricesAdminRouter.post("/:id/restore", fuelPricesController.restore);

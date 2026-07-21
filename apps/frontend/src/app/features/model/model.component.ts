@@ -14,8 +14,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ApiService } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
+import { FavoritesStore } from '../../core/favorites-store.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { DisclaimerComponent } from '../../shared/ui/disclaimer.component';
+import { AnnualCostCardComponent } from './annual-cost-card.component';
 
 interface Brand {
   id: string;
@@ -66,6 +68,8 @@ interface ModelDetail {
   id: string;
   name: string;
   segment: string;
+  brandId: string;
+  brandName: string;
   brand: { name: string };
   versions: ModelVersion[];
   galleryUrls?: string[];
@@ -88,6 +92,7 @@ interface SpecGroup {
   templateUrl: './model.component.html',
   styleUrl: './model.component.css',
   imports: [
+    AnnualCostCardComponent,
     RouterLink,
     DisclaimerComponent,
     MatButtonModule,
@@ -100,6 +105,7 @@ interface SpecGroup {
 export class ModelComponent {
   private api = inject(ApiService);
   private compare = inject(CompareStore);
+  readonly favorites = inject(FavoritesStore);
   private route = inject(ActivatedRoute);
 
   private params = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
@@ -269,6 +275,16 @@ export class ModelComponent {
     else this.compare.add(id);
   }
 
+  async toggleFavorite(versionId: string): Promise<void> {
+    const modelId = this.model()?.id;
+    if (!modelId) return;
+    try {
+      await this.favorites.toggle({ modelId, versionId });
+    } catch {
+      this.error.set('Inicia sesión para guardar favoritos.');
+    }
+  }
+
   formatPrice(value: number | null | undefined): string {
     if (value === null || value === undefined) return '—';
     return `$${new Intl.NumberFormat('es-CL').format(value)}`;
@@ -301,38 +317,55 @@ export class ModelComponent {
     }
     this.loading.set(true);
     try {
-      const brandsRes = await this.api.get<{ data: Brand[] }>('/brands');
-      const brand = brandsRes.data.find(
-        (b) => b.name.toLowerCase() === brandSlug.toLowerCase(),
-      );
-      if (!brand) {
-        this.error.set(`Marca "${brandSlug}" no encontrada.`);
+      // Single server-side lookup by brandSlug/modelSlug
+      const detailRes = await this.api
+        .get<{ data: ModelDetail; error: { code: string; message: string } | null }>(
+          `/models/by-slug/${encodeURIComponent(brandSlug)}/${encodeURIComponent(modelSlug)}`,
+        )
+        .catch(async () => {
+          // Fallback to legacy client-side lookup if the endpoint is missing.
+          return await this.bootstrapLegacy(brandSlug, modelSlug);
+        });
+      const detail = (detailRes as { data: ModelDetail | null }).data;
+      if (!detail) {
+        this.error.set(`Modelo "${modelSlug}" no encontrado.`);
         return;
       }
-      this.brand.set(brand);
-      await this.loadBrandDealers(brand.id);
-
-      const modelsRes = await this.api.get<{ data: BrandModel[] }>(
-        `/brands/${brand.id}/models`,
-      );
-      const brandModel = modelsRes.data.find(
-        (m) => m.name.toLowerCase() === modelSlug.toLowerCase(),
-      );
-      if (!brandModel) {
-        this.error.set(
-          `Modelo "${modelSlug}" no encontrado en ${brand.name}.`,
-        );
-        return;
-      }
-
-      const detailRes = await this.api.get<{ data: ModelDetail }>(
-        `/models/${brandModel.id}`,
-      );
-      this.model.set(detailRes.data);
+      this.model.set(detail);
+      this.brand.set({ id: detail.brandId, name: detail.brandName ?? detail.brand?.name ?? '' } as Brand);
+      await this.loadBrandDealers(detail.brandId);
     } catch {
       this.error.set('No se pudo cargar el modelo.');
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private async bootstrapLegacy(brandSlug: string, modelSlug: string): Promise<{ data: ModelDetail | null }> {
+    const brandsRes = await this.api.get<{ data: Brand[] }>('/brands');
+    const brand = brandsRes.data.find(
+      (b) => b.name.toLowerCase() === brandSlug.toLowerCase(),
+    );
+    if (!brand) {
+      this.error.set(`Marca "${brandSlug}" no encontrada.`);
+      return { data: null };
+    }
+    this.brand.set(brand);
+    const modelsRes = await this.api.get<{ data: BrandModel[] }>(
+      `/brands/${brand.id}/models`,
+    );
+    const brandModel = modelsRes.data.find(
+      (m) => m.name.toLowerCase() === modelSlug.toLowerCase(),
+    );
+    if (!brandModel) {
+      this.error.set(
+        `Modelo "${modelSlug}" no encontrado en ${brand.name}.`,
+      );
+      return { data: null };
+    }
+    const detailRes = await this.api.get<{ data: ModelDetail }>(
+      `/models/${brandModel.id}`,
+    );
+    return { data: detailRes.data };
   }
 }

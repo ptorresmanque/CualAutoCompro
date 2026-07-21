@@ -8,4 +8,5 @@ export const meComparisonsRouter = Router();
 meComparisonsRouter.use(authenticate);
 meComparisonsRouter.get("/", comparisonsController.listMine);
 meComparisonsRouter.post("/", comparisonsController.createMine);
+meComparisonsRouter.patch("/:id", comparisonsController.renameMine);
 meComparisonsRouter.delete("/:id", comparisonsController.deleteMine);

@@ -8,7 +8,10 @@ dealersRouter.get("/:brandId/dealers", dealersController.byBrand);
 
 export const dealersAdminRouter = Router();
 dealersAdminRouter.use(authenticate, requireRole("ADMIN"));
-dealersAdminRouter.get("/", dealersController.listAll);
+dealersAdminRouter.get("/", dealersController.listPaged);
 dealersAdminRouter.post("/", dealersController.create);
+dealersAdminRouter.post("/bulk-delete", dealersController.bulkDelete);
+dealersAdminRouter.get("/export", dealersController.exportCsv);
 dealersAdminRouter.patch("/:id", dealersController.update);
 dealersAdminRouter.delete("/:id", dealersController.softDelete);
+dealersAdminRouter.post("/:id/restore", dealersController.restore);
