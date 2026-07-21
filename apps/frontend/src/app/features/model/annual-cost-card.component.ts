@@ -7,7 +7,6 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -52,7 +51,7 @@ interface Row {
 
 @Component({
   selector: 'app-annual-cost-card',
-  imports: [DecimalPipe, FormsModule, MatFormFieldModule, MatInputModule, MatIconModule],
+  imports: [FormsModule, MatFormFieldModule, MatInputModule, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article class="annual-cost-card" aria-label="Costo anual estimado">

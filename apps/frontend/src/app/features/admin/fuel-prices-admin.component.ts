@@ -31,6 +31,8 @@ type SortKey = 'fuelType' | 'pricePerUnitClp' | 'effectiveFrom';
     MatButtonModule,
     MatIconModule,
     SearchInputComponent,
+    PaginationComponent,
+
   ],
   templateUrl: './fuel-prices-admin.component.html',
   styleUrl: './fuel-prices-admin.component.css',

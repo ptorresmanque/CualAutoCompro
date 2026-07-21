@@ -4,7 +4,11 @@ import { DatePipe } from '@angular/common';
 import { AdminFeedbackService } from '../../core/admin-feedback.service';
 import { ApiService } from '../../core/api.service';
 
-interface TrashRow { id: string; name?: string; deletedAt: string; [key: string]: unknown; }
+type TrashRow =
+  | { id: string; name: string; deletedAt: string }
+  | { id: string; fuelType: string; unit?: string; deletedAt: string }
+  | { id: string; mileageTag: number; costClp: number; deletedAt: string }
+  | { id: string; deletedAt: string; [key: string]: unknown };
 interface TrashGroup { key: string; label: string; rows: TrashRow[]; }
 
 const GROUPS: Array<{ key: string; label: string }> = [
@@ -21,6 +25,7 @@ const GROUPS: Array<{ key: string; label: string }> = [
   selector: 'app-trash-admin',
   imports: [DatePipe, MatButtonModule],
   templateUrl: './trash-admin.component.html',
+  styleUrl: './trash-admin.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrashAdminComponent {
@@ -47,9 +52,14 @@ export class TrashAdminComponent {
   }
 
   displayName(row: TrashRow): string {
-    if (row.name) return row.name;
-    if (row['fuelType']) return `${row['fuelType']} · ${row['unit'] ?? ''}`;
-    if (row['mileageTag'] !== undefined) return `${row['mileageTag']} km · ${row['costClp'] ?? 0} CLP`;
+    const r = row as Record<string, unknown>;
+    if (typeof r['name'] === 'string' && r['name']) return r['name'] as string;
+    if (typeof r['fuelType'] === 'string') {
+      return `${r['fuelType']}${typeof r['unit'] === 'string' ? ' · ' + (r['unit'] as string) : ''}`;
+    }
+    if (typeof r['mileageTag'] === 'number') {
+      return `${r['mileageTag']} km · ${typeof r['costClp'] === 'number' ? r['costClp'] : 0} CLP`;
+    }
     return row.id;
   }
 

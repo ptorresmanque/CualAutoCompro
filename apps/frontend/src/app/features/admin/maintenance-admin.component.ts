@@ -9,6 +9,7 @@ import { firstValueFrom } from 'rxjs';
 import { AdminFeedbackService } from '../../core/admin-feedback.service';
 import { ApiCallError } from '../../core/api-error';
 import { ApiService } from '../../core/api.service';
+import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { PaginationComponent } from '../../shared/ui/pagination.component';
@@ -25,6 +26,7 @@ type SortKey = 'versionId' | 'mileageTag' | 'costClp';
     AdminEditDialogComponent,
     DecimalPipe,
     PaginationComponent,
+    SearchInputComponent,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
