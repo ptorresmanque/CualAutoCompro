@@ -12,6 +12,7 @@ export const modelsAdminRouter = Router();
 modelsAdminRouter.use(authenticate, requireRole("ADMIN"));
 modelsAdminRouter.get("/", modelsController.listPaged);
 modelsAdminRouter.post("/", modelsController.create);
+modelsAdminRouter.get("/options", modelsController.listAll);
 modelsAdminRouter.post("/bulk-delete", modelsController.bulkDelete);
 modelsAdminRouter.get("/export", modelsController.exportCsv);
 modelsAdminRouter.patch("/:id", modelsController.update);

@@ -10,6 +10,7 @@ export const dealersAdminRouter = Router();
 dealersAdminRouter.use(authenticate, requireRole("ADMIN"));
 dealersAdminRouter.get("/", dealersController.listPaged);
 dealersAdminRouter.post("/", dealersController.create);
+dealersAdminRouter.get("/options", dealersController.listAll);
 dealersAdminRouter.post("/bulk-delete", dealersController.bulkDelete);
 dealersAdminRouter.get("/export", dealersController.exportCsv);
 dealersAdminRouter.patch("/:id", dealersController.update);

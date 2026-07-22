@@ -158,7 +158,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
   brand: [
     { field: 'name', label: 'Nombre', kind: 'text' },
     { field: 'logoUrl', label: 'Logo', kind: 'imageUrl' },
-    { field: 'dealerIds', label: 'Concesionarios', kind: 'multiSelect', optionsApi: '/admin/dealers', optionLabel: 'name' },
+    { field: 'dealerIds', label: 'Concesionarios', kind: 'multiSelect', optionsApi: '/admin/dealers/options', optionLabel: 'name' },
   ],
   model: [
     { field: 'brandId', label: 'Marca', kind: 'foreignKey', optionsApi: '/brands', optionLabel: 'name' },
@@ -168,7 +168,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'galleryUrls', label: 'Galería', kind: 'gallery' },
   ],
   version: [
-    { field: 'modelId', label: 'Modelo', kind: 'foreignKey', optionsApi: '/admin/models', optionLabel: 'name', group: 'Identificación' },
+    { field: 'modelId', label: 'Modelo', kind: 'foreignKey', optionsApi: '/admin/models/options', optionLabel: 'name', group: 'Identificación' },
     { field: 'name', label: 'Nombre', kind: 'text', group: 'Identificación' },
     { field: 'year', label: 'Año', kind: 'number', group: 'Identificación' },
     { field: 'priceClp', label: 'Precio CLP', kind: 'number', group: 'Identificación' },
@@ -188,7 +188,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'hasAbs', label: 'Frenos ABS', kind: 'boolean', group: 'Seguridad' },
     { field: 'hasEsp', label: 'Control de estabilidad', kind: 'boolean', group: 'Seguridad' },
     { field: 'hasCruiseControl', label: 'Control de crucero', kind: 'boolean', group: 'Seguridad' },
-    { field: 'equipment', label: 'Equipamiento', kind: 'multiSelect', optionsApi: '/admin/equipment', optionLabel: 'name', group: 'Equipamiento' },
+    { field: 'equipment', label: 'Equipamiento', kind: 'multiSelect', optionsApi: '/admin/equipment/options', optionLabel: 'name', group: 'Equipamiento' },
     { field: 'circulationPermitClp', label: 'Permiso circulación CLP', kind: 'number', optional: true, help: 'Permiso de circulación anual del vehículo en pesos chilenos', group: 'Seguros y permisos' },
     { field: 'mandatoryInsuranceClp', label: 'SOAP CLP', kind: 'number', optional: true, help: 'Seguro Obligatorio de Accidentes Personales (SOAP) en pesos chilenos', group: 'Seguros y permisos' },
     { field: 'voluntaryInsuranceClp', label: 'Seguro automotriz CLP', kind: 'number', optional: true, group: 'Seguros y permisos' },
