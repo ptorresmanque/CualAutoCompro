@@ -1,4 +1,22 @@
 <div class="flex flex-col gap-2 w-full">
+
+
+  <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+    <input
+      matInput
+      type="text"
+      data-testid="ms-input"
+      role="combobox"
+      [attr.aria-expanded]="open()"
+      [value]="query()"
+      (input)="onInput($any($event.target).value)"
+      (focus)="open.set(true)"
+      (keydown.escape)="open.set(false)"
+      [placeholder]="placeholder()"
+    />
+    <ng-content select="[matError]" />
+  </mat-form-field>
+
   @if (selectedIds().length > 0) {
     <mat-chip-set data-testid="ms-chips" aria-label="Seleccionados">
       @for (id of selectedIds(); track id) {
@@ -18,22 +36,6 @@
       }
     </mat-chip-set>
   }
-
-  <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-    <input
-      matInput
-      type="text"
-      data-testid="ms-input"
-      role="combobox"
-      [attr.aria-expanded]="open()"
-      [value]="query()"
-      (input)="onInput($any($event.target).value)"
-      (focus)="open.set(true)"
-      (keydown.escape)="open.set(false)"
-      [placeholder]="placeholder()"
-    />
-    <ng-content select="[matError]" />
-  </mat-form-field>
 
   @if (open() && available().length > 0) {
     <ul
