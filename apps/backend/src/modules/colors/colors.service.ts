@@ -1,73 +1,52 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { conflict, notFound } from "../../shared/errors.js";
 import type { PaginationParams } from "../../shared/pagination.js";
-import type { CreateEquipmentInput, UpdateEquipmentInput } from "./equipment.dto.admin.js";
+import type { CreateColorInput, UpdateColorInput } from "./colors.dto.admin.js";
 
-export class EquipmentService {
+export class ColorsService {
   constructor(private readonly prisma: PrismaClient) {}
 
-  list() {
-    return this.prisma.equipmentItem.findMany({
-      where: { deletedAt: null },
-      orderBy: { name: "asc" },
-    });
-  }
-
   listAll() {
-    return this.prisma.equipmentItem.findMany({
+    return this.prisma.color.findMany({
       where: { deletedAt: null },
       orderBy: { name: "asc" },
     });
-  }
-
-  /**
-   * Devuelve las categorías únicas existentes (sin duplicados, ordenadas).
-   * Útil para precargar el autocomplete del formulario de equipamiento.
-   */
-  async listCategories(): Promise<string[]> {
-    const groups = await this.prisma.equipmentItem.groupBy({
-      by: ["category"],
-      where: { deletedAt: null },
-      _count: { _all: true },
-      orderBy: { category: "asc" },
-    });
-    return groups.map((g) => g.category);
   }
 
   async listPaged(q: string | undefined, params: PaginationParams) {
-    const where: Prisma.EquipmentItemWhereInput = { deletedAt: null };
+    const where: Prisma.ColorWhereInput = { deletedAt: null };
     if (q) {
       const term = q.trim();
       if (term.length > 0) where.name = { contains: term };
     }
     const [rows, total] = await this.prisma.$transaction([
-      this.prisma.equipmentItem.findMany({
+      this.prisma.color.findMany({
         where,
         orderBy: { name: "asc" },
         skip: params.skip,
         take: params.take,
       }),
-      this.prisma.equipmentItem.count({ where }),
+      this.prisma.color.count({ where }),
     ]);
     return { rows, total };
   }
 
-  async create(input: CreateEquipmentInput) {
-    return this.prisma.equipmentItem.create({ data: input as Prisma.EquipmentItemCreateInput });
+  async create(input: CreateColorInput) {
+    return this.prisma.color.create({ data: input as Prisma.ColorCreateInput });
   }
 
-  async update(id: string, input: UpdateEquipmentInput) {
+  async update(id: string, input: UpdateColorInput) {
     const data = Object.fromEntries(
       Object.entries(input).filter(([, v]) => v !== undefined),
-    ) as Prisma.EquipmentItemUpdateInput;
+    ) as Prisma.ColorUpdateInput;
     try {
-      return await this.prisma.equipmentItem.update({
+      return await this.prisma.color.update({
         where: { id, deletedAt: null },
         data,
       });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
-        throw notFound("Equipment item no encontrado");
+        throw notFound("Color no encontrado");
       }
       throw e;
     }
@@ -75,23 +54,23 @@ export class EquipmentService {
 
   async softDelete(id: string) {
     try {
-      const attachedVersions = await this.prisma.versionEquipment.count({
-        where: { equipmentItemId: id, version: { deletedAt: null } },
+      const attachedVersions = await this.prisma.versionColor.count({
+        where: { colorId: id, version: { deletedAt: null } },
       });
       if (attachedVersions > 0) {
-        throw conflict("No se puede eliminar: el equipamiento está asociado a versiones", {
-          code: "EQUIPMENT_IN_USE",
+        throw conflict("No se puede eliminar: el color está asociado a versiones", {
+          code: "COLOR_IN_USE",
           versionCount: attachedVersions,
         });
       }
-      await this.prisma.equipmentItem.update({
+      await this.prisma.color.update({
         where: { id, deletedAt: null },
         data: { deletedAt: new Date() },
       });
       return { deleted: true };
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
-        throw notFound("Equipment item no encontrado");
+        throw notFound("Color no encontrado");
       }
       throw e;
     }
@@ -99,49 +78,49 @@ export class EquipmentService {
 
   async restore(id: string) {
     try {
-      return await this.prisma.equipmentItem.update({
+      return await this.prisma.color.update({
         where: { id },
         data: { deletedAt: null },
       });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
-        throw notFound("Equipment item no encontrado");
+        throw notFound("Color no encontrado");
       }
       throw e;
     }
   }
 
-  async attach(versionId: string, itemId: string) {
+  async attach(versionId: string, colorId: string) {
     try {
-      const [version, item] = await Promise.all([
+      const [version, color] = await Promise.all([
         this.prisma.version.findFirst({
           where: { id: versionId, deletedAt: null, model: { deletedAt: null, brand: { deletedAt: null } } },
           select: { id: true },
         }),
-        this.prisma.equipmentItem.findFirst({
-          where: { id: itemId, deletedAt: null },
+        this.prisma.color.findFirst({
+          where: { id: colorId, deletedAt: null },
           select: { id: true },
         }),
       ]);
       if (!version) throw notFound("Versión no encontrada");
-      if (!item) throw notFound("Equipamiento no encontrado");
-      return await this.prisma.versionEquipment.create({
-        data: { versionId, equipmentItemId: itemId },
+      if (!color) throw notFound("Color no encontrado");
+      return await this.prisma.versionColor.create({
+        data: { versionId, colorId },
       });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-        throw conflict("El equipamiento ya está asociado a esta versión", {
-          code: "EQUIPMENT_ALREADY_ATTACHED",
+        throw conflict("El color ya está asociado a esta versión", {
+          code: "COLOR_ALREADY_ATTACHED",
         });
       }
       throw e;
     }
   }
 
-  async detach(versionId: string, itemId: string) {
+  async detach(versionId: string, colorId: string) {
     try {
-      await this.prisma.versionEquipment.delete({
-        where: { versionId_equipmentItemId: { versionId, equipmentItemId: itemId } },
+      await this.prisma.versionColor.delete({
+        where: { versionId_colorId: { versionId, colorId } },
       });
       return { detached: true };
     } catch (e) {

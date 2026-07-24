@@ -79,11 +79,12 @@ model Version {
   priceClp              Int
   transmission          String
   fuel                  String
-  engineDisplacementCc  Int
+  engineDisplacementCc  Int?
   powerHp               Int
   torqueNm              Int
-  consumptionCityKmL    Float
-  consumptionHighwayKmL Float
+  consumptionCityKmL    Float?
+  consumptionHighwayKmL Float?
+  autonomyKm            Float?
   lengthMm              Int
   widthMm               Int
   heightMm              Int
@@ -102,6 +103,7 @@ model Version {
   recallUrl             String?
   model                 Model              @relation(fields: [modelId], references: [id], onDelete: Cascade)
   equipmentItems        VersionEquipment[]
+  colorItems            VersionColor[]
   maintenanceCosts      MaintenanceCost[]
   comparisonItems       ComparisonItem[]
   favorites             Favorite[]
@@ -113,6 +115,27 @@ model Version {
   @@index([priceClp])
   @@index([year])
   @@index([deletedAt])
+}
+
+model Color {
+  id        String           @id @default(cuid())
+  name      String           @unique
+  hex       String?
+  versions  VersionColor[]
+  deletedAt DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([deletedAt])
+}
+
+model VersionColor {
+  versionId String
+  colorId   String
+  version   Version @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  color     Color   @relation(fields: [colorId], references: [id], onDelete: Cascade)
+
+  @@id([versionId, colorId])
+  @@index([colorId])
 }
 
 model EquipmentItem {

@@ -127,11 +127,12 @@ export class FavoritesService {
         priceClp: number;
         transmission: string;
         fuel: string;
-        engineDisplacementCc: number;
+        engineDisplacementCc: number | null;
         powerHp: number;
         torqueNm: number;
-        consumptionCityKmL: number;
-        consumptionHighwayKmL: number;
+        consumptionCityKmL: number | null;
+        consumptionHighwayKmL: number | null;
+        autonomyKm: number | null;
       }>;
     },
     versionId: string,
@@ -156,11 +157,11 @@ export class FavoritesService {
         priceClp: v.priceClp,
         transmission: v.transmission,
         fuel: v.fuel,
-        engineDisplacementCc: v.engineDisplacementCc,
+        engineDisplacementCc: v.engineDisplacementCc ?? 0,
         powerHp: v.powerHp,
         torqueNm: v.torqueNm,
-        consumptionCityKmL: v.consumptionCityKmL,
-        consumptionHighwayKmL: v.consumptionHighwayKmL,
+        consumptionCityKmL: v.consumptionCityKmL ?? 0,
+        consumptionHighwayKmL: v.consumptionHighwayKmL ?? 0,
       })),
     };
   }

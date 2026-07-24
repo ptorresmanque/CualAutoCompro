@@ -20,9 +20,11 @@ interface VersionRow {
   priceClp: number;
   model: { name: string } | null;
   equipmentItems?: { equipmentItem: { id: string; name: string; category: string } }[];
-  // Projected from equipmentItems by openEdit so the dialog's multi-select
-  // control named 'equipment' can be preloaded. Read by computeEquipmentDiff.
+  colorItems?: { color: { id: string; name: string; hex: string | null } }[];
+  // Projected from *Items by openEdit so the dialog's multi-select controls
+  // can be preloaded. Read by computeEquipmentDiff / computeColorDiff.
   equipment?: string[];
+  colors?: string[];
 }
 interface ModelOption { id: string; name: string; }
 type SortKey = 'name' | 'year' | 'priceClp' | 'modelName';
@@ -115,9 +117,10 @@ export class VersionsAdminComponent {
     // new equipment selection. If equipmentItems is dropped, oldIds is [],
     // and the diff tries to attach every selected item — including the ones
     // already attached — which the backend rejects with 409 Conflict.
-    const { equipmentItems, ...rest } = row;
+    const { equipmentItems, colorItems, ...rest } = row;
     const equipment = equipmentItems?.map((ei) => ei.equipmentItem.id) ?? [];
-    this.dialogEntity.set({ ...rest, equipment, equipmentItems } as VersionRow);
+    const colors = colorItems?.map((ci) => ci.color.id) ?? [];
+    this.dialogEntity.set({ ...rest, equipment, colors, equipmentItems, colorItems } as VersionRow);
   }
   closeDialog(): void {
     this.dialogEntity.set(undefined);
@@ -126,10 +129,12 @@ export class VersionsAdminComponent {
   async onSave(value: Record<string, unknown>): Promise<void> {
     const e = this.dialogEntity();
     const newEquipmentIds = (value['equipment'] as string[] | null) ?? [];
-    const { toAdd, toRemove } = this.computeEquipmentDiff(e, newEquipmentIds);
+    const newColorIds = (value['colors'] as string[] | null) ?? [];
+    const { toAdd: eqAdd, toRemove: eqRemove } = this.computeEquipmentDiff(e, newEquipmentIds);
+    const { toAdd: coAdd, toRemove: coRemove } = this.computeColorDiff(e, newColorIds);
 
-    // 1) Save the version (without the equipment field).
-    const { equipment: _ignore, ...versionPayload } = value;
+    // 1) Save the version (without the multi-select fields).
+    const { equipment: _eqIgnore, colors: _coIgnore, ...versionPayload } = value;
     const versionName = String(versionPayload['name'] ?? '');
     let versionId: string;
     try {
@@ -146,12 +151,18 @@ export class VersionsAdminComponent {
         this.feedback.success(`Versión "${versionName}" creada`);
       }
 
-      // 2) Sync equipment relations.
-      for (const itemId of toRemove) {
+      // 2) Sync equipment + color relations.
+      for (const itemId of eqRemove) {
         await this.api.delete(`/admin/equipment/version/${versionId}/item/${itemId}`);
       }
-      for (const itemId of toAdd) {
+      for (const itemId of eqAdd) {
         await this.api.post(`/admin/equipment/attach`, { versionId, itemId });
+      }
+      for (const colorId of coRemove) {
+        await this.api.delete(`/admin/colors/version/${versionId}/color/${colorId}`);
+      }
+      for (const colorId of coAdd) {
+        await this.api.post(`/admin/colors/attach`, { versionId, colorId });
       }
 
       this.dialogEntity.set(undefined);
@@ -172,6 +183,16 @@ export class VersionsAdminComponent {
     newIds: string[],
   ): { toAdd: string[]; toRemove: string[] } {
     const oldIds = (e?.equipmentItems ?? []).map((ei) => ei.equipmentItem.id);
+    const toAdd = newIds.filter((id) => !oldIds.includes(id));
+    const toRemove = oldIds.filter((id) => !newIds.includes(id));
+    return { toAdd, toRemove };
+  }
+
+  private computeColorDiff(
+    e: VersionRow | null | undefined,
+    newIds: string[],
+  ): { toAdd: string[]; toRemove: string[] } {
+    const oldIds = (e?.colorItems ?? []).map((ci) => ci.color.id);
     const toAdd = newIds.filter((id) => !oldIds.includes(id));
     const toRemove = oldIds.filter((id) => !newIds.includes(id));
     return { toAdd, toRemove };

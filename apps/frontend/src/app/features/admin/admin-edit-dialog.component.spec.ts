@@ -677,7 +677,7 @@ describe('Sections layout', () => {
     fixture.detectChanges();
 
     const sections = fixture.componentInstance.sections();
-    expect(sections.length).toBe(9);
+    expect(sections.length).toBe(10);
     expect(sections.map((s) => s.label)).toEqual([
       'Identificación',
       'Motor',
@@ -685,6 +685,7 @@ describe('Sections layout', () => {
       'Dimensiones',
       'Seguridad',
       'Equipamiento',
+      'Apariencia',
       'Seguros y permisos',
       'Tanque y batería',
       'Recalls',
@@ -707,10 +708,11 @@ describe('Sections layout', () => {
     expect(byId.get('motor')?.fields.map((f) => f.field)).toEqual([
       'transmission', 'fuel', 'engineDisplacementCc', 'powerHp', 'torqueNm',
     ]);
-    expect(byId.get('consumo')?.fields.length).toBe(2);
+    expect(byId.get('consumo')?.fields.length).toBe(3);
     expect(byId.get('dimensiones')?.fields.length).toBe(5);
     expect(byId.get('seguridad')?.fields.length).toBe(4);
     expect(byId.get('equipamiento')?.fields.length).toBe(1);
+    expect(byId.get('apariencia')?.fields.map((f) => f.field)).toEqual(['colors']);
     expect(byId.get('seguros-y-permisos')?.fields.length).toBe(3);
     expect(byId.get('tanque-y-bateria')?.fields.length).toBe(2);
     expect(byId.get('recalls')?.fields.length).toBe(2);
@@ -734,6 +736,7 @@ describe('Sections layout', () => {
       'Dimensiones',
       'Seguridad',
       'Equipamiento',
+      'Apariencia',
       'Seguros y permisos',
       'Tanque y batería',
       'Recalls',
@@ -749,7 +752,7 @@ describe('Sections layout', () => {
     fixture.detectChanges();
 
     const navItems = fixture.nativeElement.querySelectorAll('.dialog-section-nav-item');
-    expect(navItems.length).toBe(9);
+    expect(navItems.length).toBe(10);
   });
 
   it('brand: sin grupos, sections() devuelve una sola sección con label vacío', async () => {

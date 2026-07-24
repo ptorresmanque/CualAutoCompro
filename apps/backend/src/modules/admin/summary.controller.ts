@@ -5,7 +5,7 @@ import { prisma } from "../../infra/prisma.js";
 
 export const adminSummaryController = {
   get: ah(async (_req: Request, res: Response) => {
-    const [brands, models, versions, equipment, maintenance, dealers, fuelPrices, users] =
+    const [brands, models, versions, equipment, maintenance, dealers, fuelPrices, colors, users] =
       await Promise.all([
         prisma.brand.count({ where: { deletedAt: null } }),
         prisma.model.count({ where: { deletedAt: null, brand: { deletedAt: null } } }),
@@ -14,8 +14,9 @@ export const adminSummaryController = {
         prisma.maintenanceCost.count({ where: { deletedAt: null, version: { deletedAt: null, model: { deletedAt: null, brand: { deletedAt: null } } } } }),
         prisma.dealer.count({ where: { deletedAt: null } }),
         prisma.fuelPrice.count({ where: { deletedAt: null } }),
+        prisma.color.count({ where: { deletedAt: null } }),
         prisma.user.count(),
       ]);
-    res.json(ok({ brands, models, versions, equipment, maintenance, dealers, fuelPrices, users }));
+    res.json(ok({ brands, models, versions, equipment, maintenance, dealers, fuelPrices, colors, users }));
   }),
 };

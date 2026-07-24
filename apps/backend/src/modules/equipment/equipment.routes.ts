@@ -10,6 +10,7 @@ export const equipmentAdminRouter = Router();
 equipmentAdminRouter.use(authenticate, requireRole("ADMIN"));
 equipmentAdminRouter.get("/", equipmentController.listPaged);
 equipmentAdminRouter.post("/", equipmentController.create);
+equipmentAdminRouter.get("/categories", equipmentController.listCategories);
 equipmentAdminRouter.get("/options", equipmentController.listAll);
 equipmentAdminRouter.post("/bulk-delete", equipmentController.bulkDelete);
 equipmentAdminRouter.get("/export", equipmentController.exportCsv);

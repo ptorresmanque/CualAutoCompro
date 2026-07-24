@@ -26,6 +26,7 @@ export class AdminShellComponent {
     { path: '/admin/models', label: 'Modelos' },
     { path: '/admin/versions', label: 'Versiones' },
     { path: '/admin/equipment', label: 'Equipamiento' },
+    { path: '/admin/colors', label: 'Colores' },
     { path: '/admin/maintenance', label: 'Mantención' },
     { path: '/admin/dealers', label: 'Concesionarios' },
     { path: '/admin/fuel-prices', label: 'Precios combustible' },

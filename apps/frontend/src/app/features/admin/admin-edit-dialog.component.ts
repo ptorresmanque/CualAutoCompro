@@ -25,7 +25,9 @@ import {
   Validators,
 } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Subject, takeUntil } from 'rxjs';
+import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -121,10 +123,24 @@ export class AdminEditDialogComponent implements AfterViewInit, OnDestroy {
   readonly loading = signal(true);
   readonly form = signal<FormGroup>(this.fb.group({}));
 
+  /**
+   * Emite el valor actual del control `fuel` del form. Inicia en undefined
+   * y se reemplaza cuando el form se construye (ver effect() abajo).
+   * `isFieldVisible` trata undefined como "mostrar todo" para no romper el
+   * render inicial antes de cargar la plantilla.
+   */
+  private readonly fuelSubject = new BehaviorSubject<string | undefined>(undefined);
+  readonly currentFuel = toSignal<string | undefined>(this.fuelSubject, {
+    initialValue: undefined,
+  });
+
   readonly fieldMetas = computed<FieldMeta[]>(() => {
     const key = this.entityKey();
     const tpl = this.emptyTemplate();
-    const all = (FIELD_METAS[key] ?? []).filter((m) => !m.hidden);
+    const fuel = this.currentFuel();
+    const all = (FIELD_METAS[key] ?? [])
+      .filter((m) => !m.hidden)
+      .filter((m) => this.isFieldVisible(m, fuel));
     const known = new Set(all.map((m) => m.field));
     const hiddenNames = new Set(
       (FIELD_METAS[key] ?? []).filter((m) => m.hidden).map((m) => m.field),
@@ -137,6 +153,12 @@ export class AdminEditDialogComponent implements AfterViewInit, OnDestroy {
     }
     return [...all, ...extras];
   });
+
+  private isFieldVisible(meta: FieldMeta, fuel: string | undefined): boolean {
+    if (!meta.showWhenFuels || meta.showWhenFuels.length === 0) return true;
+    if (!fuel) return true;
+    return meta.showWhenFuels.includes(fuel);
+  }
 
   readonly firstField = viewChild<ElementRef<HTMLElement>>('firstField');
 
@@ -191,6 +213,7 @@ export class AdminEditDialogComponent implements AfterViewInit, OnDestroy {
   }
 
   private fetchAbort = new Subject<void>();
+  private destroyRef = inject(DestroyRef);
   private autofocusDone = false;
 
   constructor() {
@@ -206,6 +229,20 @@ export class AdminEditDialogComponent implements AfterViewInit, OnDestroy {
           this.form.set(this.fb.group(this.buildInitialControls(key)));
         }
       });
+    });
+
+    effect(() => {
+      // Re-suscribir el fuelSubject cada vez que el form (re-)construye controles.
+      const f = this.form();
+      const fuelCtrl = f.get('fuel');
+      if (!fuelCtrl) {
+        this.fuelSubject.next(undefined);
+        return;
+      }
+      this.fuelSubject.next(fuelCtrl.value ?? undefined);
+      fuelCtrl.valueChanges
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((v: unknown) => this.fuelSubject.next(typeof v === 'string' ? v : undefined));
     });
 
     effect(() => {

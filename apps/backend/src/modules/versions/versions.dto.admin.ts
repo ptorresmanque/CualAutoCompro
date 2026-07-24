@@ -11,11 +11,12 @@ const versionObjectSchema = z.object({
   priceClp: z.number().int().nonnegative(),
   transmission: z.string().min(1).max(40).regex(ENUM_REGEX),
   fuel: z.string().min(1).max(40).regex(ENUM_REGEX),
-  engineDisplacementCc: z.number().int().nonnegative(),
+  engineDisplacementCc: z.number().int().nonnegative().nullable().optional(),
   powerHp: z.number().int().nonnegative(),
   torqueNm: z.number().int().nonnegative(),
-  consumptionCityKmL: z.number().nonnegative(),
-  consumptionHighwayKmL: z.number().nonnegative(),
+  consumptionCityKmL: z.number().nonnegative().nullable().optional(),
+  consumptionHighwayKmL: z.number().nonnegative().nullable().optional(),
+  autonomyKm: z.number().nonnegative().nullable().optional(),
   lengthMm: z.number().int().nonnegative(),
   widthMm: z.number().int().nonnegative(),
   heightMm: z.number().int().nonnegative(),
@@ -47,13 +48,42 @@ const validateRecall = (
   }
 };
 
-export const createVersionSchema = versionObjectSchema.superRefine(validateRecall);
+/**
+ * Para vehiculos electricos, cilindrada y consumos km/L no aplican (deben ser null)
+ * y autonomiaKm es obligatoria.
+ */
+const validateFuelFields = (
+  data: { fuel?: string | undefined; engineDisplacementCc?: number | null | undefined; autonomyKm?: number | null | undefined },
+  ctx: z.RefinementCtx,
+) => {
+  if (data.fuel === "ELECTRIC") {
+    if (data.engineDisplacementCc != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["engineDisplacementCc"],
+        message: "Cilindrada no aplica a vehiculos electricos",
+      });
+    }
+    if (data.autonomyKm == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["autonomyKm"],
+        message: "Autonomia es obligatoria para vehiculos electricos",
+      });
+    }
+  }
+};
+
+export const createVersionSchema = versionObjectSchema
+  .superRefine(validateRecall)
+  .superRefine(validateFuelFields);
 
 export const updateVersionSchema = versionObjectSchema
   .partial()
   .omit({ modelId: true })
   .extend({ priceNote: z.string().max(120).optional() })
-  .superRefine(validateRecall);
+  .superRefine(validateRecall)
+  .superRefine(validateFuelFields);
 
 export type CreateVersionInput = z.infer<typeof createVersionSchema>;
 export type UpdateVersionInput = z.infer<typeof updateVersionSchema>;

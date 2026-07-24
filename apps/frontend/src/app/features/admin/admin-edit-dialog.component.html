@@ -67,10 +67,10 @@
                         @case ('number')        { <app-number-field        [control]="$any(controlFor(meta.field))" [required]="isFieldRequired(meta)"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-number-field> }
                         @case ('boolean')       { <app-toggle-field        [control]="$any(controlFor(meta.field))" /> }
                         @case ('foreignKey')    { <app-select-search       [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi!" [optionLabel]="meta.optionLabel!"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-select-search> }
-                        @case ('enumWithOther') { <app-select-search       [control]="$any(controlFor(meta.field))" [options]="meta.options!" [allowOther]="true"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-select-search> }
+                        @case ('enumWithOther') { <app-select-search       [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi ?? null" [options]="meta.options ?? null" [allowOther]="true"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-select-search> }
                         @case ('imageUrl')      { <app-image-upload-field  [control]="$any(controlFor(meta.field))" /> }
                         @case ('gallery')       { <app-gallery-upload-field [control]="$any(controlFor(meta.field))" /> }
-                        @case ('multiSelect')   { <app-multi-select-field  [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi!" [optionLabel]="meta.optionLabel!" [placeholder]="'Buscar equipamiento…'"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-multi-select-field> }
+                        @case ('multiSelect')   { <app-multi-select-field  [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi!" [optionLabel]="meta.optionLabel!" [placeholder]="meta.placeholder ?? 'Buscar…'"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-multi-select-field> }
                         @case ('array')         { <app-text-field          [control]="$any(controlFor(meta.field))" [multiline]="true"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-text-field> }
                       }
                     </div>

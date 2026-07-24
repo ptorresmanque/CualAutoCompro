@@ -18,11 +18,12 @@ type VersionRow = {
   priceClp: number;
   transmission: string;
   fuel: string;
-  engineDisplacementCc: number;
+  engineDisplacementCc: number | null;
   powerHp: number;
   torqueNm: number;
-  consumptionCityKmL: number;
-  consumptionHighwayKmL: number;
+  consumptionCityKmL: number | null;
+  consumptionHighwayKmL: number | null;
+  autonomyKm: number | null;
   lengthMm: number;
   widthMm: number;
   heightMm: number;
@@ -84,6 +85,11 @@ export class VersionsService {
             equipmentItem: { select: { id: true, name: true, category: true } },
           },
         },
+        colorItems: {
+          include: {
+            color: { select: { id: true, name: true, hex: true } },
+          },
+        },
       },
     });
   }
@@ -114,6 +120,11 @@ export class VersionsService {
           equipmentItems: {
             include: {
               equipmentItem: { select: { id: true, name: true, category: true } },
+            },
+          },
+          colorItems: {
+            include: {
+              color: { select: { id: true, name: true, hex: true } },
             },
           },
         },
@@ -300,6 +311,10 @@ export class VersionsService {
       if (input.consumptionHighwayKmL !== undefined) {
         setClauses.push("`consumptionHighwayKmL` = ?");
         values.push(input.consumptionHighwayKmL);
+      }
+      if (input.autonomyKm !== undefined) {
+        setClauses.push("`autonomyKm` = ?");
+        values.push(input.autonomyKm);
       }
       if (input.lengthMm !== undefined) {
         setClauses.push("`lengthMm` = ?");

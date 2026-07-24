@@ -141,6 +141,13 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'colors',
+            loadComponent: () =>
+              import('./features/admin/colors-admin.component').then(
+                (m) => m.ColorsAdminComponent,
+              ),
+          },
+          {
             path: 'maintenance',
             loadComponent: () =>
               import('./features/admin/maintenance-admin.component').then(

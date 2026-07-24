@@ -16,6 +16,7 @@ import { comparisonsRouter, meComparisonsRouter } from "./modules/comparisons/co
 import { popularityRouter } from "./modules/popularity/popularity.routes.js";
 import { meFavoritesRouter } from "./modules/favorites/favorites.routes.js";
 import { equipmentAdminRouter, equipmentRouter } from "./modules/equipment/equipment.routes.js";
+import { colorsAdminRouter } from "./modules/colors/colors.routes.js";
 import { maintenanceAdminRouter, maintenanceRouter } from "./modules/maintenance/maintenance.routes.js";
 import { costRouter } from "./modules/cost/cost.routes.js";
 import { dealersRouter, dealersAdminRouter } from "./modules/dealers/dealers.routes.js";
@@ -66,6 +67,7 @@ export const createApp = () => {
   app.use("/api/v1/me/favorites", meFavoritesRouter);
   app.use("/api/v1/equipment", equipmentRouter);
   app.use("/api/v1/admin/equipment", equipmentAdminRouter);
+  app.use("/api/v1/admin/colors", colorsAdminRouter);
   app.use("/api/v1/maintenance", maintenanceRouter);
   app.use("/api/v1/cost", costRouter);
   app.use("/api/v1/admin/maintenance", maintenanceAdminRouter);

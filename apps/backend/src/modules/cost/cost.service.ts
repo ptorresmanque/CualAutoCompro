@@ -49,9 +49,12 @@ export class CostService {
     let fuelClp = 0;
     let fuelPricePerUnit: number | null = null;
     let fuelUnit: string | null = null;
-    if (fuelPrice && version.consumptionCityKmL > 0 && version.consumptionHighwayKmL > 0) {
+    const cityKml = version.consumptionCityKmL ?? 0;
+    const hwKml = version.consumptionHighwayKmL ?? 0;
+    if (fuelPrice && (cityKml > 0 || hwKml > 0)) {
       const pricePerLiter = fuelPrice.pricePerUnitClp;
-      const liters = cityKm / version.consumptionCityKmL + hwKm / version.consumptionHighwayKmL;
+      // Si solo hay autonomia (electricos), cae a una estimacion promedio.
+      const liters = (cityKml > 0 ? cityKm / cityKml : 0) + (hwKml > 0 ? hwKm / hwKml : safeKm / Math.max((version.autonomyKm ?? 0), 1));
       fuelClp = round(liters * pricePerLiter);
       fuelPricePerUnit = pricePerLiter;
       fuelUnit = fuelPrice.unit;

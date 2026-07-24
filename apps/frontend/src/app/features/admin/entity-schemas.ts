@@ -50,11 +50,12 @@ export const versionSchema = z.object({
   priceClp: z.number().int().nonnegative(),
   transmission: z.string().min(1).max(40).regex(ENUM_REGEX),
   fuel: z.string().min(1).max(40).regex(ENUM_REGEX),
-  engineDisplacementCc: z.number().int().nonnegative(),
+  engineDisplacementCc: z.number().int().nonnegative().nullable().optional(),
   powerHp: z.number().int().nonnegative(),
   torqueNm: z.number().int().nonnegative(),
-  consumptionCityKmL: z.number().nonnegative(),
-  consumptionHighwayKmL: z.number().nonnegative(),
+  consumptionCityKmL: z.number().nonnegative().nullable().optional(),
+  consumptionHighwayKmL: z.number().nonnegative().nullable().optional(),
+  autonomyKm: z.number().nonnegative().nullable().optional(),
   lengthMm: z.number().int().nonnegative(),
   widthMm: z.number().int().nonnegative(),
   heightMm: z.number().int().nonnegative(),
@@ -76,6 +77,13 @@ export const versionSchema = z.object({
 export const equipmentSchema = z.object({
   name: z.string().min(2).max(120),
   category: z.string().min(2).max(60),
+});
+
+const HEX_REGEX = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
+
+export const colorSchema = z.object({
+  name: z.string().min(2).max(80),
+  hex: z.string().regex(HEX_REGEX).nullable().optional(),
 });
 
 export const maintenanceSchema = z.object({
@@ -100,11 +108,12 @@ export type BrandInput = z.infer<typeof brandSchema>;
 export type ModelInput = z.infer<typeof modelSchema>;
 export type VersionInput = z.infer<typeof versionSchema>;
 export type EquipmentInput = z.infer<typeof equipmentSchema>;
+export type ColorInput = z.infer<typeof colorSchema>;
 export type MaintenanceInput = z.infer<typeof maintenanceSchema>;
 export type DealerInput = z.infer<typeof dealerSchema>;
 export type FuelPriceInput = z.infer<typeof fuelPriceSchema>;
 
-export type EntityKey = 'brand' | 'model' | 'version' | 'equipment' | 'maintenance' | 'dealer' | 'fuelPrice';
+export type EntityKey = 'brand' | 'model' | 'version' | 'equipment' | 'maintenance' | 'dealer' | 'fuelPrice' | 'color';
 
 export const entitySchemaByKey: Record<EntityKey, z.ZodTypeAny> = {
   brand: brandSchema,
@@ -114,6 +123,7 @@ export const entitySchemaByKey: Record<EntityKey, z.ZodTypeAny> = {
   maintenance: maintenanceSchema,
   dealer: dealerSchema,
   fuelPrice: fuelPriceSchema,
+  color: colorSchema,
 };
 
 export type FieldKind =
@@ -136,6 +146,9 @@ export interface FieldMeta {
   optionLabel?: string;
   optional?: boolean;
   hidden?: boolean;
+  /** When provided, hides the field unless the form's `fuel` value is in this list. */
+  showWhenFuels?: string[];
+  placeholder?: string;
   help?: string;
   group?: string;
 }
@@ -174,11 +187,12 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'priceClp', label: 'Precio CLP', kind: 'number', group: 'Identificación' },
     { field: 'transmission', label: 'Transmisión', kind: 'enumWithOther', options: [...TRANSMISSIONS], group: 'Motor' },
     { field: 'fuel', label: 'Combustible', kind: 'enumWithOther', options: [...FUELS], group: 'Motor' },
-    { field: 'engineDisplacementCc', label: 'Cilindrada cc', kind: 'number', group: 'Motor' },
+    { field: 'engineDisplacementCc', label: 'Cilindrada cc', kind: 'number', optional: true, help: 'No aplica a vehículos eléctricos', group: 'Motor', showWhenFuels: ['BENCINA', 'DIESEL', 'HYBRID'] },
     { field: 'powerHp', label: 'Potencia hp', kind: 'number', group: 'Motor' },
     { field: 'torqueNm', label: 'Torque Nm', kind: 'number', group: 'Motor' },
-    { field: 'consumptionCityKmL', label: 'Consumo ciudad km/L', kind: 'number', group: 'Consumo' },
-    { field: 'consumptionHighwayKmL', label: 'Consumo carretera km/L', kind: 'number', group: 'Consumo' },
+    { field: 'consumptionCityKmL', label: 'Consumo ciudad km/L', kind: 'number', optional: true, help: 'No aplica a vehículos eléctricos', group: 'Consumo', showWhenFuels: ['BENCINA', 'DIESEL', 'HYBRID'] },
+    { field: 'consumptionHighwayKmL', label: 'Consumo carretera km/L', kind: 'number', optional: true, help: 'No aplica a vehículos eléctricos', group: 'Consumo', showWhenFuels: ['BENCINA', 'DIESEL', 'HYBRID'] },
+    { field: 'autonomyKm', label: 'Autonomía km', kind: 'number', optional: true, help: 'Autonomía estimada con carga completa (obligatoria para eléctricos)', group: 'Consumo', showWhenFuels: ['ELECTRIC'] },
     { field: 'lengthMm', label: 'Largo mm', kind: 'number', group: 'Dimensiones' },
     { field: 'widthMm', label: 'Ancho mm', kind: 'number', group: 'Dimensiones' },
     { field: 'heightMm', label: 'Alto mm', kind: 'number', group: 'Dimensiones' },
@@ -189,6 +203,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'hasEsp', label: 'Control de estabilidad', kind: 'boolean', group: 'Seguridad' },
     { field: 'hasCruiseControl', label: 'Control de crucero', kind: 'boolean', group: 'Seguridad' },
     { field: 'equipment', label: 'Equipamiento', kind: 'multiSelect', optionsApi: '/admin/equipment/options', optionLabel: 'name', group: 'Equipamiento' },
+    { field: 'colors', label: 'Colores', kind: 'multiSelect', optionsApi: '/admin/colors/options', optionLabel: 'name', placeholder: 'Buscar color…', group: 'Apariencia' },
     { field: 'circulationPermitClp', label: 'Permiso circulación CLP', kind: 'number', optional: true, help: 'Permiso de circulación anual del vehículo en pesos chilenos', group: 'Seguros y permisos' },
     { field: 'mandatoryInsuranceClp', label: 'SOAP CLP', kind: 'number', optional: true, help: 'Seguro Obligatorio de Accidentes Personales (SOAP) en pesos chilenos', group: 'Seguros y permisos' },
     { field: 'voluntaryInsuranceClp', label: 'Seguro automotriz CLP', kind: 'number', optional: true, group: 'Seguros y permisos' },
@@ -199,7 +214,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
   ],
   equipment: [
     { field: 'name', label: 'Nombre', kind: 'text' },
-    { field: 'category', label: 'Categoría', kind: 'text' },
+    { field: 'category', label: 'Categoría', kind: 'enumWithOther', optionsApi: '/admin/equipment/categories', placeholder: 'Buscar o crear categoría…' },
   ],
   maintenance: [
     { field: 'versionId', label: 'Versión', kind: 'foreignKey', optionsApi: '/admin/versions', optionLabel: 'name', hidden: true },
@@ -215,5 +230,9 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'fuelType', label: 'Tipo de combustible', kind: 'enumWithOther', options: [...FUELS] },
     { field: 'pricePerUnitClp', label: 'Precio CLP / unidad', kind: 'number' },
     { field: 'unit', label: 'Unidad', kind: 'enumWithOther', options: ['L', 'kWh'] },
+  ],
+  color: [
+    { field: 'name', label: 'Nombre', kind: 'text' },
+    { field: 'hex', label: 'Hex (opcional)', kind: 'text', optional: true, help: 'Código hexadecimal del color, p. ej. #FF0000' },
   ],
 };

@@ -39,6 +39,7 @@ const TEMPLATES: Record<string, unknown> = {
   maintenance: { versionId: "", mileageTag: 0, costClp: 0 },
   dealer: { name: "", url: "", logoUrl: null },
   fuelPrice: { fuelType: "BENCINA", pricePerUnitClp: 0, unit: "L" },
+  color: { name: "", hex: null },
 };
 
 export const seedController = {

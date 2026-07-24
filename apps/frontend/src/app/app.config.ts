@@ -15,6 +15,7 @@ import { MAT_ICON_DEFAULT_OPTIONS } from '@angular/material/icon';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth.interceptor';
+import { loadingInterceptor } from './core/loading.interceptor';
 import { AuthService } from './core/auth.service';
 import { PopularityService } from './core/popularity.service';
 
@@ -23,7 +24,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideAnimationsAsync(),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor, loadingInterceptor])),
     provideAppInitializer(() => inject(AuthService).bootstrap()),
     provideAppInitializer(() => inject(PopularityService).refresh()),
     {

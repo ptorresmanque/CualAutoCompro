@@ -4,12 +4,12 @@ import { badRequest, conflict, notFound } from "../../shared/errors.js";
 import { ok } from "../../shared/response.js";
 import { prisma } from "../../infra/prisma.js";
 
-const ENTITY_NAMES = ["brands", "models", "versions", "equipment", "maintenance", "dealers", "fuelPrices"] as const;
+const ENTITY_NAMES = ["brands", "models", "versions", "equipment", "maintenance", "dealers", "fuelPrices", "colors"] as const;
 type EntityName = (typeof ENTITY_NAMES)[number];
 
 export const adminTrashController = {
   list: ah(async (_req: Request, res: Response) => {
-    const [brands, models, versions, equipment, maintenance, dealers, fuelPrices] = await Promise.all([
+    const [brands, models, versions, equipment, maintenance, dealers, fuelPrices, colors] = await Promise.all([
       prisma.brand.findMany({ where: { deletedAt: { not: null } }, select: { id: true, name: true, deletedAt: true }, orderBy: { deletedAt: "desc" } }),
       prisma.model.findMany({ where: { deletedAt: { not: null } }, select: { id: true, name: true, deletedAt: true, brand: { select: { name: true } } }, orderBy: { deletedAt: "desc" } }),
       prisma.version.findMany({ where: { deletedAt: { not: null } }, select: { id: true, name: true, deletedAt: true, model: { select: { name: true, brand: { select: { name: true } } } } }, orderBy: { deletedAt: "desc" } }),
@@ -17,8 +17,9 @@ export const adminTrashController = {
       prisma.maintenanceCost.findMany({ where: { deletedAt: { not: null } }, select: { id: true, mileageTag: true, costClp: true, deletedAt: true, version: { select: { name: true } } }, orderBy: { deletedAt: "desc" } }),
       prisma.dealer.findMany({ where: { deletedAt: { not: null } }, select: { id: true, name: true, deletedAt: true }, orderBy: { deletedAt: "desc" } }),
       prisma.fuelPrice.findMany({ where: { deletedAt: { not: null } }, select: { id: true, fuelType: true, pricePerUnitClp: true, unit: true, deletedAt: true }, orderBy: { deletedAt: "desc" } }),
+      prisma.color.findMany({ where: { deletedAt: { not: null } }, select: { id: true, name: true, hex: true, deletedAt: true }, orderBy: { deletedAt: "desc" } }),
     ]);
-    res.json(ok({ brands, models, versions, equipment, maintenance, dealers, fuelPrices }));
+    res.json(ok({ brands, models, versions, equipment, maintenance, dealers, fuelPrices, colors }));
   }),
 
   restore: ah(async (req: Request, res: Response) => {
@@ -39,7 +40,9 @@ export const adminTrashController = {
                 ? await prisma.maintenanceCost.update({ where: { id }, data: { deletedAt: null } })
                 : entity === "dealers"
                   ? await prisma.dealer.update({ where: { id }, data: { deletedAt: null } })
-                  : await prisma.fuelPrice.update({ where: { id }, data: { deletedAt: null } });
+                  : entity === "fuelPrices"
+                    ? await prisma.fuelPrice.update({ where: { id }, data: { deletedAt: null } })
+                    : await prisma.color.update({ where: { id }, data: { deletedAt: null } });
       res.json(ok(restored));
     } catch (error) {
       if (error && typeof error === "object" && "code" in error && error.code === "P2025") {

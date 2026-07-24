@@ -1,0 +1,91 @@
+<section>
+  <header class="flex items-center justify-between mb-4 gap-2">
+    <h2 class="text-xl font-bold">Colores</h2>
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      (click)="openCreate()"
+    >+ Nuevo</button>
+  </header>
+
+  <app-search-input
+    placeholder="Buscar color…"
+    [value]="search()"
+    (changed)="onSearch($event)"
+  />
+
+  @if (error(); as err) {
+    <div class="mb-3 flex items-center justify-between gap-2 rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark">
+      <span>{{ err }}</span>
+      <button mat-button type="button" (click)="retry()">Reintentar</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="text-sm text-ink-muted">Cargando…</p>
+  } @else if (displayed().length === 0) {
+    <p class="text-sm text-ink-muted">No hay colores.</p>
+  } @else {
+    <div class="admin-table-scroll">
+      <table class="admin-table w-full text-sm">
+        <thead class="text-left text-xs text-ink-muted">
+          <tr>
+            <th class="py-2 w-10"></th>
+            <th class="py-2">
+              <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
+                (click)="toggleSort('name')"
+                [attr.aria-sort]="sortKey() === 'name' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+                Nombre
+                <mat-icon class="sort-icon">{{ sortKey() === 'name' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
+              </button>
+            </th>
+            <th class="py-2">Hex</th>
+            <th class="py-2 actions-col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of displayed(); track c.id) {
+            <tr class="border-t border-border">
+              <td class="py-2">
+                @if (c.hex) {
+                  <span class="inline-block w-5 h-5 rounded border border-border align-middle" [style.background]="c.hex" [attr.aria-label]="c.hex"></span>
+                }
+              </td>
+              <td class="py-2">{{ c.name }}</td>
+              <td class="py-2 font-mono text-xs">{{ c.hex ?? '—' }}</td>
+              <td class="py-2 actions-col">
+                <div class="action-buttons">
+                  <button mat-stroked-button color="primary" (click)="openEdit(c)">
+                    <mat-icon class="action-icon">edit</mat-icon>
+                    <span class="action-label">Editar</span>
+                  </button>
+                  <button mat-stroked-button class="action-danger" (click)="confirmDelete(c)">
+                    <mat-icon class="action-icon">delete</mat-icon>
+                    <span class="action-label">Eliminar</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-pagination
+      [meta]="pagination()"
+      [loading]="loading()"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    />
+  }
+
+  @if (dialogMode() === 'open') {
+    <app-admin-edit-dialog
+      [entityKey]="'color'"
+      [apiPath]="'colors'"
+      [entity]="$any(dialogEntity())"
+      (save)="onSave($event)"
+      (cancel)="closeDialog()"
+    />
+  }
+</section>

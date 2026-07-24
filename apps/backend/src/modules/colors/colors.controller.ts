@@ -2,20 +2,20 @@ import type { Request, Response } from "express";
 import { ah } from "../../shared/async-handler.js";
 import { ok } from "../../shared/response.js";
 import { prisma } from "../../infra/prisma.js";
-import { EquipmentService } from "./equipment.service.js";
+import { ColorsService } from "./colors.service.js";
 import {
-  createEquipmentSchema,
-  updateEquipmentSchema,
-  attachEquipmentSchema,
-} from "./equipment.dto.admin.js";
+  createColorSchema,
+  updateColorSchema,
+  attachColorSchema,
+} from "./colors.dto.admin.js";
 import { validation } from "../../shared/errors.js";
 import { toCsv } from "../../shared/csv.js";
 import { parsePagination, sendPaged } from "../../shared/pagination.js";
 
-const svc = new EquipmentService(prisma);
+const svc = new ColorsService(prisma);
 
-export const equipmentController = {
-  list: ah(async (_req: Request, res: Response) => res.json(ok(await svc.list()))),
+export const colorsController = {
+  listAll: ah(async (_req: Request, res: Response) => res.json(ok(await svc.listAll()))),
 
   listPaged: ah(async (req: Request, res: Response) => {
     const params = parsePagination(req.query.page, req.query.pageSize);
@@ -24,21 +24,15 @@ export const equipmentController = {
     sendPaged(res, rows, total, params);
   }),
 
-  listAll: ah(async (_req: Request, res: Response) => res.json(ok(await svc.listAll()))),
-
-  listCategories: ah(async (_req: Request, res: Response) =>
-    res.json(ok(await svc.listCategories())),
-  ),
-
   create: ah(async (req: Request, res: Response) => {
-    const parsed = createEquipmentSchema.safeParse(req.body);
+    const parsed = createColorSchema.safeParse(req.body);
     if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     res.status(201).json(ok(await svc.create(parsed.data)));
   }),
 
   update: ah(async (req: Request, res: Response) => {
     const id = req.params.id ?? "";
-    const parsed = updateEquipmentSchema.safeParse(req.body);
+    const parsed = updateColorSchema.safeParse(req.body);
     if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     res.json(ok(await svc.update(id, parsed.data)));
   }),
@@ -54,14 +48,14 @@ export const equipmentController = {
   }),
 
   attach: ah(async (req: Request, res: Response) => {
-    const parsed = attachEquipmentSchema.safeParse(req.body);
+    const parsed = attachColorSchema.safeParse(req.body);
     if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
-    res.json(ok(await svc.attach(parsed.data.versionId, parsed.data.itemId)));
+    res.json(ok(await svc.attach(parsed.data.versionId, parsed.data.colorId)));
   }),
 
   detach: ah(async (req: Request, res: Response) => {
-    const { versionId, itemId } = req.params;
-    res.json(ok(await svc.detach(versionId ?? "", itemId ?? "")));
+    const { versionId, colorId } = req.params;
+    res.json(ok(await svc.detach(versionId ?? "", colorId ?? "")));
   }),
 
   bulkDelete: ah(async (req: Request, res: Response) => {
@@ -75,11 +69,11 @@ export const equipmentController = {
   exportCsv: ah(async (_req: Request, res: Response) => {
     const rows = await svc.listAll();
     const csv = toCsv(
-      ['id', 'name', 'category'],
-      rows.map(e => [e.id, e.name, e.category]),
+      ['id', 'name', 'hex'],
+      rows.map(c => [c.id, c.name, c.hex ?? '']),
     );
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", 'attachment; filename="equipment.csv"');
+    res.setHeader("Content-Disposition", 'attachment; filename="colors.csv"');
     res.send(csv);
   }),
 };
