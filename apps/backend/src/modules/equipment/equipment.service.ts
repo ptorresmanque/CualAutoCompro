@@ -23,15 +23,20 @@ export class EquipmentService {
   /**
    * Devuelve las categorías únicas existentes (sin duplicados, ordenadas).
    * Útil para precargar el autocomplete del formulario de equipamiento.
+   *
+   * Devuelve objetos `{ id, name }` para ser compatible con `app-select-search`
+   * que consume endpoints `optionsApi` cuya respuesta es una lista de items
+   * con esos dos campos. `id` y `name` son iguales (la categoría en sí) y al
+   * hacer `pick()` se guarda el id como valor del form control.
    */
-  async listCategories(): Promise<string[]> {
+  async listCategories(): Promise<Array<{ id: string; name: string }>> {
     const groups = await this.prisma.equipmentItem.groupBy({
       by: ["category"],
       where: { deletedAt: null },
       _count: { _all: true },
       orderBy: { category: "asc" },
     });
-    return groups.map((g) => g.category);
+    return groups.map((g) => ({ id: g.category, name: g.category }));
   }
 
   async listPaged(q: string | undefined, params: PaginationParams) {

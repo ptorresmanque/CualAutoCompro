@@ -9,6 +9,7 @@ import {
   input,
   OnInit,
   signal,
+  viewChild,
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -38,6 +39,15 @@ export class SelectSearchComponent implements OnInit {
   readonly open = signal(false);
   readonly activeIndex = signal(0);
   readonly remoteOptions = signal<{ id: string; [k: string]: unknown }[]>([]);
+
+  // Posicion del dropdown anclado al input. Se usa `position: fixed` para
+  // escapar el `overflow: hidden` del dialog que aloja al componente.
+  readonly dropdownTop = signal<string>('0px');
+  readonly dropdownLeft = signal<string>('0px');
+  readonly dropdownWidth = signal<string>('0px');
+  readonly flipped = signal(false);
+
+  private readonly input = viewChild<ElementRef<HTMLInputElement>>('input');
 
   constructor() {
     effect(() => {
@@ -91,6 +101,27 @@ export class SelectSearchComponent implements OnInit {
     }
   }
 
+  positionDropdown(): void {
+    const el = this.input()?.nativeElement;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const viewportH = window.innerHeight;
+    // 15rem ≈ 240px (CSS). Si no entra abajo, flip.
+    const maxH = 240;
+    const wantTop = rect.bottom + 4;
+    const wantFlipped = wantTop + maxH > viewportH && rect.top - 4 - maxH > 0;
+
+    if (wantFlipped) {
+      this.flipped.set(true);
+      this.dropdownTop.set(`${Math.max(rect.top - 4 - maxH, 4)}px`);
+    } else {
+      this.flipped.set(false);
+      this.dropdownTop.set(`${Math.min(wantTop, viewportH - maxH - 4)}px`);
+    }
+    this.dropdownLeft.set(`${rect.left}px`);
+    this.dropdownWidth.set(`${rect.width}px`);
+  }
+
   onInput(v: string): void {
     this.query.set(v);
     this.open.set(true);
@@ -123,6 +154,7 @@ export class SelectSearchComponent implements OnInit {
     const len = this.filtered().length;
     if (len === 0) return;
     this.activeIndex.update((i) => (i + 1) % len);
+    this.positionDropdown();
   }
 
   onArrowUp(e: Event): void {
@@ -130,6 +162,7 @@ export class SelectSearchComponent implements OnInit {
     const len = this.filtered().length;
     if (len === 0) return;
     this.activeIndex.update((i) => (i <= 0 ? len - 1 : i - 1));
+    this.positionDropdown();
   }
 
   onEnter(e: Event): void {
@@ -144,5 +177,11 @@ export class SelectSearchComponent implements OnInit {
   @HostListener('document:click', ['$event'])
   onDocClick(e: MouseEvent): void {
     if (!this.el.nativeElement.contains(e.target as Node)) this.open.set(false);
+  }
+
+  @HostListener('window:resize')
+  @HostListener('window:scroll')
+  onWindowChange(): void {
+    if (this.open()) this.positionDropdown();
   }
 }

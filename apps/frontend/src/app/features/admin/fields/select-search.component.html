@@ -9,8 +9,8 @@
       [attr.aria-activedescendant]="open() && filtered().length > 0 ? 'option-' + activeIndex() : null"
       aria-autocomplete="list"
       [value]="query()"
-      (input)="onInput($any($event.target).value)"
-      (focus)="open.set(true)"
+      (input)="onInput($any($event.target).value); positionDropdown()"
+      (focus)="open.set(true); positionDropdown()"
       (keydown.escape)="open.set(false)"
       (keydown.arrowdown)="onArrowDown($event)"
       (keydown.arrowup)="onArrowUp($event)"
@@ -20,7 +20,14 @@
   </mat-form-field>
 
   @if (open() && filtered().length > 0) {
-    <ul role="listbox" class="select-search-list">
+    <ul
+      role="listbox"
+      class="select-search-list"
+      [class.select-search-list-flipped]="flipped()"
+      [style.top]="dropdownTop()"
+      [style.left]="dropdownLeft()"
+      [style.width]="dropdownWidth()"
+    >
       @for (item of filtered(); track item.label; let i = $index) {
         <li
           [attr.id]="'option-' + i"

@@ -1,17 +1,25 @@
-:host { display: block; width: 100%; position: relative; }
+:host {
+  display: block;
+  width: 100%;
+  position: relative;
+}
 
 .select-search-field {
   position: relative;
   width: 100%;
 }
 
+/*
+  Dropdown se posiciona con `position: fixed` y se ancla al input via
+  getBoundingClientRect(). Esto lo libera de cualquier `overflow: hidden` o
+  `overflow-y: auto` del dialog padre (donde los inputs viven adentro de un
+  panel con scroll interno). Ademas, si no hay espacio debajo, se "flipa"
+  y se muestra encima del input.
+*/
 .select-search-list {
-  position: absolute;
+  position: fixed;
   z-index: 1000;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin: 0.25rem 0 0;
+  margin: 0;
   padding: 0.25rem 0;
   list-style: none;
   max-height: 15rem;
@@ -20,6 +28,10 @@
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: 0.5rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.select-search-list-flipped {
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .select-search-list li {
