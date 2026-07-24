@@ -353,7 +353,7 @@
 
     <!-- Collapsible sections -->
     <div class="space-y-3">
-      @for (s of sections; track s.name) {
+      @for (s of sections(); track s.name) {
         <mat-expansion-panel
           class="compare-section"
           [expanded]="s.name === 'specs'"
@@ -390,8 +390,8 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-border">
-                @for (row of s.rows; track $index) {
-                  <tr [attr.data-testid]="'row-' + (row.kind === 'simple' ? row.key : 'maintenance-breakdown')">
+                @for (row of s.rows; track trackByRow($index, row)) {
+                  <tr [attr.data-testid]="'row-' + trackByRow($index, row)">
                     <th scope="row" class="px-4 py-2 text-left font-bold text-ink-muted text-xs uppercase tracking-wider">
                       {{ row.label }}
                     </th>
@@ -399,6 +399,15 @@
                       @for (v of versions(); track v.id) {
                         <td [class]="cellClass(row.key)" class="px-4 py-2 text-ink">
                           {{ row.format(v) }}
+                        </td>
+                      }
+                    } @else if (row.kind === 'equipmentList') {
+                      @for (v of versions(); track v.id) {
+                        <td
+                          class="px-4 py-2 text-ink"
+                          [attr.data-testid]="'equipment-cell-' + v.id + '-' + row.category"
+                        >
+                          {{ formatEquipmentByCategory(v, row.category) }}
                         </td>
                       }
                     } @else {

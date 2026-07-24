@@ -167,8 +167,7 @@ describe('VersionsAdminComponent', () => {
       engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
       consumptionCityKmL: 0, consumptionHighwayKmL: 0,
       lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
-      trunkLiters: 0, airbagCount: 0,
-      hasAbs: false, hasEsp: false, hasCruiseControl: false,
+      trunkLiters: 0,
       equipment: ['e2', 'e3'],
     });
 
@@ -279,8 +278,7 @@ describe('VersionsAdminComponent', () => {
       engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
       consumptionCityKmL: 0, consumptionHighwayKmL: 0,
       lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
-      trunkLiters: 0, airbagCount: 0,
-      hasAbs: false, hasEsp: false, hasCruiseControl: false,
+      trunkLiters: 0,
       equipment: ['e1', 'e2', 'e3'],
     });
     fixture.detectChanges();

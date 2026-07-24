@@ -18,10 +18,6 @@ const baseInput = {
   heightMm: 1450,
   weightKg: 1300,
   trunkLiters: 450,
-  airbagCount: 6,
-  hasAbs: true,
-  hasEsp: true,
-  hasCruiseControl: true,
 };
 
 describe("versions.dto.admin recall validation", () => {

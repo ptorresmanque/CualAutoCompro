@@ -24,8 +24,7 @@ async function seedVersion() {
       consumptionCityKmL: 1,
       consumptionHighwayKmL: 1,
       lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1,
-      trunkLiters: 1, airbagCount: 1,
-      hasAbs: true, hasEsp: true, hasCruiseControl: true,
+      trunkLiters: 1,
     },
   });
   return { version, modelId: model.id };
@@ -85,8 +84,7 @@ describe("Popularity endpoints", () => {
         engineDisplacementCc: 1, powerHp: 1, torqueNm: 1,
         consumptionCityKmL: 1, consumptionHighwayKmL: 1,
         lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1,
-        trunkLiters: 1, airbagCount: 1,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true,
+        trunkLiters: 1,
       },
     });
     const app = request(createApp());

@@ -73,8 +73,7 @@ describe('AdminEditDialogComponent', () => {
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
         lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
-        trunkLiters: 0, airbagCount: 0,
-        hasAbs: false, hasEsp: false, hasCruiseControl: false,
+        trunkLiters: 0,
       },
     });
     await fixture.whenStable();
@@ -115,14 +114,14 @@ describe('AdminEditDialogComponent', () => {
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
         lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
-        trunkLiters: 0, airbagCount: 0,
-        hasAbs: false, hasEsp: false, hasCruiseControl: false, hasRecall: false,
+        trunkLiters: 0, hasRecall: false,
       },
     });
     await fixture.whenStable();
     fixture.detectChanges();
     const toggles = fixture.nativeElement.querySelectorAll('app-toggle-field');
-    expect(toggles.length).toBe(4);
+    // Solo queda hasRecall tras quitar los booleanos de seguridad (hasAbs/hasEsp/hasCruiseControl).
+    expect(toggles.length).toBe(1);
     const allText = fixture.nativeElement.textContent ?? '';
     expect(allText.toLowerCase()).toContain('recall');
   });
@@ -137,8 +136,7 @@ describe('AdminEditDialogComponent', () => {
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
         lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
-        trunkLiters: 0, airbagCount: 0,
-        hasAbs: false, hasEsp: false, hasCruiseControl: false,
+        trunkLiters: 0,
       },
     });
     await fixture.whenStable();
@@ -166,8 +164,7 @@ describe('AdminEditDialogComponent', () => {
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
         lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
-        trunkLiters: 0, airbagCount: 0,
-        hasAbs: false, hasEsp: false, hasCruiseControl: false,
+        trunkLiters: 0,
       },
     });
     await fixture.whenStable();
@@ -259,8 +256,7 @@ describe('AdminEditDialogComponent', () => {
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
         lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
-        trunkLiters: 0, airbagCount: 0,
-        hasAbs: false, hasEsp: false, hasCruiseControl: false,
+        trunkLiters: 0,
       },
     });
     await fixture.whenStable();
@@ -315,8 +311,7 @@ describe('AdminEditDialogComponent', () => {
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
         lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
-        trunkLiters: 0, airbagCount: 0,
-        hasAbs: false, hasEsp: false, hasCruiseControl: false, hasRecall: false,
+        trunkLiters: 0, hasRecall: false,
         circulationPermitClp: null, mandatoryInsuranceClp: null, voluntaryInsuranceClp: null,
         fuelTankLiters: null, batteryCapacityKwh: null, recallUrl: null,
       },
@@ -329,8 +324,7 @@ describe('AdminEditDialogComponent', () => {
       engineDisplacementCc: 2000, powerHp: 150, torqueNm: 200,
       consumptionCityKmL: 12, consumptionHighwayKmL: 16,
       lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300,
-      trunkLiters: 450, airbagCount: 6,
-      hasAbs: true, hasEsp: true, hasCruiseControl: true,
+      trunkLiters: 450,
       circulationPermitClp: null, mandatoryInsuranceClp: null, voluntaryInsuranceClp: null,
       fuelTankLiters: null, batteryCapacityKwh: null,
       hasRecall: false, recallUrl: null,
@@ -355,8 +349,7 @@ describe('AdminEditDialogComponent', () => {
       engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
       consumptionCityKmL: 0, consumptionHighwayKmL: 0,
       lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
-      trunkLiters: 0, airbagCount: 0,
-      hasAbs: false, hasEsp: false, hasCruiseControl: false,
+      trunkLiters: 0,
     },
   });
 });
@@ -448,8 +441,7 @@ describe('Required/optional markers', () => {
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
         lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
-        trunkLiters: 0, airbagCount: 0,
-        hasAbs: false, hasEsp: false, hasCruiseControl: false,
+        trunkLiters: 0,
       },
     });
     await fixture.whenStable();
@@ -659,8 +651,7 @@ describe('Sections layout', () => {
               engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
               consumptionCityKmL: 0, consumptionHighwayKmL: 0,
               lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
-              trunkLiters: 0, airbagCount: 0,
-              hasAbs: false, hasEsp: false, hasCruiseControl: false,
+              trunkLiters: 0,
             },
           }
         : { data: { name: '', logoUrl: null } };
@@ -677,13 +668,13 @@ describe('Sections layout', () => {
     fixture.detectChanges();
 
     const sections = fixture.componentInstance.sections();
-    expect(sections.length).toBe(10);
+    // 9 secciones tras eliminar el grupo Seguridad (hasAbs/hasEsp/hasCruiseControl/airbagCount).
+    expect(sections.length).toBe(9);
     expect(sections.map((s) => s.label)).toEqual([
       'Identificación',
       'Motor',
       'Consumo',
       'Dimensiones',
-      'Seguridad',
       'Equipamiento',
       'Apariencia',
       'Seguros y permisos',
@@ -710,7 +701,6 @@ describe('Sections layout', () => {
     ]);
     expect(byId.get('consumo')?.fields.length).toBe(3);
     expect(byId.get('dimensiones')?.fields.length).toBe(5);
-    expect(byId.get('seguridad')?.fields.length).toBe(4);
     expect(byId.get('equipamiento')?.fields.length).toBe(1);
     expect(byId.get('apariencia')?.fields.map((f) => f.field)).toEqual(['colors']);
     expect(byId.get('seguros-y-permisos')?.fields.length).toBe(3);
@@ -734,7 +724,6 @@ describe('Sections layout', () => {
       'Motor',
       'Consumo',
       'Dimensiones',
-      'Seguridad',
       'Equipamiento',
       'Apariencia',
       'Seguros y permisos',
@@ -752,7 +741,7 @@ describe('Sections layout', () => {
     fixture.detectChanges();
 
     const navItems = fixture.nativeElement.querySelectorAll('.dialog-section-nav-item');
-    expect(navItems.length).toBe(10);
+    expect(navItems.length).toBe(9);
   });
 
   it('brand: sin grupos, sections() devuelve una sola sección con label vacío', async () => {
@@ -803,8 +792,8 @@ describe('Sections layout', () => {
     fixture.detectChanges();
 
     const fields = fixture.nativeElement.querySelectorAll('.dialog-field');
-    // 28 fields en FIELD_METAS.version + equipment (1) = 29. Aceptamos >=28
-    expect(fields.length).toBeGreaterThanOrEqual(28);
+    // Tras quitar los 4 fields de seguridad, son 25 fields en FIELD_METAS.version + equipment (1) = 26.
+    expect(fields.length).toBeGreaterThanOrEqual(24);
   });
 
   it('scrollToSection: llama document.getElementById(id).scrollIntoView', async () => {

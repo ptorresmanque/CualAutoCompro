@@ -90,10 +90,6 @@ model Version {
   heightMm              Int
   weightKg              Int
   trunkLiters           Int
-  airbagCount           Int
-  hasAbs                Boolean
-  hasEsp                Boolean
-  hasCruiseControl      Boolean
   circulationPermitClp  Int?
   mandatoryInsuranceClp Int?
   voluntaryInsuranceClp Int?

@@ -12,14 +12,12 @@ async function seedUserAndModelAndVersion() {
   const v1 = await prisma.version.create({
     data: { modelId: m.id, name: "v1", year: 2026, priceClp: 100, transmission: "MANUAL", fuel: "BENCINA",
       engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-      lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-      hasAbs: true, hasEsp: true, hasCruiseControl: true },
+      lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 },
   });
   const v2 = await prisma.version.create({
     data: { modelId: m.id, name: "v2", year: 2026, priceClp: 200, transmission: "AUTOMATIC", fuel: "BENCINA",
       engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-      lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-      hasAbs: true, hasEsp: true, hasCruiseControl: true },
+      lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 },
   });
   return { u, m, v1, v2 };
 }
@@ -107,8 +105,7 @@ describe("FavoritesService", () => {
     const v3 = await prisma.version.create({
       data: { modelId: m2.id, name: "v3", year: 2026, priceClp: 300, transmission: "MANUAL", fuel: "BENCINA",
         engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true },
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 },
     });
     await expect(svc.add(u.id, { modelId: m.id, versionId: v3.id }))
       .rejects.toMatchObject({ code: "BAD_REQUEST" });
@@ -161,8 +158,7 @@ describe("FavoritesService", () => {
     const v3 = await prisma.version.create({
       data: { modelId: m2.id, name: "v3", year: 2026, priceClp: 300, transmission: "MANUAL", fuel: "BENCINA",
         engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true },
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 },
     });
     await svc.add(u.id, { modelId: m.id, versionId: v1.id });
     await expect(svc.updateVersion(u.id, {

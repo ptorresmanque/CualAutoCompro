@@ -36,8 +36,7 @@ describe("VersionsService + extendEnum", () => {
         engineDisplacementCc: 1, powerHp: 1, torqueNm: 1,
         consumptionCityKmL: 1, consumptionHighwayKmL: 1,
         lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1,
-        trunkLiters: 1, airbagCount: 1,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true,
+        trunkLiters: 1,
       },
     });
     const item = await prisma.equipmentItem.create({
@@ -70,8 +69,7 @@ describe("VersionsService + extendEnum", () => {
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
         lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
-        trunkLiters: 0, airbagCount: 0,
-        hasAbs: false, hasEsp: false, hasCruiseControl: false,
+        trunkLiters: 0,
       },
     });
 
@@ -102,10 +100,6 @@ describe("VersionsService + extendEnum", () => {
       heightMm: 0,
       weightKg: 0,
       trunkLiters: 0,
-      airbagCount: 0,
-      hasAbs: false,
-      hasEsp: false,
-      hasCruiseControl: false,
       hasRecall: false,
     });
     expect(created.fuel).toBe(newFuel);
@@ -132,10 +126,6 @@ describe("VersionsService + extendEnum", () => {
       heightMm: 0,
       weightKg: 0,
       trunkLiters: 0,
-      airbagCount: 0,
-      hasAbs: false,
-      hasEsp: false,
-      hasCruiseControl: false,
       hasRecall: false,
     });
     const newFuel = `TEST_UPD_FUEL_${Date.now()}`;
@@ -178,8 +168,7 @@ describe("VersionsService price history", () => {
       consumptionCityKmL: 14,
       consumptionHighwayKmL: 18,
       lengthMm: 4630, widthMm: 1780, heightMm: 1455,
-      weightKg: 1300, trunkLiters: 470, airbagCount: 6,
-      hasAbs: true, hasEsp: true, hasCruiseControl: true,
+      weightKg: 1300, trunkLiters: 470,
       hasRecall: false,
       recallUrl: null,
     });
@@ -206,8 +195,7 @@ describe("VersionsService price history", () => {
       powerHp: 150, torqueNm: 200,
       consumptionCityKmL: 12, consumptionHighwayKmL: 16,
       lengthMm: 4660, widthMm: 1800, heightMm: 1440,
-      weightKg: 1400, trunkLiters: 450, airbagCount: 6,
-      hasAbs: true, hasEsp: true, hasCruiseControl: true,
+      weightKg: 1400, trunkLiters: 450,
       hasRecall: false,
       recallUrl: null,
     });
@@ -236,8 +224,7 @@ describe("VersionsService price history", () => {
       powerHp: 100, torqueNm: 130,
       consumptionCityKmL: 15, consumptionHighwayKmL: 19,
       lengthMm: 4060, widthMm: 1725, heightMm: 1450,
-      weightKg: 1050, trunkLiters: 325, airbagCount: 4,
-      hasAbs: true, hasEsp: true, hasCruiseControl: false,
+      weightKg: 1050, trunkLiters: 325,
       hasRecall: false,
       recallUrl: null,
     });

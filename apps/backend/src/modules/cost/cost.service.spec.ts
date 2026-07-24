@@ -39,8 +39,7 @@ describe("CostService.calculate", () => {
         consumptionCityKmL: 14,
         consumptionHighwayKmL: 18,
         lengthMm: 4000, widthMm: 1700, heightMm: 1500,
-        weightKg: 1100, trunkLiters: 320, airbagCount: 4,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true,
+        weightKg: 1100, trunkLiters: 320,
       },
     });
     await prisma.fuelPrice.create({
@@ -75,8 +74,7 @@ describe("CostService.calculate", () => {
         consumptionCityKmL: 12,
         consumptionHighwayKmL: 16,
         lengthMm: 4660, widthMm: 1800, heightMm: 1440,
-        weightKg: 1400, trunkLiters: 450, airbagCount: 6,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true,
+        weightKg: 1400, trunkLiters: 450,
       },
     });
     await prisma.fuelPrice.create({
@@ -118,8 +116,7 @@ describe("CostService.calculate", () => {
         consumptionCityKmL: 16,
         consumptionHighwayKmL: 20,
         lengthMm: 3840, widthMm: 1735, heightMm: 1495,
-        weightKg: 950, trunkLiters: 265, airbagCount: 2,
-        hasAbs: true, hasEsp: false, hasCruiseControl: false,
+        weightKg: 950, trunkLiters: 265,
         circulationPermitClp: 250_000,
         mandatoryInsuranceClp: 180_000,
       },
@@ -152,8 +149,7 @@ describe("CostService.calculate", () => {
         consumptionCityKmL: 15,
         consumptionHighwayKmL: 19,
         lengthMm: 4060, widthMm: 1725, heightMm: 1450,
-        weightKg: 1050, trunkLiters: 325, airbagCount: 4,
-        hasAbs: true, hasEsp: true, hasCruiseControl: false,
+        weightKg: 1050, trunkLiters: 325,
       },
     });
     const result = await svc.calculate(version.id, 1_000_000);

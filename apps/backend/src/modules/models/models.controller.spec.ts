@@ -13,7 +13,6 @@ const seed = async () => {
       transmission: "CVT", fuel: "BENCINA", engineDisplacementCc: 1496,
       powerHp: 110, torqueNm: 140, consumptionCityKmL: 14, consumptionHighwayKmL: 19,
       lengthMm: 3940, widthMm: 1740, heightMm: 1480, weightKg: 1100, trunkLiters: 286,
-      airbagCount: 6, hasAbs: true, hasEsp: true, hasCruiseControl: true,
     },
   });
   await prisma.version.create({
@@ -22,7 +21,6 @@ const seed = async () => {
       transmission: "MANUAL", fuel: "BENCINA", engineDisplacementCc: 1496,
       powerHp: 110, torqueNm: 140, consumptionCityKmL: 18, consumptionHighwayKmL: 22,
       lengthMm: 3940, widthMm: 1740, heightMm: 1480, weightKg: 1080, trunkLiters: 286,
-      airbagCount: 4, hasAbs: true, hasEsp: true, hasCruiseControl: false,
     },
   });
   const mazda = await prisma.brand.create({ data: { name: "Mazda" } });
@@ -147,20 +145,17 @@ describe("GET /api/v1/models sort + order + minConsumption", () => {
     await prisma.version.create({
       data: { modelId: a.id, name: "A1", year: 2026, priceClp: 20000000, transmission: "AUTOMATIC", fuel: "BENCINA",
         engineDisplacementCc: 1500, powerHp: 120, torqueNm: 145, consumptionCityKmL: 10, consumptionHighwayKmL: 14,
-        lengthMm: 4200, widthMm: 1760, heightMm: 1480, weightKg: 1100, trunkLiters: 360, airbagCount: 6,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true },
+        lengthMm: 4200, widthMm: 1760, heightMm: 1480, weightKg: 1100, trunkLiters: 360 },
     });
     await prisma.version.create({
       data: { modelId: c.id, name: "C1", year: 2026, priceClp: 15000000, transmission: "AUTOMATIC", fuel: "BENCINA",
         engineDisplacementCc: 2000, powerHp: 150, torqueNm: 200, consumptionCityKmL: 14, consumptionHighwayKmL: 18,
-        lengthMm: 4500, widthMm: 1850, heightMm: 1500, weightKg: 1300, trunkLiters: 420, airbagCount: 6,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true },
+        lengthMm: 4500, widthMm: 1850, heightMm: 1500, weightKg: 1300, trunkLiters: 420 },
     });
     await prisma.version.create({
       data: { modelId: z.id, name: "Z1", year: 2026, priceClp: 10000000, transmission: "MANUAL", fuel: "BENCINA",
         engineDisplacementCc: 1200, powerHp: 80, torqueNm: 110, consumptionCityKmL: 16, consumptionHighwayKmL: 20,
-        lengthMm: 4000, widthMm: 1700, heightMm: 1450, weightKg: 1000, trunkLiters: 320, airbagCount: 4,
-        hasAbs: true, hasEsp: false, hasCruiseControl: false },
+        lengthMm: 4000, widthMm: 1700, heightMm: 1450, weightKg: 1000, trunkLiters: 320 },
     });
     return { a, c, z };
   }

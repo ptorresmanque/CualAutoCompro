@@ -54,11 +54,8 @@ export interface CompareVersion {
   heightMm?: number | null;
   weightKg?: number | null;
   trunkLiters?: number | null;
-  airbagCount?: number | null;
-  hasAbs?: boolean | null;
-  hasEsp?: boolean | null;
-  hasCruiseControl?: boolean | null;
   circulationPermitClp?: number | null;
+  equipmentItems?: { equipmentItem: { id: string; name: string; category: string } }[];
   mandatoryInsuranceClp?: number | null;
   voluntaryInsuranceClp?: number | null;
   fuelTankLiters?: number | null;
@@ -85,10 +82,6 @@ type DiffKey =
   | 'heightMm'
   | 'weightKg'
   | 'trunkLiters'
-  | 'airbagCount'
-  | 'hasAbs'
-  | 'hasEsp'
-  | 'hasCruiseControl'
   | 'circulationPermitClp'
   | 'mandatoryInsuranceClp'
   | 'voluntaryInsuranceClp'
@@ -96,7 +89,8 @@ type DiffKey =
 
 type CompareRow =
   | { kind: 'simple'; key: DiffKey; label: string; format: (v: CompareVersion) => string }
-  | { kind: 'maintenanceBreakdown'; label: string };
+  | { kind: 'maintenanceBreakdown'; label: string }
+  | { kind: 'equipmentList'; label: string; category: string };
 
 interface Section {
   name: string;
@@ -194,7 +188,9 @@ export class CompareComponent {
     }
   }
 
-  readonly sections: ReadonlyArray<Section> = [
+  // Secciones estáticas. La sección "Equipamiento" se inyecta dinámicamente
+  // por el computed `sections` para tener una fila por categoría.
+  private readonly staticSections: ReadonlyArray<Section> = [
     {
       name: 'specs',
       label: 'Especificaciones',
@@ -291,36 +287,9 @@ export class CompareComponent {
         },
       ],
     },
-    {
-      name: 'equipamiento',
-      label: 'Equipamiento',
-      rows: [
-        {
-          kind: 'simple',
-          key: 'airbagCount',
-          label: 'Airbags',
-          format: (v) => (v.airbagCount ? String(v.airbagCount) : '—'),
-        },
-        {
-          kind: 'simple',
-          key: 'hasAbs',
-          label: 'ABS',
-          format: (v) => (v.hasAbs ? 'Sí' : 'No'),
-        },
-        {
-          kind: 'simple',
-          key: 'hasEsp',
-          label: 'Control de estabilidad',
-          format: (v) => (v.hasEsp ? 'Sí' : 'No'),
-        },
-        {
-          kind: 'simple',
-          key: 'hasCruiseControl',
-          label: 'Control de crucero',
-          format: (v) => (v.hasCruiseControl ? 'Sí' : 'No'),
-        },
-      ],
-    },
+    // La seccion "Equipamiento" se genera dinamicamente en `this.equipmentSection`
+    // (computed signal) con una fila por cada categoria presente en alguna version.
+    // No se incluye aqui como seccion estatica para evitar duplicarla.
     {
       name: 'costos',
       label: 'Costos',
@@ -353,6 +322,53 @@ export class CompareComponent {
       ],
     },
   ];
+
+  /**
+   * Sección dinámica de Equipamiento: una fila por cada categoría presente en
+   * los `equipmentItems` de las versiones comparadas. Las categorías se ordenan
+   * alfabéticamente y la sección solo aparece si hay al menos una categoría.
+   */
+  readonly equipmentSection = computed<Section | null>(() => {
+    const cats = new Set<string>();
+    for (const v of this.versions()) {
+      for (const ei of v.equipmentItems ?? []) {
+        const c = ei.equipmentItem.category;
+        if (c) cats.add(c);
+      }
+    }
+    if (cats.size === 0) return null;
+    const sorted = [...cats].sort((a, b) => a.localeCompare(b));
+    return {
+      name: 'equipamiento',
+      label: 'Equipamiento',
+      rows: sorted.map((category) => ({
+        kind: 'equipmentList',
+        label: category,
+        category,
+      })),
+    };
+  });
+
+  /**
+   * Lista completa de secciones que se renderizan. Inyecta la sección de
+   * Equipamiento entre "Precio y Año" y "Costos" (índice 2 en staticSections).
+   */
+  readonly sections = computed<ReadonlyArray<Section>>(() => {
+    const eq = this.equipmentSection();
+    if (!eq) return this.staticSections;
+    return [...this.staticSections.slice(0, 2), eq, ...this.staticSections.slice(2)];
+  });
+
+  /**
+   * Devuelve los nombres de los items de una categoría para una versión,
+   * separados por coma. `—` si la versión no tiene items en esa categoría.
+   */
+  formatEquipmentByCategory(v: CompareVersion, category: string): string {
+    const names = (v.equipmentItems ?? [])
+      .filter((ei) => ei.equipmentItem.category === category)
+      .map((ei) => ei.equipmentItem.name);
+    return names.length > 0 ? names.join(', ') : '—';
+  }
 
   constructor() {
     effect(() => {
@@ -540,7 +556,9 @@ export class CompareComponent {
   }
 
   trackByRow(_: number, row: CompareRow): string {
-    return row.kind === 'simple' ? row.key : 'maintenance-breakdown';
+    if (row.kind === 'simple') return row.key;
+    if (row.kind === 'equipmentList') return `equipment-${row.category}`;
+    return 'maintenance-breakdown';
   }
 
   trackBySection(_: number, s: Section): string {

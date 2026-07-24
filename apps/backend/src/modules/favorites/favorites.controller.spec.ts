@@ -9,8 +9,7 @@ async function seedVersion() {
     prisma.model.create({ data: { brandId: br.id, name: "Yaris", segment: "HATCHBACK" } })).then((m) =>
     prisma.version.create({ data: { modelId: m.id, name: "XLS", year: 2026, priceClp: 100, transmission: "MANUAL", fuel: "BENCINA",
       engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-      lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-      hasAbs: true, hasEsp: true, hasCruiseControl: true } }));
+      lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 } }));
   return v;
 }
 
@@ -100,8 +99,7 @@ describe("Favorites endpoints", () => {
     const v2 = await prisma.version.create({
       data: { modelId: m2.id, name: "v2", year: 2026, priceClp: 200, transmission: "MANUAL", fuel: "BENCINA",
         engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true },
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 },
     });
     const res = await request(createApp())
       .post("/api/v1/me/favorites")
@@ -117,14 +115,12 @@ describe("Favorites endpoints", () => {
     const v1 = await prisma.version.create({
       data: { modelId: m.id, name: "XLS", year: 2026, priceClp: 100, transmission: "MANUAL", fuel: "BENCINA",
         engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true },
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 },
     });
     const v2 = await prisma.version.create({
       data: { modelId: m.id, name: "Sport", year: 2025, priceClp: 200, transmission: "AUTOMATIC", fuel: "BENCINA",
         engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true },
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 },
     });
 
     await request(createApp()).post("/api/v1/me/favorites").set("Cookie", cookie)

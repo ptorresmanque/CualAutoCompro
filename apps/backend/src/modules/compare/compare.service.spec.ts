@@ -20,13 +20,13 @@ describe("CompareService", () => {
       data: { modelId: y.id, name: "XLS", year: 2026, priceClp: 14_990_000,
         transmission: "CVT", fuel: "BENCINA", engineDisplacementCc: 1496, powerHp: 110, torqueNm: 140,
         consumptionCityKmL: 14, consumptionHighwayKmL: 19, lengthMm: 3940, widthMm: 1740, heightMm: 1480,
-        weightKg: 1100, trunkLiters: 286, airbagCount: 6, hasAbs: true, hasEsp: true, hasCruiseControl: true },
+        weightKg: 1100, trunkLiters: 286 },
     });
     const v2 = await prisma.version.create({
       data: { modelId: y.id, name: "Sport", year: 2025, priceClp: 12_500_000,
         transmission: "MANUAL", fuel: "BENCINA", engineDisplacementCc: 1496, powerHp: 110, torqueNm: 140,
         consumptionCityKmL: 13, consumptionHighwayKmL: 18, lengthMm: 3940, widthMm: 1740, heightMm: 1480,
-        weightKg: 1080, trunkLiters: 286, airbagCount: 4, hasAbs: true, hasEsp: false, hasCruiseControl: false },
+        weightKg: 1080, trunkLiters: 286 },
     });
     return { v1: v1.id, v2: v2.id };
   };
@@ -54,11 +54,11 @@ describe("CompareService", () => {
     expect(Object.values(out.diffHighlights).every((v) => v === false)).toBe(true);
   });
 
-  it("diffHighlights incluye todos los DIFF_KEYS (22 keys)", async () => {
+  it("diffHighlights incluye todos los DIFF_KEYS (18 keys)", async () => {
     const { v1, v2 } = await seed2();
     const svc = new CompareService(prisma, new FuelPricesService(prisma));
     const out = await svc.compare([v1, v2]);
-    expect(Object.keys(out.diffHighlights).length).toBe(22);
+    expect(Object.keys(out.diffHighlights).length).toBe(18);
   });
 });
 
@@ -95,10 +95,6 @@ describe("CompareService.computeFillCost", () => {
         heightMm: 1450,
         weightKg: 1300,
         trunkLiters: 450,
-        airbagCount: 6,
-        hasAbs: true,
-        hasEsp: true,
-        hasCruiseControl: true,
         fuelTankLiters: 50,
       },
     });
@@ -130,10 +126,6 @@ describe("CompareService.computeFillCost", () => {
         heightMm: 1450,
         weightKg: 1700,
         trunkLiters: 400,
-        airbagCount: 6,
-        hasAbs: true,
-        hasEsp: true,
-        hasCruiseControl: true,
         batteryCapacityKwh: 60,
       },
     });
@@ -164,10 +156,6 @@ describe("CompareService.computeFillCost", () => {
         heightMm: 1450,
         weightKg: 1300,
         trunkLiters: 450,
-        airbagCount: 6,
-        hasAbs: true,
-        hasEsp: true,
-        hasCruiseControl: true,
         fuelTankLiters: 50,
       },
     });
@@ -187,8 +175,7 @@ describe("CompareService.computeFillCost", () => {
         engineDisplacementCc: 2000, powerHp: 150, torqueNm: 200,
         consumptionCityKmL: 12, consumptionHighwayKmL: 16,
         lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300,
-        trunkLiters: 450, airbagCount: 6,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true,
+        trunkLiters: 450,
         circulationPermitClp: 100000, mandatoryInsuranceClp: 50000,
       },
     });
@@ -199,8 +186,7 @@ describe("CompareService.computeFillCost", () => {
         engineDisplacementCc: 2000, powerHp: 150, torqueNm: 200,
         consumptionCityKmL: 12, consumptionHighwayKmL: 16,
         lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300,
-        trunkLiters: 450, airbagCount: 6,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true,
+        trunkLiters: 450,
         circulationPermitClp: 200000, mandatoryInsuranceClp: 80000,
       },
     });

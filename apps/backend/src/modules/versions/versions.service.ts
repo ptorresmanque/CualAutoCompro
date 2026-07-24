@@ -29,10 +29,6 @@ type VersionRow = {
   heightMm: number;
   weightKg: number;
   trunkLiters: number;
-  airbagCount: number;
-  hasAbs: boolean;
-  hasEsp: boolean;
-  hasCruiseControl: boolean;
   circulationPermitClp: number | null;
   mandatoryInsuranceClp: number | null;
   voluntaryInsuranceClp: number | null;
@@ -47,7 +43,7 @@ type VersionRow = {
 const VERSION_RETURNING = `id, \`modelId\`, name, year, \`priceClp\`, transmission, fuel,
   \`engineDisplacementCc\`, \`powerHp\`, \`torqueNm\`, \`consumptionCityKmL\`,
   \`consumptionHighwayKmL\`, \`lengthMm\`, \`widthMm\`, \`heightMm\`, \`weightKg\`,
-  \`trunkLiters\`, \`airbagCount\`, \`hasAbs\`, \`hasEsp\`, \`hasCruiseControl\`,
+  \`trunkLiters\`,
   \`circulationPermitClp\`, \`mandatoryInsuranceClp\`, \`voluntaryInsuranceClp\`,
   \`fuelTankLiters\`, \`batteryCapacityKwh\`, \`hasRecall\`, \`recallUrl\`,
   \`deletedAt\`, \`createdAt\``;
@@ -190,7 +186,7 @@ export class VersionsService {
          id, \`modelId\`, name, year, \`priceClp\`, transmission, fuel,
          \`engineDisplacementCc\`, \`powerHp\`, \`torqueNm\`, \`consumptionCityKmL\`,
          \`consumptionHighwayKmL\`, \`lengthMm\`, \`widthMm\`, \`heightMm\`, \`weightKg\`,
-         \`trunkLiters\`, \`airbagCount\`, \`hasAbs\`, \`hasEsp\`, \`hasCruiseControl\`,
+         \`trunkLiters\`,
          \`circulationPermitClp\`, \`mandatoryInsuranceClp\`, \`voluntaryInsuranceClp\`,
          \`fuelTankLiters\`, \`batteryCapacityKwh\`, \`hasRecall\`, \`recallUrl\`,
          \`deletedAt\`, \`createdAt\`
@@ -199,7 +195,7 @@ export class VersionsService {
          ?, ?, ?, ?, ?, ?, ?,
          ?, ?, ?, ?,
          ?, ?, ?, ?, ?,
-         ?, ?, ?, ?, ?,
+         ?,
          ?, ?, ?, ?,
          ?, ?, ?,
          NULL, NOW()
@@ -221,10 +217,6 @@ export class VersionsService {
       input.heightMm,
       input.weightKg,
       input.trunkLiters,
-      input.airbagCount,
-      input.hasAbs,
-      input.hasEsp,
-      input.hasCruiseControl,
       input.circulationPermitClp ?? null,
       input.mandatoryInsuranceClp ?? null,
       input.voluntaryInsuranceClp ?? null,
@@ -335,22 +327,6 @@ export class VersionsService {
       if (input.trunkLiters !== undefined) {
         setClauses.push("`trunkLiters` = ?");
         values.push(input.trunkLiters);
-      }
-      if (input.airbagCount !== undefined) {
-        setClauses.push("`airbagCount` = ?");
-        values.push(input.airbagCount);
-      }
-      if (input.hasAbs !== undefined) {
-        setClauses.push("`hasAbs` = ?");
-        values.push(input.hasAbs);
-      }
-      if (input.hasEsp !== undefined) {
-        setClauses.push("`hasEsp` = ?");
-        values.push(input.hasEsp);
-      }
-      if (input.hasCruiseControl !== undefined) {
-        setClauses.push("`hasCruiseControl` = ?");
-        values.push(input.hasCruiseControl);
       }
       if (input.circulationPermitClp !== undefined) {
         setClauses.push("`circulationPermitClp` = ?");

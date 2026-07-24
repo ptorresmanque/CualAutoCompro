@@ -5,7 +5,7 @@ import type { FuelPricesService } from "../fuel-prices/fuel-prices.service.js";
 const DIFF_KEYS = [
   "priceClp","year","transmission","fuel","engineDisplacementCc","powerHp","torqueNm",
   "consumptionCityKmL","consumptionHighwayKmL","lengthMm","widthMm","heightMm",
-  "weightKg","trunkLiters","airbagCount","hasAbs","hasEsp","hasCruiseControl",
+  "weightKg","trunkLiters",
   "circulationPermitClp","mandatoryInsuranceClp","voluntaryInsuranceClp","computedFillCostClp",
 ] as const;
 
@@ -29,6 +29,9 @@ export class CompareService {
           },
         },
         maintenanceCosts: { where: { deletedAt: null } },
+        equipmentItems: {
+          include: { equipmentItem: { select: { id: true, name: true, category: true } } },
+        },
       },
     });
     if (versions.length !== versionIds.length) throw notFound("Alguna versión no existe");

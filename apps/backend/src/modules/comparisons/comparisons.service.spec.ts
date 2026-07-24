@@ -13,8 +13,7 @@ describe("ComparisonsService", () => {
     const v = await prisma.version.create({
       data: { modelId: "m", name: "x", year: 2026, priceClp: 1, transmission: "MANUAL", fuel: "BENCINA",
         engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true },
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 },
     }).catch(async () => {
       // fallback: crear model + brand si hace falta
       const b = await prisma.brand.create({ data: { name: "X" } });
@@ -22,8 +21,7 @@ describe("ComparisonsService", () => {
       return prisma.version.create({
         data: { modelId: m.id, name: "x", year: 2026, priceClp: 1, transmission: "MANUAL", fuel: "BENCINA",
           engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-          lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-          hasAbs: true, hasEsp: true, hasCruiseControl: true },
+          lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 },
       });
     });
     const out = await svc.create({ userId: u.id, versionIds: [v.id] });
@@ -38,8 +36,7 @@ describe("ComparisonsService", () => {
       prisma.model.create({ data: { brandId: br.id, name: "M", segment: "SEDAN" } })).then((m) =>
       prisma.version.create({ data: { modelId: m.id, name: "x", year: 2026, priceClp: 1, transmission: "MANUAL", fuel: "BENCINA",
         engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true } }));
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 } }));
     await svc.create({ userId: a.id, versionIds: [v.id] });
     const aList = await svc.listByUser(a.id);
     expect(aList.length).toBe(1);
@@ -54,8 +51,7 @@ describe("ComparisonsService", () => {
       prisma.model.create({ data: { brandId: br.id, name: "M", segment: "SEDAN" } })).then((m) =>
       prisma.version.create({ data: { modelId: m.id, name: "x", year: 2026, priceClp: 1, transmission: "MANUAL", fuel: "BENCINA",
         engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true } }));
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 } }));
     const originalCreate = prisma.comparison.create;
     let calls = 0;
     (prisma.comparison as unknown as { create: (...args: unknown[]) => Promise<unknown> }).create = async (...args: unknown[]) => {
@@ -101,8 +97,7 @@ describe("ComparisonsService", () => {
       prisma.model.create({ data: { brandId: br.id, name: "M", segment: "SEDAN" } })).then((m) =>
       prisma.version.create({ data: { modelId: m.id, name: "x", year: 2026, priceClp: 1, transmission: "MANUAL", fuel: "BENCINA",
         engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true } }));
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 } }));
     const created = await svc.create({ userId: owner.id, versionIds: [v.id] });
     await expect(svc.delete(created.id, other.id)).rejects.toMatchObject({ code: "NOT_FOUND" });
     const stillThere = await prisma.comparison.findUnique({ where: { id: created.id } });

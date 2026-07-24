@@ -91,10 +91,6 @@ describe("ModelsService + extendEnum", () => {
         heightMm: 0,
         weightKg: 0,
         trunkLiters: 0,
-        airbagCount: 0,
-        hasAbs: false,
-        hasEsp: false,
-        hasCruiseControl: false,
       },
     });
 
@@ -135,10 +131,6 @@ describe("ModelsService + extendEnum", () => {
         heightMm: 0,
         weightKg: 0,
         trunkLiters: 0,
-        airbagCount: 0,
-        hasAbs: false,
-        hasEsp: false,
-        hasCruiseControl: false,
       },
     });
 
@@ -175,10 +167,6 @@ describe("ModelsService + extendEnum", () => {
         heightMm: 0,
         weightKg: 0,
         trunkLiters: 0,
-        airbagCount: 0,
-        hasAbs: false,
-        hasEsp: false,
-        hasCruiseControl: false,
       },
     });
     const item = await prisma.equipmentItem.create({
@@ -224,10 +212,6 @@ describe("ModelsService + extendEnum", () => {
         heightMm: 0,
         weightKg: 0,
         trunkLiters: 0,
-        airbagCount: 0,
-        hasAbs: false,
-        hasEsp: false,
-        hasCruiseControl: false,
       },
     });
     const item = await prisma.equipmentItem.create({

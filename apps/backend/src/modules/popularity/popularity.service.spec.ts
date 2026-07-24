@@ -164,10 +164,6 @@ const versionData = (modelId: string) => ({
   heightMm: 1,
   weightKg: 1,
   trunkLiters: 1,
-  airbagCount: 1,
-  hasAbs: true,
-  hasEsp: true,
-  hasCruiseControl: true,
 });
 
 async function seedVersion(modelName: string) {

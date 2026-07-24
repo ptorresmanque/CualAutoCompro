@@ -273,8 +273,8 @@ describe('ModelComponent — recall badge + dealers', () => {
 
   it('crea una tab por versión con su contenido independiente', () => {
     const { cmp, fixture } = createWithVersions([
-      { id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450, airbagCount: 6, hasAbs: true, hasEsp: true, hasCruiseControl: true },
-      { id: 'v2', name: 'Limited', year: 2025, priceClp: 18000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 180, engineDisplacementCc: 2500, torqueNm: 250, consumptionCityKmL: 11, consumptionHighwayKmL: 15, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450, airbagCount: 8, hasAbs: true, hasEsp: true, hasCruiseControl: true },
+      { id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450 },
+      { id: 'v2', name: 'Limited', year: 2025, priceClp: 18000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 180, engineDisplacementCc: 2500, torqueNm: 250, consumptionCityKmL: 11, consumptionHighwayKmL: 15, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450 },
     ]);
     fixture.detectChanges();
     const tabs = fixture.nativeElement.querySelectorAll('[data-testid^="tab-version-"]');
@@ -296,8 +296,8 @@ describe('ModelComponent — recall badge + dealers', () => {
 
   it('incluye el grupo Equipamiento en cada versión que tenga items', () => {
     const { fixture } = createWithVersions([
-      { id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450, airbagCount: 6, hasAbs: true, hasEsp: true, hasCruiseControl: true, equipmentItems: [{ equipmentItem: { name: 'Apple CarPlay', category: 'Conectividad' } }, { equipmentItem: { name: 'Cámara 360°', category: 'Seguridad' } }] },
-      { id: 'v2', name: 'Base', year: 2025, priceClp: 12000000, transmission: 'MANUAL', fuel: 'BENCINA', powerHp: 120, engineDisplacementCc: 1600, torqueNm: 160, consumptionCityKmL: 14, consumptionHighwayKmL: 18, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450, airbagCount: 4, hasAbs: true, hasEsp: false, hasCruiseControl: false, equipmentItems: [] },
+      { id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450, equipmentItems: [{ equipmentItem: { name: 'Apple CarPlay', category: 'Conectividad' } }, { equipmentItem: { name: 'Cámara 360°', category: 'Seguridad' } }] },
+      { id: 'v2', name: 'Base', year: 2025, priceClp: 12000000, transmission: 'MANUAL', fuel: 'BENCINA', powerHp: 120, engineDisplacementCc: 1600, torqueNm: 160, consumptionCityKmL: 14, consumptionHighwayKmL: 18, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450, equipmentItems: [] },
     ]);
     fixture.detectChanges();
     const equipV1 = fixture.nativeElement.querySelector('[data-testid="spec-group-v1-Equipamiento"]');

@@ -13,7 +13,6 @@ const seed = async () => {
       transmission: "CVT", fuel: "BENCINA", engineDisplacementCc: 1496,
       powerHp: 110, torqueNm: 140, consumptionCityKmL: 14, consumptionHighwayKmL: 19,
       lengthMm: 3940, widthMm: 1740, heightMm: 1480, weightKg: 1100, trunkLiters: 286,
-      airbagCount: 6, hasAbs: true, hasEsp: true, hasCruiseControl: true,
     },
   });
   const climatizador = await prisma.equipmentItem.create({ data: { name: "Climatizador", category: "Confort" } });

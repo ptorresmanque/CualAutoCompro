@@ -49,10 +49,6 @@ interface ModelVersion {
   heightMm?: number | null;
   weightKg?: number | null;
   trunkLiters?: number | null;
-  airbagCount?: number | null;
-  hasAbs?: boolean;
-  hasEsp?: boolean;
-  hasCruiseControl?: boolean;
   hasRecall?: boolean | null;
   recallUrl?: string | null;
   equipmentItems?: { equipmentItem: { name: string; category: string } }[];
@@ -192,31 +188,15 @@ export class ModelComponent {
           { label: 'Maletero', value: v.trunkLiters ? `${v.trunkLiters} L` : '—', zebra: false },
         ],
       },
-      {
-        title: 'Seguridad',
-        icon: 'verified_user',
-        rows: [
-          {
-            label: 'Airbags',
-            value: v.airbagCount ? `${v.airbagCount} airbags` : '—',
-            zebra: false,
-          },
-          { label: 'Frenos ABS + EBD', value: v.hasAbs ? 'Sí' : 'No', zebra: true },
-          { label: 'Control estabilidad (ESP)', value: v.hasEsp ? 'Sí' : 'No', zebra: false },
-          {
-            label: 'Control de crucero',
-            value: v.hasCruiseControl ? 'Sí' : 'No',
-            zebra: true,
-          },
-        ],
-      },
     ];
 
     const items = v.equipmentItems ?? [];
     if (items.length > 0) {
-      const sorted = [...items].sort((a, b) =>
-        a.equipmentItem.name.localeCompare(b.equipmentItem.name),
-      );
+      const sorted = [...items].sort((a, b) => {
+        const nameCmp = a.equipmentItem.name.localeCompare(b.equipmentItem.name);
+        if (nameCmp !== 0) return nameCmp;
+        return a.equipmentItem.category.localeCompare(b.equipmentItem.category);
+      });
       groups.push({
         title: 'Equipamiento',
         icon: 'inventory_2',

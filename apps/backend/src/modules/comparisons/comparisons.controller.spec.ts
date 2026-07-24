@@ -23,8 +23,7 @@ describe("Comparisons endpoints", () => {
       prisma.model.create({ data: { brandId: br.id, name: "M", segment: "SEDAN" } })).then((m) =>
       prisma.version.create({ data: { modelId: m.id, name: "x", year: 2026, priceClp: 1, transmission: "MANUAL", fuel: "BENCINA",
         engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true } }));
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 } }));
     const registered = await request(createApp())
       .post("/api/v1/auth/register")
       .send({ email: "dup" + "@" + "test.cl", password: "secreto123", name: "Dup" });
@@ -52,8 +51,7 @@ describe("Comparisons endpoints", () => {
       prisma.model.create({ data: { brandId: br.id, name: "M", segment: "SEDAN" } })).then((m) =>
       prisma.version.create({ data: { modelId: m.id, name: "x", year: 2026, priceClp: 1, transmission: "MANUAL", fuel: "BENCINA",
         engineDisplacementCc: 1, powerHp: 1, torqueNm: 1, consumptionCityKmL: 1, consumptionHighwayKmL: 1,
-        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1, airbagCount: 1,
-        hasAbs: true, hasEsp: true, hasCruiseControl: true } }));
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1 } }));
     const registered = await request(createApp())
       .post("/api/v1/auth/register")
       .send({ email: "reader" + "@" + "test.cl", password: "secreto123", name: "Reader" });
