@@ -17,6 +17,25 @@
     <ng-content select="[matError]" />
   </mat-form-field>
 
+  @if (open() && available().length > 0) {
+    <ul
+      data-testid="ms-options"
+      role="listbox"
+      class="max-h-60 overflow-auto rounded border border-border bg-surface shadow-e2"
+    >
+      @for (item of available(); track item.id) {
+        <li
+          data-testid="ms-option"
+          role="option"
+          (click)="pick(item)"
+          class="px-3 py-1.5 text-sm cursor-pointer hover:bg-engine-50"
+        >
+          {{ item[optionLabel()] }}
+        </li>
+      }
+    </ul>
+  }
+
   @if (selectedIds().length > 0) {
     <mat-chip-set data-testid="ms-chips" aria-label="Seleccionados">
       @for (id of selectedIds(); track id) {
@@ -37,24 +56,7 @@
     </mat-chip-set>
   }
 
-  @if (open() && available().length > 0) {
-    <ul
-      data-testid="ms-options"
-      role="listbox"
-      class="max-h-60 overflow-auto rounded border border-border bg-surface shadow-e2"
-    >
-      @for (item of available(); track item.id) {
-        <li
-          data-testid="ms-option"
-          role="option"
-          (click)="pick(item)"
-          class="px-3 py-1.5 text-sm cursor-pointer hover:bg-engine-50"
-        >
-          {{ item[optionLabel()] }}
-        </li>
-      }
-    </ul>
-  }
+
 
   @if (error(); as err) {
     <p class="text-warn-dark text-xs">{{ err }}</p>
