@@ -16,6 +16,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ApiService } from '../../../core/api.service';
 
+export interface StaticSelectOption { value: string; label: string; }
 interface OptionItem { id?: string; value?: string; label: string; isOther?: boolean; }
 
 @Component({
@@ -30,7 +31,7 @@ export class SelectSearchComponent implements OnInit {
   private el = inject(ElementRef<HTMLElement>);
 
   readonly control = input.required<FormControl<string>>();
-  readonly options = input<string[] | null>(null);
+  readonly options = input<Array<string | StaticSelectOption> | null>(null);
   readonly optionsApi = input<string | null>(null);
   readonly optionLabel = input<string>('name');
   readonly allowOther = input<boolean>(false);
@@ -58,7 +59,9 @@ export class SelectSearchComponent implements OnInit {
 
   readonly filtered = computed<OptionItem[]>(() => {
     const q = this.query().toLowerCase();
-    const staticOpts: OptionItem[] = (this.options() ?? []).map((v) => ({ value: v, label: v }));
+    const staticOpts: OptionItem[] = (this.options() ?? []).map((option) =>
+      typeof option === 'string' ? { value: option, label: option } : option,
+    );
     const remote = this.remoteOptions();
     const remoteOpts: OptionItem[] = Array.isArray(remote)
       ? remote.map((o) => ({
@@ -93,7 +96,8 @@ export class SelectSearchComponent implements OnInit {
         if (match) {
           this.query.set(String(match[this.optionLabel()] ?? ''));
         } else {
-          this.query.set(current);
+      const match = this.filtered().find((option) => option.value === current);
+      this.query.set(match?.label ?? current);
         }
       }
     } catch {
@@ -138,7 +142,7 @@ export class SelectSearchComponent implements OnInit {
       display = item.label;
     } else {
       value = item.value ?? item.label;
-      display = value;
+      display = item.label;
     }
     this.control().setValue(value);
     this.query.set(display);

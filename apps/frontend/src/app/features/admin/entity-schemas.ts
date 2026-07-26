@@ -139,7 +139,7 @@ export interface FieldMeta {
   field: string;
   label: string;
   kind: FieldKind;
-  options?: string[];
+  options?: Array<string | { value: string; label: string }>;
   optionsApi?: string;
   optionLabel?: string;
   optional?: boolean;
@@ -185,8 +185,14 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'priceClp', label: 'Precio CLP', kind: 'number', group: 'Identificación' },
     { field: 'transmission', label: 'Transmisión', kind: 'enumWithOther', options: [...TRANSMISSIONS], group: 'Motor' },
     { field: 'fuel', label: 'Combustible', kind: 'enumWithOther', options: [...FUELS], group: 'Motor' },
-    { field: 'traction', label: 'Tracción', kind: 'enumWithOther', options: ['TRACTION_FRONT', 'TRACTION_REAR', 'TRACTION_AWD', 'TRACTION_4X4_LOW'], group: 'Motor' },
-    { field: 'engineType', label: 'Tipo Motor', kind: 'enumWithOther', options: ['ENGINE_NA', 'ENGINE_TURBO', 'ENGINE_TWIN_TURBO'], optional: true, group: 'Motor', showWhenFuels: ['BENCINA', 'DIESEL', 'HYBRID'] },
+    { field: 'traction', label: 'Tracción', kind: 'enumWithOther', options: [
+      { value: 'TRACTION_FRONT', label: 'Delantera' }, { value: 'TRACTION_REAR', label: 'Trasera' },
+      { value: 'TRACTION_AWD', label: 'Integral' }, { value: 'TRACTION_4X4_LOW', label: '4x4 con reductora' },
+    ], group: 'Motor' },
+    { field: 'engineType', label: 'Tipo Motor', kind: 'enumWithOther', options: [
+      { value: 'ENGINE_NA', label: 'Aspirado' }, { value: 'ENGINE_TURBO', label: 'Turbo' },
+      { value: 'ENGINE_TWIN_TURBO', label: 'Bi Turbo' },
+    ], optional: true, group: 'Motor', showWhenFuels: ['BENCINA', 'DIESEL', 'HYBRID'] },
     { field: 'engineDisplacementCc', label: 'Cilindrada cc', kind: 'number', optional: true, help: 'No aplica a vehículos eléctricos', group: 'Motor', showWhenFuels: ['BENCINA', 'DIESEL', 'HYBRID'] },
     { field: 'powerHp', label: 'Potencia hp', kind: 'number', group: 'Motor' },
     { field: 'torqueNm', label: 'Torque Nm', kind: 'number', group: 'Motor' },
