@@ -11,6 +11,7 @@ const ALLOWED_MIMES: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp",
   "image/gif": "gif",
+  "image/avif": "avif",
 };
 
 const PUBLIC_DIR = path.resolve(process.cwd(), "public", "uploads");
@@ -20,6 +21,10 @@ const hasValidImageSignature = (buffer: Buffer, mime: string): boolean => {
   if (mime === "image/png") return buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
   if (mime === "image/gif") return buffer.subarray(0, 6).toString("ascii") === "GIF89a" || buffer.subarray(0, 6).toString("ascii") === "GIF87a";
   if (mime === "image/webp") return buffer.subarray(0, 4).toString("ascii") === "RIFF" && buffer.subarray(8, 12).toString("ascii") === "WEBP";
+  if (mime === "image/avif") {
+    if (buffer.length < 12) return false;
+    return buffer.subarray(4, 12).toString("ascii") === "ftypavif";
+  }
   return false;
 };
 

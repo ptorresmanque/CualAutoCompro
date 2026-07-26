@@ -51,6 +51,42 @@ describe("uploadsController", () => {
     expect(res.status).toBe(400);
   });
 
+  it("200 happy path con AVIF válido", async () => {
+    const avif = Buffer.from([
+      0x00, 0x00, 0x00, 0x20,
+      0x66, 0x74, 0x79, 0x70,
+      0x61, 0x76, 0x69, 0x66,
+      0x00, 0x00, 0x00, 0x00,
+    ]);
+    const res = await request(app)
+      .post("/api/v1/admin/uploads")
+      .set("Cookie", cookie)
+      .attach("file", avif, { filename: "test.avif", contentType: "image/avif" });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      url: expect.stringMatching(/^\/uploads\/\d{4}-\d{2}\/[A-Za-z0-9_-]+\.avif$/),
+      mime: "image/avif",
+    });
+  });
+
+  it("rechaza AVIF con magic bytes inválidos", async () => {
+    const jpegHeader = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]);
+    const res = await request(app)
+      .post("/api/v1/admin/uploads")
+      .set("Cookie", cookie)
+      .attach("file", jpegHeader, { filename: "fake.avif", contentType: "image/avif" });
+    expect(res.status).toBe(400);
+    expect(res.body.error?.message).toMatch(/no coincide con su tipo de imagen/i);
+  });
+
+  it("rechaza AVIF con menos de 12 bytes", async () => {
+    const res = await request(app)
+      .post("/api/v1/admin/uploads")
+      .set("Cookie", cookie)
+      .attach("file", Buffer.from("ftypavif"), { filename: "short.avif", contentType: "image/avif" });
+    expect(res.status).toBe(400);
+  });
+
   it("rechaza archivo >5MB", async () => {
     const big = Buffer.alloc(6 * 1024 * 1024, 0);
     const res = await request(app)
