@@ -118,6 +118,9 @@ export class ModelComponent {
 
   readonly versions = computed<ModelVersion[]>(() => this.model()?.versions ?? []);
   readonly galleryUrls = computed<string[]>(() => this.model()?.galleryUrls ?? []);
+  readonly galleryUrlsAbsolute = computed<string[]>(() =>
+    this.galleryUrls().map((u) => toAbsoluteUploadUrl(u) ?? u),
+  );
   readonly dealers = signal<BrandDealer[]>([]);
   readonly hasGallery = computed(() => this.galleryUrls().length > 0);
 

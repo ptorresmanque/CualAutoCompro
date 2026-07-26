@@ -49,10 +49,22 @@
       >
         @if (hasGallery()) {
           <div
-            class="absolute inset-0 bg-cover bg-center transition-opacity duration-300"
-            [style.background-image]="'url(' + currentUrl() + ')'"
-            data-testid="carousel-image"
-          ></div>
+            class="carousel-track"
+            [style.transform]="'translateX(' + (-currentIndex() * 100) + '%)'"
+            data-testid="carousel-track"
+          >
+            @for (url of galleryUrlsAbsolute(); track url; let i = $index) {
+              <img
+                class="carousel-slide"
+                [src]="url"
+                [attr.alt]="'Imagen ' + (i + 1) + ' de ' + galleryUrls().length + ' del modelo ' + (model()?.name ?? '')"
+                [attr.aria-hidden]="i === currentIndex() ? null : 'true'"
+                loading="lazy"
+                decoding="async"
+                data-testid="carousel-image"
+              />
+            }
+          </div>
           <span
             class="model-gallery-counter"
             aria-live="polite"
