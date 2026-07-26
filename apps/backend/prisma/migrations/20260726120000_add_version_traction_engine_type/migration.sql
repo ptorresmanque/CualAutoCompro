@@ -1,0 +1,3 @@
+ALTER TABLE `Version`
+  ADD COLUMN `traction` VARCHAR(191) NULL,
+  ADD COLUMN `engineType` VARCHAR(191) NULL;

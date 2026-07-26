@@ -79,6 +79,8 @@ model Version {
   priceClp              Int
   transmission          String
   fuel                  String
+  traction              String?
+  engineType            String?
   engineDisplacementCc  Int?
   powerHp               Int
   torqueNm              Int

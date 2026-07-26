@@ -13,6 +13,8 @@ const TEMPLATES: Record<string, unknown> = {
     priceClp: 0,
     transmission: "MANUAL",
     fuel: "BENCINA",
+    traction: "TRACTION_FRONT",
+    engineType: "ENGINE_NA",
     engineDisplacementCc: 0,
     powerHp: 0,
     torqueNm: 0,

@@ -18,6 +18,8 @@ type VersionRow = {
   priceClp: number;
   transmission: string;
   fuel: string;
+  traction: string | null;
+  engineType: string | null;
   engineDisplacementCc: number | null;
   powerHp: number;
   torqueNm: number;
@@ -41,6 +43,7 @@ type VersionRow = {
 };
 
 const VERSION_RETURNING = `id, \`modelId\`, name, year, \`priceClp\`, transmission, fuel,
+  \`traction\`, \`engineType\`,
   \`engineDisplacementCc\`, \`powerHp\`, \`torqueNm\`, \`consumptionCityKmL\`,
   \`consumptionHighwayKmL\`, \`lengthMm\`, \`widthMm\`, \`heightMm\`, \`weightKg\`,
   \`trunkLiters\`,
@@ -184,6 +187,7 @@ export class VersionsService {
     await this.prisma.$executeRawUnsafe(
       `INSERT INTO \`Version\` (
          id, \`modelId\`, name, year, \`priceClp\`, transmission, fuel,
+         \`traction\`, \`engineType\`,
          \`engineDisplacementCc\`, \`powerHp\`, \`torqueNm\`, \`consumptionCityKmL\`,
          \`consumptionHighwayKmL\`, \`lengthMm\`, \`widthMm\`, \`heightMm\`, \`weightKg\`,
          \`trunkLiters\`,
@@ -193,6 +197,7 @@ export class VersionsService {
        )
        VALUES (
          ?, ?, ?, ?, ?, ?, ?,
+         ?, ?,
          ?, ?, ?, ?,
          ?, ?, ?, ?, ?,
          ?,
@@ -207,6 +212,8 @@ export class VersionsService {
       input.priceClp,
       input.transmission,
       input.fuel,
+      input.traction ?? null,
+      input.engineType ?? null,
       input.engineDisplacementCc,
       input.powerHp,
       input.torqueNm,
@@ -268,6 +275,8 @@ export class VersionsService {
         setClauses.push("name = ?");
         values.push(input.name);
       }
+      if (input.traction !== undefined) { setClauses.push("`traction` = ?"); values.push(input.traction); }
+      if (input.engineType !== undefined) { setClauses.push("`engineType` = ?"); values.push(input.engineType); }
       if (input.year !== undefined) {
         setClauses.push("year = ?");
         values.push(input.year);

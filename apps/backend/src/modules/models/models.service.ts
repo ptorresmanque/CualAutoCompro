@@ -98,6 +98,8 @@ export class ModelsService {
         priceClp: v.priceClp,
         transmission: v.transmission,
         fuel: v.fuel,
+        traction: v.traction,
+        engineType: v.engineType,
         engineDisplacementCc: v.engineDisplacementCc,
         powerHp: v.powerHp,
         torqueNm: v.torqueNm,

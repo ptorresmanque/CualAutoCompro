@@ -54,11 +54,11 @@ describe("CompareService", () => {
     expect(Object.values(out.diffHighlights).every((v) => v === false)).toBe(true);
   });
 
-  it("diffHighlights incluye todos los DIFF_KEYS (18 keys)", async () => {
+  it("diffHighlights incluye todos los DIFF_KEYS", async () => {
     const { v1, v2 } = await seed2();
     const svc = new CompareService(prisma, new FuelPricesService(prisma));
     const out = await svc.compare([v1, v2]);
-    expect(Object.keys(out.diffHighlights).length).toBe(18);
+    expect(Object.keys(out.diffHighlights).length).toBe(20);
   });
 });
 

@@ -22,6 +22,7 @@ import { AuthService } from '../../core/auth.service';
 import { CompareStore } from '../../core/compare-store.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { VehicleCardInput } from '../../shared/ui/vehicle-card.component';
+import { versionFieldLabel } from '../../core/types/version-labels';
 
 interface ModelLite {
   name: string;
@@ -35,6 +36,8 @@ interface AvailableVersionLite {
   priceClp: number;
   transmission?: string | null;
   fuel?: string | null;
+  traction?: string | null;
+  engineType?: string | null;
 }
 
 export interface CompareVersion {
@@ -44,6 +47,8 @@ export interface CompareVersion {
   year?: number | null;
   transmission?: string | null;
   fuel?: string | null;
+  traction?: string | null;
+  engineType?: string | null;
   engineDisplacementCc?: number | null;
   powerHp?: number | null;
   torqueNm?: number | null;
@@ -72,6 +77,8 @@ type DiffKey =
   | 'year'
   | 'transmission'
   | 'fuel'
+  | 'traction'
+  | 'engineType'
   | 'engineDisplacementCc'
   | 'powerHp'
   | 'torqueNm'
@@ -237,6 +244,8 @@ export class CompareComponent {
           label: 'Combustible',
           format: (v) => v.fuel ?? '—',
         },
+        { kind: 'simple', key: 'traction', label: 'Tracción', format: (v) => versionFieldLabel(v.traction) },
+        { kind: 'simple', key: 'engineType', label: 'Tipo motor', format: (v) => v.fuel === 'ELECTRIC' ? '—' : versionFieldLabel(v.engineType) },
         {
           kind: 'simple',
           key: 'lengthMm',

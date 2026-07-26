@@ -242,7 +242,11 @@ export class AdminEditDialogComponent implements AfterViewInit, OnDestroy {
       this.fuelSubject.next(fuelCtrl.value ?? undefined);
       fuelCtrl.valueChanges
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe((v: unknown) => this.fuelSubject.next(typeof v === 'string' ? v : undefined));
+        .subscribe((v: unknown) => {
+          const fuel = typeof v === 'string' ? v : undefined;
+          this.fuelSubject.next(fuel);
+          if (fuel === 'ELECTRIC') this.form().get('engineType')?.setValue(null);
+        });
     });
 
     effect(() => {

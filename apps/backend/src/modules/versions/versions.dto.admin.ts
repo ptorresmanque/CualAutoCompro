@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export const TRANSMISSIONS = ["MANUAL", "AUTOMATIC", "CVT", "DCT"] as const;
 export const FUELS = ["BENCINA", "DIESEL", "HYBRID", "ELECTRIC"] as const;
+export const TRACTIONS = ["TRACTION_FRONT", "TRACTION_REAR", "TRACTION_AWD", "TRACTION_4X4_LOW"] as const;
+export const ENGINE_TYPES = ["ENGINE_NA", "ENGINE_TURBO", "ENGINE_TWIN_TURBO"] as const;
 export const ENUM_REGEX = /^[A-Z0-9_]+$/;
 
 const versionObjectSchema = z.object({
@@ -11,6 +13,8 @@ const versionObjectSchema = z.object({
   priceClp: z.number().int().nonnegative(),
   transmission: z.string().min(1).max(40).regex(ENUM_REGEX),
   fuel: z.string().min(1).max(40).regex(ENUM_REGEX),
+  traction: z.enum(TRACTIONS).nullable().optional(),
+  engineType: z.enum(ENGINE_TYPES).nullable().optional(),
   engineDisplacementCc: z.number().int().nonnegative().nullable().optional(),
   powerHp: z.number().int().nonnegative(),
   torqueNm: z.number().int().nonnegative(),
@@ -49,10 +53,13 @@ const validateRecall = (
  * y autonomiaKm es obligatoria.
  */
 const validateFuelFields = (
-  data: { fuel?: string | undefined; engineDisplacementCc?: number | null | undefined; autonomyKm?: number | null | undefined },
+  data: { fuel?: string | undefined; engineDisplacementCc?: number | null | undefined; autonomyKm?: number | null | undefined; engineType?: string | null | undefined },
   ctx: z.RefinementCtx,
 ) => {
   if (data.fuel === "ELECTRIC") {
+    if (data.engineType != null) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["engineType"], message: "Tipo motor no aplica a vehiculos electricos" });
+    }
     if (data.engineDisplacementCc != null) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

@@ -15,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { VehicleVersion } from '../../core/types/vehicle';
 import { AuthService } from '../../core/auth.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
+import { versionFieldLabel } from '../../core/types/version-labels';
 
 export interface VehicleCardInput {
   id: string;
@@ -50,6 +51,7 @@ export class VehicleCardComponent {
   readonly favoriteToggled = output<VehicleVersion>();
 
   readonly canFavorite = computed(() => this.auth.currentUser() !== null);
+  readonly versionFieldLabel = versionFieldLabel;
 
   readonly favoriteIcon = computed(() =>
     this.isFavorite() ? 'favorite' : 'favorite_border',

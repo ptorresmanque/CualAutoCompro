@@ -3,7 +3,7 @@ import { badRequest, notFound } from "../../shared/errors.js";
 import type { FuelPricesService } from "../fuel-prices/fuel-prices.service.js";
 
 const DIFF_KEYS = [
-  "priceClp","year","transmission","fuel","engineDisplacementCc","powerHp","torqueNm",
+  "priceClp","year","transmission","fuel","traction","engineType","engineDisplacementCc","powerHp","torqueNm",
   "consumptionCityKmL","consumptionHighwayKmL","lengthMm","widthMm","heightMm",
   "weightKg","trunkLiters",
   "circulationPermitClp","mandatoryInsuranceClp","voluntaryInsuranceClp","computedFillCostClp",
@@ -53,6 +53,8 @@ export class CompareService {
                 priceClp: av.priceClp,
                 transmission: av.transmission,
                 fuel: av.fuel,
+                traction: av.traction,
+                engineType: av.engineType,
               })),
             }
           : undefined,

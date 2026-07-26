@@ -19,6 +19,7 @@ import { FavoritesStore } from '../../core/favorites-store.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { DisclaimerComponent } from '../../shared/ui/disclaimer.component';
 import { AnnualCostCardComponent } from './annual-cost-card.component';
+import { versionFieldLabel } from '../../core/types/version-labels';
 
 interface Brand {
   id: string;
@@ -39,6 +40,8 @@ interface ModelVersion {
   year: number | null;
   fuel?: string | null;
   transmission?: string | null;
+  traction?: string | null;
+  engineType?: string | null;
   powerHp?: number | null;
   torqueNm?: number | null;
   engineDisplacementCc?: number | null;
@@ -163,6 +166,8 @@ export class ModelComponent {
           { label: 'Torque', value: v.torqueNm ? `${v.torqueNm} Nm` : '—', zebra: false },
           { label: 'Combustible', value: v.fuel ?? '—', zebra: true },
           { label: 'Transmisión', value: v.transmission ?? '—', zebra: false },
+          { label: 'Tracción', value: versionFieldLabel(v.traction), zebra: true },
+          ...(v.fuel !== 'ELECTRIC' ? [{ label: 'Tipo motor', value: versionFieldLabel(v.engineType), zebra: false }] : []),
           {
             label: 'Consumo ciudad / carretera',
             value: v.consumptionCityKmL && v.consumptionHighwayKmL
