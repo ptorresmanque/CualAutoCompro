@@ -397,7 +397,7 @@
                     </th>
                     @if (row.kind === 'simple') {
                       @for (v of versions(); track v.id) {
-                        <td [class]="cellClass(row.key)" class="px-4 py-2 text-ink">
+                        <td class="px-4 py-2 text-ink" [class.row-diff]="isDiff(row.key)">
                           {{ row.format(v) }}
                         </td>
                       }

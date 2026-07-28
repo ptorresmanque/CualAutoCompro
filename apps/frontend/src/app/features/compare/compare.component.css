@@ -214,53 +214,10 @@
 
 .compare-swap-button:hover { text-decoration: underline; }
 
-/* Tables (engineer notebook feel) */
-.compare-table {
-  width: 100%;
-  font-size: 0.875rem;
-  border-collapse: collapse;
-}
-
-.compare-table thead th {
-  background: var(--paper-warm);
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-muted);
-  text-align: left;
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid var(--ink);
-  font-weight: 700;
-}
-
-.compare-table tbody tr {
-  border-bottom: 1px solid var(--rule);
-}
-
-.compare-table tbody th,
-.compare-table tbody td {
-  padding: 0.5rem 1rem;
-  text-align: left;
-}
-
-.compare-table tbody th {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--graphite);
-  font-weight: 600;
-  width: 25%;
-}
-
-.compare-table tbody td {
-  font-family: var(--font-sans);
-  color: var(--ink);
-  font-size: 0.875rem;
-}
-
-.compare-table .row-diff td {
+/* Tabla comparativa: la estructura y la tipografía vienen de utilidades
+ * Tailwind en la plantilla (misma convención que .admin-table). Acá solo
+ * vive el resaltado de las celdas que difieren entre versiones. */
+td.row-diff {
   background: var(--engine-50);
   color: var(--engine-dark);
   font-weight: 600;

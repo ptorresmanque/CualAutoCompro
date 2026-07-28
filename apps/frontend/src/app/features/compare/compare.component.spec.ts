@@ -79,6 +79,42 @@ describe('CompareComponent', () => {
     ).toBe(3);
   });
 
+  it('resalta con .row-diff solo las celdas de los atributos que difieren', async () => {
+    store.hydrateFromUrl('a,b');
+    const fixture = TestBed.createComponent(CompareComponent);
+    const ready = fixture.componentInstance.ready;
+    const req = http.expectOne((r) => r.url.includes('/api/v1/compare'));
+    req.flush({
+      data: {
+        versions: [
+          { id: 'a', name: 'A', priceClp: 10500000, year: 2025 },
+          { id: 'b', name: 'B', priceClp: 11500000, year: 2025 },
+        ],
+        diffHighlights: { priceClp: true },
+      },
+    });
+    await ready;
+    fixture.detectChanges();
+
+    const priceCells: HTMLElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('[data-testid="row-priceClp"] td'),
+    );
+    expect(priceCells.length).toBe(2);
+    for (const cell of priceCells) {
+      expect(cell.classList.contains('row-diff')).toBe(true);
+      // el binding no debe pisar las clases estáticas de la celda
+      expect(cell.classList.contains('px-4')).toBe(true);
+    }
+
+    const yearCells: HTMLElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('[data-testid="row-year"] td'),
+    );
+    expect(yearCells.length).toBe(2);
+    for (const cell of yearCells) {
+      expect(cell.classList.contains('row-diff')).toBe(false);
+    }
+  });
+
   it('usa GET /compare?ids= cuando hay query param en URL', async () => {
     TestBed.resetTestingModule();
     localStorage.clear();

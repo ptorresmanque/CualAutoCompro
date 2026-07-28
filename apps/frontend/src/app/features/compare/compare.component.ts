@@ -541,10 +541,6 @@ export class CompareComponent {
     return Boolean(this.diffHighlights()[key]);
   }
 
-  cellClass(key: DiffKey): string {
-    return this.isDiff(key) ? 'row-diff' : '';
-  }
-
   sectionIcon(name: string): string {
     switch (name) {
       case 'specs':
