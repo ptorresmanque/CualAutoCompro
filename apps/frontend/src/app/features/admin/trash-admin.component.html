@@ -8,7 +8,7 @@
   </header>
 
   @if (error(); as message) {
-    <div class="mb-3 rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark" role="alert">{{ message }}</div>
+    <div class="mb-3 rounded border border-danger bg-danger-light px-3 py-2 text-sm text-danger-dark" role="alert">{{ message }}</div>
   }
   @if (loading()) {
     <p class="text-sm text-ink-muted">Cargando…</p>

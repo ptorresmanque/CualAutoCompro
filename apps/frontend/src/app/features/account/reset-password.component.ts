@@ -24,7 +24,7 @@ import { ApiService } from '../../core/api.service';
       <p class="text-sm text-ink-muted mb-6">Elige una contraseña nueva para tu cuenta.</p>
 
       @if (!token()) {
-        <div class="rounded border border-warn bg-warn-light p-4 text-sm">
+        <div class="rounded border border-danger bg-danger-light p-4 text-sm">
           El enlace es inválido o ha expirado. Solicita uno nuevo.
         </div>
         <a routerLink="/account/forgot-password" class="mt-6 inline-flex items-center gap-1 text-engine hover:underline">
@@ -55,7 +55,7 @@ import { ApiService } from '../../core/api.service';
             />
           </mat-form-field>
           @if (error(); as err) {
-            <p class="text-sm text-warn-dark">{{ err }}</p>
+            <p class="text-sm text-danger-dark">{{ err }}</p>
           }
           <button
             mat-flat-button

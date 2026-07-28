@@ -7,7 +7,7 @@
   <app-search-input placeholder="Buscar por tipo…" [value]="crud.search()" (changed)="crud.onSearch($event)" />
 
   @if (crud.error(); as err) {
-    <div class="mb-3 flex items-center justify-between gap-2 rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark">
+    <div class="mb-3 flex items-center justify-between gap-2 rounded border border-danger bg-danger-light px-3 py-2 text-sm text-danger-dark">
       <span>{{ err }}</span>
       <button mat-button type="button" (click)="crud.retry()">Reintentar</button>
     </div>
