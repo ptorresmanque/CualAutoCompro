@@ -30,6 +30,26 @@ describe("ModelsService + extendEnum", () => {
     expect(created.segment).toBe(newSegment);
   });
 
+  it("listSegments() devuelve los canónicos más los creados con 'Otro'", async () => {
+    const svc = new ModelsService(prisma);
+    const brand = await prisma.brand.findFirstOrThrow({ where: { name: "Toyota" } });
+    const newSegment = `TEST_FACET_SEG_${Date.now()}`;
+    await svc.create({
+      brandId: brand.id,
+      name: `Modelo Facet ${Date.now()}`,
+      segment: newSegment,
+      imageUrl: null,
+      galleryUrls: [],
+    });
+
+    const segments = await svc.listSegments();
+    expect(segments.map((s) => s.id)).toContain(newSegment);
+    expect(segments.map((s) => s.id)).toEqual(expect.arrayContaining(["SEDAN", "SUV", "PICKUP"]));
+    expect(segments.find((s) => s.id === newSegment)?.count).toBe(1);
+    // `id` y `name` iguales: es la forma que consume `app-select-search`.
+    expect(segments.every((s) => s.id === s.name)).toBe(true);
+  });
+
   it("create() rechaza segmento con formato inválido antes de tocar la DB", async () => {
     const svc = new ModelsService(prisma);
     const brand = await prisma.brand.findFirstOrThrow({ where: { name: "Toyota" } });

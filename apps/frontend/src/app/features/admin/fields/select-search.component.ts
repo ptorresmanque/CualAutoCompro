@@ -71,8 +71,18 @@ export class SelectSearchComponent implements OnInit {
         }))
       : [];
     const all = [...staticOpts, ...remoteOpts];
-    const matches = q ? all.filter((o) => o.label.toLowerCase().includes(q)) : all;
-    if (this.allowOther() && q && !matches.some((m) => m.label.toLowerCase() === q)) {
+    // Con `allowOther` las opciones son tokens (`MINI_VAN`) y lo que se tipea
+    // es lenguaje natural ("mini van"): sin comparar también por token, un
+    // valor ya existente no aparecía y el usuario terminaba creándolo de nuevo.
+    const qToken = this.allowOther() ? toEnumToken(this.query()) : '';
+    const matchesQuery = (label: string): boolean =>
+      label.toLowerCase().includes(q) || (!!qToken && toEnumToken(label).includes(qToken));
+    const matches = q ? all.filter((o) => matchesQuery(o.label)) : all;
+    if (
+      this.allowOther() &&
+      q &&
+      !matches.some((m) => m.label.toLowerCase() === q || (!!qToken && toEnumToken(m.label) === qToken))
+    ) {
       matches.push({ label: `Otro: ${this.query()}`, isOther: true });
     }
     return matches;

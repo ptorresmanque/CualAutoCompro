@@ -18,28 +18,34 @@ import {
 } from '../../shared/ui/vehicle-card.component';
 import { RangeSliderComponent } from '../../shared/ui/range-slider.component';
 import { VehicleVersion } from '../../core/types/vehicle';
+import {
+  CANONICAL_FUELS,
+  CANONICAL_SEGMENTS,
+  CANONICAL_TRANSMISSIONS,
+  fuelLabel,
+  segmentLabel,
+  transmissionLabel,
+} from '../../core/types/catalog-labels';
 
-type Segment =
-  | 'SEDAN'
-  | 'SUV'
-  | 'HATCHBACK'
-  | 'PICKUP'
-  | 'CROSSOVER'
-  | 'COMMERCIAL';
-
-type Transmission = 'MANUAL' | 'AUTOMATIC' | 'CVT' | 'DCT';
-type Fuel = 'BENCINA' | 'DIESEL' | 'HYBRID' | 'ELECTRIC';
+// Segmento, transmisión y combustible son tokens abiertos, no uniones
+// cerradas: el admin puede dar de alta valores nuevos con la opción "Otro" y
+// las opciones reales llegan desde la API (ver `loadFacets`).
 type Sort = 'name' | 'minPrice' | 'minConsumption';
 type Order = 'asc' | 'desc';
+
+export interface FilterOption {
+  value: string;
+  label: string;
+}
 
 export interface CatalogFilters {
   q?: string;
   brand?: string;
-  segment?: Segment;
+  segment?: string;
   priceMin?: number;
   priceMax?: number;
-  transmission?: Transmission;
-  fuel?: Fuel;
+  transmission?: string;
+  fuel?: string;
   powerMin?: number;
   consumptionMax?: number;
   consumptionHighwayMax?: number;
@@ -47,6 +53,13 @@ export interface CatalogFilters {
   order?: Order;
   page?: number;
   pageSize?: number;
+}
+
+function toOptions(
+  tokens: readonly string[],
+  label: (token: string) => string,
+): FilterOption[] {
+  return tokens.map((value) => ({ value, label: label(value) }));
 }
 
 const PRICE_BOUNDS = { min: 0, max: 100_000_000, step: 500_000 };
@@ -77,28 +90,11 @@ export class CatalogComponent {
   private route = inject(ActivatedRoute);
   readonly favorites = inject(FavoritesStore);
 
-  readonly segments: ReadonlyArray<{ value: Segment; label: string }> = [
-    { value: 'SEDAN', label: 'Sedán' },
-    { value: 'SUV', label: 'SUV' },
-    { value: 'HATCHBACK', label: 'Hatchback' },
-    { value: 'PICKUP', label: 'Pickup' },
-    { value: 'CROSSOVER', label: 'Crossover' },
-    { value: 'COMMERCIAL', label: 'Comercial' },
-  ];
-
-  readonly transmissions: ReadonlyArray<{ value: Transmission; label: string }> = [
-    { value: 'MANUAL', label: 'Manual' },
-    { value: 'AUTOMATIC', label: 'Automática' },
-    { value: 'CVT', label: 'CVT' },
-    { value: 'DCT', label: 'DCT' },
-  ];
-
-  readonly fuels: ReadonlyArray<{ value: Fuel; label: string }> = [
-    { value: 'BENCINA', label: 'Bencina' },
-    { value: 'DIESEL', label: 'Diésel' },
-    { value: 'HYBRID', label: 'Híbrido' },
-    { value: 'ELECTRIC', label: 'Eléctrico' },
-  ];
+  // Se llenan desde la API (`loadFacets`). Los valores iniciales son los
+  // canónicos para que los filtros no aparezcan vacíos mientras carga.
+  readonly segments = signal<FilterOption[]>(toOptions(CANONICAL_SEGMENTS, segmentLabel));
+  readonly transmissions = signal<FilterOption[]>(toOptions(CANONICAL_TRANSMISSIONS, transmissionLabel));
+  readonly fuels = signal<FilterOption[]>(toOptions(CANONICAL_FUELS, fuelLabel));
 
   readonly sortOptions: ReadonlyArray<{ value: Sort; label: string; tip?: string }> = [
     { value: 'name', label: 'Nombre' },
@@ -161,7 +157,7 @@ export class CatalogComponent {
       this.filters.set(next);
       void this.load();
     });
-    this.initialLoad = Promise.all([this.loadBrands(), this.load()]);
+    this.initialLoad = Promise.all([this.loadBrands(), this.loadFacets(), this.load()]);
   }
 
   isAdded(item: VehicleCardInput): boolean {
@@ -184,6 +180,30 @@ readonly initialLoad: Promise<unknown>;
     } catch {
       /* ignore */
     }
+  }
+
+  /**
+   * Opciones de segmento / transmisión / combustible según lo que existe en la
+   * DB, incluidos los valores creados desde la opción "Otro" del admin. Si
+   * falla, quedan los canónicos con los que se inicializan las señales.
+   */
+  private async loadFacets(): Promise<void> {
+    const facets: Array<[string, typeof this.segments, (t: string) => string]> = [
+      ['/models/segments', this.segments, segmentLabel],
+      ['/versions/transmissions', this.transmissions, transmissionLabel],
+      ['/versions/fuels', this.fuels, fuelLabel],
+    ];
+    await Promise.all(
+      facets.map(async ([path, target, label]) => {
+        try {
+          const res = await this.api.get<{ data: Array<{ id: string }> }>(path);
+          const options = toOptions(res.data.map((o) => o.id), label);
+          if (options.length > 0) target.set(options);
+        } catch {
+          /* se conservan los canónicos */
+        }
+      }),
+    );
   }
 
   async load(): Promise<void> {
@@ -339,11 +359,11 @@ readonly initialLoad: Promise<unknown>;
     const brand = params.get('brand');
     if (brand) next.brand = brand;
     const segment = params.get('segment');
-    if (segment) next.segment = segment as Segment;
+    if (segment) next.segment = segment;
     const transmission = params.get('transmission');
-    if (transmission) next.transmission = transmission as Transmission;
+    if (transmission) next.transmission = transmission;
     const fuel = params.get('fuel');
-    if (fuel) next.fuel = fuel as Fuel;
+    if (fuel) next.fuel = fuel;
     for (const key of ['priceMin', 'priceMax', 'powerMin', 'consumptionMax', 'consumptionHighwayMax'] as const) {
       const value = numberParam(key);
       if (value !== undefined) next[key] = value;

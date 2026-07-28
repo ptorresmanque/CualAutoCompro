@@ -16,6 +16,7 @@ import { VehicleVersion } from '../../core/types/vehicle';
 import { AuthService } from '../../core/auth.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { versionFieldLabel } from '../../core/types/version-labels';
+import { fuelLabel, segmentLabel, transmissionLabel } from '../../core/types/catalog-labels';
 
 export interface VehicleCardInput {
   id: string;
@@ -75,7 +76,11 @@ export class VehicleCardComponent {
     return this.model().versions[0] ?? null;
   });
 
-  readonly segmentLabel = computed(() => this.segmentToLabel(this.model().segment));
+  readonly segmentLabel = computed(() => segmentLabel(this.model().segment));
+  readonly selectedFuelLabel = computed(() => fuelLabel(this.selectedVersion()?.fuel));
+  readonly selectedTransmissionLabel = computed(() =>
+    transmissionLabel(this.selectedVersion()?.transmission),
+  );
   readonly priceFormatted = computed(() => {
     const v = this.selectedVersion();
     if (v) return new Intl.NumberFormat('es-CL').format(v.priceClp);
@@ -129,17 +134,5 @@ export class VehicleCardComponent {
   }
   onMouseLeave(): void {
     this._hovered.set(false);
-  }
-
-  private segmentToLabel(s: string): string {
-    const map: Record<string, string> = {
-      SEDAN: 'Sedán',
-      SUV: 'SUV',
-      HATCHBACK: 'Hatchback',
-      PICKUP: 'Pickup',
-      CROSSOVER: 'Crossover',
-      COMMERCIAL: 'Comercial',
-    };
-    return map[s] ?? s;
   }
 }

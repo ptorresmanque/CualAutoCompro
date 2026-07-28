@@ -40,7 +40,7 @@
               (change)="updateFilter({ segment: $any($event).value || undefined })"
             >
               <mat-radio-button [value]="null">Cualquiera</mat-radio-button>
-              @for (s of segments; track s.value) {
+              @for (s of segments(); track s.value) {
                 <mat-radio-button [value]="s.value">{{ s.label }}</mat-radio-button>
               }
             </mat-radio-group>
@@ -71,7 +71,7 @@
               (change)="updateFilter({ transmission: $any($event).value || undefined })"
             >
               <mat-radio-button [value]="null">Cualquiera</mat-radio-button>
-              @for (t of transmissions; track t.value) {
+              @for (t of transmissions(); track t.value) {
                 <mat-radio-button [value]="t.value">{{ t.label }}</mat-radio-button>
               }
             </mat-radio-group>
@@ -86,7 +86,7 @@
               (change)="updateFilter({ fuel: $any($event).value || undefined })"
             >
               <mat-radio-button [value]="null">Cualquiera</mat-radio-button>
-              @for (f of fuels; track f.value) {
+              @for (f of fuels(); track f.value) {
                 <mat-radio-button [value]="f.value">{{ f.label }}</mat-radio-button>
               }
             </mat-radio-group>

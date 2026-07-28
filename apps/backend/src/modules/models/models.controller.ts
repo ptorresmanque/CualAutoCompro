@@ -19,6 +19,10 @@ export const modelsController = {
   }),
 
 
+  listSegments: ah(async (_req: Request, res: Response) =>
+    res.json(ok(await svc.listSegments())),
+  ),
+
   detailBySlug: ah(async (req: Request, res: Response) => {
     const brandSlug = (req.params.brandSlug ?? "").trim();
     const modelSlug = (req.params.modelSlug ?? "").trim();

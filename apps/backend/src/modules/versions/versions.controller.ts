@@ -22,6 +22,12 @@ export const versionsController = {
     res.json(ok(await svc.list({ page, pageSize })));
   }),
 
+  listFuels: ah(async (_req: Request, res: Response) => res.json(ok(await svc.listFuels()))),
+
+  listTransmissions: ah(async (_req: Request, res: Response) =>
+    res.json(ok(await svc.listTransmissions())),
+  ),
+
   detail: ah(async (req: Request, res: Response) => {
     const id = req.params.id ?? "";
     if (!id) return res.status(400).json({ data: null, error: { code: "BAD_REQUEST", message: "id requerido" } });

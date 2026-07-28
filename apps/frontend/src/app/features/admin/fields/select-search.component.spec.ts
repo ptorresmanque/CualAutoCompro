@@ -90,6 +90,30 @@ describe('SelectSearchComponent', () => {
     expect(ctrl.value).toBe('DOBLE_EMBRAGUE');
   });
 
+  it('con allowOther encuentra un token existente al tipearlo en lenguaje natural', () => {
+    TestBed.configureTestingModule({
+      imports: [SelectSearchComponent, ReactiveFormsModule],
+    });
+    const fixture = TestBed.createComponent(SelectSearchComponent);
+    const ctrl = new FormControl<string>('', { nonNullable: true });
+    fixture.componentRef.setInput('control', ctrl);
+    fixture.componentRef.setInput('options', ['SEDAN', 'MINI_VAN']);
+    fixture.componentRef.setInput('allowOther', true);
+    fixture.detectChanges();
+
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[role="combobox"]');
+    input.value = 'mini van';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    // Sin comparar por token, "mini van" no matcheaba "MINI_VAN" y el usuario
+    // terminaba creando un duplicado vía "Otro".
+    const items = fixture.nativeElement.querySelectorAll('li[role="option"]');
+    expect(items.length).toBe(1);
+    expect(items[0].textContent).toContain('MINI_VAN');
+    expect(fixture.nativeElement.querySelector('button[data-testid="select-other"]')).toBeFalsy();
+  });
+
   it('con allowOther ignora un texto sin caracteres utilizables', () => {
     TestBed.configureTestingModule({
       imports: [SelectSearchComponent, ReactiveFormsModule],

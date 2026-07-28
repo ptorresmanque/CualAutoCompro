@@ -17,6 +17,7 @@ import {
   VehicleCardInput,
 } from '../../shared/ui/vehicle-card.component';
 import { VehicleVersion } from '../../core/types/vehicle';
+import { fuelLabel, transmissionLabel } from '../../core/types/catalog-labels';
 
 interface Stats {
   total: number;
@@ -104,38 +105,18 @@ export class LandingComponent {
     if (version.engineDisplacementCc) {
       details.push(`${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 1 }).format(version.engineDisplacementCc / 1000)} L`);
     }
-    if (version.fuel) details.push(this.fuelLabel(version.fuel));
+    if (version.fuel) details.push(fuelLabel(version.fuel));
     if (version.powerHp) details.push(`${version.powerHp} HP`);
     return details.join(' · ') || 'Motor por confirmar';
   }
 
   drivingLabel(version: VehicleVersion): string {
     const details: string[] = [];
-    if (version.transmission) details.push(this.transmissionLabel(version.transmission));
+    if (version.transmission) details.push(transmissionLabel(version.transmission));
     if (version.consumptionCityKmL) {
       details.push(`${new Intl.NumberFormat('es-CL', { maximumFractionDigits: 1 }).format(version.consumptionCityKmL)} km/l ciudad`);
     }
     return details.join(' · ') || 'Consumo por confirmar';
-  }
-
-  private fuelLabel(fuel: string): string {
-    const labels: Record<string, string> = {
-      BENCINA: 'Bencina',
-      DIESEL: 'Diésel',
-      HYBRID: 'Híbrido',
-      ELECTRIC: 'Eléctrico',
-    };
-    return labels[fuel] ?? fuel;
-  }
-
-  private transmissionLabel(transmission: string): string {
-    const labels: Record<string, string> = {
-      MANUAL: 'Manual',
-      AUTOMATIC: 'Automática',
-      CVT: 'CVT',
-      DCT: 'DCT',
-    };
-    return labels[transmission] ?? transmission;
   }
 
   readonly ready: Promise<void>;

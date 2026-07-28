@@ -20,6 +20,7 @@ import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { DisclaimerComponent } from '../../shared/ui/disclaimer.component';
 import { AnnualCostCardComponent } from './annual-cost-card.component';
 import { versionFieldLabel } from '../../core/types/version-labels';
+import { fuelLabel, segmentLabel, transmissionLabel } from '../../core/types/catalog-labels';
 
 interface Brand {
   id: string;
@@ -141,18 +142,11 @@ export class ModelComponent {
     this.activeTabIndex.set(i);
   }
 
-  readonly segmentLabel = computed(() => {
-    const seg = this.model()?.segment;
-    const map: Record<string, string> = {
-      SEDAN: 'Sedán',
-      SUV: 'SUV',
-      HATCHBACK: 'Hatchback',
-      PICKUP: 'Pickup',
-      CROSSOVER: 'Crossover',
-      COMMERCIAL: 'Comercial',
-    };
-    return (seg && map[seg]) ?? seg ?? '';
-  });
+  readonly segmentLabel = computed(() => segmentLabel(this.model()?.segment));
+
+  // Expuestos al template para el chip de transmisión y la línea de motor.
+  readonly fuelLabel = fuelLabel;
+  readonly transmissionLabel = transmissionLabel;
 
   readonly specGroupsByVersion = computed<{ version: ModelVersion; groups: SpecGroup[] }[]>(() => {
     return this.versions().map((v) => ({ version: v, groups: this.buildSpecGroups(v) }));
@@ -167,8 +161,8 @@ export class ModelComponent {
           { label: 'Desplazamiento', value: v.engineDisplacementCc ? `${(v.engineDisplacementCc / 1000).toFixed(1)} L` : '—', zebra: false },
           { label: 'Potencia', value: v.powerHp ? `${v.powerHp} HP` : '—', zebra: true },
           { label: 'Torque', value: v.torqueNm ? `${v.torqueNm} Nm` : '—', zebra: false },
-          { label: 'Combustible', value: v.fuel ?? '—', zebra: true },
-          { label: 'Transmisión', value: v.transmission ?? '—', zebra: false },
+          { label: 'Combustible', value: fuelLabel(v.fuel) || '—', zebra: true },
+          { label: 'Transmisión', value: transmissionLabel(v.transmission) || '—', zebra: false },
           { label: 'Tracción', value: versionFieldLabel(v.traction), zebra: true },
           ...(v.fuel !== 'ELECTRIC' ? [{ label: 'Tipo motor', value: versionFieldLabel(v.engineType), zebra: false }] : []),
           {

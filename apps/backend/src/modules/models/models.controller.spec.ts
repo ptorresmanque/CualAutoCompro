@@ -53,6 +53,33 @@ describe("GET /api/v1/models", () => {
     expect(res.body.data.items.every((m: { segment: string }) => m.segment === "HATCHBACK")).toBe(true);
   });
 
+  it("filtra por un segmento no canónico creado con 'Otro' (antes daba 400)", async () => {
+    const toyota = await prisma.brand.findFirstOrThrow({ where: { name: "Toyota" } });
+    await prisma.model.create({
+      data: { brandId: toyota.id, name: "Hiace", segment: "MINI_VAN" },
+    });
+    const res = await request(createApp()).get("/api/v1/models?segment=MINI_VAN");
+    expect(res.status).toBe(200);
+    expect(res.body.data.items.map((m: { name: string }) => m.name)).toEqual(["Hiace"]);
+  });
+
+  it("rechaza un segmento con formato inválido", async () => {
+    const res = await request(createApp()).get("/api/v1/models?segment=mini%20van");
+    expect(res.status).toBe(400);
+  });
+
+  it("GET /api/v1/models/segments lista canónicos y creados, sin chocar con /:id", async () => {
+    const toyota = await prisma.brand.findFirstOrThrow({ where: { name: "Toyota" } });
+    await prisma.model.create({
+      data: { brandId: toyota.id, name: "Hiace", segment: "MINI_VAN" },
+    });
+    const res = await request(createApp()).get("/api/v1/models/segments");
+    expect(res.status).toBe(200);
+    const ids = res.body.data.map((s: { id: string }) => s.id);
+    expect(ids).toContain("MINI_VAN");
+    expect(ids).toEqual(expect.arrayContaining(["SEDAN", "SUV", "HATCHBACK"]));
+  });
+
   it("filtra por rango de precio desde versions", async () => {
     const res = await request(createApp()).get("/api/v1/models?priceMin=14000000");
     expect(res.body.data.items.length).toBeGreaterThanOrEqual(1);

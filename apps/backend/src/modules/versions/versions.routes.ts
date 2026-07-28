@@ -5,6 +5,9 @@ import { versionsController } from "./versions.controller.js";
 
 export const versionsRouter = Router();
 versionsRouter.get("/", versionsController.list);
+// Antes de `/:id`, si no Express los matchea como id de versión.
+versionsRouter.get("/fuels", versionsController.listFuels);
+versionsRouter.get("/transmissions", versionsController.listTransmissions);
 versionsRouter.get("/:id", versionsController.detail);
 
 export const versionsAdminRouter = Router();

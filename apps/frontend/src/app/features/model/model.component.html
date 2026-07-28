@@ -222,12 +222,12 @@
                 <span
                   class="flex-shrink-0 bg-engine-100 text-engine-dark px-2 py-0.5 font-mono text-[10px] uppercase tracking-stamp font-bold"
                 >
-                  {{ v.transmission }}
+                  {{ transmissionLabel(v.transmission) }}
                 </span>
               }
             </div>
             @if (v.fuel) {
-              <p class="font-mono text-[11px] text-ink-muted uppercase tracking-stamp">{{ v.fuel }} · {{ v.powerHp ?? '—' }} HP</p>
+              <p class="font-mono text-[11px] text-ink-muted uppercase tracking-stamp">{{ fuelLabel(v.fuel) }} · {{ v.powerHp ?? '—' }} HP</p>
             }
             <p class="mt-2 font-display text-3xl text-ink leading-none">
               {{ formatPrice(v.priceClp) }}

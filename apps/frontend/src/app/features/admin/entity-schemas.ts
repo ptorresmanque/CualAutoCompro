@@ -198,7 +198,10 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
   model: [
     { field: 'brandId', label: 'Marca', kind: 'foreignKey', optionsApi: '/brands', optionLabel: 'name', sticky: true },
     { field: 'name', label: 'Nombre', kind: 'text' },
-    { field: 'segment', label: 'Segmento', kind: 'enumWithOther', options: [...SEGMENTS], sticky: true },
+    // Las opciones salen del endpoint y no de `SEGMENTS`: incluye los valores
+    // dados de alta con "Otro" en cargas anteriores, que de otro modo habría
+    // que retipear (y se duplicaban como MINIVAN / MINI_VAN).
+    { field: 'segment', label: 'Segmento', kind: 'enumWithOther', optionsApi: '/models/segments', placeholder: 'Buscar o crear segmento…', sticky: true },
     { field: 'imageUrl', label: 'Imagen principal', kind: 'imageUrl' },
     { field: 'galleryUrls', label: 'Galería', kind: 'gallery' },
   ],
@@ -207,8 +210,10 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'name', label: 'Nombre', kind: 'text', group: 'Identificación' },
     { field: 'year', label: 'Año', kind: 'number', group: 'Identificación', sticky: true },
     { field: 'priceClp', label: 'Precio CLP', kind: 'number', group: 'Identificación' },
-    { field: 'transmission', label: 'Transmisión', kind: 'enumWithOther', options: [...TRANSMISSIONS], group: 'Motor', sticky: true },
-    { field: 'fuel', label: 'Combustible', kind: 'enumWithOther', options: [...FUELS], group: 'Motor', sticky: true },
+    // Igual que `segment` en model: opciones desde la DB para no perder los
+    // valores creados con "Otro".
+    { field: 'transmission', label: 'Transmisión', kind: 'enumWithOther', optionsApi: '/versions/transmissions', placeholder: 'Buscar o crear transmisión…', group: 'Motor', sticky: true },
+    { field: 'fuel', label: 'Combustible', kind: 'enumWithOther', optionsApi: '/versions/fuels', placeholder: 'Buscar o crear combustible…', group: 'Motor', sticky: true },
     { field: 'traction', label: 'Tracción', kind: 'enumWithOther', options: [
       { value: 'TRACTION_FRONT', label: 'Delantera' }, { value: 'TRACTION_REAR', label: 'Trasera' },
       { value: 'TRACTION_AWD', label: 'Integral' }, { value: 'TRACTION_4X4_LOW', label: '4x4 con reductora' },

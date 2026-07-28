@@ -6,6 +6,7 @@ import type { listModelsQuerySchema } from "./models.dto.js";
 import { conflict, notFound } from "../../shared/errors.js";
 import { extendEnum } from "../../shared/enum-extension.js";
 import { toGalleryUrls } from "../../shared/json.js";
+import { mergeEnumFacets, type EnumFacet } from "../../shared/enum-facets.js";
 import { SEGMENTS, type CreateModelInput, type UpdateModelInput } from "./models.dto.admin.js";
 import type { PaginationParams } from "../../shared/pagination.js";
 import { slugify } from "../../shared/slug.js";
@@ -152,6 +153,31 @@ export class ModelsService {
       include: { brand: { select: { id: true, name: true } } },
     });
     return rows.map((m) => ({ ...m, galleryUrls: toGalleryUrls(m.galleryUrls) }));
+  }
+
+  /**
+   * Segmentos disponibles: los canónicos de `SEGMENTS` más los que se hayan
+   * dado de alta por la opción "Otro" del formulario y viven solo en la DB.
+   *
+   * Sin esto un segmento nuevo se guarda pero nunca vuelve a ofrecerse, y cada
+   * carga posterior lo retipea (`MINIVAN` / `MINI_VAN` / `VAN` como segmentos
+   * distintos).
+   *
+   * Devuelve `{ id, name }` con ambos iguales al token para ser compatible con
+   * `app-select-search` (que consume `optionsApi` esperando esa forma), igual
+   * que `EquipmentService.listCategories()`. Las etiquetas legibles son cosa
+   * del frontend (`core/types/segment-labels.ts`).
+   */
+  async listSegments(): Promise<EnumFacet[]> {
+    const groups = await this.prisma.model.groupBy({
+      by: ["segment"],
+      where: { deletedAt: null, brand: { deletedAt: null } },
+      _count: { _all: true },
+    });
+    return mergeEnumFacets(
+      SEGMENTS,
+      new Map(groups.map((g) => [g.segment, g._count._all])),
+    );
   }
 
   async listPaged(q: string | undefined, params: PaginationParams) {

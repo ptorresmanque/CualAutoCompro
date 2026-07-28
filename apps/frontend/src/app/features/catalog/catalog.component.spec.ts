@@ -57,14 +57,27 @@ describe('CatalogComponent', () => {
     req.flush({ data: { total: items.length, items, page: 1, pageSize: 20 } });
   }
 
+  /**
+   * Las opciones de segmento / transmisión / combustible se piden a la API
+   * porque el admin puede crear valores nuevos con "Otro". Los tests no
+   * dependen de ellas (el componente arranca con los canónicos), pero hay que
+   * responder los requests para que `initialLoad` resuelva y `verify()` pase.
+   */
+  function flushFacets() {
+    for (const path of ['/models/segments', '/versions/transmissions', '/versions/fuels']) {
+      http.match((r) => r.url.endsWith(path)).forEach((r) => r.flush({ data: [] }));
+    }
+  }
+
   it('carga modelos al init', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [{ id: 'toyota', name: 'Toyota' }] });
     flushItems(
-      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      http.expectOne((r) => r.url.endsWith('/api/v1/models')),
       [
         {
           id: 'm1',
@@ -87,11 +100,12 @@ describe('CatalogComponent', () => {
   it('updateFilter refetch con params mergeados', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     flushItems(
-      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      http.expectOne((r) => r.url.endsWith('/api/v1/models')),
       [],
     );
     await fixture.componentInstance.initialLoad;
@@ -101,7 +115,7 @@ describe('CatalogComponent', () => {
     });
     const req = http.expectOne(
       (r) =>
-        r.url.includes('/api/v1/models') &&
+        r.url.endsWith('/api/v1/models') &&
         r.params.get('segment') === 'SUV',
     );
     flushItems(req, [
@@ -125,11 +139,12 @@ describe('CatalogComponent', () => {
   it('botón Comparar agrega version por defaultVersion (no model.id) a CompareStore', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     flushItems(
-      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      http.expectOne((r) => r.url.endsWith('/api/v1/models')),
       [
         {
           id: 'm1',
@@ -166,11 +181,12 @@ describe('CatalogComponent', () => {
   it('botón Comparar agrega la versión SELECCIONADA vía chip, no la default', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     flushItems(
-      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      http.expectOne((r) => r.url.endsWith('/api/v1/models')),
       [
         {
           id: 'm1',
@@ -212,11 +228,12 @@ describe('CatalogComponent', () => {
   it('botón Comparar toggle: segunda pulsación quita la versión', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     flushItems(
-      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      http.expectOne((r) => r.url.endsWith('/api/v1/models')),
       [
         {
           id: 'm1',
@@ -248,11 +265,12 @@ describe('CatalogComponent', () => {
   it('muestra sticky selection-bar con contador cuando hay versiones seleccionadas', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     flushItems(
-      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      http.expectOne((r) => r.url.endsWith('/api/v1/models')),
       [
         {
           id: 'm1',
@@ -288,11 +306,12 @@ describe('CatalogComponent', () => {
   it('botón "Limpiar" vacía CompareStore y oculta la sticky bar', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     flushItems(
-      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      http.expectOne((r) => r.url.endsWith('/api/v1/models')),
       [
         {
           id: 'm1',
@@ -341,11 +360,12 @@ describe('CatalogComponent', () => {
   it('muestra el nombre+año de la versión elegida junto al botón Comparar', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     flushItems(
-      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      http.expectOne((r) => r.url.endsWith('/api/v1/models')),
       [
         {
           id: 'm1',
@@ -377,11 +397,12 @@ describe('CatalogComponent', () => {
   it('deshabilita el botón Comparar cuando el modelo no tiene versiones', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     flushItems(
-      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      http.expectOne((r) => r.url.endsWith('/api/v1/models')),
       [
         {
           id: 'm2',
@@ -406,11 +427,12 @@ describe('CatalogComponent', () => {
   it('muestra mensaje vacío cuando no hay resultados', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     flushItems(
-      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      http.expectOne((r) => r.url.endsWith('/api/v1/models')),
       [],
     );
     await fixture.componentInstance.initialLoad;
@@ -424,11 +446,12 @@ describe('CatalogComponent', () => {
   it('botones "Ver comparación" tienen routerLink generado (no <a> sin href)', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     flushItems(
-      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      http.expectOne((r) => r.url.endsWith('/api/v1/models')),
       [
         {
           id: 'm1',
@@ -459,11 +482,12 @@ describe('CatalogComponent', () => {
   it('muestra chips de versión solo cuando hay > 1 versión', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     flushItems(
-      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      http.expectOne((r) => r.url.endsWith('/api/v1/models')),
       [
         {
           id: 'm1',
@@ -484,7 +508,7 @@ describe('CatalogComponent', () => {
 
     const loadPromise = fixture.componentInstance.updateFilter({});
     flushItems(
-      http.expectOne((r) => r.url.includes('/api/v1/models')),
+      http.expectOne((r) => r.url.endsWith('/api/v1/models')),
       [
         {
           id: 'm2',
@@ -514,18 +538,19 @@ describe('CatalogComponent', () => {
   it('aplica filtro transmission=AUTOMATIC y se ve en request', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     http
-      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .expectOne((r) => r.url.endsWith('/api/v1/models'))
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
     const p = fixture.componentInstance.updateFilter({ transmission: 'AUTOMATIC' });
     const req = http.expectOne(
       (r) =>
-        r.url.includes('/api/v1/models') &&
+        r.url.endsWith('/api/v1/models') &&
         r.params.get('transmission') === 'AUTOMATIC',
     );
     req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
@@ -535,18 +560,19 @@ describe('CatalogComponent', () => {
   it('cambia sort a minPrice y se ve en request', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     http
-      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .expectOne((r) => r.url.endsWith('/api/v1/models'))
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
     const p = fixture.componentInstance.updateFilter({ sort: 'minPrice' });
     const req = http.expectOne(
       (r) =>
-        r.url.includes('/api/v1/models') &&
+        r.url.endsWith('/api/v1/models') &&
         r.params.get('sort') === 'minPrice',
     );
     req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
@@ -556,24 +582,25 @@ describe('CatalogComponent', () => {
   it('clearFilters resetea sort y order a defaults', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     http
-      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .expectOne((r) => r.url.endsWith('/api/v1/models'))
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
     const p1 = fixture.componentInstance.updateFilter({ sort: 'minPrice', order: 'desc' });
     http
-      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .expectOne((r) => r.url.endsWith('/api/v1/models'))
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await p1;
 
     const p2 = fixture.componentInstance.clearFilters();
     const req = http.expectOne(
       (r) =>
-        r.url.includes('/api/v1/models') &&
+        r.url.endsWith('/api/v1/models') &&
         r.params.get('sort') === 'name' &&
         r.params.get('order') === 'asc',
     );
@@ -584,11 +611,12 @@ describe('CatalogComponent', () => {
   it('sort-select es un <mat-select> (no <select> nativo)', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     http
-      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .expectOne((r) => r.url.endsWith('/api/v1/models'))
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
     fixture.detectChanges();
@@ -603,10 +631,11 @@ describe('CatalogComponent', () => {
   it('clearFilters también resetea selectedVersions (I8)', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
-    flushItems(http.expectOne((r) => r.url.includes('/api/v1/models')), []);
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
     await fixture.componentInstance.initialLoad;
 
     // El usuario seleccionó una versión alternativa
@@ -617,7 +646,7 @@ describe('CatalogComponent', () => {
     expect(fixture.componentInstance.selectedVersions()).toEqual({ m1: 'v-alt' });
 
     const p = fixture.componentInstance.clearFilters();
-    flushItems(http.expectOne((r) => r.url.includes('/api/v1/models')), []);
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
     await p;
 
     expect(fixture.componentInstance.selectedVersions()).toEqual({});
@@ -626,11 +655,12 @@ describe('CatalogComponent', () => {
   it('sliders existen: filtro de año NO existe; precio tiene doble thumb; hay sliders de potencia, consumo ciudad y consumo carretera', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     http
-      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .expectOne((r) => r.url.endsWith('/api/v1/models'))
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
     fixture.detectChanges();
@@ -660,16 +690,17 @@ describe('CatalogComponent', () => {
   it('priceMin slider omite el query param cuando está en el bound mínimo', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     http
-      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .expectOne((r) => r.url.endsWith('/api/v1/models'))
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
     const p = fixture.componentInstance.onPriceMinChange(0);
-    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
     expect(req.request.params.has('priceMin')).toBe(false);
     req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await p;
@@ -678,18 +709,19 @@ describe('CatalogComponent', () => {
   it('priceMax slider omite el query param cuando está en el bound máximo', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     http
-      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .expectOne((r) => r.url.endsWith('/api/v1/models'))
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
     const p = fixture.componentInstance.onPriceMaxChange(
       fixture.componentInstance.priceBounds.max,
     );
-    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
     expect(req.request.params.has('priceMax')).toBe(false);
     req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await p;
@@ -698,22 +730,23 @@ describe('CatalogComponent', () => {
   it('price range slider envía priceMin/priceMax cuando están dentro del rango', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     http
-      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .expectOne((r) => r.url.endsWith('/api/v1/models'))
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
     const pMin = fixture.componentInstance.onPriceMinChange(5_000_000);
-    const req1 = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    const req1 = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
     expect(req1.request.params.get('priceMin')).toBe('5000000');
     req1.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await pMin;
 
     const pMax = fixture.componentInstance.onPriceMaxChange(20_000_000);
-    const req2 = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    const req2 = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
     expect(req2.request.params.get('priceMax')).toBe('20000000');
     req2.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await pMax;
@@ -722,16 +755,17 @@ describe('CatalogComponent', () => {
   it('powerMin slider envía powerMin solo cuando v > bound mínimo', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     http
-      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .expectOne((r) => r.url.endsWith('/api/v1/models'))
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
     const p = fixture.componentInstance.onPowerMinChange(150);
-    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
     expect(req.request.params.get('powerMin')).toBe('150');
     req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await p;
@@ -740,16 +774,17 @@ describe('CatalogComponent', () => {
   it('consumptionMax slider envía consumptionMax cuando v < bound máximo', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     http
-      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .expectOne((r) => r.url.endsWith('/api/v1/models'))
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
     const p = fixture.componentInstance.onConsumptionMaxChange(15);
-    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
     expect(req.request.params.get('consumptionMax')).toBe('15');
     req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await p;
@@ -758,16 +793,17 @@ describe('CatalogComponent', () => {
   it('consumptionHighwayMax slider envía consumptionHighwayMax cuando v < bound máximo', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     http
-      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .expectOne((r) => r.url.endsWith('/api/v1/models'))
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
     const p = fixture.componentInstance.onConsumptionHighwayMaxChange(18);
-    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
     expect(req.request.params.get('consumptionHighwayMax')).toBe('18');
     req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await p;
@@ -776,18 +812,19 @@ describe('CatalogComponent', () => {
   it('consumptionMax slider omite el query param cuando está en el bound máximo', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     http
-      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .expectOne((r) => r.url.endsWith('/api/v1/models'))
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
     const p = fixture.componentInstance.onConsumptionMaxChange(
       fixture.componentInstance.consumptionBounds.max,
     );
-    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
     expect(req.request.params.has('consumptionMax')).toBe(false);
     req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await p;
@@ -796,20 +833,59 @@ describe('CatalogComponent', () => {
   it('powerMin slider omite el query param cuando está en el bound mínimo', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
+    flushFacets();
     http
       .expectOne((r) => r.url.includes('/api/v1/brands'))
       .flush({ data: [] });
     http
-      .expectOne((r) => r.url.includes('/api/v1/models'))
+      .expectOne((r) => r.url.endsWith('/api/v1/models'))
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
     const p = fixture.componentInstance.onPowerMinChange(
       fixture.componentInstance.powerBounds.min,
     );
-    const req = http.expectOne((r) => r.url.includes('/api/v1/models'));
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
     expect(req.request.params.has('powerMin')).toBe(false);
     req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await p;
+  });
+
+  it('ofrece como filtro los segmentos creados desde el admin con "Otro"', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .match((r) => r.url.endsWith('/models/segments'))
+      .forEach((r) => r.flush({ data: [{ id: 'SUV' }, { id: 'MINI_VAN' }] }));
+    http
+      .match((r) => r.url.endsWith('/versions/transmissions') || r.url.endsWith('/versions/fuels'))
+      .forEach((r) => r.flush({ data: [] }));
+    http.expectOne((r) => r.url.includes('/api/v1/brands')).flush({ data: [] });
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await fixture.componentInstance.initialLoad;
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.segments()).toEqual([
+      { value: 'SUV', label: 'SUV' },
+      { value: 'MINI_VAN', label: 'Mini van' },
+    ]);
+    expect(fixture.nativeElement.textContent).toContain('Mini van');
+  });
+
+  it('mantiene los segmentos canónicos si la API de facetas falla', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    http
+      .match((r) => r.url.endsWith('/models/segments'))
+      .forEach((r) => r.flush({ data: null }, { status: 500, statusText: 'Server Error' }));
+    http
+      .match((r) => r.url.endsWith('/versions/transmissions') || r.url.endsWith('/versions/fuels'))
+      .forEach((r) => r.flush({ data: [] }));
+    http.expectOne((r) => r.url.includes('/api/v1/brands')).flush({ data: [] });
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await fixture.componentInstance.initialLoad;
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.segments().map((s) => s.value)).toContain('SEDAN');
   });
 });

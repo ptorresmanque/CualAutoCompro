@@ -5,6 +5,8 @@ import { modelsController } from "./models.controller.js";
 
 export const modelsRouter = Router();
 modelsRouter.get("/", modelsController.list);
+// Antes de `/:id`, si no Express matchea "segments" como id de modelo.
+modelsRouter.get("/segments", modelsController.listSegments);
 modelsRouter.get("/by-slug/:brandSlug/:modelSlug", modelsController.detailBySlug);
 modelsRouter.get("/:id", modelsController.detail);
 

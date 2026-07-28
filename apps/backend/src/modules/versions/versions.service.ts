@@ -9,6 +9,7 @@ import {
   type UpdateVersionInput,
 } from "./versions.dto.admin.js";
 import type { PaginationParams } from "../../shared/pagination.js";
+import { mergeEnumFacets, type EnumFacet } from "../../shared/enum-facets.js";
 
 type VersionRow = {
   id: string;
@@ -112,6 +113,36 @@ export class VersionsService {
         model: { select: { name: true } },
       },
     });
+  }
+
+  /**
+   * Combustibles y transmisiones disponibles: los canónicos más los dados de
+   * alta por la opción "Otro" del formulario de versiones, que hoy se guardan
+   * pero nunca vuelven a ofrecerse. Ver `mergeEnumFacets`.
+   */
+  async listFuels(): Promise<EnumFacet[]> {
+    const groups = await this.prisma.version.groupBy({
+      by: ["fuel"],
+      where: this.publishedWhere(),
+      _count: { _all: true },
+    });
+    return mergeEnumFacets(FUELS, new Map(groups.map((g) => [g.fuel, g._count._all])));
+  }
+
+  async listTransmissions(): Promise<EnumFacet[]> {
+    const groups = await this.prisma.version.groupBy({
+      by: ["transmission"],
+      where: this.publishedWhere(),
+      _count: { _all: true },
+    });
+    return mergeEnumFacets(
+      TRANSMISSIONS,
+      new Map(groups.map((g) => [g.transmission, g._count._all])),
+    );
+  }
+
+  private publishedWhere(): Prisma.VersionWhereInput {
+    return { deletedAt: null, model: { deletedAt: null, brand: { deletedAt: null } } };
   }
 
   async listPaged(q: string | undefined, params: PaginationParams) {

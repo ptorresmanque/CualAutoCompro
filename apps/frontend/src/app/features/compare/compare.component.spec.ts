@@ -1012,8 +1012,9 @@ describe('CompareComponent carrusel — estilo ficha', () => {
     expect(dataRows[0].querySelector('.ficha-price')?.textContent).toContain('14.000.000');
     expect(dataRows[0].querySelector('.ficha-unit')?.textContent).toContain('CLP');
     expect(dataRows[1].querySelector('.ficha-row-value')?.textContent).toContain('2026');
-    expect(dataRows[2].querySelector('.ficha-row-value')?.textContent).toContain('BENCINA');
-    expect(dataRows[3].querySelector('.ficha-row-value')?.textContent).toContain('AUTOMATIC');
+    // Etiquetas legibles, no el token crudo de la DB (BENCINA / AUTOMATIC).
+    expect(dataRows[2].querySelector('.ficha-row-value')?.textContent).toContain('Bencina');
+    expect(dataRows[3].querySelector('.ficha-row-value')?.textContent).toContain('Automática');
     // Botón rectangular con la misma clase que la ficha del catálogo
     const btn = item.querySelector('[data-testid="favorite-carousel-btn-m1"]');
     expect(btn).not.toBeNull();

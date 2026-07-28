@@ -26,7 +26,9 @@ export class ModelsAdminComponent {
     searchFields: (row) => [row.name, row.segment, row.brand?.name],
     sortAccessor: (row, key) =>
       key === 'brandName' ? (row.brand?.name ?? '') : row[key as 'name' | 'segment'],
-    invalidates: ['/admin/models/options'],
+    // `/models/segments` para que un segmento creado con "Otro" aparezca en el
+    // selector del siguiente alta sin recargar la página.
+    invalidates: ['/admin/models/options', '/models/segments'],
     stickyFields: STICKY_FIELDS.model,
     onValidationError: (fields) => this.editDialog()?.applyBackendErrors(fields),
   });

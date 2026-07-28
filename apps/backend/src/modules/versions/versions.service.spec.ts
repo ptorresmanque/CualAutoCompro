@@ -106,6 +106,41 @@ describe("VersionsService + extendEnum", () => {
     expect(created.transmission).toBe(newTrans);
   });
 
+  it("listFuels()/listTransmissions() devuelven los canónicos más los creados con 'Otro'", async () => {
+    const svc = new VersionsService(prisma);
+    const model = await prisma.model.findFirstOrThrow({ where: { name: "Yaris" } });
+    const newFuel = `TEST_FACET_FUEL_${Date.now()}`;
+    const newTrans = `TEST_FACET_TRANS_${Date.now()}`;
+    await svc.create({
+      modelId: model.id,
+      name: `Versión Facet ${Date.now()}`,
+      year: 2026,
+      priceClp: 1000000,
+      transmission: newTrans,
+      fuel: newFuel,
+      engineDisplacementCc: 0,
+      powerHp: 0,
+      torqueNm: 0,
+      consumptionCityKmL: 0,
+      consumptionHighwayKmL: 0,
+      lengthMm: 0,
+      widthMm: 0,
+      heightMm: 0,
+      weightKg: 0,
+      trunkLiters: 0,
+      hasRecall: false,
+    });
+
+    const fuels = await svc.listFuels();
+    expect(fuels.map((f) => f.id)).toContain(newFuel);
+    expect(fuels.map((f) => f.id)).toEqual(expect.arrayContaining(["BENCINA", "ELECTRIC"]));
+    expect(fuels.find((f) => f.id === newFuel)?.count).toBe(1);
+
+    const transmissions = await svc.listTransmissions();
+    expect(transmissions.map((t) => t.id)).toContain(newTrans);
+    expect(transmissions.map((t) => t.id)).toEqual(expect.arrayContaining(["MANUAL", "CVT"]));
+  });
+
   it("update() extiende el enum cuando se cambia fuel/transmission a valores nuevos", async () => {
     const svc = new VersionsService(prisma);
     const model = await prisma.model.findFirstOrThrow({ where: { name: "Yaris" } });

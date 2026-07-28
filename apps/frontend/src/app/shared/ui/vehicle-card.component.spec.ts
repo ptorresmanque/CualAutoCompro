@@ -90,6 +90,46 @@ describe('VehicleCardComponent', () => {
     expect(btn.getAttribute('data-selected-version')).toBe('v1');
   });
 
+  it('muestra combustible y transmisión como etiqueta legible, no como token', () => {
+    const f = TestBed.createComponent(TestHostComponent);
+    f.componentInstance.car.set(
+      carFixture({
+        versions: [
+          {
+            id: 'v1', modelId: 'm1', name: 'XLS', priceClp: 14_990_000, year: 2026,
+            fuel: 'BENCINA', transmission: 'AUTOMATIC',
+          },
+        ],
+      }),
+    );
+    f.detectChanges();
+
+    const html = f.nativeElement as HTMLElement;
+    expect(html.textContent).toContain('Bencina');
+    expect(html.textContent).toContain('Automática');
+    expect(html.textContent).not.toContain('BENCINA');
+    expect(html.textContent).not.toContain('AUTOMATIC');
+  });
+
+  it('humaniza los valores creados desde "Otro" en el admin', () => {
+    const f = TestBed.createComponent(TestHostComponent);
+    f.componentInstance.car.set(
+      carFixture({
+        versions: [
+          {
+            id: 'v1', modelId: 'm1', name: 'XLS', priceClp: 14_990_000, year: 2026,
+            fuel: 'GAS_LICUADO', transmission: 'DOBLE_EMBRAGUE',
+          },
+        ],
+      }),
+    );
+    f.detectChanges();
+
+    const html = f.nativeElement as HTMLElement;
+    expect(html.textContent).toContain('Gas licuado');
+    expect(html.textContent).toContain('Doble embrague');
+  });
+
   it('muestra el sello POPULAR cuando featured=true', () => {
     const f = TestBed.createComponent(TestHostComponent);
     f.componentInstance.car.set(carFixture());

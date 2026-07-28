@@ -23,6 +23,7 @@ import { CompareStore } from '../../core/compare-store.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { VehicleCardInput } from '../../shared/ui/vehicle-card.component';
 import { versionFieldLabel } from '../../core/types/version-labels';
+import { fuelLabel, segmentLabel, transmissionLabel } from '../../core/types/catalog-labels';
 
 interface ModelLite {
   name: string;
@@ -236,13 +237,13 @@ export class CompareComponent {
           kind: 'simple',
           key: 'transmission',
           label: 'Transmisión',
-          format: (v) => v.transmission ?? '—',
+          format: (v) => transmissionLabel(v.transmission) || '—',
         },
         {
           kind: 'simple',
           key: 'fuel',
           label: 'Combustible',
-          format: (v) => v.fuel ?? '—',
+          format: (v) => fuelLabel(v.fuel) || '—',
         },
         { kind: 'simple', key: 'traction', label: 'Tracción', format: (v) => versionFieldLabel(v.traction) },
         { kind: 'simple', key: 'engineType', label: 'Tipo motor', format: (v) => v.fuel === 'ELECTRIC' ? '—' : versionFieldLabel(v.engineType) },
@@ -496,8 +497,12 @@ export class CompareComponent {
     return new Intl.NumberFormat('es-CL').format(value);
   }
 
+  // Expuestos al template para los chips de la ficha (ver `.html`).
+  readonly fuelLabel = fuelLabel;
+  readonly transmissionLabel = transmissionLabel;
+
   favoriteSegmentLabel(m: VehicleCardInput): string {
-    return this.segmentToLabel(m.segment ?? '');
+    return segmentLabel(m.segment ?? '');
   }
 
   favoriteVersionSummary(
@@ -508,21 +513,9 @@ export class CompareComponent {
     return {
       name: version.name,
       year: version.year,
-      fuel: version.fuel ?? null,
-      transmission: version.transmission ?? null,
+      fuel: fuelLabel(version.fuel) || null,
+      transmission: transmissionLabel(version.transmission) || null,
     };
-  }
-
-  private segmentToLabel(s: string): string {
-    const map: Record<string, string> = {
-      SEDAN: 'Sedán',
-      SUV: 'SUV',
-      HATCHBACK: 'Hatchback',
-      PICKUP: 'Pickup',
-      CROSSOVER: 'Crossover',
-      COMMERCIAL: 'Comercial',
-    };
-    return map[s] ?? s;
   }
 
   fullName(v: CompareVersion): string {

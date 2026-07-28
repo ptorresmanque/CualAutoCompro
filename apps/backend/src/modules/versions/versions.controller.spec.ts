@@ -48,6 +48,23 @@ describe("GET /api/v1/versions", () => {
     expect(res.body.data.items).toHaveLength(1);
     expect(res.body.data.pageSize).toBe(1);
   });
+
+  // Rutas declaradas antes de `/:id`, si no Express las toma como id de versión.
+  it("GET /api/v1/versions/fuels lista los combustibles disponibles", async () => {
+    const res = await request(createApp()).get("/api/v1/versions/fuels");
+    expect(res.status).toBe(200);
+    expect(res.body.data.map((f: { id: string }) => f.id)).toEqual(
+      expect.arrayContaining(["BENCINA", "DIESEL", "HYBRID", "ELECTRIC"]),
+    );
+  });
+
+  it("GET /api/v1/versions/transmissions lista las transmisiones disponibles", async () => {
+    const res = await request(createApp()).get("/api/v1/versions/transmissions");
+    expect(res.status).toBe(200);
+    expect(res.body.data.map((t: { id: string }) => t.id)).toEqual(
+      expect.arrayContaining(["MANUAL", "AUTOMATIC", "CVT", "DCT"]),
+    );
+  });
 });
 
 describe("GET /api/v1/versions/:id", () => {

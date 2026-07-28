@@ -326,7 +326,7 @@
               <mat-icon class="text-engine text-base">
                 account_tree
               </mat-icon>
-              <span class="text-xs font-semibold">{{ v.transmission ?? '—' }}</span>
+              <span class="text-xs font-semibold">{{ transmissionLabel(v.transmission) || '—' }}</span>
             </div>
             <div
               class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
@@ -334,7 +334,7 @@
               <mat-icon class="text-engine text-base">
                 local_gas_station
               </mat-icon>
-              <span class="text-xs font-semibold">{{ v.fuel ?? '—' }}</span>
+              <span class="text-xs font-semibold">{{ fuelLabel(v.fuel) || '—' }}</span>
             </div>
             <div
               class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
