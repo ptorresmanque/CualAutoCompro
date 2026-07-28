@@ -67,18 +67,6 @@
   margin-bottom: 0.25rem;
 }
 
-.compare-card-brand-avatar {
-  display: grid;
-  place-items: center;
-  height: 1.5rem;
-  width: 1.5rem;
-  background: var(--engine-100);
-  color: var(--engine-dark);
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  font-weight: 700;
-}
-
 .compare-card-brand-text {
   font-family: var(--font-mono);
   font-size: 0.625rem;
@@ -154,15 +142,6 @@
   font-size: 0.75rem;
   color: var(--ink);
   border-radius: 0;
-}
-
-.compare-save-error-banner {
-  margin-bottom: 1.5rem;
-  border: 1px solid var(--engine-dark);
-  background: var(--engine-50);
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  color: var(--engine-dark);
 }
 
 .compare-swap-popover {
