@@ -76,7 +76,7 @@ interface Row {
       @if (loading()) {
         <p class="text-sm text-ink-muted">Calculando…</p>
       } @else if (error()) {
-        <p class="text-sm text-warn-dark">{{ error() }}</p>
+        <p class="text-sm text-danger-dark">{{ error() }}</p>
       } @else if (cost(); as c) {
         <p class="annual-cost-total">{{ fmt(c.totalClp) }} <span class="text-sm text-ink-muted">/ año</span></p>
         <ul class="annual-cost-rows">
@@ -106,10 +106,10 @@ interface Row {
   styles: [
     `
       .annual-cost-card {
-        border: 1px solid var(--c-border, #cbd5e1);
+        border: 1px solid var(--rule-strong);
         border-radius: 12px;
         padding: 1rem;
-        background: var(--c-surface, #fff);
+        background: var(--paper-cool);
       }
       .km-field { width: 110px; }
       .annual-cost-total {
@@ -126,11 +126,11 @@ interface Row {
         padding: 0.25rem 0;
         font-size: 0.875rem;
       }
-      .row-icon { font-size: 18px; height: 18px; width: 18px; color: var(--c-ink-muted, #475569); }
-      .row-hint { display: block; color: var(--c-ink-muted, #475569); font-size: 0.75rem; }
+      .row-icon { font-size: 18px; height: 18px; width: 18px; color: var(--ink-muted); }
+      .row-hint { display: block; color: var(--ink-muted); font-size: 0.75rem; }
       .annual-cost-meta {
         font-size: 0.75rem;
-        color: var(--c-ink-muted, #475569);
+        color: var(--ink-muted);
         margin-top: 0.5rem;
       }
     `,

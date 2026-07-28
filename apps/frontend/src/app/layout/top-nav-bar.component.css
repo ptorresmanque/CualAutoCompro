@@ -79,7 +79,7 @@
   flex-shrink: 0;
   color: var(--ink) !important;
   background: var(--paper-cool) !important;
-  border: 1px solid var(--rule) !important;
+  border: 1px solid var(--rule-strong) !important;
   box-shadow: none !important;
 }
 
@@ -161,7 +161,7 @@
   max-width: 100%;
   height: 40px;
   padding: 0 0.625rem;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--rule-strong);
   border-radius: 2px;
   background: var(--paper);
   color: var(--ink);
@@ -247,6 +247,8 @@
   display: none !important;
   --mdc-filled-button-container-color: var(--ink);
   --mdc-filled-button-label-text-color: var(--paper);
+  --mat-button-filled-container-color: var(--ink);
+  --mat-button-filled-label-text-color: var(--paper);
   border-radius: 0 !important;
   font-family: var(--font-sans) !important;
   font-size: 0.8125rem !important;

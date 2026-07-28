@@ -4,73 +4,96 @@
 @tailwind utilities;
 
 /* ============================================================
- * Tokens "Pizarra Digital"
+ * Tokens "Pizarra Digital 2.0"
  *
  * Neutros slate, fondo blanco frío casi-puro, separadores hairline
  * quietos, acento steel-blue reservado para CTAs y estados activos.
  * Máxima legibilidad por contraste. IBM Plex para texto, Archivo
  * Black para display. Material 3 recibe overrides completos para
  * que ningún azul del prebuilt theme se filtre.
+ *
+ * Todos los pares fg/bg de esta paleta están verificados en WCAG AA
+ * por `scripts/check-design.mjs` (regla `contrast-aa`). Si tocás un
+ * hex de acá, el linter te dice si rompiste un par.
  * ============================================================ */
 :root {
-  /* Paleta base — Pizarra Digital */
-  --paper:        #F7F9FC;
-  --paper-warm:   #EEF2F7;
+  /* ---- Neutros ----
+   * `graphite` es el token más delicado: pinta mono 11px (dt, labels,
+   * ficha-num) sobre `paper-warm`, el peor fondo. Cualquier valor más
+   * claro que #56657A cae bajo 4.5:1 ahí. */
+  --paper:        #F5F8FC;
+  --paper-warm:   #E9EFF6;
   --paper-cool:   #FFFFFF;
-  --ink:          #0F172A;
-  --ink-muted:    #475569;
-  --graphite:     #64748B;
-  --rule:         #E2E8F0;
-  --engine:       #1E40AF;
+  --ink:          #0B1220;
+  --ink-muted:    #3D4A5C;
+  --graphite:     #56657A;
+  --rule:         #D8E1EC;   /* hairline decorativo */
+  --rule-strong:  #7A8CA5;   /* bordes de control — 3:1 (WCAG 1.4.11) */
+
+  /* ---- Acento steel-blue ----
+   * `engine-dark` DEBE ser más oscuro que `engine`: es el hover. */
+  --engine:       #1D4ED8;
+  --engine-dark:  #1E3A8A;
   --engine-50:    #EFF6FF;
-  --engine-dark:  #1D4ED8;
-  --blueprint:    #1E40AF;
-  --blueprint-light: #DBEAFE;
+  --engine-100:   #DBEAFE;
+  --engine-200:   #BFDBFE;
+  --blueprint:       var(--engine);
+  --blueprint-light: var(--engine-100);
+
+  /* ---- Estados semánticos ----
+   * caution = aviso / nota legal. danger = error. success = confirmación.
+   * No los intercambies: ver "Estados semánticos" en AGENTS.md. */
   --caution:      #B45309;
   --caution-light:#FEF3C7;
   --caution-dark: #78350F;
+  --danger:       #B91C1C;
+  --danger-light: #FEE2E2;
+  --danger-dark:  #7F1D1D;
+  --success:      #15803D;
+  --success-light:#DCFCE7;
+  --success-dark: #14532D;
 
   /* ---- Override M3 — todos los tokens visibles apuntan al nuevo sistema ---- */
 
   /* Primary (steel-blue) */
-  --mat-sys-primary:                   #1E40AF;
-  --mat-sys-surface-tint:              #1D4ED8;
-  --mat-sys-on-primary:                #F7F9FC;
-  --mat-sys-on-primary-container:      #1E3A8A;
-  --mat-sys-primary-container:         #DBEAFE;
-  --mat-sys-secondary-container:       #DBEAFE;
-  --mat-sys-tertiary-container:        #DBEAFE;
-  --mat-sys-primary-fixed:             #DBEAFE;
-  --mat-sys-primary-fixed-dim:         #93C5FD;
+  --mat-sys-primary:                   var(--engine);
+  --mat-sys-surface-tint:              var(--engine);
+  --mat-sys-on-primary:                var(--paper);
+  --mat-sys-on-primary-container:      var(--engine-dark);
+  --mat-sys-primary-container:         var(--engine-100);
+  --mat-sys-secondary-container:       var(--engine-100);
+  --mat-sys-tertiary-container:        var(--engine-100);
+  --mat-sys-primary-fixed:             var(--engine-100);
+  --mat-sys-primary-fixed-dim:         var(--engine-200);
 
   /* Surfaces (papel) */
-  --mat-sys-background:                #F7F9FC;
-  --mat-sys-surface:                   #FFFFFF;
-  --mat-sys-surface-container-lowest:  #FFFFFF;
-  --mat-sys-surface-container-low:     #F7F9FC;
-  --mat-sys-surface-container:         #EEF2F7;
-  --mat-sys-surface-container-high:    #E2E8F0;
-  --mat-sys-surface-container-highest: #CBD5E1;
-  --mat-sys-surface-dim:               #EEF2F7;
-  --mat-sys-surface-bright:            #FFFFFF;
+  --mat-sys-background:                var(--paper);
+  --mat-sys-surface:                   var(--paper-cool);
+  --mat-sys-surface-container-lowest:  var(--paper-cool);
+  --mat-sys-surface-container-low:     var(--paper);
+  --mat-sys-surface-container:         var(--paper-warm);
+  --mat-sys-surface-container-high:    var(--rule);
+  --mat-sys-surface-container-highest: #C3D0E0;
+  --mat-sys-surface-dim:               var(--paper-warm);
+  --mat-sys-surface-bright:            var(--paper-cool);
 
   /* Texto */
-  --mat-sys-on-surface:                #0F172A;
-  --mat-sys-on-surface-variant:        #475569;
-  --mat-sys-on-background:             #0F172A;
+  --mat-sys-on-surface:                var(--ink);
+  --mat-sys-on-surface-variant:        var(--ink-muted);
+  --mat-sys-on-background:             var(--ink);
 
   /* Outline / divider (hairlines) */
-  --mat-sys-outline:                   #64748B;
-  --mat-sys-outline-variant:           #E2E8F0;
+  --mat-sys-outline:                   var(--graphite);
+  --mat-sys-outline-variant:           var(--rule);
 
   /* Error (destructivo: rojo distinguible del acento steel-blue) */
-  --mat-sys-error:                     #B91C1C;
-  --mat-sys-on-error:                  #F7F9FC;
-  --mat-sys-error-container:           #FEE2E2;
-  --mat-sys-on-error-container:        #7F1D1D;
+  --mat-sys-error:                     var(--danger);
+  --mat-sys-on-error:                  var(--paper);
+  --mat-sys-error-container:           var(--danger-light);
+  --mat-sys-on-error-container:        var(--danger-dark);
 
   /* Inversos */
-  --mat-sys-inverse-primary:           #93C5FD;
+  --mat-sys-inverse-primary:           var(--engine-200);
 
   /* ---- Tokens de botón M3 → ink + paper ---- */
   --mdc-outlined-button-label-text-color:        var(--ink);
@@ -80,26 +103,29 @@
 
   --mdc-filled-button-container-color:           var(--ink);
   --mdc-filled-button-label-text-color:          var(--paper);
+  --mat-button-filled-container-color:           var(--ink);
+  --mat-button-filled-label-text-color:          var(--paper);
   --mdc-text-button-label-text-color:            var(--ink);
 
-  /* ---- Tokens de la app (compatibilidad) ---- */
-  --color-engine:        #1E40AF;
-  --color-engine-dark:   #1D4ED8;
-  --color-engine-light:  #DBEAFE;
-  --color-on-primary:    #F7F9FC;
-  --color-on-primary-container: #1E3A8A;
-  --color-bg:            #F7F9FC;
-  --color-surface:       #FFFFFF;
-  --color-surface-container:       #EEF2F7;
-  --color-surface-container-low:   #F7F9FC;
-  --color-surface-container-high:  #E2E8F0;
-  --color-fg:            #0F172A;
-  --color-muted:         #475569;
-  --color-subtle:        #64748B;
-  --color-accent:        #1E40AF;
-  --color-warn-bg:       #FEF3C7;
-  --color-warn-fg:       #78350F;
-  --color-border:        #E2E8F0;
+  /* ---- Tokens de la app (compatibilidad) ----
+   * Alias, no duplicados: la fuente de verdad es la paleta base de arriba. */
+  --color-engine:        var(--engine);
+  --color-engine-dark:   var(--engine-dark);
+  --color-engine-light:  var(--engine-100);
+  --color-on-primary:    var(--paper);
+  --color-on-primary-container: var(--engine-dark);
+  --color-bg:            var(--paper);
+  --color-surface:       var(--paper-cool);
+  --color-surface-container:       var(--paper-warm);
+  --color-surface-container-low:   var(--paper);
+  --color-surface-container-high:  var(--rule);
+  --color-fg:            var(--ink);
+  --color-muted:         var(--ink-muted);
+  --color-subtle:        var(--graphite);
+  --color-accent:        var(--engine);
+  --color-warn-bg:       var(--caution-light);
+  --color-warn-fg:       var(--caution-dark);
+  --color-border:        var(--rule);
   --radius:              2px;
 
   /* ---- Tipografía ---- */
@@ -201,9 +227,9 @@ h1, .display {
   color: var(--mat-sys-on-error-container);
 }
 .mat-mdc-snack-bar-container.snack-success .mdc-snackbar__surface {
-  background-color: var(--paper-cool);
-  color: var(--ink);
-  border: 1px solid var(--rule);
+  background-color: var(--success-light);
+  color: var(--success-dark);
+  border: 1px solid var(--success);
 }
 .mat-mdc-snack-bar-container.snack-warn .mat-mdc-snack-bar-action,
 .mat-mdc-snack-bar-container.snack-error .mat-mdc-snack-bar-action,
@@ -244,11 +270,13 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
 }
 
 .mat-mdc-flat-button.action-danger {
-  --mdc-filled-button-container-color: var(--mat-sys-error);
+  --mdc-filled-button-container-color: var(--danger);
   --mdc-filled-button-label-text-color: var(--paper);
   --mdc-filled-button-icon-color: var(--paper);
+  --mat-button-filled-container-color: var(--danger);
+  --mat-button-filled-label-text-color: var(--paper);
   color: var(--paper);
-  background-color: var(--mat-sys-error);
+  background-color: var(--danger);
 }
 
 /* ============================================================
@@ -257,14 +285,27 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
  * Los componentes consumen muchos tokens M3 que el prebuilt theme
  * (azure-blue) define. Estos overrides fuerzan coherencia.
  * ============================================================ */
+/* Material lee `--mat-button-filled-*`; `--mdc-filled-button-*` quedó
+ * obsoleto y por eso el CTA salía azul (var(--mat-sys-primary)) pese al
+ * override, contra la jerarquía de AGENTS.md §3. Se setean ambos: los
+ * custom properties del elemento ganan sin necesidad de !important. */
 .mat-mdc-unelevated-button.mat-primary {
   --mdc-filled-button-container-color: var(--ink);
   --mdc-filled-button-label-text-color: var(--paper);
+  --mat-button-filled-container-color: var(--ink);
+  --mat-button-filled-label-text-color: var(--paper);
+  transition: background-color 160ms ease;
+}
+
+.mat-mdc-unelevated-button.mat-primary:hover:not(:disabled) {
+  --mat-button-filled-container-color: var(--engine);
 }
 
 .mat-mdc-unelevated-button.mat-primary:disabled {
   --mdc-filled-button-container-color: var(--rule);
   --mdc-filled-button-label-text-color: var(--ink-muted);
+  --mat-button-filled-container-color: var(--rule);
+  --mat-button-filled-label-text-color: var(--ink-muted);
 }
 
 .mat-mdc-outlined-button.mat-primary,
@@ -283,7 +324,8 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
 
 /* Inputs y form-fields: hairline underline */
 .mat-mdc-form-field {
-  --mdc-outlined-text-field-outline-color: var(--rule);
+  /* --rule (1.3:1) no alcanza para un borde de control: WCAG 1.4.11 pide 3:1 */
+  --mdc-outlined-text-field-outline-color: var(--rule-strong);
   --mdc-outlined-text-field-focus-outline-color: var(--ink);
   --mdc-outlined-text-field-label-text-color: var(--ink-muted);
   --mdc-outlined-text-field-hover-label-text-color: var(--ink);
@@ -326,9 +368,9 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   border-radius: 2px !important;
 }
 
-/* Selection / highlights azul residual del prebuilt → paper */
+/* Selection — el ámbar quemado sobre ink daba 1.9:1 */
 ::selection {
-  background: var(--caution);
+  background: var(--engine-100);
   color: var(--ink);
 }
 
@@ -534,6 +576,8 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
 .filters-apply.mat-mdc-unelevated-button {
   --mdc-filled-button-container-color: var(--ink);
   --mdc-filled-button-label-text-color: var(--paper);
+  --mat-button-filled-container-color: var(--ink);
+  --mat-button-filled-label-text-color: var(--paper);
   border-radius: 0 !important;
   font-family: var(--font-sans) !important;
   font-size: 0.8125rem !important;
@@ -548,7 +592,7 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   place-items: center;
   width: 2rem;
   height: 2rem;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--rule-strong);
   border-left-width: 0;
   background: var(--paper-cool);
   cursor: pointer;
@@ -581,7 +625,7 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   border-radius: 2px;
   background: var(--ink);
   color: var(--paper);
-  box-shadow: 0 6px 0 -2px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 6px 0 -2px rgba(11, 18, 32, 0.18);
   border: 1px solid var(--ink);
 }
 
@@ -713,7 +757,7 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
 
 .ficha:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 0 -2px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 6px 0 -2px rgba(11, 18, 32, 0.12);
 }
 
 .ficha-added {
@@ -804,7 +848,7 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   place-items: center;
   border-radius: 2px;
   background: rgba(255, 255, 255, 0.92);
-  border: 1px solid var(--rule);
+  border: 1px solid var(--rule-strong);
   color: var(--ink-muted);
   z-index: 1;
 }
@@ -941,7 +985,7 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--rule-strong);
   padding: 0.25rem 0.5rem;
   background: var(--paper-cool);
   color: var(--ink-muted);
@@ -1033,7 +1077,7 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   padding: 0.5rem;
   background: var(--paper-cool);
   border: 1px solid var(--ink);
-  box-shadow: 0 6px 0 -2px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 6px 0 -2px rgba(11, 18, 32, 0.18);
   border-radius: 0;
   max-width: calc(100vw - 1.5rem);
 }

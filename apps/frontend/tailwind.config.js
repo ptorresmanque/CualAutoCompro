@@ -1,7 +1,7 @@
 /**
  * cualautocompro — design tokens.
  *
- * Sistema "Pizarra Digital" — neutros slate, fondo blanco frío casi-puro,
+ * Sistema "Pizarra Digital 2.0" — neutros slate, fondo blanco frío casi-puro,
  * acento steel-blue reservado para CTAs y estados activos. Máxima
  * legibilidad por contraste, sin el creep cálido de paletas anteriores.
  * IBM Plex (Sans + Mono) para texto, Archivo Black para display.
@@ -9,6 +9,10 @@
  * Los nombres de las escalas (`engine-*`, `paper-*`, `ink-*`) se preservaron
  * para que un find/replace o un componente suelto siga funcionando con la
  * nueva paleta — solo cambian los hex.
+ *
+ * ESPEJO de la paleta base de `src/styles.css`. Si cambiás un hex acá,
+ * cambialo allá: `scripts/check-design.mjs` valida los contrastes contra
+ * el `:root` de styles.css, no contra este archivo.
  */
 
 /** @type {import('tailwindcss').Config} */
@@ -18,19 +22,23 @@ module.exports = {
     extend: {
       colors: {
         paper: {
-          DEFAULT: '#F7F9FC',
-          warm:    '#EEF2F7',
+          DEFAULT: '#F5F8FC',
+          warm:    '#E9EFF6',
           cool:    '#FFFFFF',
         },
         ink: {
-          DEFAULT: '#0F172A',
-          muted:   '#475569',
-          subtle:  '#64748B',
+          DEFAULT: '#0B1220',
+          muted:   '#3D4A5C',
+          subtle:  '#56657A',
         },
-        graphite: '#64748B',
-        rule:     '#E2E8F0',
+        graphite: '#56657A',
+        rule: {
+          DEFAULT: '#D8E1EC',
+          strong:  '#7A8CA5',
+        },
         engine: {
-          DEFAULT: '#1E40AF',
+          DEFAULT: '#1D4ED8',
+          dark: '#1E3A8A',
           50:  '#EFF6FF',
           100: '#DBEAFE',
           200: '#BFDBFE',
@@ -43,7 +51,7 @@ module.exports = {
           900: '#1E3A8A',
         },
         blueprint: {
-          DEFAULT: '#1E40AF',
+          DEFAULT: '#1D4ED8',
           light:   '#DBEAFE',
         },
         caution: {
@@ -51,21 +59,34 @@ module.exports = {
           light:   '#FEF3C7',
           dark:    '#78350F',
         },
+        // Alias histórico de `caution` — se mantiene para los avisos legítimos
+        // (disclaimer, nota legal). Los errores usan `danger`.
         warn: {
           light: '#FEF3C7',
           DEFAULT: '#B45309',
           dark: '#78350F',
         },
+        danger: {
+          DEFAULT: '#B91C1C',
+          light:   '#FEE2E2',
+          dark:    '#7F1D1D',
+        },
+        success: {
+          DEFAULT: '#15803D',
+          light:   '#DCFCE7',
+          dark:    '#14532D',
+        },
         border: {
-          DEFAULT: '#E2E8F0',
-          strong: '#0F172A',
+          DEFAULT: '#D8E1EC',
+          control: '#7A8CA5',
+          strong:  '#0B1220',
         },
         surface: {
           DEFAULT: '#FFFFFF',
-          muted:   '#F7F9FC',
-          container:   '#EEF2F7',
-          'container-low': '#F7F9FC',
-          'container-high': '#E2E8F0',
+          muted:   '#F5F8FC',
+          container:   '#E9EFF6',
+          'container-low': '#F5F8FC',
+          'container-high': '#D8E1EC',
         },
       },
       fontFamily: {
@@ -87,11 +108,11 @@ module.exports = {
         stamp: '0.08em',
       },
       boxShadow: {
-        stamp:   '0 1px 0 rgba(15, 23, 42, 0.18), 0 0 0 3px rgba(30, 64, 175, 0.10)',
-        'card-lift': '0 2px 0 rgba(15, 23, 42, 0.08)',
-        e1: '0 1px 0 rgba(15, 23, 42, 0.08)',
-        e2: '0 2px 0 rgba(15, 23, 42, 0.12)',
-        e3: '0 8px 24px rgba(15, 23, 42, 0.10)',
+        stamp:   '0 1px 0 rgba(11, 18, 32, 0.18), 0 0 0 3px rgba(29, 78, 216, 0.10)',
+        'card-lift': '0 2px 0 rgba(11, 18, 32, 0.08)',
+        e1: '0 1px 0 rgba(11, 18, 32, 0.08)',
+        e2: '0 2px 0 rgba(11, 18, 32, 0.12)',
+        e3: '0 8px 24px rgba(11, 18, 32, 0.10)',
       },
       keyframes: {
         stampIn: {

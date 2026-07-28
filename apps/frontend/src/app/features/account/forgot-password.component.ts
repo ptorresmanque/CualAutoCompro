@@ -49,7 +49,7 @@ import { ApiService } from '../../core/api.service';
             />
           </mat-form-field>
           @if (error(); as err) {
-            <p class="text-sm text-warn-dark">{{ err }}</p>
+            <p class="text-sm text-danger-dark">{{ err }}</p>
           }
           <button
             mat-flat-button

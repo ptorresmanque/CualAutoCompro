@@ -169,10 +169,6 @@
   border-top: 1px solid var(--rule);
 }
 
-.spec-row.is-zebra {
-  background: var(--engine-50);
-}
-
 .spec-row-label {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
@@ -191,18 +187,6 @@
   background: var(--paper-cool);
   border: 1px solid var(--ink);
   padding: 1.5rem;
-}
-
-.equipment-pill {
-  background: var(--engine-50);
-  color: var(--engine-dark);
-  padding: 0.25rem 0.75rem;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 600;
-  border: 1px solid var(--engine-200);
 }
 
 .versions-sidebar {
@@ -262,18 +246,6 @@
   font-size: 1.5rem;
   color: var(--ink);
   letter-spacing: -0.01em;
-}
-
-.version-card-transmission {
-  flex-shrink: 0;
-  background: var(--engine-100);
-  color: var(--engine-dark);
-  padding: 0.125rem 0.5rem;
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
 }
 
 .detail-footer {
