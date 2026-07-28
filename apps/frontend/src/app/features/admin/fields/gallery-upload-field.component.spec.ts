@@ -111,6 +111,33 @@ describe('GalleryUploadFieldComponent', () => {
     expect(ctrl.value).toEqual(['/uploads/existing.png']);
     const errEl = fixture.nativeElement.querySelector('[data-testid="gallery-error"]');
     expect(errEl).toBeTruthy();
-    expect(errEl?.textContent).toContain('Http failure');
+    // Sin sobre del backend (caída de red / 5xx) mostramos el mensaje genérico,
+    // no el "Http failure response for..." interno de HttpClient.
+    expect(errEl?.textContent).toContain('No se pudo subir la imagen');
+  });
+
+  it('muestra el mensaje del backend cuando el upload devuelve 400', async () => {
+    const { fixture, ctrl, http } = setup(['/uploads/existing.png']);
+    const file = new File([new Uint8Array([1])], 'raro.png', { type: 'image/png' });
+    const inputEl: HTMLInputElement = fixture.nativeElement.querySelector('input[type="file"]');
+    Object.defineProperty(inputEl, 'files', { value: [file] });
+    inputEl.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const req = http.expectOne((r) => r.url.includes('/api/v1/admin/uploads'));
+    req.flush(
+      {
+        data: null,
+        error: { code: 'BAD_REQUEST', message: 'El archivo no es una imagen válida' },
+      },
+      { status: 400, statusText: 'Bad Request' },
+    );
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    expect(ctrl.value).toEqual(['/uploads/existing.png']);
+    const errEl = fixture.nativeElement.querySelector('[data-testid="gallery-error"]');
+    expect(errEl?.textContent).toContain('El archivo no es una imagen válida');
   });
 });

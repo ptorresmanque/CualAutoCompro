@@ -3,6 +3,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../../core/api.service';
+import { toApiCallError } from '../../../core/api-error';
 import { toAbsoluteUploadUrl } from '../../../core/upload-url';
 
 @Component({
@@ -45,7 +46,11 @@ export class GalleryUploadFieldComponent {
       this.control().setValue(next);
       this.control().markAsDirty();
     } catch (e) {
-      this.error.set((e as Error).message);
+      // Ver nota en image-upload-field: el mensaje de `HttpErrorResponse` es
+      // genérico y oculta el motivo real del 400 que manda el backend.
+      this.error.set(
+        toApiCallError(e)?.message ?? 'No se pudo subir la imagen. Intenta nuevamente.',
+      );
     } finally {
       this.uploading.set(false);
       input.value = '';

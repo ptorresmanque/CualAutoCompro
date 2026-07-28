@@ -3,6 +3,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../../core/api.service';
+import { toApiCallError } from '../../../core/api-error';
 import { toAbsoluteUploadUrl } from '../../../core/upload-url';
 
 @Component({
@@ -33,7 +34,12 @@ export class ImageUploadFieldComponent {
       const res = await this.api.upload(file);
       this.control().setValue(res.data.url);
     } catch (e) {
-      this.error.set((e as Error).message);
+      // `HttpClient` lanza un `HttpErrorResponse` cuyo `.message` es genérico
+      // ("Http failure response ... 400 Bad Request") y esconde el motivo real
+      // que manda el backend (mime inválido, archivo corrupto, etc.).
+      this.error.set(
+        toApiCallError(e)?.message ?? 'No se pudo subir la imagen. Intenta nuevamente.',
+      );
     } finally {
       this.uploading.set(false);
       input.value = '';
