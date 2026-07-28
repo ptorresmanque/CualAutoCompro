@@ -38,13 +38,21 @@ describe('BrandsAdminComponent', () => {
     const fixture = TestBed.createComponent(BrandsAdminComponent);
     fixture.detectChanges();
     const http = TestBed.inject(HttpTestingController);
+    // match() consume los requests: hay que vaciar estos mismos, no volver a
+    // buscarlos (por eso este test fallaba con items() vacío).
     const reqs = http.match((r) => r.url.endsWith('/admin/brands'));
     expect(reqs.length).toBeGreaterThan(0);
-    flushPaged(http, [{ id: 'b1', name: 'Toyota', logoUrl: null }]);
+    for (const r of reqs) {
+      r.flush({
+        data: [{ id: 'b1', name: 'Toyota', logoUrl: null }],
+        pagination: { page: 1, pageSize: 25, total: 1, totalPages: 1 },
+        error: null,
+      });
+    }
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
-    expect(fixture.componentInstance.items().length).toBe(1);
-    expect(fixture.componentInstance.pagination().total).toBe(1);
+    expect(fixture.componentInstance.crud.items().length).toBe(1);
+    expect(fixture.componentInstance.crud.pagination().total).toBe(1);
   });
 
   it('openCreate muestra dialog', async () => {
@@ -57,8 +65,8 @@ describe('BrandsAdminComponent', () => {
     const http = TestBed.inject(HttpTestingController);
     flushPaged(http, []);
     await fixture.whenStable();
-    fixture.componentInstance.openCreate();
-    expect(fixture.componentInstance.dialogEntity()).toBeNull();
+    fixture.componentInstance.crud.openCreate();
+    expect(fixture.componentInstance.crud.dialogEntity()).toBeNull();
   });
 
   it('ordena por nombre asc/desc', async () => {
@@ -77,17 +85,17 @@ describe('BrandsAdminComponent', () => {
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
     const cmp = fixture.componentInstance;
-    expect(cmp.sortKey()).toBeNull();
-    expect(cmp.displayed().map((b) => b.name)).toEqual(['Zoe', 'Audi', 'Mazda']);
+    expect(cmp.crud.sortKey()).toBeNull();
+    expect(cmp.crud.displayed().map((b) => b.name)).toEqual(['Zoe', 'Audi', 'Mazda']);
 
-    cmp.toggleSort('name');
-    expect(cmp.sortKey()).toBe('name');
-    expect(cmp.sortDir()).toBe('asc');
-    expect(cmp.displayed().map((b) => b.name)).toEqual(['Audi', 'Mazda', 'Zoe']);
+    cmp.crud.toggleSort('name');
+    expect(cmp.crud.sortKey()).toBe('name');
+    expect(cmp.crud.sortDir()).toBe('asc');
+    expect(cmp.crud.displayed().map((b) => b.name)).toEqual(['Audi', 'Mazda', 'Zoe']);
 
-    cmp.toggleSort('name');
-    expect(cmp.sortDir()).toBe('desc');
-    expect(cmp.displayed().map((b) => b.name)).toEqual(['Zoe', 'Mazda', 'Audi']);
+    cmp.crud.toggleSort('name');
+    expect(cmp.crud.sortDir()).toBe('desc');
+    expect(cmp.crud.displayed().map((b) => b.name)).toEqual(['Zoe', 'Mazda', 'Audi']);
   });
 
   it('al editar marca, PATCH envía dealerIds al backend', async () => {
@@ -103,9 +111,9 @@ describe('BrandsAdminComponent', () => {
     await new Promise((r) => setTimeout(r, 0));
 
     const cmp = fixture.componentInstance;
-    cmp.openEdit({ id: 'b1', name: 'Toyota', logoUrl: null });
+    cmp.crud.openEdit({ id: 'b1', name: 'Toyota', logoUrl: null });
 
-    void cmp.onSave({
+    void cmp.crud.save({
       name: 'Toyota Updated',
       logoUrl: null,
       dealerIds: ['d1', 'd2'],
@@ -147,9 +155,9 @@ describe('BrandsAdminComponent', () => {
       logoUrl: null,
       dealers: [{ dealer: { id: 'd1' } }, { dealer: { id: 'd2' } }],
     };
-    cmp.openEdit(row);
+    cmp.crud.openEdit(row);
 
-    const dialogEntity = cmp.dialogEntity() as BrandRow | null;
+    const dialogEntity = cmp.crud.dialogEntity() as BrandRow | null;
     expect(dialogEntity).not.toBeNull();
     expect(dialogEntity!.dealerIds).toEqual(['d1', 'd2']);
   });
@@ -167,9 +175,9 @@ describe('BrandsAdminComponent', () => {
     await new Promise((r) => setTimeout(r, 0));
 
     const cmp = fixture.componentInstance;
-    cmp.openCreate();
+    cmp.crud.openCreate();
 
-    void cmp.onSave({ name: 'NuevaMarca', logoUrl: null, dealerIds: ['d1'] });
+    void cmp.crud.save({ name: 'NuevaMarca', logoUrl: null, dealerIds: ['d1'] });
 
     const postReqs = http.match((r) => r.method === 'POST' && r.url.endsWith('/admin/brands'));
     expect(postReqs.length).toBe(1);
@@ -200,8 +208,8 @@ describe('BrandsAdminComponent', () => {
     const feedback = TestBed.inject(AdminFeedbackService);
     const successSpy = vi.spyOn(feedback, 'success');
 
-    fixture.componentInstance.dialogEntity.set(null);
-    void fixture.componentInstance.onSave({
+    fixture.componentInstance.crud.openCreate();
+    void fixture.componentInstance.crud.save({
       name: 'Toyota',
       logoUrl: null,
       dealerIds: ['d1'],
@@ -231,7 +239,7 @@ describe('BrandsAdminComponent', () => {
     const feedback = TestBed.inject(AdminFeedbackService);
     const successSpy = vi.spyOn(feedback, 'success');
 
-    void fixture.componentInstance.confirmDelete({
+    void fixture.componentInstance.crud.confirmDelete({
       id: 'b1',
       name: 'Toyota',
       logoUrl: null,
@@ -261,7 +269,7 @@ describe('BrandsAdminComponent', () => {
     flushPaged(http, []);
     await fixture.whenStable();
 
-    await fixture.componentInstance.confirmDelete({
+    await fixture.componentInstance.crud.confirmDelete({
       id: 'b1',
       name: 'Toyota',
       logoUrl: null,
@@ -282,7 +290,7 @@ describe('BrandsAdminComponent', () => {
     flushPaged(http, [{ id: 'b1', name: 'Toyota', logoUrl: null }]);
     await fixture.whenStable();
 
-    fixture.componentInstance.onPageChange(2);
+    fixture.componentInstance.crud.onPageChange(2);
     await fixture.whenStable();
     const req = http.expectOne(
       (r) => r.url.endsWith('/admin/brands') && r.params.get('page') === '2',
@@ -293,7 +301,10 @@ describe('BrandsAdminComponent', () => {
       error: null,
     });
     await fixture.whenStable();
-    expect(fixture.componentInstance.pagination().page).toBe(2);
-    expect(fixture.componentInstance.pagination().total).toBe(50);
+    // load() vuelca la paginación en la continuación del await: hace falta
+    // ceder un macrotask antes de leerla.
+    await new Promise((r) => setTimeout(r, 0));
+    expect(fixture.componentInstance.crud.pagination().page).toBe(2);
+    expect(fixture.componentInstance.crud.pagination().total).toBe(50);
   });
 });

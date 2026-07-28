@@ -31,9 +31,9 @@ describe('DealersAdminComponent', () => {
     flushPaged(http, [{ id: 'd1', name: 'AutoMax', url: 'https://automax.example', logoUrl: null }]);
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
-    expect(fixture.componentInstance.items().length).toBe(1);
-    expect(fixture.componentInstance.items()[0].url).toBe('https://automax.example');
-    expect(fixture.componentInstance.pagination().total).toBe(1);
+    expect(fixture.componentInstance.crud.items().length).toBe(1);
+    expect(fixture.componentInstance.crud.items()[0].url).toBe('https://automax.example');
+    expect(fixture.componentInstance.crud.pagination().total).toBe(1);
   });
 
   it('openCreate muestra dialog', async () => {
@@ -46,7 +46,7 @@ describe('DealersAdminComponent', () => {
     const http = TestBed.inject(HttpTestingController);
     flushPaged(http, []);
     await fixture.whenStable();
-    fixture.componentInstance.openCreate();
-    expect(fixture.componentInstance.dialogEntity()).toBeNull();
+    fixture.componentInstance.crud.openCreate();
+    expect(fixture.componentInstance.crud.dialogEntity()).toBeNull();
   });
 });

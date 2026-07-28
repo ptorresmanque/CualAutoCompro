@@ -93,6 +93,27 @@ export class VersionsService {
     });
   }
 
+  /**
+   * Versiones para alimentar selectores del admin. A diferencia de `listAll`,
+   * no trae `equipmentItems` ni `colorItems`: el selector solo necesita
+   * id + etiqueta, y esas relaciones hacen el payload varias veces más pesado.
+   */
+  async listOptions() {
+    return this.prisma.version.findMany({
+      where: {
+        deletedAt: null,
+        model: { deletedAt: null, brand: { deletedAt: null } },
+      },
+      orderBy: [{ model: { name: "asc" } }, { name: "asc" }, { year: "desc" }],
+      select: {
+        id: true,
+        name: true,
+        year: true,
+        model: { select: { name: true } },
+      },
+    });
+  }
+
   async listPaged(q: string | undefined, params: PaginationParams) {
     const where: Prisma.VersionWhereInput = {
       deletedAt: null,

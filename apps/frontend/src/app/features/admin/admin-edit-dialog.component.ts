@@ -24,8 +24,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -36,7 +35,7 @@ import { MatError } from '@angular/material/form-field';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { ENV } from '../../core/env';
+import { AdminOptionsCacheService } from '../../core/admin-options-cache.service';
 import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
 import { applyBackendErrors, type BackendFieldError } from '../../shared/ui/admin-form-errors';
 import { entitySchemaByKey, FIELD_METAS, isFieldRequired, type EntityKey, type FieldMeta } from './entity-schemas';
@@ -55,6 +54,8 @@ interface Section {
   id: string;
   label: string;
   fields: FieldMeta[];
+  /** True cuando todos sus campos son opcionales: puede arrancar plegada. */
+  collapsible: boolean;
 }
 
 function sectionId(label: string): string {
@@ -65,6 +66,20 @@ function sectionId(label: string): string {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
+}
+
+/**
+ * Una sección se puede plegar solo si **todos** sus campos están marcados
+ * `optional` de forma explícita y ninguno depende del combustible.
+ *
+ * No alcanza con `!isFieldRequired`: los multiSelect (Equipamiento, Colores)
+ * también dan false ahí, pero por un motivo técnico —el backend los recibe
+ * aparte— y esconderlos entorpecería la carga en vez de agilizarla. Los campos
+ * con `showWhenFuels` ya se muestran solo cuando aplican, así que plegarlos
+ * sería una segunda capa de ocultamiento.
+ */
+function isCollapsibleGroup(fields: FieldMeta[]): boolean {
+  return fields.every((f) => f.optional === true && !f.showWhenFuels);
 }
 
 function sanitize(value: Record<string, unknown> | null): Record<string, unknown> {
@@ -105,14 +120,20 @@ function sanitize(value: Record<string, unknown> | null): Record<string, unknown
 })
 export class AdminEditDialogComponent implements AfterViewInit, OnDestroy {
   private fb = inject(FormBuilder);
-  private http = inject(HttpClient);
   private dialog = inject(MatDialog);
+  private optionsCache = inject(AdminOptionsCacheService);
 
   readonly entityKey = input.required<EntityKey>();
   readonly entity = input<Record<string, unknown> | null>(null);
   readonly apiPath = input.required<string>();
+  /**
+   * 'create' habilita "Guardar y crear otro". No se puede deducir de `entity`,
+   * porque al duplicar hay prefill pero el alta es nueva.
+   */
+  readonly mode = input<'create' | 'edit'>('create');
 
   @Output() save = new EventEmitter<Record<string, unknown>>();
+  @Output() saveAndNew = new EventEmitter<Record<string, unknown>>();
   @Output() cancel = new EventEmitter<void>();
 
   readonly tab = signal<Tab>('form');
@@ -175,12 +196,56 @@ export class AdminEditDialogComponent implements AfterViewInit, OnDestroy {
       }
       map.get(g)!.push(meta);
     }
-    return order.map((g) => ({
-      id: sectionId(g),
-      label: g,
-      fields: map.get(g)!,
-    }));
+    return order.map((g) => {
+      const fields = map.get(g)!;
+      return {
+        id: sectionId(g),
+        label: g,
+        fields,
+        collapsible: g !== '' && isCollapsibleGroup(fields),
+      };
+    });
   });
+
+  /**
+   * Secciones plegables actualmente abiertas. Una plegable arranca cerrada
+   * salvo que la entidad cargada traiga datos en alguno de sus campos: editar
+   * nunca debe esconder información existente.
+   */
+  private readonly expandedSections = signal<ReadonlySet<string>>(new Set());
+
+  isSectionOpen(section: Section): boolean {
+    if (!section.collapsible) return true;
+    return this.expandedSections().has(section.id);
+  }
+
+  toggleSection(section: Section): void {
+    if (!section.collapsible) return;
+    this.expandedSections.update((current) => {
+      const next = new Set(current);
+      if (next.has(section.id)) next.delete(section.id);
+      else next.add(section.id);
+      return next;
+    });
+  }
+
+  private hasData(value: unknown): boolean {
+    if (value === null || value === undefined || value === '') return false;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'boolean') return value;
+    return true;
+  }
+
+  /** Abre las secciones plegables que ya traen datos en la entidad cargada. */
+  private syncExpandedSections(): void {
+    const entity = this.entity() ?? {};
+    const open = new Set<string>();
+    for (const section of this.sections()) {
+      if (!section.collapsible) continue;
+      if (section.fields.some((f) => this.hasData(entity[f.field]))) open.add(section.id);
+    }
+    this.expandedSections.set(open);
+  }
 
   private readonly activeSectionId = signal<string | null>(null);
   readonly activeSection = computed(() => this.activeSectionId());
@@ -212,16 +277,24 @@ export class AdminEditDialogComponent implements AfterViewInit, OnDestroy {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  private fetchAbort = new Subject<void>();
   private destroyRef = inject(DestroyRef);
-  private autofocusDone = false;
+  /** Valor de `autofocusRequest` ya atendido; -1 = todavía ninguno. */
+  private autofocusDone = -1;
+  /**
+   * Última entidad aplicada al form, para detectar un prefill nuevo. Arranca
+   * en `null` —el mismo valor por defecto del input— para que el primer render
+   * no dispare un reset: el form recién construido ya está limpio, y resetear
+   * ahí borraría lo que el usuario haya tipeado mientras cargaba la plantilla.
+   */
+  private lastAppliedEntity: Record<string, unknown> | null = null;
+  /**
+   * Se incrementa cuando llega un prefill nuevo. Es un signal —y no un
+   * booleano— porque el effect de foco tiene que volver a correr después de
+   * "Guardar y crear otro".
+   */
+  private readonly autofocusRequest = signal(0);
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => {
-      this.fetchAbort.next();
-      this.fetchAbort.complete();
-    });
-
     effect(() => {
       const key = this.entityKey();
       untracked(() => {
@@ -250,11 +323,12 @@ export class AdminEditDialogComponent implements AfterViewInit, OnDestroy {
     });
 
     effect(() => {
-      if (this.autofocusDone) return;
-      if (this.loading()) return;
+      // Se re-dispara con cada prefill nuevo (ver autofocusRequest).
+      const request = this.autofocusRequest();
+      if (this.autofocusDone === request) return;
       const wrapper = this.firstField()?.nativeElement;
       if (!wrapper) return;
-      this.autofocusDone = true;
+      this.autofocusDone = request;
       queueMicrotask(() => {
         if (!wrapper.isConnected) return;
         const focusable = wrapper.querySelector<HTMLElement>(
@@ -264,28 +338,26 @@ export class AdminEditDialogComponent implements AfterViewInit, OnDestroy {
       });
     });
 
+    /**
+     * La plantilla solo aporta campos "extra" que el backend conoce y
+     * FIELD_METAS no. El formulario se renderiza de inmediato desde
+     * FIELD_METAS y esto lo completa cuando llega; va por caché, así que a
+     * partir de la segunda apertura resuelve sin red.
+     */
     effect(() => {
       const key = this.entityKey();
-      this.fetchAbort.next();
       untracked(() => {
         this.loading.set(true);
         this.loadError.set(null);
-        this.http
-          .get<{ data: Record<string, unknown> }>(`${ENV.apiBase}/admin/seed/template/${key}`)
-          .pipe(takeUntil(this.fetchAbort))
-          .subscribe({
-            next: (res) => {
-              untracked(() => {
-                this.emptyTemplate.set(res.data);
-                this.loading.set(false);
-              });
-            },
-            error: (err: Error) => {
-              untracked(() => {
-                this.loadError.set(`No se pudo cargar la plantilla: ${err.message}`);
-                this.loading.set(false);
-              });
-            },
+        this.optionsCache
+          .getObject<Record<string, unknown>>(`/admin/seed/template/${key}`)
+          .then((tpl) => {
+            this.emptyTemplate.set(tpl);
+            this.loading.set(false);
+          })
+          .catch((err: Error) => {
+            this.loadError.set(`No se pudo cargar la plantilla: ${err.message}`);
+            this.loading.set(false);
           });
       });
     });
@@ -294,7 +366,9 @@ effect(() => {
       const tpl = this.emptyTemplate();
       const e = this.entity();
       untracked(() => {
-        if (Object.keys(tpl).length === 0) return;
+        // Sin `return` temprano si la plantilla aún no llegó: los controles ya
+        // existen (vienen de FIELD_METAS), así que los valores de la entidad se
+        // aplican de inmediato y la plantilla solo suma los campos extra.
         const form = this.form();
         const hiddenNames = new Set(
           (FIELD_METAS[this.entityKey()] ?? [])
@@ -308,6 +382,20 @@ effect(() => {
           }
         }
         const value = sanitize(e) ?? tpl;
+
+        // Al volver de "Guardar y crear otro" el prefill trae solo los campos
+        // sticky; el resto debe quedar en blanco y no con lo recién guardado.
+        //
+        // Solo cuando cambia la entidad: este effect también corre al llegar
+        // la plantilla, y ahí resetear pisaría lo que el usuario ya tipeó
+        // mientras el request estaba en vuelo.
+        const entityChanged = e !== this.lastAppliedEntity;
+        this.lastAppliedEntity = e;
+        if (entityChanged) {
+          this.resetControlsNotIn(form, value);
+          this.autofocusRequest.update((n) => n + 1);
+        }
+
         for (const [k, v] of Object.entries(value)) {
           if (HIDDEN_KEYS.has(k) || hiddenNames.has(k)) continue;
           const ctrl = form.get(k);
@@ -326,21 +414,35 @@ effect(() => {
           }
         }
         form.markAsPristine();
+        this.syncExpandedSections();
         this.jsonText.set(JSON.stringify(value, null, 2));
       });
     });
+  }
+
+  /** Valor con el que arranca un control según el tipo de campo. */
+  private initialValueFor(meta: FieldMeta): unknown {
+    if (meta.kind === 'gallery' || meta.kind === 'multiSelect') return [];
+    if (meta.kind === 'boolean' && meta.optional) return false;
+    return null;
+  }
+
+  private resetControlsNotIn(form: FormGroup, value: Record<string, unknown>): void {
+    const metaByField = new Map(
+      (FIELD_METAS[this.entityKey()] ?? []).map((m) => [m.field, m]),
+    );
+    for (const name of Object.keys(form.controls)) {
+      if (name in value) continue;
+      const meta = metaByField.get(name);
+      form.get(name)?.setValue(meta ? this.initialValueFor(meta) : null);
+    }
   }
 
   private buildInitialControls(key: EntityKey): Record<string, FormControl> {
     const metas = (FIELD_METAS[key] ?? []).filter((m) => !m.hidden);
     const controls: Record<string, FormControl> = {};
     for (const meta of metas) {
-      let initial: unknown = null;
-      if (meta.kind === 'gallery' || meta.kind === 'multiSelect') {
-        initial = [];
-      } else if (meta.kind === 'boolean' && meta.optional) {
-        initial = false;
-      }
+      const initial = this.initialValueFor(meta);
       const ctrl = new FormControl(initial);
       const isExemptKind =
         meta.kind === 'foreignKey' ||
@@ -371,6 +473,7 @@ effect(() => {
    */
   applyBackendErrors(fields: BackendFieldError[]): void {
     applyBackendErrors(this.form(), fields);
+    this.expandSectionsWithErrors();
   }
 
   errorMessage(field: string): string {
@@ -427,12 +530,39 @@ effect(() => {
   }
 
   onSubmit(): void {
+    const value = this.validatedValue();
+    if (!value) return;
+    this.save.emit(value);
+  }
+
+  onSubmitAndNew(): void {
+    const value = this.validatedValue();
+    if (!value) return;
+    this.saveAndNew.emit(value);
+  }
+
+  /**
+   * Devuelve el valor del form si es válido; si no, marca todo como tocado y
+   * abre las secciones plegadas que contengan el error — sin esto el usuario
+   * ve el guardado fallar sin ninguna pista visible.
+   */
+  private validatedValue(): Record<string, unknown> | null {
     const form = this.form();
     if (form.invalid) {
       form.markAllAsTouched();
-      return;
+      this.expandSectionsWithErrors();
+      return null;
     }
-    this.save.emit(form.getRawValue() as Record<string, unknown>);
+    return form.getRawValue() as Record<string, unknown>;
+  }
+
+  private expandSectionsWithErrors(): void {
+    const form = this.form();
+    const withErrors = this.sections()
+      .filter((s) => s.collapsible && s.fields.some((f) => form.get(f.field)?.invalid))
+      .map((s) => s.id);
+    if (withErrors.length === 0) return;
+    this.expandedSections.update((current) => new Set([...current, ...withErrors]));
   }
 
   onCancel(): Promise<void> {

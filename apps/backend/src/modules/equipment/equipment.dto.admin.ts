@@ -12,5 +12,10 @@ export const attachEquipmentSchema = z.object({
   itemId: z.string().min(1),
 });
 
+/** Body de `PUT /admin/equipment/version/:versionId`: la selección completa. */
+export const syncEquipmentSchema = z.object({
+  itemIds: z.array(z.string().min(1)),
+});
+
 export type CreateEquipmentInput = z.infer<typeof createEquipmentSchema>;
 export type UpdateEquipmentInput = z.infer<typeof updateEquipmentSchema>;

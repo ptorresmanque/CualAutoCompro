@@ -5,26 +5,26 @@
       mat-flat-button
       color="primary"
       type="button"
-      (click)="openCreate()"
+      (click)="crud.openCreate()"
     >+ Nuevo</button>
   </header>
 
   <app-search-input
     placeholder="Buscar equipamiento o categoría…"
-    [value]="search()"
-    (changed)="onSearch($event)"
+    [value]="crud.search()"
+    (changed)="crud.onSearch($event)"
   />
 
-  @if (error(); as err) {
+  @if (crud.error(); as err) {
     <div class="mb-3 flex items-center justify-between gap-2 rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark">
       <span>{{ err }}</span>
-      <button mat-button type="button" (click)="retry()">Reintentar</button>
+      <button mat-button type="button" (click)="crud.retry()">Reintentar</button>
     </div>
   }
 
-  @if (loading()) {
+  @if (crud.loading()) {
     <p class="text-sm text-ink-muted">Cargando…</p>
-  } @else if (displayed().length === 0) {
+  } @else if (crud.displayed().length === 0) {
     <p class="text-sm text-ink-muted">No hay equipamiento.</p>
   } @else {
     <div class="admin-table-scroll">
@@ -33,35 +33,39 @@
           <tr>
             <th class="py-2">
               <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
-                (click)="toggleSort('name')"
-                [attr.aria-sort]="sortKey() === 'name' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+                (click)="crud.toggleSort('name')"
+                [attr.aria-sort]="crud.sortKey() === 'name' ? (crud.sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
                 Nombre
-                <mat-icon class="sort-icon">{{ sortKey() === 'name' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
+                <mat-icon class="sort-icon">{{ crud.sortKey() === 'name' ? (crud.sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
               </button>
             </th>
             <th class="py-2">
               <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
-                (click)="toggleSort('category')"
-                [attr.aria-sort]="sortKey() === 'category' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+                (click)="crud.toggleSort('category')"
+                [attr.aria-sort]="crud.sortKey() === 'category' ? (crud.sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
                 Categoría
-                <mat-icon class="sort-icon">{{ sortKey() === 'category' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
+                <mat-icon class="sort-icon">{{ crud.sortKey() === 'category' ? (crud.sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
               </button>
             </th>
             <th class="py-2 actions-col">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          @for (e of displayed(); track e.id) {
+          @for (e of crud.displayed(); track e.id) {
             <tr class="border-t border-border">
               <td class="py-2">{{ e.name }}</td>
               <td class="py-2">{{ e.category }}</td>
               <td class="py-2 actions-col">
                 <div class="action-buttons">
-                  <button mat-stroked-button color="primary" (click)="openEdit(e)">
+                  <button mat-stroked-button color="primary" (click)="crud.openEdit(e)">
                     <mat-icon class="action-icon">edit</mat-icon>
                     <span class="action-label">Editar</span>
                   </button>
-                  <button mat-stroked-button class="action-danger" (click)="confirmDelete(e)">
+                  <button mat-stroked-button (click)="crud.openDuplicate(e)">
+                    <mat-icon class="action-icon">content_copy</mat-icon>
+                    <span class="action-label">Duplicar</span>
+                  </button>
+                  <button mat-stroked-button class="action-danger" (click)="crud.confirmDelete(e)">
                     <mat-icon class="action-icon">delete</mat-icon>
                     <span class="action-label">Eliminar</span>
                   </button>
@@ -73,20 +77,22 @@
       </table>
     </div>
     <app-pagination
-      [meta]="pagination()"
-      [loading]="loading()"
-      (pageChange)="onPageChange($event)"
-      (pageSizeChange)="onPageSizeChange($event)"
+      [meta]="crud.pagination()"
+      [loading]="crud.loading()"
+      (pageChange)="crud.onPageChange($event)"
+      (pageSizeChange)="crud.onPageSizeChange($event)"
     />
   }
 
-  @if (dialogMode() === 'open') {
+  @if (crud.dialogMode() !== 'closed') {
     <app-admin-edit-dialog
       [entityKey]="'equipment'"
       [apiPath]="'equipment'"
-      [entity]="$any(dialogEntity())"
-      (save)="onSave($event)"
-      (cancel)="closeDialog()"
+      [entity]="$any(crud.dialogEntity())"
+      [mode]="$any(crud.dialogMode())"
+      (save)="crud.save($event)"
+      (saveAndNew)="crud.saveAndNew($event)"
+      (cancel)="crud.closeDialog()"
     />
   }
 </section>

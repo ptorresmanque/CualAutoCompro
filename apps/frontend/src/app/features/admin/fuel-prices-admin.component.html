@@ -1,21 +1,21 @@
 <section>
   <header class="flex items-center justify-between mb-4 gap-2">
     <h2 class="text-xl font-bold">Precios de combustible</h2>
-    <button mat-flat-button color="primary" type="button" (click)="openCreate()">+ Nuevo</button>
+    <button mat-flat-button color="primary" type="button" (click)="crud.openCreate()">+ Nuevo</button>
   </header>
 
-  <app-search-input placeholder="Buscar por tipo…" [value]="search()" (changed)="onSearch($event)" />
+  <app-search-input placeholder="Buscar por tipo…" [value]="crud.search()" (changed)="crud.onSearch($event)" />
 
-  @if (error(); as err) {
+  @if (crud.error(); as err) {
     <div class="mb-3 flex items-center justify-between gap-2 rounded border border-warn bg-warn-light px-3 py-2 text-sm text-warn-dark">
       <span>{{ err }}</span>
-      <button mat-button type="button" (click)="retry()">Reintentar</button>
+      <button mat-button type="button" (click)="crud.retry()">Reintentar</button>
     </div>
   }
 
-  @if (loading()) {
+  @if (crud.loading()) {
     <p class="text-sm text-ink-muted">Cargando…</p>
-  } @else if (displayed().length === 0) {
+  } @else if (crud.displayed().length === 0) {
     <p class="text-sm text-ink-muted">No hay precios registrados.</p>
   } @else {
     <div class="admin-table-scroll">
@@ -24,34 +24,34 @@
           <tr>
             <th class="py-2">
               <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
-                (click)="toggleSort('fuelType')"
-                [attr.aria-sort]="sortKey() === 'fuelType' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+                (click)="crud.toggleSort('fuelType')"
+                [attr.aria-sort]="crud.sortKey() === 'fuelType' ? (crud.sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
                 Tipo
-                <mat-icon class="sort-icon">{{ sortKey() === 'fuelType' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
+                <mat-icon class="sort-icon">{{ crud.sortKey() === 'fuelType' ? (crud.sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
               </button>
             </th>
             <th class="py-2">
               <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
-                (click)="toggleSort('pricePerUnitClp')"
-                [attr.aria-sort]="sortKey() === 'pricePerUnitClp' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+                (click)="crud.toggleSort('pricePerUnitClp')"
+                [attr.aria-sort]="crud.sortKey() === 'pricePerUnitClp' ? (crud.sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
                 Precio CLP
-                <mat-icon class="sort-icon">{{ sortKey() === 'pricePerUnitClp' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
+                <mat-icon class="sort-icon">{{ crud.sortKey() === 'pricePerUnitClp' ? (crud.sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
               </button>
             </th>
             <th class="py-2">Unidad</th>
             <th class="py-2">
               <button type="button" class="sort-header font-bold uppercase tracking-wide hover:text-ink"
-                (click)="toggleSort('effectiveFrom')"
-                [attr.aria-sort]="sortKey() === 'effectiveFrom' ? (sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
+                (click)="crud.toggleSort('effectiveFrom')"
+                [attr.aria-sort]="crud.sortKey() === 'effectiveFrom' ? (crud.sortDir() === 'asc' ? 'ascending' : 'descending') : 'none'">
                 Vigente desde
-                <mat-icon class="sort-icon">{{ sortKey() === 'effectiveFrom' ? (sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
+                <mat-icon class="sort-icon">{{ crud.sortKey() === 'effectiveFrom' ? (crud.sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
               </button>
             </th>
             <th class="py-2 actions-col">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          @for (fp of displayed(); track fp.id) {
+          @for (fp of crud.displayed(); track fp.id) {
             <tr class="border-t border-border">
               <td class="py-2">{{ fp.fuelType }}</td>
               <td class="py-2">{{ formatCurrency(fp.pricePerUnitClp) }}</td>
@@ -59,7 +59,11 @@
               <td class="py-2">{{ fp.effectiveFrom | date: 'short' }}</td>
               <td class="py-2 actions-col">
                 <div class="action-buttons">
-                  <button mat-stroked-button class="action-danger" (click)="confirmDelete(fp)">
+                  <button mat-stroked-button (click)="crud.openDuplicate(fp)">
+                    <mat-icon class="action-icon">content_copy</mat-icon>
+                    <span class="action-label">Duplicar</span>
+                  </button>
+                  <button mat-stroked-button class="action-danger" (click)="crud.confirmDelete(fp)">
                     <mat-icon class="action-icon">delete</mat-icon>
                     <span class="action-label">Eliminar</span>
                   </button>
@@ -71,20 +75,22 @@
       </table>
     </div>
     <app-pagination
-      [meta]="pagination()"
-      [loading]="loading()"
-      (pageChange)="onPageChange($event)"
-      (pageSizeChange)="onPageSizeChange($event)"
+      [meta]="crud.pagination()"
+      [loading]="crud.loading()"
+      (pageChange)="crud.onPageChange($event)"
+      (pageSizeChange)="crud.onPageSizeChange($event)"
     />
   }
 
-  @if (dialogMode() === 'open') {
+  @if (crud.dialogMode() !== 'closed') {
     <app-admin-edit-dialog
       [entityKey]="'fuelPrice'"
       [apiPath]="'fuel-prices'"
-      [entity]="$any(dialogEntity())"
-      (save)="onSave($event)"
-      (cancel)="closeDialog()"
+      [entity]="$any(crud.dialogEntity())"
+      [mode]="$any(crud.dialogMode())"
+      (save)="crud.save($event)"
+      (saveAndNew)="crud.saveAndNew($event)"
+      (cancel)="crud.closeDialog()"
     />
   }
 </section>

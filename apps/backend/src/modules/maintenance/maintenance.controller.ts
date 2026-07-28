@@ -23,7 +23,11 @@ export const maintenanceController = {
   listPaged: ah(async (req: Request, res: Response) => {
     const params = parsePagination(req.query.page, req.query.pageSize);
     const q = typeof req.query.q === "string" ? req.query.q.trim() : undefined;
-    const { rows, total } = await svc.listPaged(q, params);
+    const versionId =
+      typeof req.query.versionId === "string" && req.query.versionId.length > 0
+        ? req.query.versionId
+        : undefined;
+    const { rows, total } = await svc.listPaged(q, params, versionId);
     sendPaged(res, rows, total, params);
   }),
 

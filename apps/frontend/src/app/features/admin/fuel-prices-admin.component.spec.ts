@@ -40,9 +40,9 @@ describe('FuelPricesAdminComponent', () => {
     }
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
-    expect(fixture.componentInstance.items().length).toBe(2);
-    fixture.componentInstance.openCreate();
-    expect(fixture.componentInstance.dialogEntity()).toBeNull();
+    expect(fixture.componentInstance.crud.items().length).toBe(2);
+    fixture.componentInstance.crud.openCreate();
+    expect(fixture.componentInstance.crud.dialogEntity()).toBeNull();
   });
 
   it('formatCurrency devuelve CLP con formato es-CL', () => {
@@ -70,8 +70,8 @@ describe('FuelPricesAdminComponent', () => {
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
 
-    fixture.componentInstance.openCreate();
-    const savePromise = fixture.componentInstance.onSave({
+    fixture.componentInstance.crud.openCreate();
+    const savePromise = fixture.componentInstance.crud.save({
       fuelType: 'gasoline_93',
       pricePerUnitClp: 1300,
       unit: 'litro',

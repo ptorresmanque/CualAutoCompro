@@ -9,300 +9,179 @@ const dialogMock = {
   open: () => ({ afterClosed: () => of(true) }),
 };
 
+const tick = () => new Promise((r) => setTimeout(r, 0));
+
+const rowWithRelations = {
+  id: 'v1',
+  name: 'XLI',
+  year: 2026,
+  priceClp: 15_000_000,
+  model: { name: 'Corolla' },
+  equipmentItems: [
+    { equipmentItem: { id: 'e1', name: 'A', category: 'C' } },
+    { equipmentItem: { id: 'e2', name: 'B', category: 'C' } },
+  ],
+  colorItems: [{ color: { id: 'c1', name: 'Rojo', hex: '#F00' } }],
+};
+
+function setup() {
+  TestBed.configureTestingModule({
+    imports: [VersionsAdminComponent],
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+      { provide: MatDialog, useValue: dialogMock },
+    ],
+  });
+  const fixture = TestBed.createComponent(VersionsAdminComponent);
+  fixture.detectChanges();
+  return { fixture, http: TestBed.inject(HttpTestingController) };
+}
+
+const flushList = (
+  http: HttpTestingController,
+  data: unknown[] = [rowWithRelations],
+): void => {
+  http.expectOne((r) => r.url.includes('/api/v1/admin/versions')).flush({
+    data,
+    pagination: { page: 1, pageSize: 25, total: data.length, totalPages: 1 },
+    error: null,
+  });
+};
+
 describe('VersionsAdminComponent', () => {
-  it('carga lista desde /admin/versions (fallback /versions en test)', async () => {
-    TestBed.configureTestingModule({
-      imports: [VersionsAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
-    });
-    const fixture = TestBed.createComponent(VersionsAdminComponent);
-    fixture.detectChanges();
-    const http = TestBed.inject(HttpTestingController);
+  it('carga la lista paginada desde /admin/versions', async () => {
+    const { fixture, http } = setup();
+    flushList(http);
+    await fixture.whenStable();
+    await tick();
+
+    expect(fixture.componentInstance.crud.items().length).toBe(1);
+    expect(fixture.componentInstance.crud.pagination().total).toBe(1);
+  });
+
+  it('la carga inicial no pide opciones que nadie usa', async () => {
+    const { fixture, http } = setup();
     const reqs = http.match(() => true);
-    expect(reqs.length).toBeGreaterThan(0);
-    for (const r of reqs) {
-      if (r.request.url.includes('/models')) {
-        r.flush({
-        data: [],
-        pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 },
-        error: null,
-      });
-      } else {
-        r.flush({
-        data: [{ id: 'v1', name: 'XLI', year: 2024, priceClp: 15000000, model: { name: 'Corolla' } }],
-        pagination: { page: 1, pageSize: 25, total: 1, totalPages: 1 },
-        error: null,
-      });
-      }
-    }
+    // Antes acá salía también un GET a /models cuyo resultado no se leía.
+    expect(reqs.length).toBe(1);
+    expect(reqs[0].request.url).toContain('/admin/versions');
+    reqs[0].flush({
+      data: [],
+      pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 },
+      error: null,
+    });
     await fixture.whenStable();
-    await new Promise((r) => setTimeout(r, 0));
-    expect(fixture.componentInstance.items().length).toBeGreaterThan(0);
   });
 
-  it('openEdit proyecta equipmentItems a equipment y preserva equipmentItems en el entity', async () => {
-    TestBed.configureTestingModule({
-      imports: [VersionsAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
-    });
-    const fixture = TestBed.createComponent(VersionsAdminComponent);
-    fixture.detectChanges();
-    const http = TestBed.inject(HttpTestingController);
-
-    // Drain initial load() requests.
-    for (const r of http.match(() => true)) {
-      r.flush({
-        data: [],
-        pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 },
-        error: null,
-      });
-    }
+  it('openEdit proyecta las relaciones a los ids que consumen los multi-select', async () => {
+    const { fixture, http } = setup();
+    flushList(http);
     await fixture.whenStable();
 
-    // Simulate opening edit on a version that already has equipment.
-    const row = {
-      id: 'v1',
-      name: 'v1',
-      year: 2026,
-      priceClp: 0,
-      model: { name: 'M' },
-      equipmentItems: [
-        { equipmentItem: { id: 'e1', name: 'A', category: 'C' } },
-        { equipmentItem: { id: 'e2', name: 'B', category: 'C' } },
-      ],
-    };
-    fixture.componentInstance.openEdit(row as any);
+    fixture.componentInstance.crud.openEdit(rowWithRelations as never);
 
-    const entity = fixture.componentInstance.dialogEntity() as any;
-    // Projected array used to preload the dialog's 'equipment' control.
-    expect(entity.equipment).toEqual(['e1', 'e2']);
-    // Raw equipmentItems kept on the entity so onSave's diff can compute
-    // toAdd/toRemove against the actually-attached items. Dropping it
-    // would make every selected item look "new" to the diff and the
-    // backend would 409 on the already-attached ones.
-    expect(entity.equipmentItems).toEqual([
-      { equipmentItem: { id: 'e1', name: 'A', category: 'C' } },
-      { equipmentItem: { id: 'e2', name: 'B', category: 'C' } },
-    ]);
+    const entity = fixture.componentInstance.crud.dialogEntity() as Record<string, unknown>;
+    expect(entity['equipment']).toEqual(['e1', 'e2']);
+    expect(entity['colors']).toEqual(['c1']);
+    expect(fixture.componentInstance.crud.dialogMode()).toBe('edit');
   });
 
-  it('openCreate muestra dialog', async () => {
-    TestBed.configureTestingModule({
-      imports: [VersionsAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
-    });
-    const fixture = TestBed.createComponent(VersionsAdminComponent);
-    fixture.detectChanges();
-    const http = TestBed.inject(HttpTestingController);
-    const reqs = http.match(() => true);
-    for (const r of reqs) r.flush({
-        data: [],
-        pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 },
-        error: null,
-      });
+  it('openCreate abre el diálogo vacío en modo create', async () => {
+    const { fixture, http } = setup();
+    flushList(http, []);
     await fixture.whenStable();
-    fixture.componentInstance.openCreate();
-    expect(fixture.componentInstance.dialogEntity()).toBeNull();
+
+    fixture.componentInstance.crud.openCreate();
+    expect(fixture.componentInstance.crud.dialogEntity()).toBeNull();
+    expect(fixture.componentInstance.crud.dialogMode()).toBe('create');
   });
 
-  it('edit sincroniza equipment: detach removidos, attach agregados', async () => {
-    TestBed.configureTestingModule({
-      imports: [VersionsAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
-    });
-    const fixture = TestBed.createComponent(VersionsAdminComponent);
-    fixture.detectChanges();
-    const http = TestBed.inject(HttpTestingController);
-
-    // Seed initial load.
-    const seedReqs = http.match(() => true);
-    for (const r of seedReqs) {
-      r.flush({
-        data: [],
-        pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 },
-        error: null,
-      });
-    }
+  it('openDuplicate precarga todo menos el id y guarda como alta nueva', async () => {
+    const { fixture, http } = setup();
+    flushList(http);
     await fixture.whenStable();
 
-    // Simulate opening edit on a version that already has equipment e1, e2.
-    const existing = {
-      id: 'v1',
-      name: 'v1',
-      year: 2026,
-      priceClp: 0,
-      model: { name: 'M' },
-      equipmentItems: [
-        { equipmentItem: { id: 'e1', name: 'A', category: 'C' } },
-        { equipmentItem: { id: 'e2', name: 'B', category: 'C' } },
-      ],
-    };
-    fixture.componentInstance.dialogEntity.set(existing as any);
+    fixture.componentInstance.crud.openDuplicate(rowWithRelations as never);
+
+    const entity = fixture.componentInstance.crud.dialogEntity() as Record<string, unknown>;
+    expect(entity['name']).toBe('XLI');
+    expect(entity['equipment']).toEqual(['e1', 'e2']);
+    expect(entity).not.toHaveProperty('id');
+    expect(fixture.componentInstance.crud.dialogMode()).toBe('create');
+    expect(fixture.componentInstance.crud.editingRow()).toBeNull();
+  });
+
+  it('al guardar emite un PUT por relación con la selección completa', async () => {
+    const { fixture, http } = setup();
+    flushList(http);
     await fixture.whenStable();
 
-    // The dialog mounts and fires /admin/seed/template/version. Flush it
-    // so the form renders and the multi-select + foreign-key fields fire
-    // their own option requests.
-    http.expectOne((r) => r.url.includes('/admin/seed/template/version')).flush({ data: {} });
-    await fixture.whenStable();
+    const component = fixture.componentInstance;
+    component.crud.openEdit(rowWithRelations as never);
 
-    http.expectOne(
-      (r) => r.url.includes('/admin/equipment') && !r.url.includes('/attach') && !r.url.includes('/version/'),
-    ).flush({
-        data: [],
-        pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 },
-        error: null,
-      });
-    http.expectOne((r) => r.url.includes('/models')).flush({ data: { items: [] } });
-    await fixture.whenStable();
-
-    // Simulate save with equipment e2 (kept) + e3 (added); e1 removed.
-    const savePromise = fixture.componentInstance.onSave({
+    const savePromise = component.crud.save({
       modelId: 'm1',
-      name: 'v1',
+      name: 'XLI',
       year: 2026,
-      priceClp: 0,
+      priceClp: 15_000_000,
       transmission: 'MANUAL',
       fuel: 'BENCINA',
-      engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
-      consumptionCityKmL: 0, consumptionHighwayKmL: 0,
-      lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
-      trunkLiters: 0,
       equipment: ['e2', 'e3'],
+      colors: ['c1', 'c2'],
     });
 
-    // 1) PATCH version (no equipment field)
-    const patchReq = http.expectOne(
+    // 1) PATCH de la versión, sin los campos de relación.
+    const patch = http.expectOne(
       (r) => r.url.includes('/api/v1/admin/versions/v1') && r.method === 'PATCH',
     );
-    expect(patchReq.request.body.equipment).toBeUndefined();
-    patchReq.flush({ data: { ...existing, equipmentItems: [] } });
+    expect(patch.request.body.equipment).toBeUndefined();
+    expect(patch.request.body.colors).toBeUndefined();
+    patch.flush({ data: { id: 'v1' }, error: null });
 
-    // 2) DELETE e1
-    await new Promise((r) => setTimeout(r, 0));
-    const delReq = http.expectOne(
-      (r) => r.url.includes('/api/v1/admin/equipment/version/v1/item/e1'),
+    // 2) Un único PUT por relación, con la selección entera. Antes esto era
+    //    un request por ítem, en serie.
+    await tick();
+    const eq = http.expectOne(
+      (r) => r.url.includes('/api/v1/admin/equipment/version/v1') && r.method === 'PUT',
     );
-    expect(delReq.request.method).toBe('DELETE');
-    delReq.flush({ data: { detached: true } });
+    expect(eq.request.body).toEqual({ itemIds: ['e2', 'e3'] });
+    eq.flush({ data: { attached: 1, detached: 1 }, error: null });
 
-    // 3) POST attach e3
-    await new Promise((r) => setTimeout(r, 0));
-    const attachReq = http.expectOne(
-      (r) => r.url.includes('/api/v1/admin/equipment/attach'),
+    const co = http.expectOne(
+      (r) => r.url.includes('/api/v1/admin/colors/version/v1') && r.method === 'PUT',
     );
-    expect(attachReq.request.body).toEqual({ versionId: 'v1', itemId: 'e3' });
-    attachReq.flush({ data: { versionId: 'v1', equipmentItemId: 'e3' } });
+    expect(co.request.body).toEqual({ colorIds: ['c1', 'c2'] });
+    co.flush({ data: { attached: 1, detached: 0 }, error: null });
 
-    // 4) reload listAll is fired by onSave AFTER the equipment sync;
-    // flush it before awaiting savePromise to avoid deadlock (savePromise
-    // awaits load() which awaits the reload requests).
-    await new Promise((r) => setTimeout(r, 0));
-    http.expectOne((r) => r.url.includes('/admin/versions')).flush({ data: { items: [] } });
-    http.expectOne((r) => r.url.includes('/models')).flush({ data: { items: [] } });
-
+    // 3) Recarga de la lista.
+    await tick();
+    flushList(http);
     await savePromise;
-    await fixture.whenStable();
+
+    expect(component.crud.dialogMode()).toBe('closed');
   });
 
-  it('edit + agregar nuevo item: el diff solo attach el nuevo (no los existentes)', async () => {
-    // Regression: previously openEdit projected equipmentItems -> equipment
-    // but DROPPED equipmentItems from the entity. onSave's diff uses
-    // e.equipmentItems to compute toAdd; with the field missing, oldIds=[]
-    // and the diff tried to attach every selected item, including the
-    // already-attached ones, causing 409 Conflict on the backend.
-    TestBed.configureTestingModule({
-      imports: [VersionsAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
-    });
-    const fixture = TestBed.createComponent(VersionsAdminComponent);
-    fixture.detectChanges();
-    const http = TestBed.inject(HttpTestingController);
-
-    // Initial load of /admin/versions and /models.
-    const versionsReq = http.expectOne((r) => r.url.includes('/api/v1/admin/versions'));
-    versionsReq.flush({
-      data: [
-        {
-          id: 'v1',
-          name: 'v1',
-          year: 2026,
-          priceClp: 0,
-          model: { name: 'M' },
-          equipmentItems: [
-            { equipmentItem: { id: 'e1', name: 'A', category: 'C' } },
-            { equipmentItem: { id: 'e2', name: 'B', category: 'C' } },
-          ],
-        },
-      ],
-    });
-    http.expectOne((r) => r.url.includes('/api/v1/models')).flush({ data: { items: [] } });
-    await fixture.whenStable();
-    await new Promise((r) => setTimeout(r, 0));
-    fixture.detectChanges();
-
-    // openEdit (must preserve equipmentItems on the entity for the diff).
-    const component = fixture.componentInstance as VersionsAdminComponent;
-    const row = {
-      id: 'v1',
-      name: 'v1',
-      year: 2026,
-      priceClp: 0,
-      model: { name: 'M' },
-      equipmentItems: [
-        { equipmentItem: { id: 'e1', name: 'A', category: 'C' } },
-        { equipmentItem: { id: 'e2', name: 'B', category: 'C' } },
-      ],
-    };
-    component.openEdit(row as any);
-    fixture.detectChanges();
+  it('sin selección manda listas vacías, que desasocian todo', async () => {
+    const { fixture, http } = setup();
+    flushList(http);
     await fixture.whenStable();
 
-    // Sanity: entity must carry BOTH equipment (projected) and equipmentItems
-    // (raw, used by the diff).
-    const entity = component.dialogEntity() as any;
-    expect(entity.equipment).toEqual(['e1', 'e2']);
-    expect(entity.equipmentItems).toEqual([
-      { equipmentItem: { id: 'e1', name: 'A', category: 'C' } },
-      { equipmentItem: { id: 'e2', name: 'B', category: 'C' } },
-    ]);
+    const component = fixture.componentInstance;
+    component.crud.openEdit(rowWithRelations as never);
+    const savePromise = component.crud.save({ name: 'XLI' });
 
-    // User adds e3. Form.equipment = [e1, e2, e3].
-    const savePromise = component.onSave({
-      modelId: 'm1',
-      name: 'v1',
-      year: 2026,
-      priceClp: 0,
-      transmission: 'MANUAL',
-      fuel: 'BENCINA',
-      engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
-      consumptionCityKmL: 0, consumptionHighwayKmL: 0,
-      lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0,
-      trunkLiters: 0,
-      equipment: ['e1', 'e2', 'e3'],
-    });
-    fixture.detectChanges();
+    http.expectOne((r) => r.method === 'PATCH').flush({ data: { id: 'v1' }, error: null });
+    await tick();
 
-    // 1) PATCH version (no equipment field).
-    const patchReq = http.expectOne(
-      (r) => r.url.includes('/api/v1/admin/versions/v1') && r.method === 'PATCH',
-    );
-    expect(patchReq.request.body.equipment).toBeUndefined();
-    patchReq.flush({ data: { id: 'v1', name: 'v1' } });
+    const puts = http.match((r) => r.method === 'PUT');
+    expect(puts.map((r) => r.request.body)).toEqual([{ itemIds: [] }, { colorIds: [] }]);
+    puts.forEach((r) => r.flush({ data: { attached: 0, detached: 2 }, error: null }));
 
-    // 2) POST attach ONLY e3 (not e1 or e2 — those are already attached).
-    await new Promise((r) => setTimeout(r, 0));
-    const attachReqs = http.match((r) => r.url.includes('/api/v1/admin/equipment/attach'));
-    expect(attachReqs.length).toBe(1);
-    expect(attachReqs[0]?.request.body).toEqual({ versionId: 'v1', itemId: 'e3' });
-    for (const r of attachReqs) {
-      r.flush({ data: { versionId: 'v1', equipmentItemId: r.request.body['itemId'] } });
-    }
-
-    // 3) reload (load() fires BOTH /admin/versions and /models).
-    await new Promise((r) => setTimeout(r, 0));
-    http.expectOne((r) => r.url.includes('/api/v1/admin/versions')).flush({ data: { items: [] } });
-    http.expectOne((r) => r.url.includes('/api/v1/models')).flush({ data: { items: [] } });
+    // Drena la recarga y las opciones que monta el diálogo, sin asertar sobre
+    // ellas: lo que importa acá son los bodies de los PUT.
+    await tick();
+    http.match(() => true).forEach((r) => r.flush({ data: [], error: null }));
     await savePromise;
   });
 });

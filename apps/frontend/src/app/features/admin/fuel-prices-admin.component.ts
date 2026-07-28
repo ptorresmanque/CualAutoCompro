@@ -1,18 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatDialog } from '@angular/material/dialog';
-import { firstValueFrom } from 'rxjs';
-import { AdminFeedbackService } from '../../core/admin-feedback.service';
-import { ApiCallError } from '../../core/api-error';
-import { ApiService } from '../../core/api.service';
-import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { PaginationComponent } from '../../shared/ui/pagination.component';
-import type { PagedResponse } from '../../shared/ui/pagination.types';
+import { AdminCrudStore } from '../../shared/ui/admin-crud.store';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
-import { sortItems, type SortDir } from './sort-utils';
+import { STICKY_FIELDS } from './entity-schemas';
 
 interface FuelPriceRow {
   id: string;
@@ -21,7 +15,6 @@ interface FuelPriceRow {
   unit: string;
   effectiveFrom: string;
 }
-type SortKey = 'fuelType' | 'pricePerUnitClp' | 'effectiveFrom';
 
 @Component({
   selector: 'app-fuel-prices-admin',
@@ -32,140 +25,27 @@ type SortKey = 'fuelType' | 'pricePerUnitClp' | 'effectiveFrom';
     MatIconModule,
     SearchInputComponent,
     PaginationComponent,
-
   ],
   templateUrl: './fuel-prices-admin.component.html',
   styleUrl: './fuel-prices-admin.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FuelPricesAdminComponent {
-  private api = inject(ApiService);
-  private feedback = inject(AdminFeedbackService);
-  private dialog = inject(MatDialog);
-
   readonly editDialog = viewChild<AdminEditDialogComponent>(AdminEditDialogComponent);
 
-  readonly items = signal<FuelPriceRow[]>([]);
-  readonly search = signal('');
-  readonly pagination = signal({ page: 1, pageSize: 25, total: 0, totalPages: 1 });
-  readonly page = signal(1);
-  readonly pageSize = signal(25);
-  readonly dialogEntity = signal<FuelPriceRow | null | undefined>(undefined);
-  readonly dialogMode = computed(() => (this.dialogEntity() === undefined ? 'closed' : 'open'));
-  readonly error = signal<string | null>(null);
-  readonly loading = signal(false);
-
-  readonly sortKey = signal<SortKey | null>('effectiveFrom');
-  readonly sortDir = signal<SortDir>('desc');
-
-  readonly displayed = computed<FuelPriceRow[]>(() => {
-    const q = this.search().trim().toLowerCase();
-    const filtered = q ? this.items().filter((fp) => fp.fuelType.toLowerCase().includes(q)) : this.items();
-    return sortItems(filtered, this.sortKey(), this.sortDir(), (fp, k) => fp[k as SortKey]);
+  readonly crud = new AdminCrudStore<FuelPriceRow>({
+    apiPath: '/admin/fuel-prices',
+    label: { singular: 'Precio', created: 'creado', updated: 'actualizado', deleted: 'eliminado' },
+    rowName: (row) => `${row.fuelType} (${row.unit})`,
+    searchFields: (row) => [row.fuelType, row.unit],
+    sortAccessor: (row, key) => row[key as 'fuelType' | 'pricePerUnitClp' | 'effectiveFrom'],
+    initialSort: { key: 'effectiveFrom', dir: 'desc' },
+    stickyFields: STICKY_FIELDS.fuelPrice,
+    onValidationError: (fields) => this.editDialog()?.applyBackendErrors(fields),
   });
 
   constructor() {
-    void this.load();
-  }
-
-  private async load(): Promise<void> {
-    this.loading.set(true);
-    try {
-      const params: Record<string, string | number> = { page: this.page(), pageSize: this.pageSize() };
-      const q = this.search().trim();
-      if (q.length > 0) params['q'] = q;
-      const res = await this.api.get<PagedResponse<FuelPriceRow[]>>('/admin/fuel-prices', params);
-      this.items.set(res.data);
-      this.pagination.set(res.pagination);
-    } catch (e) {
-      this.error.set((e as Error).message);
-    } finally {
-      this.loading.set(false);
-    }
-  }
-
-  openCreate(): void {
-    this.dialogEntity.set(null);
-  }
-  closeDialog(): void {
-    this.dialogEntity.set(undefined);
-  }
-
-  async onSave(value: Record<string, unknown>): Promise<void> {
-    const e = this.dialogEntity();
-    try {
-      if (e) {
-        await this.api.patch(`/admin/fuel-prices/${e.id}`, value);
-        this.feedback.success(`Precio ${value['fuelType']} (${value['unit']}) actualizado`);
-      } else {
-        await this.api.post(`/admin/fuel-prices`, value);
-        this.feedback.success(`Precio ${value['fuelType']} (${value['unit']}) creado`);
-      }
-      this.dialogEntity.set(undefined);
-      await this.load();
-    } catch (err) {
-      if (err instanceof ApiCallError && err.backend.code === 'VALIDATION' && err.backend.fields) {
-        this.editDialog()?.applyBackendErrors(err.backend.fields);
-        return;
-      }
-      const msg = (err as Error).message;
-      this.error.set(msg);
-      this.feedback.error(msg);
-    }
-  }
-
-  async confirmDelete(row: FuelPriceRow): Promise<void> {
-    const ref = this.dialog.open(ConfirmDialogComponent, {
-      disableClose: true,
-      data: {
-        title: 'Eliminar precio',
-        message: `¿Eliminar el precio de ${row.fuelType} (${row.unit})?`,
-        confirmLabel: 'Eliminar',
-        danger: true,
-      },
-    });
-    const ok = await firstValueFrom(ref.afterClosed());
-    if (!ok) return;
-    try {
-      await this.api.delete(`/admin/fuel-prices/${row.id}`);
-      this.feedback.success(`Precio ${row.fuelType} (${row.unit}) eliminado`);
-      await this.load();
-    } catch (err) {
-      const msg = (err as Error).message;
-      this.error.set(msg);
-      this.feedback.error(msg);
-    }
-  }
-
-  onSearch(value: string): void {
-    this.search.set(value);
-    this.page.set(1);
-    void this.load();
-  }
-
-  onPageChange(page: number): void {
-    this.page.set(page);
-    void this.load();
-  }
-
-  onPageSizeChange(pageSize: number): void {
-    this.pageSize.set(pageSize);
-    this.page.set(1);
-    void this.load();
-  }
-
-  retry(): void {
-    this.error.set(null);
-    void this.load();
-  }
-
-  toggleSort(key: SortKey): void {
-    if (this.sortKey() === key) {
-      this.sortDir.update((d) => (d === 'asc' ? 'desc' : 'asc'));
-    } else {
-      this.sortKey.set(key);
-      this.sortDir.set('asc');
-    }
+    void this.crud.load();
   }
 
   formatCurrency(value: number): string {

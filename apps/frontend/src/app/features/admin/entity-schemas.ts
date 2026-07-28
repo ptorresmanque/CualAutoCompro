@@ -144,6 +144,12 @@ export interface FieldMeta {
   optionLabel?: string;
   optional?: boolean;
   hidden?: boolean;
+  /**
+   * Campo de contexto: al usar "Guardar y crear otro" su valor se conserva
+   * para la siguiente alta. Marcar los que se repiten dentro de una tanda de
+   * carga (marca, modelo, año) y no los que identifican al registro.
+   */
+  sticky?: boolean;
   /** When provided, hides the field unless the form's `fuel` value is in this list. */
   showWhenFuels?: string[];
   placeholder?: string;
@@ -165,6 +171,24 @@ export function isFieldRequired(meta: FieldMeta): boolean {
   return true;
 }
 
+/**
+ * Convierte texto libre a un token válido según `ENUM_REGEX`.
+ *
+ * La opción "Otro" de los selects deja escribir cualquier cosa; sin normalizar,
+ * "Doble embrague" llegaba como "DOBLE EMBRAGUE" y el backend lo rechazaba por
+ * el espacio. El rango ̀-ͯ son los diacríticos combinantes que deja
+ * `normalize('NFD')`.
+ */
+export function toEnumToken(raw: string): string {
+  return raw
+    .trim()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/(^_+|_+$)/g, '');
+}
+
 export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
   brand: [
     { field: 'name', label: 'Nombre', kind: 'text' },
@@ -172,23 +196,26 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'dealerIds', label: 'Concesionarios', kind: 'multiSelect', optionsApi: '/admin/dealers/options', optionLabel: 'name' },
   ],
   model: [
-    { field: 'brandId', label: 'Marca', kind: 'foreignKey', optionsApi: '/brands', optionLabel: 'name' },
+    { field: 'brandId', label: 'Marca', kind: 'foreignKey', optionsApi: '/brands', optionLabel: 'name', sticky: true },
     { field: 'name', label: 'Nombre', kind: 'text' },
-    { field: 'segment', label: 'Segmento', kind: 'enumWithOther', options: [...SEGMENTS] },
+    { field: 'segment', label: 'Segmento', kind: 'enumWithOther', options: [...SEGMENTS], sticky: true },
     { field: 'imageUrl', label: 'Imagen principal', kind: 'imageUrl' },
     { field: 'galleryUrls', label: 'Galería', kind: 'gallery' },
   ],
   version: [
-    { field: 'modelId', label: 'Modelo', kind: 'foreignKey', optionsApi: '/admin/models/options', optionLabel: 'name', group: 'Identificación' },
+    { field: 'modelId', label: 'Modelo', kind: 'foreignKey', optionsApi: '/admin/models/options', optionLabel: 'name', group: 'Identificación', sticky: true },
     { field: 'name', label: 'Nombre', kind: 'text', group: 'Identificación' },
-    { field: 'year', label: 'Año', kind: 'number', group: 'Identificación' },
+    { field: 'year', label: 'Año', kind: 'number', group: 'Identificación', sticky: true },
     { field: 'priceClp', label: 'Precio CLP', kind: 'number', group: 'Identificación' },
-    { field: 'transmission', label: 'Transmisión', kind: 'enumWithOther', options: [...TRANSMISSIONS], group: 'Motor' },
-    { field: 'fuel', label: 'Combustible', kind: 'enumWithOther', options: [...FUELS], group: 'Motor' },
+    { field: 'transmission', label: 'Transmisión', kind: 'enumWithOther', options: [...TRANSMISSIONS], group: 'Motor', sticky: true },
+    { field: 'fuel', label: 'Combustible', kind: 'enumWithOther', options: [...FUELS], group: 'Motor', sticky: true },
     { field: 'traction', label: 'Tracción', kind: 'enumWithOther', options: [
       { value: 'TRACTION_FRONT', label: 'Delantera' }, { value: 'TRACTION_REAR', label: 'Trasera' },
       { value: 'TRACTION_AWD', label: 'Integral' }, { value: 'TRACTION_4X4_LOW', label: '4x4 con reductora' },
-    ], group: 'Motor' },
+      // `optional` para no exigir en el form lo que versionSchema declara
+      // `.nullable().optional()`: sin esto el formulario se niega a guardar
+      // una versión sin tracción que el backend sí acepta.
+    ], optional: true, group: 'Motor' },
     { field: 'engineType', label: 'Tipo Motor', kind: 'enumWithOther', options: [
       { value: 'ENGINE_NA', label: 'Aspirado' }, { value: 'ENGINE_TURBO', label: 'Turbo' },
       { value: 'ENGINE_TWIN_TURBO', label: 'Bi Turbo' },
@@ -216,10 +243,10 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
   ],
   equipment: [
     { field: 'name', label: 'Nombre', kind: 'text' },
-    { field: 'category', label: 'Categoría', kind: 'enumWithOther', optionsApi: '/admin/equipment/categories', placeholder: 'Buscar o crear categoría…' },
+    { field: 'category', label: 'Categoría', kind: 'enumWithOther', optionsApi: '/admin/equipment/categories', placeholder: 'Buscar o crear categoría…', sticky: true },
   ],
   maintenance: [
-    { field: 'versionId', label: 'Versión', kind: 'foreignKey', optionsApi: '/admin/versions', optionLabel: 'name', hidden: true },
+    { field: 'versionId', label: 'Versión', kind: 'foreignKey', optionsApi: '/admin/versions/options', optionLabel: 'name', hidden: true, sticky: true },
     { field: 'mileageTag', label: 'Kilometraje', kind: 'number' },
     { field: 'costClp', label: 'Costo CLP', kind: 'number' },
   ],
@@ -231,10 +258,21 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
   fuelPrice: [
     { field: 'fuelType', label: 'Tipo de combustible', kind: 'enumWithOther', options: [...FUELS] },
     { field: 'pricePerUnitClp', label: 'Precio CLP / unidad', kind: 'number' },
-    { field: 'unit', label: 'Unidad', kind: 'enumWithOther', options: ['L', 'kWh'] },
+    { field: 'unit', label: 'Unidad', kind: 'enumWithOther', options: ['L', 'kWh'], sticky: true },
   ],
   color: [
     { field: 'name', label: 'Nombre', kind: 'text' },
     { field: 'hex', label: 'Hex (opcional)', kind: 'text', optional: true, help: 'Código hexadecimal del color, p. ej. #FF0000' },
   ],
 };
+
+/**
+ * Campos que "Guardar y crear otro" conserva, derivados del flag `sticky`
+ * de FIELD_METAS para que no haya dos listas que mantener sincronizadas.
+ */
+export const STICKY_FIELDS: Record<EntityKey, string[]> = Object.fromEntries(
+  Object.entries(FIELD_METAS).map(([key, metas]) => [
+    key,
+    metas.filter((m) => m.sticky).map((m) => m.field),
+  ]),
+) as Record<EntityKey, string[]>;

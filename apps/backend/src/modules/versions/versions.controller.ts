@@ -46,6 +46,26 @@ export const versionsController = {
     res.json(ok(await svc.listAll()));
   }),
 
+  /**
+   * Opciones para `app-select-search` / `app-multi-select-field`, que leen la
+   * etiqueta desde el campo indicado por `optionLabel` (por defecto `name`).
+   * Por eso `name` se aplana a "Modelo Nombre (Año)" y el nombre crudo del
+   * modelo queda aparte en `modelName`.
+   */
+  listOptions: ah(async (_req: Request, res: Response) => {
+    const rows = await svc.listOptions();
+    res.json(
+      ok(
+        rows.map((v) => ({
+          id: v.id,
+          name: `${v.model.name} ${v.name} (${v.year})`,
+          year: v.year,
+          modelName: v.model.name,
+        })),
+      ),
+    );
+  }),
+
   create: ah(async (req: Request, res: Response) => {
     const parsed = createVersionSchema.safeParse(req.body);
     if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);

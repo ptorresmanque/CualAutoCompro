@@ -23,11 +23,12 @@ export class MaintenanceService {
     });
   }
 
-  async listPaged(q: string | undefined, params: PaginationParams) {
+  async listPaged(q: string | undefined, params: PaginationParams, versionId?: string) {
     const where: Prisma.MaintenanceCostWhereInput = {
       deletedAt: null,
       version: { deletedAt: null, model: { deletedAt: null, brand: { deletedAt: null } } },
     };
+    if (versionId) where.versionId = versionId;
     if (q) {
       const term = q.trim();
       if (term.length > 0) {

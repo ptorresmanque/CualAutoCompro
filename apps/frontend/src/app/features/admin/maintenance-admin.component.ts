@@ -1,24 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
-import { firstValueFrom } from 'rxjs';
-import { AdminFeedbackService } from '../../core/admin-feedback.service';
-import { ApiCallError } from '../../core/api-error';
-import { ApiService } from '../../core/api.service';
+import { AdminOptionsCacheService } from '../../core/admin-options-cache.service';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
-import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
-import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { PaginationComponent } from '../../shared/ui/pagination.component';
-import type { PagedResponse } from '../../shared/ui/pagination.types';
-import { sortItems, type SortDir } from './sort-utils';
+import { AdminCrudStore } from '../../shared/ui/admin-crud.store';
+import { AdminEditDialogComponent } from './admin-edit-dialog.component';
+import { STICKY_FIELDS } from './entity-schemas';
 
 interface MaintenanceRow { id: string; versionId: string; mileageTag: number; costClp: number; }
-interface VersionOption { id: string; name: string; model?: { name: string } | null; }
-type SortKey = 'versionId' | 'mileageTag' | 'costClp';
+interface VersionOption { id: string; name: string; }
 
 @Component({
   selector: 'app-maintenance-admin',
@@ -37,163 +31,55 @@ type SortKey = 'versionId' | 'mileageTag' | 'costClp';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MaintenanceAdminComponent {
-  private api = inject(ApiService);
-  private feedback = inject(AdminFeedbackService);
-  private dialog = inject(MatDialog);
+  private optionsCache = inject(AdminOptionsCacheService);
 
   readonly editDialog = viewChild<AdminEditDialogComponent>(AdminEditDialogComponent);
 
   readonly versions = signal<VersionOption[]>([]);
   readonly selectedVersion = signal<string>('');
-  readonly items = signal<MaintenanceRow[]>([]);
-  readonly pagination = signal({ page: 1, pageSize: 25, total: 0, totalPages: 1 });
-  readonly page = signal(1);
-  readonly pageSize = signal(25);
-  readonly search = signal('');
-  readonly dialogEntity = signal<MaintenanceRow | null | undefined>(undefined);
-  readonly dialogMode = computed(() => (this.dialogEntity() === undefined ? 'closed' : 'open'));
-  readonly error = signal<string | null>(null);
-  readonly loading = signal(false);
+  readonly optionsError = signal<string | null>(null);
 
-  readonly sortKey = signal<SortKey | null>('mileageTag');
-  readonly sortDir = signal<SortDir>('asc');
-
-  readonly displayed = computed<MaintenanceRow[]>(() =>
-    sortItems(this.items(), this.sortKey(), this.sortDir(), (m, k) => m[k as SortKey]),
-  );
+  // Anotación explícita: `beforeSave` lee `this.crud`, y sin el tipo declarado
+  // TypeScript no puede resolver la referencia circular del inicializador.
+  readonly crud: AdminCrudStore<MaintenanceRow> = new AdminCrudStore<MaintenanceRow>({
+    apiPath: '/admin/maintenance',
+    label: { singular: 'Mantención', created: 'creada', updated: 'actualizada', deleted: 'eliminada' },
+    rowName: (row) => `${row.mileageTag} km`,
+    sortAccessor: (row, key) => row[key as 'mileageTag' | 'costClp'],
+    initialSort: { key: 'mileageTag', dir: 'asc' },
+    // El filtro por versión se resuelve en el servidor.
+    extraParams: (): Record<string, string | number> =>
+      this.selectedVersion() ? { versionId: this.selectedVersion() } : {},
+    // El diálogo no muestra versionId (está oculto): se inyecta al guardar.
+    beforeSave: (value) => ({
+      ...value,
+      versionId: this.crud.editingRow()?.versionId ?? this.selectedVersion(),
+    }),
+    stickyFields: STICKY_FIELDS.maintenance,
+    onValidationError: (fields) => this.editDialog()?.applyBackendErrors(fields),
+  });
 
   constructor() {
     void this.loadVersions();
   }
 
+  /**
+   * Usa `/admin/versions/options`, que devuelve el catálogo completo. Antes esto
+   * pedía `/versions?pageSize=50` y las versiones más allá de la 50 no se podían
+   * seleccionar.
+   */
   private async loadVersions(): Promise<void> {
-    this.loading.set(true);
     try {
-      const res = await this.api.get<{ data: { items: VersionOption[] } | VersionOption[] }>(
-        '/versions',
-        { pageSize: 50 },
-      );
-      const data = res.data;
-      this.versions.set(Array.isArray(data) ? data : data.items);
+      this.versions.set(await this.optionsCache.get<VersionOption>('/admin/versions/options'));
     } catch (e) {
-      this.error.set((e as Error).message);
-    } finally {
-      this.loading.set(false);
-    }
-  }
-
-  private async loadMaintenance(versionId: string): Promise<void> {
-    this.loading.set(true);
-    try {
-      const params: Record<string, string | number> = { page: this.page(), pageSize: this.pageSize() };
-      const q = this.search().trim();
-      if (q.length > 0) params['q'] = q;
-      const res = await this.api.get<PagedResponse<MaintenanceRow[]>>('/admin/maintenance', params);
-      this.items.set(res.data);
-      this.pagination.set(res.pagination);
-    } catch (e) {
-      this.error.set((e as Error).message);
-    } finally {
-      this.loading.set(false);
+      this.optionsError.set((e as Error).message);
     }
   }
 
   onVersionChange(versionId: string): void {
     this.selectedVersion.set(versionId);
-    this.items.set([]);
     if (versionId) {
-      void this.loadMaintenance(versionId);
-    }
-  }
-
-  openCreate(): void {
-    this.dialogEntity.set(null);
-  }
-  openEdit(row: MaintenanceRow): void {
-    this.dialogEntity.set(row);
-  }
-  closeDialog(): void {
-    this.dialogEntity.set(undefined);
-  }
-
-  async onSave(value: Record<string, unknown>): Promise<void> {
-    const e = this.dialogEntity();
-    const versionId = e ? e.versionId : this.selectedVersion();
-    const payload: Record<string, unknown> = { ...value, versionId };
-    const mileage = payload['mileageTag'];
-    const mileageLabel = mileage !== undefined ? `${mileage} km` : '';
-    try {
-      if (e) {
-        await this.api.patch(`/admin/maintenance/${e.id}`, payload);
-        this.feedback.success(`Mantención ${mileageLabel} actualizada`);
-      } else {
-        await this.api.post(`/admin/maintenance`, payload);
-        this.feedback.success(`Mantención ${mileageLabel} creada`);
-      }
-      this.dialogEntity.set(undefined);
-      await this.loadMaintenance(this.selectedVersion());
-    } catch (err) {
-      if (err instanceof ApiCallError && err.backend.code === 'VALIDATION' && err.backend.fields) {
-        this.editDialog()?.applyBackendErrors(err.backend.fields);
-        return;
-      }
-      const msg = (err as Error).message;
-      this.error.set(msg);
-      this.feedback.error(msg);
-    }
-  }
-
-  async confirmDelete(row: MaintenanceRow): Promise<void> {
-    const ref = this.dialog.open(ConfirmDialogComponent, {
-      disableClose: true,
-      data: {
-        title: 'Eliminar mantención',
-        message: `¿Eliminar el registro de mantención a los ${row.mileageTag} km?`,
-        confirmLabel: 'Eliminar',
-        danger: true,
-      },
-    });
-    const ok = await firstValueFrom(ref.afterClosed());
-    if (!ok) return;
-    try {
-      await this.api.delete(`/admin/maintenance/${row.id}`);
-      this.feedback.success(`Mantención ${row.mileageTag} km eliminada`);
-      await this.loadMaintenance(this.selectedVersion());
-    } catch (err) {
-      const msg = (err as Error).message;
-      this.error.set(msg);
-      this.feedback.error(msg);
-    }
-  }
-
-  onSearch(value: string): void {
-    this.search.set(value);
-    this.page.set(1);
-    if (this.selectedVersion()) void this.loadMaintenance(this.selectedVersion());
-  }
-
-  onPageChange(page: number): void {
-    this.page.set(page);
-    if (this.selectedVersion()) void this.loadMaintenance(this.selectedVersion());
-  }
-
-  onPageSizeChange(pageSize: number): void {
-    this.pageSize.set(pageSize);
-    this.page.set(1);
-    if (this.selectedVersion()) void this.loadMaintenance(this.selectedVersion());
-  }
-
-  retry(): void {
-    this.error.set(null);
-    if (this.selectedVersion()) void this.loadMaintenance(this.selectedVersion());
-  }
-
-  toggleSort(key: SortKey): void {
-    if (this.sortKey() === key) {
-      this.sortDir.update((d) => (d === 'asc' ? 'desc' : 'asc'));
-    } else {
-      this.sortKey.set(key);
-      this.sortDir.set('asc');
+      this.crud.onSearch(this.crud.search());
     }
   }
 

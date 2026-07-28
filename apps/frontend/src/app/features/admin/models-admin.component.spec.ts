@@ -31,8 +31,8 @@ describe('ModelsAdminComponent', () => {
     }
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
-    expect(fixture.componentInstance.items().length).toBe(1);
-    expect(fixture.componentInstance.pagination().total).toBe(1);
+    expect(fixture.componentInstance.crud.items().length).toBe(1);
+    expect(fixture.componentInstance.crud.pagination().total).toBe(1);
   });
 
   it('openCreate muestra dialog', async () => {
@@ -48,7 +48,7 @@ describe('ModelsAdminComponent', () => {
       else r.flush({ data: [], pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 }, error: null });
     }
     await fixture.whenStable();
-    fixture.componentInstance.openCreate();
-    expect(fixture.componentInstance.dialogEntity()).toBeNull();
+    fixture.componentInstance.crud.openCreate();
+    expect(fixture.componentInstance.crud.dialogEntity()).toBeNull();
   });
 });

@@ -79,7 +79,7 @@ describe('AdminEditDialogComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const modelsReq = http.expectOne((r) => r.url.endsWith('/api/v1/admin/models'));
+    const modelsReq = http.expectOne((r) => r.url.endsWith('/api/v1/admin/models/options'));
     modelsReq.flush({
       data: [
         { id: 'm1', name: 'Yaris' },
@@ -697,7 +697,7 @@ describe('Sections layout', () => {
       'modelId', 'name', 'year', 'priceClp',
     ]);
     expect(byId.get('motor')?.fields.map((f) => f.field)).toEqual([
-      'transmission', 'fuel', 'engineDisplacementCc', 'powerHp', 'torqueNm',
+      'transmission', 'fuel', 'traction', 'engineType', 'engineDisplacementCc', 'powerHp', 'torqueNm',
     ]);
     expect(byId.get('consumo')?.fields.length).toBe(3);
     expect(byId.get('dimensiones')?.fields.length).toBe(5);
@@ -716,8 +716,10 @@ describe('Sections layout', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
+    // Las secciones opcionales usan un <button> plegable en vez de <h3>; el
+    // label vive en .dialog-section-label en ambos casos.
     const headers = Array.from(
-      fixture.nativeElement.querySelectorAll('.dialog-section-header') as NodeListOf<Element>,
+      fixture.nativeElement.querySelectorAll('.dialog-section-label') as NodeListOf<Element>,
     ).map((el) => el.textContent?.trim());
     expect(headers).toEqual([
       'Identificación',
@@ -849,5 +851,183 @@ describe('Sections layout', () => {
 
     const host = fixture.nativeElement as HTMLElement;
     expect(host.classList.contains('with-nav')).toBe(false);
+  });
+});
+
+describe('Guardar y crear otro', () => {
+  const versionTemplate = {
+    modelId: '', name: '', year: 2026, priceClp: 0,
+    transmission: 'MANUAL', fuel: 'BENCINA',
+    powerHp: 0, torqueNm: 0,
+    lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0, trunkLiters: 0,
+  };
+
+  it('el botón solo existe en modo create', async () => {
+    const { fixture, http } = setup('version');
+    http.match(() => true).forEach((r) => r.flush({ data: versionTemplate }));
+    // La plantilla llega por una cadena de promesas: hay que ceder un macrotask.
+    await new Promise((r) => setTimeout(r, 0));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="dialog-save-and-new"]'),
+    ).toBeTruthy();
+
+    fixture.componentRef.setInput('mode', 'edit');
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="dialog-save-and-new"]'),
+    ).toBeNull();
+  });
+
+  it('emite saveAndNew y no save', async () => {
+    const { fixture, http } = setup('version');
+    http.match(() => true).forEach((r) => r.flush({ data: versionTemplate }));
+    // La plantilla llega por una cadena de promesas: hay que ceder un macrotask.
+    await new Promise((r) => setTimeout(r, 0));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const saved: unknown[] = [];
+    const savedAndNew: unknown[] = [];
+    fixture.componentInstance.save.subscribe((v) => saved.push(v));
+    fixture.componentInstance.saveAndNew.subscribe((v) => savedAndNew.push(v));
+
+    // Rellena todo lo que falte para que el form sea válido, sin depender de
+    // qué campos son obligatorios hoy.
+    const form = fixture.componentInstance.form();
+    for (const name of Object.keys(form.controls)) {
+      const ctrl = form.get(name)!;
+      if (ctrl.valid) continue;
+      ctrl.setValue(name === 'name' ? 'XLI' : 1);
+    }
+    expect(form.valid).toBe(true);
+    fixture.detectChanges();
+
+    const btn = fixture.nativeElement.querySelector(
+      '[data-testid="dialog-save-and-new"]',
+    ) as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    btn.click();
+
+    expect(savedAndNew.length).toBe(1);
+    expect(saved.length).toBe(0);
+  });
+
+  it('un prefill parcial limpia los campos no sticky y deja el form pristine', async () => {
+    const { fixture, http } = setup('version');
+    http.match(() => true).forEach((r) => r.flush({ data: versionTemplate }));
+    // La plantilla llega por una cadena de promesas: hay que ceder un macrotask.
+    await new Promise((r) => setTimeout(r, 0));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const form = fixture.componentInstance.form();
+    form.patchValue({ modelId: 'm1', name: 'XLI', priceClp: 15000000 });
+    form.markAsDirty();
+
+    // Lo que hace el store tras un saveAndNew exitoso: solo los sticky.
+    fixture.componentRef.setInput('entity', { modelId: 'm1', year: 2026 });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(form.get('modelId')?.value).toBe('m1');
+    expect(form.get('year')?.value).toBe(2026);
+    expect(form.get('name')?.value).toBeNull();
+    expect(form.get('priceClp')?.value).toBeNull();
+    expect(form.pristine).toBe(true);
+  });
+});
+
+describe('Secciones plegables', () => {
+  const versionTemplate = {
+    modelId: '', name: '', year: 2026, priceClp: 0,
+    transmission: 'MANUAL', fuel: 'BENCINA',
+    powerHp: 0, torqueNm: 0,
+    lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0, trunkLiters: 0,
+  };
+
+  const sectionsOf = (fixture: { componentInstance: AdminEditDialogComponent }) =>
+    new Map(fixture.componentInstance.sections().map((s) => [s.id, s]));
+
+  it('solo pliega secciones enteramente opcionales', async () => {
+    const { fixture, http } = setup('version');
+    http.match(() => true).forEach((r) => r.flush({ data: versionTemplate }));
+    // La plantilla llega por una cadena de promesas: hay que ceder un macrotask.
+    await new Promise((r) => setTimeout(r, 0));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const byId = sectionsOf(fixture);
+    expect(byId.get('seguros-y-permisos')?.collapsible).toBe(true);
+    expect(byId.get('tanque-y-bateria')?.collapsible).toBe(true);
+    expect(byId.get('recalls')?.collapsible).toBe(true);
+
+    // Con campos obligatorios: nunca se pliegan.
+    expect(byId.get('identificacion')?.collapsible).toBe(false);
+    expect(byId.get('motor')?.collapsible).toBe(false);
+    expect(byId.get('dimensiones')?.collapsible).toBe(false);
+
+    // Relaciones y campos condicionados por combustible: se dejan visibles.
+    expect(byId.get('equipamiento')?.collapsible).toBe(false);
+    expect(byId.get('apariencia')?.collapsible).toBe(false);
+    expect(byId.get('consumo')?.collapsible).toBe(false);
+  });
+
+  it('al crear arrancan cerradas y al abrirlas se muestran', async () => {
+    const { fixture, http } = setup('version');
+    http.match(() => true).forEach((r) => r.flush({ data: versionTemplate }));
+    // La plantilla llega por una cadena de promesas: hay que ceder un macrotask.
+    await new Promise((r) => setTimeout(r, 0));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const byId = sectionsOf(fixture);
+    const recalls = byId.get('recalls')!;
+    expect(fixture.componentInstance.isSectionOpen(recalls)).toBe(false);
+    expect(fixture.componentInstance.isSectionOpen(byId.get('motor')!)).toBe(true);
+
+    fixture.componentInstance.toggleSection(recalls);
+    expect(fixture.componentInstance.isSectionOpen(recalls)).toBe(true);
+  });
+
+  it('al editar una entidad con datos, la sección correspondiente arranca abierta', async () => {
+    const { fixture, http } = setup('version');
+    http.match(() => true).forEach((r) => r.flush({ data: versionTemplate }));
+    // La plantilla llega por una cadena de promesas: hay que ceder un macrotask.
+    await new Promise((r) => setTimeout(r, 0));
+    await fixture.whenStable();
+
+    fixture.componentRef.setInput('entity', {
+      id: 'v1', name: 'XLI', mandatoryInsuranceClp: 45000,
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const byId = sectionsOf(fixture);
+    expect(fixture.componentInstance.isSectionOpen(byId.get('seguros-y-permisos')!)).toBe(true);
+    // Las que no traen datos siguen plegadas.
+    expect(fixture.componentInstance.isSectionOpen(byId.get('tanque-y-bateria')!)).toBe(false);
+  });
+
+  it('un submit inválido abre la sección plegada que tiene el error', async () => {
+    const { fixture, http } = setup('version');
+    http.match(() => true).forEach((r) => r.flush({ data: versionTemplate }));
+    // La plantilla llega por una cadena de promesas: hay que ceder un macrotask.
+    await new Promise((r) => setTimeout(r, 0));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const byId = sectionsOf(fixture);
+    const recalls = byId.get('recalls')!;
+    expect(fixture.componentInstance.isSectionOpen(recalls)).toBe(false);
+
+    // Error de backend sobre un campo que vive en una sección plegada.
+    fixture.componentInstance.applyBackendErrors([
+      { path: ['recallUrl'], message: 'URL inválida' },
+    ]);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.isSectionOpen(recalls)).toBe(true);
   });
 });

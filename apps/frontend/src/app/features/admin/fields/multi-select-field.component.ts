@@ -13,7 +13,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { ApiService } from '../../../core/api.service';
+import { AdminOptionsCacheService } from '../../../core/admin-options-cache.service';
 
 interface OptionItem { id: string; [k: string]: unknown; }
 
@@ -31,7 +31,7 @@ interface OptionItem { id: string; [k: string]: unknown; }
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MultiSelectFieldComponent implements OnInit {
-  private api = inject(ApiService);
+  private optionsCache = inject(AdminOptionsCacheService);
   private destroyRef = inject(DestroyRef);
 
   readonly control = input.required<FormControl<string[] | null>>();
@@ -83,8 +83,7 @@ export class MultiSelectFieldComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const res = await this.api.get<{ data: OptionItem[] }>(this.optionsApi()!);
-      this.remoteOptions.set(res.data);
+      this.remoteOptions.set(await this.optionsCache.get<OptionItem>(this.optionsApi()!));
     } catch (e) {
       this.error.set((e as Error).message);
     } finally {

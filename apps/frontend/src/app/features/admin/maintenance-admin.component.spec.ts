@@ -9,185 +9,167 @@ const dialogMock = {
   open: () => ({ afterClosed: () => of(true) }),
 };
 
+const tick = () => new Promise((r) => setTimeout(r, 0));
+
+const paged = (data: unknown[]) => ({
+  data,
+  pagination: { page: 1, pageSize: 25, total: data.length, totalPages: 1 },
+  error: null,
+});
+
+function setup() {
+  TestBed.configureTestingModule({
+    imports: [MaintenanceAdminComponent],
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+      { provide: MatDialog, useValue: dialogMock },
+    ],
+  });
+  const fixture = TestBed.createComponent(MaintenanceAdminComponent);
+  fixture.detectChanges();
+  return { fixture, http: TestBed.inject(HttpTestingController) };
+}
+
+/** El selector se alimenta del catálogo completo, no de una página. */
+const flushVersionOptions = (
+  http: HttpTestingController,
+  versions = [
+    { id: 'v1', name: 'Modelo A 1.6 (2026)' },
+    { id: 'v2', name: 'Modelo B 2.0 (2026)' },
+  ],
+) => {
+  http
+    .expectOne((r) => r.url.includes('/api/v1/admin/versions/options'))
+    .flush({ data: versions, error: null });
+};
+
 describe('MaintenanceAdminComponent', () => {
-  it('carga lista de versiones y permite crear tras seleccionar', async () => {
-    TestBed.configureTestingModule({
-      imports: [MaintenanceAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
-    });
-    const fixture = TestBed.createComponent(MaintenanceAdminComponent);
-    fixture.detectChanges();
-    const http = TestBed.inject(HttpTestingController);
-    const reqs = http.match(() => true);
-    expect(reqs.length).toBeGreaterThan(0);
-    for (const r of reqs) {
-      r.flush({
-        data: [{ id: 'v1', name: 'XLI', model: { name: 'Corolla' } }],
-        pagination: { page: 1, pageSize: 50, total: 1, totalPages: 1 },
-        error: null,
-      });
-    }
+  it('alimenta el selector desde /admin/versions/options', async () => {
+    const { fixture, http } = setup();
+    // 55 versiones: antes el selector pedía /versions?pageSize=50 y las
+    // últimas quedaban fuera de alcance.
+    const many = Array.from({ length: 55 }, (_, i) => ({ id: `v${i}`, name: `V${i}` }));
+    flushVersionOptions(http, many);
     await fixture.whenStable();
-    await new Promise((r) => setTimeout(r, 0));
-    expect(fixture.componentInstance.versions().length).toBeGreaterThan(0);
-    fixture.componentInstance.onVersionChange('v1');
-    await fixture.whenStable();
-    const mainReqs = http.match(() => true);
-    for (const r of mainReqs) r.flush({
-        data: [],
-        pagination: { page: 1, pageSize: 25, total: 0, totalPages: 1 },
-        error: null,
-      });
-    await fixture.whenStable();
-    await new Promise((r) => setTimeout(r, 0));
-    fixture.componentInstance.openCreate();
-    expect(fixture.componentInstance.dialogEntity()).toBeNull();
+    await tick();
+
+    expect(fixture.componentInstance.versions().length).toBe(55);
   });
 
-  it('al cambiar de versión filtra los items por versionId', async () => {
-    TestBed.configureTestingModule({
-      imports: [MaintenanceAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
-    });
-    const fixture = TestBed.createComponent(MaintenanceAdminComponent);
-    fixture.detectChanges();
-
-    const http = TestBed.inject(HttpTestingController);
-    const versionsReq = http.expectOne((r) => r.url.includes('/api/v1/versions'));
-    versionsReq.flush({
-      data: {
-        items: [
-          { id: 'v1', name: '1.6', model: { name: 'Modelo A' } },
-          { id: 'v2', name: '2.0', model: { name: 'Modelo B' } },
-        ],
-      },
-    });
-
+  it('no consulta mantenciones hasta que se elige una versión', async () => {
+    const { fixture, http } = setup();
+    flushVersionOptions(http);
     await fixture.whenStable();
-    fixture.componentInstance.onVersionChange('v1');
-    fixture.detectChanges();
+    await tick();
 
-    const adminReq = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance'));
-    adminReq.flush({
-      data: [
-        { id: 'm1', versionId: 'v1', mileageTag: 10000, costClp: 50000 },
-        { id: 'm2', versionId: 'v2', mileageTag: 30000, costClp: 80000 },
-        { id: 'm3', versionId: 'v1', mileageTag: 60000, costClp: 120000 },
-      ],
-    });
-
-    await fixture.whenStable();
-    await new Promise((r) => setTimeout(r, 0));
-    const items = fixture.componentInstance.displayed();
-    expect(items.length).toBe(2);
-    expect(items.every((i) => i.versionId === 'v1')).toBe(true);
+    http.expectNone((r) => r.url.includes('/admin/maintenance'));
+    expect(fixture.componentInstance.crud.items()).toEqual([]);
   });
 
-  it('onSave en modo edit NO sobrescribe versionId con el del dropdown', async () => {
-    TestBed.configureTestingModule({
-      imports: [MaintenanceAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
-    });
-    const fixture = TestBed.createComponent(MaintenanceAdminComponent);
-    fixture.detectChanges();
-    const http = TestBed.inject(HttpTestingController);
-
-    const versionsReq = http.expectOne((r) => r.url.includes('/api/v1/versions'));
-    versionsReq.flush({
-      data: {
-        items: [
-          { id: 'v1', name: '1.6', model: { name: 'A' } },
-          { id: 'v2', name: '2.0', model: { name: 'B' } },
-        ],
-      },
-    });
+  it('al elegir una versión pide las mantenciones filtradas por versionId', async () => {
+    const { fixture, http } = setup();
+    flushVersionOptions(http);
     await fixture.whenStable();
+    await tick();
 
-    fixture.componentInstance.onVersionChange('v1');
-    fixture.detectChanges();
-    const adminReq1 = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance'));
-    adminReq1.flush({
-      data: [{ id: 'm1', versionId: 'v1', mileageTag: 10000, costClp: 50000 }],
-    });
-    await fixture.whenStable();
-    await new Promise((r) => setTimeout(r, 0));
-
-    // User switches the dropdown to v2 WHILE editing m1 (a v1 record).
     fixture.componentInstance.onVersionChange('v2');
     fixture.detectChanges();
-    const adminReq2 = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance'));
-    adminReq2.flush({ data: [] });
+
+    const req = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance'));
+    // El filtro se resuelve en el servidor: antes este parámetro no viajaba y
+    // la tabla mostraba las mantenciones de todo el catálogo.
+    expect(req.request.params.get('versionId')).toBe('v2');
+    req.flush(paged([{ id: 'm2', versionId: 'v2', mileageTag: 30000, costClp: 80000 }]));
+
     await fixture.whenStable();
-    await new Promise((r) => setTimeout(r, 0));
+    await tick();
+    expect(fixture.componentInstance.crud.items().length).toBe(1);
+  });
 
-    // Set dialogEntity directly to simulate the user having clicked "Editar"
-    // on the m1 row. We do NOT call detectChanges() here because rendering
-    // the dialog component would trigger an extra GET to
-    // /admin/seed/template/maintenance that this test does not need.
-    // onSave reads dialogEntity from the signal directly.
+  it('paginar y buscar conservan el filtro de versión', async () => {
+    const { fixture, http } = setup();
+    flushVersionOptions(http);
+    await fixture.whenStable();
+    await tick();
+
+    fixture.componentInstance.onVersionChange('v1');
+    http.expectOne((r) => r.url.includes('/admin/maintenance')).flush(paged([]));
+    await tick();
+
+    fixture.componentInstance.crud.onPageChange(2);
+    const paginated = http.expectOne((r) => r.url.includes('/admin/maintenance'));
+    expect(paginated.request.params.get('versionId')).toBe('v1');
+    expect(paginated.request.params.get('page')).toBe('2');
+    paginated.flush(paged([]));
+    await tick();
+
+    fixture.componentInstance.crud.onSearch('10000');
+    const searched = http.expectOne((r) => r.url.includes('/admin/maintenance'));
+    expect(searched.request.params.get('versionId')).toBe('v1');
+    expect(searched.request.params.get('q')).toBe('10000');
+    searched.flush(paged([]));
+    await tick();
+  });
+
+  it('en modo edit conserva el versionId del registro, no el del dropdown', async () => {
+    const { fixture, http } = setup();
+    flushVersionOptions(http);
+    await fixture.whenStable();
+    await tick();
+
+    fixture.componentInstance.onVersionChange('v1');
+    http.expectOne((r) => r.url.includes('/admin/maintenance')).flush(paged([]));
+    await tick();
+
+    // El usuario cambia el dropdown a v2 y luego edita un registro de v1.
+    fixture.componentInstance.onVersionChange('v2');
+    http.expectOne((r) => r.url.includes('/admin/maintenance')).flush(paged([]));
+    await tick();
+
     const m1 = { id: 'm1', versionId: 'v1', mileageTag: 10000, costClp: 99999 };
-    fixture.componentInstance.dialogEntity.set(m1);
+    fixture.componentInstance.crud.openEdit(m1 as never);
 
-    const savePromise = fixture.componentInstance.onSave({
+    const savePromise = fixture.componentInstance.crud.save({
       mileageTag: 11000,
       costClp: 99999,
     });
 
-    const patchReq = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance/m1'));
-    expect(patchReq.request.method).toBe('PATCH');
-    // versionId must remain v1 (the entity's original) — NOT v2 (the dropdown)
-    expect(patchReq.request.body.versionId).toBe('v1');
-    patchReq.flush({ data: { ...m1, mileageTag: 11000 } });
+    const patch = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance/m1'));
+    expect(patch.request.method).toBe('PATCH');
+    expect(patch.request.body.versionId).toBe('v1');
+    patch.flush({ data: { ...m1, mileageTag: 11000 }, error: null });
 
-    // Drain the PATCH microtask so the post-PATCH loadMaintenance fires its GET.
-    await new Promise((r) => setTimeout(r, 0));
-
-    // The reload GET triggered by onSave for the currently-selected version (v2).
-    const reloadReq = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance'));
-    reloadReq.flush({ data: [] });
+    await tick();
+    http.expectOne((r) => r.url.includes('/admin/maintenance')).flush(paged([]));
     await savePromise;
-    await fixture.whenStable();
   });
 
-  it('onSave en modo create inyecta versionId desde selectedVersion cuando el form no lo trae', async () => {
-    TestBed.configureTestingModule({
-      imports: [MaintenanceAdminComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
-    });
-    const fixture = TestBed.createComponent(MaintenanceAdminComponent);
-    fixture.detectChanges();
-    const http = TestBed.inject(HttpTestingController);
-
-    const versionsReq = http.expectOne((r) => r.url.includes('/api/v1/versions'));
-    versionsReq.flush({
-      data: { items: [{ id: 'v1', name: '1.6', model: { name: 'A' } }] },
-    });
+  it('en modo create inyecta el versionId del dropdown', async () => {
+    const { fixture, http } = setup();
+    flushVersionOptions(http);
     await fixture.whenStable();
+    await tick();
 
     fixture.componentInstance.onVersionChange('v1');
-    fixture.detectChanges();
-    const adminReq1 = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance'));
-    adminReq1.flush({ data: [] });
-    await fixture.whenStable();
-    await new Promise((r) => setTimeout(r, 0));
+    http.expectOne((r) => r.url.includes('/admin/maintenance')).flush(paged([]));
+    await tick();
 
-    fixture.componentInstance.dialogEntity.set(null);
-    fixture.detectChanges();
+    fixture.componentInstance.crud.openCreate();
+    expect(fixture.componentInstance.crud.dialogEntity()).toBeNull();
 
-    const savePromise = fixture.componentInstance.onSave({
+    const savePromise = fixture.componentInstance.crud.save({
       mileageTag: 15000,
       costClp: 75000,
     });
 
-    const postReq = http.expectOne((r) => r.url.endsWith('/api/v1/admin/maintenance'));
-    expect(postReq.request.method).toBe('POST');
-    expect(postReq.request.body.versionId).toBe('v1');
-    postReq.flush({ data: { id: 'm-new', versionId: 'v1', mileageTag: 15000, costClp: 75000 } });
+    const post = http.expectOne((r) => r.url.endsWith('/api/v1/admin/maintenance'));
+    expect(post.request.method).toBe('POST');
+    expect(post.request.body.versionId).toBe('v1');
+    post.flush({ data: { id: 'm-new' }, error: null });
 
-    await new Promise((r) => setTimeout(r, 0));
-    const reloadReq = http.expectOne((r) => r.url.includes('/api/v1/admin/maintenance'));
-    reloadReq.flush({ data: [] });
+    await tick();
+    http.expectOne((r) => r.url.includes('/admin/maintenance')).flush(paged([]));
     await savePromise;
-    await fixture.whenStable();
   });
 });

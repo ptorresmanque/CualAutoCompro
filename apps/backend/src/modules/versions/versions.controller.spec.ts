@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { createApp } from "../../app.js";
 import { setupTestPrisma, resetTestDb } from "../../../__tests__/helpers/db.js";
+import { loginAsAdmin } from "../../../__tests__/helpers/auth.js";
 import { prisma } from "../../infra/prisma.js";
 
 const seed = async () => {
@@ -94,5 +95,78 @@ describe("GET /api/v1/admin/versions", () => {
   it("sin auth → 401", async () => {
     const res = await request(createApp()).get("/api/v1/admin/versions");
     expect(res.status).toBe(401);
+  });
+});
+
+describe("GET /api/v1/admin/versions/options", () => {
+  beforeEach(async () => {
+    setupTestPrisma();
+    await resetTestDb(prisma);
+  });
+
+  it("sin auth → 401", async () => {
+    const res = await request(createApp()).get("/api/v1/admin/versions/options");
+    expect(res.status).toBe(401);
+  });
+
+  it("lista todas las versiones con label 'Modelo Nombre (Año)' y sin relaciones pesadas", async () => {
+    await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+    const res = await request(app).get("/api/v1/admin/versions/options").set("Cookie", cookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body.error).toBeNull();
+    expect(res.body.data).toHaveLength(1);
+    const [option] = res.body.data;
+    expect(option.name).toBe("Yaris XLS (2026)");
+    expect(option.modelName).toBe("Yaris");
+    expect(option.year).toBe(2026);
+    expect(option).not.toHaveProperty("equipmentItems");
+    expect(option).not.toHaveProperty("colorItems");
+  });
+
+  it("no queda capturado por la ruta /:id/price-history", async () => {
+    await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+    const res = await request(app).get("/api/v1/admin/versions/options").set("Cookie", cookie);
+    expect(Array.isArray(res.body.data)).toBe(true);
+  });
+
+  it("devuelve más de 50 versiones (el selector ya no topa en pageSize)", async () => {
+    const brand = await prisma.brand.create({ data: { name: "Toyota" } });
+    const model = await prisma.model.create({ data: { brandId: brand.id, name: "Yaris", segment: "HATCHBACK" } });
+    await prisma.version.createMany({
+      data: Array.from({ length: 55 }, (_, i) => ({
+        modelId: model.id, name: `V${i}`, year: 2026, priceClp: 10_000_000,
+        transmission: "MANUAL", fuel: "BENCINA", powerHp: 100, torqueNm: 130,
+        lengthMm: 4000, widthMm: 1700, heightMm: 1500, weightKg: 1100, trunkLiters: 300,
+      })),
+    });
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+    const res = await request(app).get("/api/v1/admin/versions/options").set("Cookie", cookie);
+    expect(res.body.data).toHaveLength(55);
+  });
+
+  it("excluye versiones eliminadas y las de modelos eliminados", async () => {
+    const brand = await prisma.brand.create({ data: { name: "Toyota" } });
+    const model = await prisma.model.create({ data: { brandId: brand.id, name: "Yaris", segment: "HATCHBACK" } });
+    const deadModel = await prisma.model.create({ data: { brandId: brand.id, name: "Muerto", segment: "SUV", deletedAt: new Date() } });
+    const base = {
+      year: 2026, priceClp: 10_000_000, transmission: "MANUAL", fuel: "BENCINA",
+      powerHp: 100, torqueNm: 130, lengthMm: 4000, widthMm: 1700, heightMm: 1500,
+      weightKg: 1100, trunkLiters: 300,
+    };
+    await prisma.version.create({ data: { ...base, modelId: model.id, name: "Viva" } });
+    await prisma.version.create({ data: { ...base, modelId: model.id, name: "Borrada", deletedAt: new Date() } });
+    await prisma.version.create({ data: { ...base, modelId: deadModel.id, name: "Huerfana" } });
+
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+    const res = await request(app).get("/api/v1/admin/versions/options").set("Cookie", cookie);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].name).toBe("Yaris Viva (2026)");
   });
 });

@@ -32,16 +32,35 @@
             {{ err }}
           </div>
         }
-        @if (loading()) {
-          <p class="dialog-loading">Cargando plantilla…</p>
-        } @else if (tab() === 'form') {
+        @if (tab() === 'form') {
           <form [formGroup]="form()" class="dialog-sections">
             @for (section of sections(); track section.id; let isFirstSection = $first) {
               <section [id]="section.id" #sectionEl class="dialog-section">
                 @if (section.label) {
-                  <h3 class="dialog-section-header">{{ section.label }}</h3>
+                  @if (section.collapsible) {
+                    <button
+                      type="button"
+                      class="dialog-section-header dialog-section-toggle"
+                      [attr.aria-expanded]="isSectionOpen(section)"
+                      [attr.aria-controls]="'grid-' + section.id"
+                      [attr.data-testid]="'section-toggle-' + section.id"
+                      (click)="toggleSection(section)"
+                    >
+                      <mat-icon class="dialog-section-caret">{{ isSectionOpen(section) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                      <span class="dialog-section-label">{{ section.label }}</span>
+                      <span class="dialog-section-hint">opcional</span>
+                    </button>
+                  } @else {
+                    <h3 class="dialog-section-header">
+                      <span class="dialog-section-label">{{ section.label }}</span>
+                    </h3>
+                  }
                 }
-                <div class="dialog-section-grid">
+                <div
+                  class="dialog-section-grid"
+                  [id]="'grid-' + section.id"
+                  [hidden]="!isSectionOpen(section)"
+                >
                   @for (meta of section.fields; track meta.field; let isFirst = $first) {
                     <div
                       class="dialog-field"
@@ -122,6 +141,15 @@
         type="button"
         (click)="onCancel()"
       >Cancelar</button>
+      @if (mode() === 'create') {
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="loading()"
+          (click)="onSubmitAndNew()"
+          data-testid="dialog-save-and-new"
+        >Guardar y crear otro</button>
+      }
       <button
         mat-flat-button
         color="primary"

@@ -143,6 +143,47 @@ export class EquipmentService {
     }
   }
 
+  /**
+   * Deja la versión con exactamente `itemIds` asociados, en una transacción.
+   * A diferencia de `attach`, es idempotente: reenviar la misma selección no
+   * produce 409. El admin manda la selección completa y el diff se calcula acá,
+   * en vez de emitir un request por ítem desde el navegador.
+   */
+  async syncVersion(versionId: string, itemIds: string[]) {
+    const nextIds = new Set(itemIds);
+
+    const version = await this.prisma.version.findFirst({
+      where: { id: versionId, deletedAt: null, model: { deletedAt: null, brand: { deletedAt: null } } },
+      select: { id: true },
+    });
+    if (!version) throw notFound("Versión no encontrada");
+
+    const valid = await this.prisma.equipmentItem.findMany({
+      where: { id: { in: [...nextIds] }, deletedAt: null },
+      select: { id: true },
+    });
+    if (valid.length !== nextIds.size) throw notFound("Equipamiento no encontrado");
+
+    const current = await this.prisma.versionEquipment.findMany({
+      where: { versionId },
+      select: { equipmentItemId: true },
+    });
+    const currentIds = new Set(current.map((r) => r.equipmentItemId));
+    const toAttach = [...nextIds].filter((id) => !currentIds.has(id));
+    const toDetach = [...currentIds].filter((id) => !nextIds.has(id));
+
+    await this.prisma.$transaction([
+      this.prisma.versionEquipment.deleteMany({
+        where: { versionId, equipmentItemId: { in: toDetach } },
+      }),
+      this.prisma.versionEquipment.createMany({
+        data: toAttach.map((equipmentItemId) => ({ versionId, equipmentItemId })),
+      }),
+    ]);
+
+    return { attached: toAttach.length, detached: toDetach.length };
+  }
+
   async detach(versionId: string, itemId: string) {
     try {
       await this.prisma.versionEquipment.delete({

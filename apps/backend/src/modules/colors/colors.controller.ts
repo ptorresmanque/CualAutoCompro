@@ -7,6 +7,7 @@ import {
   createColorSchema,
   updateColorSchema,
   attachColorSchema,
+  syncColorsSchema,
 } from "./colors.dto.admin.js";
 import { validation } from "../../shared/errors.js";
 import { toCsv } from "../../shared/csv.js";
@@ -51,6 +52,13 @@ export const colorsController = {
     const parsed = attachColorSchema.safeParse(req.body);
     if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     res.json(ok(await svc.attach(parsed.data.versionId, parsed.data.colorId)));
+  }),
+
+  syncVersion: ah(async (req: Request, res: Response) => {
+    const versionId = req.params.versionId ?? "";
+    const parsed = syncColorsSchema.safeParse(req.body);
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
+    res.json(ok(await svc.syncVersion(versionId, parsed.data.colorIds)));
   }),
 
   detach: ah(async (req: Request, res: Response) => {

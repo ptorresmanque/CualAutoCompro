@@ -26,6 +26,9 @@ export const resetTestDb = async (prisma: PrismaClient) => {
     prisma.versionPriceHistory.deleteMany(),
     prisma.versionEquipment.deleteMany(),
     prisma.equipmentItem.deleteMany(),
+    // Color.name es @unique: sin esto, dos specs que crean el mismo color chocan.
+    prisma.versionColor.deleteMany(),
+    prisma.color.deleteMany(),
     prisma.version.deleteMany(),
     prisma.model.deleteMany(),
     prisma.popularityEvent.deleteMany(),

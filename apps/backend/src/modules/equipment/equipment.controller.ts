@@ -7,6 +7,7 @@ import {
   createEquipmentSchema,
   updateEquipmentSchema,
   attachEquipmentSchema,
+  syncEquipmentSchema,
 } from "./equipment.dto.admin.js";
 import { validation } from "../../shared/errors.js";
 import { toCsv } from "../../shared/csv.js";
@@ -57,6 +58,13 @@ export const equipmentController = {
     const parsed = attachEquipmentSchema.safeParse(req.body);
     if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
     res.json(ok(await svc.attach(parsed.data.versionId, parsed.data.itemId)));
+  }),
+
+  syncVersion: ah(async (req: Request, res: Response) => {
+    const versionId = req.params.versionId ?? "";
+    const parsed = syncEquipmentSchema.safeParse(req.body);
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
+    res.json(ok(await svc.syncVersion(versionId, parsed.data.itemIds)));
   }),
 
   detach: ah(async (req: Request, res: Response) => {

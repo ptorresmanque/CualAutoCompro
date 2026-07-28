@@ -14,7 +14,8 @@ import {
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { ApiService } from '../../../core/api.service';
+import { AdminOptionsCacheService } from '../../../core/admin-options-cache.service';
+import { toEnumToken } from '../entity-schemas';
 
 export interface StaticSelectOption { value: string; label: string; }
 interface OptionItem { id?: string; value?: string; label: string; isOther?: boolean; }
@@ -27,7 +28,7 @@ interface OptionItem { id?: string; value?: string; label: string; isOther?: boo
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SelectSearchComponent implements OnInit {
-  private api = inject(ApiService);
+  private optionsCache = inject(AdminOptionsCacheService);
   private el = inject(ElementRef<HTMLElement>);
 
   readonly control = input.required<FormControl<string>>();
@@ -88,8 +89,8 @@ export class SelectSearchComponent implements OnInit {
 
   private async loadRemote(): Promise<void> {
     try {
-      const res = await this.api.get<{ data: { id: string }[] }>(this.optionsApi()!);
-      this.remoteOptions.set(res.data as { id: string }[]);
+      const data = await this.optionsCache.get<{ id: string }>(this.optionsApi()!);
+      this.remoteOptions.set(data);
       const current = this.control().value;
       if (current && !this.query()) {
         const match = this.remoteOptions().find((o) => o.id === current);
@@ -135,7 +136,10 @@ export class SelectSearchComponent implements OnInit {
     let value: string;
     let display: string;
     if (item.isOther) {
-      value = this.query().toUpperCase();
+      // Normaliza a un token válido para ENUM_REGEX: sin acentos ni espacios.
+      value = toEnumToken(this.query());
+      // Si no queda nada utilizable (solo símbolos), no seleccionamos.
+      if (!value) return;
       display = value;
     } else if (item.id != null) {
       value = item.id;

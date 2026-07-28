@@ -31,8 +31,8 @@ describe('EquipmentAdminComponent', () => {
     flushPaged(http, [{ id: 'e1', name: 'Climatizador', category: 'Confort' }]);
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
-    expect(fixture.componentInstance.items().length).toBe(1);
-    expect(fixture.componentInstance.pagination().total).toBe(1);
+    expect(fixture.componentInstance.crud.items().length).toBe(1);
+    expect(fixture.componentInstance.crud.pagination().total).toBe(1);
   });
 
   it('openCreate muestra dialog', async () => {
@@ -45,7 +45,7 @@ describe('EquipmentAdminComponent', () => {
     const http = TestBed.inject(HttpTestingController);
     flushPaged(http, []);
     await fixture.whenStable();
-    fixture.componentInstance.openCreate();
-    expect(fixture.componentInstance.dialogEntity()).toBeNull();
+    fixture.componentInstance.crud.openCreate();
+    expect(fixture.componentInstance.crud.dialogEntity()).toBeNull();
   });
 });

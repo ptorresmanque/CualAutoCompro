@@ -14,4 +14,5 @@ colorsAdminRouter.patch("/:id", colorsController.update);
 colorsAdminRouter.delete("/:id", colorsController.softDelete);
 colorsAdminRouter.post("/:id/restore", colorsController.restore);
 colorsAdminRouter.post("/attach", colorsController.attach);
+colorsAdminRouter.put("/version/:versionId", colorsController.syncVersion);
 colorsAdminRouter.delete("/version/:versionId/color/:colorId", colorsController.detach);

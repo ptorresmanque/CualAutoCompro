@@ -53,6 +53,23 @@ export class ApiService {
     return unwrap(response);
   }
 
+  put<T>(path: string, body: unknown): Promise<T> {
+    return firstValueFrom(
+      this.http.put<T>(`${ENV.apiBase}${path}`, body, {
+        withCredentials: true,
+      }),
+    );
+  }
+
+  /**
+   * Like `put()` but unwraps the `ApiResponse<T>` envelope and throws
+   * `ApiCallError` if `error !== null`.
+   */
+  async putUnwrapped<T>(path: string, body: unknown): Promise<T> {
+    const response = await this.put<ApiResponse<T>>(path, body);
+    return unwrap(response);
+  }
+
   patch<T>(path: string, body: unknown): Promise<T> {
     return firstValueFrom(
       this.http.patch<T>(`${ENV.apiBase}${path}`, body, {

@@ -14,5 +14,10 @@ export const attachColorSchema = z.object({
   colorId: z.string().min(1),
 });
 
+/** Body de `PUT /admin/colors/version/:versionId`: la selección completa. */
+export const syncColorsSchema = z.object({
+  colorIds: z.array(z.string().min(1)),
+});
+
 export type CreateColorInput = z.infer<typeof createColorSchema>;
 export type UpdateColorInput = z.infer<typeof updateColorSchema>;

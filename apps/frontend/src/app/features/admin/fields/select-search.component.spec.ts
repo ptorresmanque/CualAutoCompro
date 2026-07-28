@@ -67,6 +67,51 @@ describe('SelectSearchComponent', () => {
     expect(ctrl.value).toBe('ELECTRIC_SUV');
   });
 
+  it('con allowOther normaliza el texto libre a un token de enum válido', () => {
+    TestBed.configureTestingModule({
+      imports: [SelectSearchComponent, ReactiveFormsModule],
+    });
+    const fixture = TestBed.createComponent(SelectSearchComponent);
+    const ctrl = new FormControl<string>('', { nonNullable: true });
+    fixture.componentRef.setInput('control', ctrl);
+    fixture.componentRef.setInput('options', ['MANUAL', 'AUTOMATIC']);
+    fixture.componentRef.setInput('allowOther', true);
+    fixture.detectChanges();
+
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[role="combobox"]');
+    input.value = 'Doble embrague';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    const btn: HTMLButtonElement = fixture.nativeElement.querySelector('button[data-testid="select-other"]');
+    btn.click();
+
+    // Antes se guardaba "DOBLE EMBRAGUE" y el backend lo rechazaba por el espacio.
+    expect(ctrl.value).toBe('DOBLE_EMBRAGUE');
+  });
+
+  it('con allowOther ignora un texto sin caracteres utilizables', () => {
+    TestBed.configureTestingModule({
+      imports: [SelectSearchComponent, ReactiveFormsModule],
+    });
+    const fixture = TestBed.createComponent(SelectSearchComponent);
+    const ctrl = new FormControl<string>('', { nonNullable: true });
+    fixture.componentRef.setInput('control', ctrl);
+    fixture.componentRef.setInput('options', ['MANUAL']);
+    fixture.componentRef.setInput('allowOther', true);
+    fixture.detectChanges();
+
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input[role="combobox"]');
+    input.value = '!!!';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    const btn: HTMLButtonElement = fixture.nativeElement.querySelector('button[data-testid="select-other"]');
+    btn.click();
+
+    expect(ctrl.value).toBe('');
+  });
+
   it('navega con ArrowDown/Enter y selecciona el highlighted option', () => {
     TestBed.configureTestingModule({
       imports: [SelectSearchComponent, ReactiveFormsModule],

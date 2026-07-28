@@ -18,4 +18,5 @@ equipmentAdminRouter.patch("/:id", equipmentController.update);
 equipmentAdminRouter.delete("/:id", equipmentController.softDelete);
 equipmentAdminRouter.post("/:id/restore", equipmentController.restore);
 equipmentAdminRouter.post("/attach", equipmentController.attach);
+equipmentAdminRouter.put("/version/:versionId", equipmentController.syncVersion);
 equipmentAdminRouter.delete("/version/:versionId/item/:itemId", equipmentController.detach);

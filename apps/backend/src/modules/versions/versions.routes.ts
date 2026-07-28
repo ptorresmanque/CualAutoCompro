@@ -13,6 +13,8 @@ versionsAdminRouter.get("/", versionsController.listPaged);
 versionsAdminRouter.post("/", versionsController.create);
 versionsAdminRouter.post("/bulk-delete", versionsController.bulkDelete);
 versionsAdminRouter.get("/export", versionsController.exportCsv);
+// Antes de "/:id/price-history": si no, Express captura "options" como :id.
+versionsAdminRouter.get("/options", versionsController.listOptions);
 versionsAdminRouter.get("/:id/price-history", versionsController.listPriceHistory);
 versionsAdminRouter.patch("/:id", versionsController.update);
 versionsAdminRouter.delete("/:id", versionsController.softDelete);

@@ -117,6 +117,47 @@ export class ColorsService {
     }
   }
 
+  /**
+   * Deja la versión con exactamente `colorIds` asociados, en una transacción.
+   * A diferencia de `attach`, es idempotente: reenviar la misma selección no
+   * produce 409. El admin manda la selección completa y el diff se calcula acá,
+   * en vez de emitir un request por color desde el navegador.
+   */
+  async syncVersion(versionId: string, colorIds: string[]) {
+    const nextIds = new Set(colorIds);
+
+    const version = await this.prisma.version.findFirst({
+      where: { id: versionId, deletedAt: null, model: { deletedAt: null, brand: { deletedAt: null } } },
+      select: { id: true },
+    });
+    if (!version) throw notFound("Versión no encontrada");
+
+    const valid = await this.prisma.color.findMany({
+      where: { id: { in: [...nextIds] }, deletedAt: null },
+      select: { id: true },
+    });
+    if (valid.length !== nextIds.size) throw notFound("Color no encontrado");
+
+    const current = await this.prisma.versionColor.findMany({
+      where: { versionId },
+      select: { colorId: true },
+    });
+    const currentIds = new Set(current.map((r) => r.colorId));
+    const toAttach = [...nextIds].filter((id) => !currentIds.has(id));
+    const toDetach = [...currentIds].filter((id) => !nextIds.has(id));
+
+    await this.prisma.$transaction([
+      this.prisma.versionColor.deleteMany({
+        where: { versionId, colorId: { in: toDetach } },
+      }),
+      this.prisma.versionColor.createMany({
+        data: toAttach.map((colorId) => ({ versionId, colorId })),
+      }),
+    ]);
+
+    return { attached: toAttach.length, detached: toDetach.length };
+  }
+
   async detach(versionId: string, colorId: string) {
     try {
       await this.prisma.versionColor.delete({
