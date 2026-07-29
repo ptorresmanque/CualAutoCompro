@@ -38,6 +38,17 @@ export class MultiSelectFieldComponent implements OnInit {
   readonly optionsApi = input<string | null>(null);
   readonly optionLabel = input<string>('name');
   readonly placeholder = input<string>('Buscar…');
+  /**
+   * `id → motivo`, p. ej. `{ 'eq1': 'Heredado de la marca Toyota' }`. Los chips
+   * anotados se marcan con un ícono y el motivo como tooltip. Sirve para
+   * distinguir lo que la entidad trae por herencia de lo que es propio: sin
+   * esto, quitar un chip heredado parece un borrado y no una excepción.
+   */
+  readonly annotations = input<Record<string, string>>({});
+
+  annotationOf(id: string): string | null {
+    return this.annotations()[id] ?? null;
+  }
 
   readonly query = signal('');
   readonly open = signal(false);

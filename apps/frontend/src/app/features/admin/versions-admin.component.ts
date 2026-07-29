@@ -8,14 +8,29 @@ import { AdminCrudStore } from '../../shared/ui/admin-crud.store';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { STICKY_FIELDS } from './entity-schemas';
 
+interface EquipmentEntry {
+  equipmentItem: { id: string; name: string; category: string };
+  /** De dónde sale el ítem: propio de la versión, o heredado del modelo/marca. */
+  source?: 'VERSION' | 'MODEL' | 'BRAND';
+  /** Nombre de la marca o del modelo del que se hereda. */
+  sourceName?: string | null;
+}
+
 interface VersionRow {
   id: string;
   name: string;
   year: number;
   priceClp: number;
   model: { name: string } | null;
-  equipmentItems?: { equipmentItem: { id: string; name: string; category: string } }[];
+  equipmentItems?: EquipmentEntry[];
   colorItems?: { color: { id: string; name: string; hex: string | null } }[];
+}
+
+/** Motivo que se muestra en el chip de un ítem heredado, o null si es propio. */
+function inheritedReason(entry: EquipmentEntry): string | null {
+  if (entry.source === 'BRAND') return `Heredado de la marca ${entry.sourceName ?? ''}`.trim();
+  if (entry.source === 'MODEL') return `Heredado del modelo ${entry.sourceName ?? ''}`.trim();
+  return null;
 }
 
 @Component({
@@ -45,20 +60,39 @@ export class VersionsAdminComponent {
     // Proyecta las relaciones a los ids que esperan los multi-select del
     // diálogo (`equipment` y `colors`). Sin esto los controles quedan vacíos
     // y guardar desasociaría todo.
+    //
+    // `equipment` es el equipamiento **efectivo**: incluye lo que la versión
+    // hereda de su modelo y su marca. `equipmentInherited` marca cuáles son
+    // esos en el chip, para que quitarlos se lea como una excepción de esta
+    // versión y no como borrar el ítem del origen.
     toDialogEntity: (row) => ({
       ...row,
       equipment: row.equipmentItems?.map((ei) => ei.equipmentItem.id) ?? [],
+      equipmentInherited: Object.fromEntries(
+        (row.equipmentItems ?? [])
+          .map((ei) => [ei.equipmentItem.id, inheritedReason(ei)] as const)
+          .filter((pair): pair is readonly [string, string] => pair[1] !== null),
+      ),
       colors: row.colorItems?.map((ci) => ci.color.id) ?? [],
     }),
 
-    // Esos dos campos no van al endpoint de la versión: se sincronizan aparte.
+    // Esos campos no van al endpoint de la versión: se sincronizan aparte.
     beforeSave: (value) => {
-      const { equipment: _eq, colors: _co, equipmentItems: _ei, colorItems: _ci, ...rest } = value;
+      const {
+        equipment: _eq,
+        equipmentInherited: _eqi,
+        colors: _co,
+        equipmentItems: _ei,
+        colorItems: _ci,
+        ...rest
+      } = value;
       return rest;
     },
 
     // Un PUT por relación con la selección completa; el backend calcula el
     // diff en una transacción. Antes acá había un request por ítem, en serie.
+    // Para equipamiento el backend deriva de esa selección qué queda como
+    // propio y qué pasa a ser una exclusión de lo heredado.
     afterSave: async ({ id, value }) => {
       await Promise.all([
         this.api.put(`/admin/equipment/version/${id}`, {

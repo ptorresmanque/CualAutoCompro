@@ -13,7 +13,9 @@ describe('ForgotPasswordComponent', () => {
     });
     const fixture = TestBed.createComponent(ForgotPasswordComponent);
     fixture.componentInstance.email.set('user@example.com');
-    await fixture.componentInstance.submit();
+    // Sin await todavía: `submit()` solo resuelve cuando este mismo test
+    // flushea el request, así que esperarlo acá deadlockea hasta el timeout.
+    const submitted = fixture.componentInstance.submit();
 
     const http = TestBed.inject(HttpTestingController);
     const req = http.expectOne((r) => r.url.includes('/auth/forgot-password'));
@@ -21,6 +23,7 @@ describe('ForgotPasswordComponent', () => {
     expect(req.request.body).toEqual({ email: 'user@example.com' });
     req.flush({ data: { sent: true }, error: null });
 
+    await submitted;
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
     expect(fixture.componentInstance.sent()).toBe(true);

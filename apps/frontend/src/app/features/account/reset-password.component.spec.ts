@@ -29,7 +29,9 @@ describe('ResetPasswordComponent', () => {
     expect(fixture.componentInstance.token()).toBe('a'.repeat(30));
 
     fixture.componentInstance.password.set('new-pass-1234');
-    await fixture.componentInstance.submit();
+    // Sin await todavía: `submit()` solo resuelve cuando este mismo test
+    // flushea el request, así que esperarlo acá deadlockea hasta el timeout.
+    const submitted = fixture.componentInstance.submit();
 
     const http = TestBed.inject(HttpTestingController);
     const req = http.expectOne((r) => r.url.includes('/auth/reset-password'));
@@ -40,6 +42,7 @@ describe('ResetPasswordComponent', () => {
     });
     req.flush({ data: { updated: true }, error: null });
 
+    await submitted;
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 0));
     expect(fixture.componentInstance.done()).toBe(true);

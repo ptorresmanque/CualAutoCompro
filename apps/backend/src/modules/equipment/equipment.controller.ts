@@ -67,6 +67,20 @@ export const equipmentController = {
     res.json(ok(await svc.syncVersion(versionId, parsed.data.itemIds)));
   }),
 
+  syncBrand: ah(async (req: Request, res: Response) => {
+    const brandId = req.params.brandId ?? "";
+    const parsed = syncEquipmentSchema.safeParse(req.body);
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
+    res.json(ok(await svc.syncBrand(brandId, parsed.data.itemIds)));
+  }),
+
+  syncModel: ah(async (req: Request, res: Response) => {
+    const modelId = req.params.modelId ?? "";
+    const parsed = syncEquipmentSchema.safeParse(req.body);
+    if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
+    res.json(ok(await svc.syncModel(modelId, parsed.data.itemIds)));
+  }),
+
   detach: ah(async (req: Request, res: Response) => {
     const { versionId, itemId } = req.params;
     res.json(ok(await svc.detach(versionId ?? "", itemId ?? "")));

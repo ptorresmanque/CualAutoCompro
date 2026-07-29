@@ -87,6 +87,40 @@ describe('VersionsAdminComponent', () => {
     expect(fixture.componentInstance.crud.dialogMode()).toBe('edit');
   });
 
+  it('openEdit marca como heredado solo el equipamiento con source MODEL o BRAND', async () => {
+    const { fixture, http } = setup();
+    const row = {
+      ...rowWithRelations,
+      equipmentItems: [
+        { equipmentItem: { id: 'e1', name: 'A', category: 'C' }, source: 'VERSION', sourceName: null },
+        { equipmentItem: { id: 'e2', name: 'B', category: 'C' }, source: 'BRAND', sourceName: 'Toyota' },
+        { equipmentItem: { id: 'e3', name: 'C', category: 'C' }, source: 'MODEL', sourceName: 'Corolla' },
+      ],
+    };
+    flushList(http, [row]);
+    await fixture.whenStable();
+
+    fixture.componentInstance.crud.openEdit(row as never);
+
+    const entity = fixture.componentInstance.crud.dialogEntity() as Record<string, unknown>;
+    expect(entity['equipment']).toEqual(['e1', 'e2', 'e3']);
+    expect(entity['equipmentInherited']).toEqual({
+      e2: 'Heredado de la marca Toyota',
+      e3: 'Heredado del modelo Corolla',
+    });
+  });
+
+  it('sin source (payload viejo) nada queda marcado como heredado', async () => {
+    const { fixture, http } = setup();
+    flushList(http);
+    await fixture.whenStable();
+
+    fixture.componentInstance.crud.openEdit(rowWithRelations as never);
+
+    const entity = fixture.componentInstance.crud.dialogEntity() as Record<string, unknown>;
+    expect(entity['equipmentInherited']).toEqual({});
+  });
+
   it('openCreate abre el diálogo vacío en modo create', async () => {
     const { fixture, http } = setup();
     flushList(http, []);
@@ -136,6 +170,7 @@ describe('VersionsAdminComponent', () => {
       (r) => r.url.includes('/api/v1/admin/versions/v1') && r.method === 'PATCH',
     );
     expect(patch.request.body.equipment).toBeUndefined();
+    expect(patch.request.body.equipmentInherited).toBeUndefined();
     expect(patch.request.body.colors).toBeUndefined();
     patch.flush({ data: { id: 'v1' }, error: null });
 

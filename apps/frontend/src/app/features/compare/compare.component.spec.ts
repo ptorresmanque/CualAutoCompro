@@ -5,7 +5,9 @@ import {
   provideHttpClientTesting,
   HttpTestingController,
 } from '@angular/common/http/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { CompareComponent } from './compare.component';
 import { CompareStore } from '../../core/compare-store.service';
 import { AuthService, type User } from '../../core/auth.service';
@@ -128,6 +130,10 @@ describe('CompareComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
+              // `paramMap` siempre existe en un ActivatedRoute real, y el
+              // componente lo consulta cuando no hay `slug` en el query string.
+              // Sin esto el mock revienta con "reading 'get' of undefined".
+              paramMap: convertToParamMap({}),
               queryParamMap: {
                 get: (key: string) => (key === 'ids' ? 'a,b,c' : null),
                 has: (key: string) => key === 'ids',
@@ -177,6 +183,10 @@ describe('CompareComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
+              // `paramMap` siempre existe en un ActivatedRoute real, y el
+              // componente lo consulta cuando no hay `slug` en el query string.
+              // Sin esto el mock revienta con "reading 'get' of undefined".
+              paramMap: convertToParamMap({}),
               queryParamMap: {
                 get: (key: string) => (key === 'slug' ? 'abc12345' : null),
                 has: (key: string) => key === 'slug',
@@ -249,6 +259,10 @@ describe('CompareComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
+              // `paramMap` siempre existe en un ActivatedRoute real, y el
+              // componente lo consulta cuando no hay `slug` en el query string.
+              // Sin esto el mock revienta con "reading 'get' of undefined".
+              paramMap: convertToParamMap({}),
               queryParamMap: {
                 get: (key: string) => (key === 'slug' ? 'noexiste' : null),
                 has: (key: string) => key === 'slug',
@@ -453,6 +467,10 @@ describe('CompareComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
+              // `paramMap` siempre existe en un ActivatedRoute real, y el
+              // componente lo consulta cuando no hay `slug` en el query string.
+              // Sin esto el mock revienta con "reading 'get' of undefined".
+              paramMap: convertToParamMap({}),
               queryParamMap: {
                 get: () => null,
                 has: () => false,
@@ -558,6 +576,10 @@ describe('CompareComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
+              // `paramMap` siempre existe en un ActivatedRoute real, y el
+              // componente lo consulta cuando no hay `slug` en el query string.
+              // Sin esto el mock revienta con "reading 'get' of undefined".
+              paramMap: convertToParamMap({}),
               queryParamMap: {
                 get: () => null,
                 has: () => false,
@@ -642,7 +664,7 @@ describe('CompareComponent', () => {
     ).not.toBeNull();
   });
 
-  it('carrusel: click en "Agregar versión" abre popover; click fuera cierra', async () => {
+  it('carrusel: click en "Agregar versión" abre el menú de versiones; click fuera cierra', async () => {
     TestBed.resetTestingModule();
     localStorage.clear();
     store.hydrateFromUrl('x');
@@ -651,12 +673,17 @@ describe('CompareComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        provideNoopAnimations(),
         CompareStore,
         AuthService,
         {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
+              // `paramMap` siempre existe en un ActivatedRoute real, y el
+              // componente lo consulta cuando no hay `slug` en el query string.
+              // Sin esto el mock revienta con "reading 'get' of undefined".
+              paramMap: convertToParamMap({}),
               queryParamMap: {
                 get: () => null,
                 has: () => false,
@@ -722,21 +749,28 @@ describe('CompareComponent', () => {
     ) as HTMLButtonElement;
     btn.click();
     fixture.detectChanges();
-    expect(
-      fixture.nativeElement.querySelector(
-        '[data-testid="favorite-carousel-popover-m1"]',
-      ),
-    ).not.toBeNull();
+    await fixture.whenStable();
 
-    // click outside the popover
-    const outsideClick = new MouseEvent('click', { bubbles: true });
-    document.body.dispatchEvent(outsideClick);
+    // El botón es un `matMenuTriggerFor`: el panel se monta en el overlay del
+    // CDK (fuera de `fixture.nativeElement`), no dentro del componente.
+    const overlay = TestBed.inject(OverlayContainer).getContainerElement();
+    expect(overlay.querySelector('.mat-mdc-menu-panel')).not.toBeNull();
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+    // Lo propio del componente: el menú lista las versiones de ESE favorito.
+    expect(overlay.querySelector('[data-testid="favorite-carousel-opt-v1"]')).not.toBeNull();
+
+    // El cierre por click afuera lo maneja el backdrop del overlay.
+    const backdrop = document.querySelector('.cdk-overlay-backdrop') as HTMLElement;
+    expect(backdrop).not.toBeNull();
+    backdrop.click();
     fixture.detectChanges();
-    expect(
-      fixture.nativeElement.querySelector(
-        '[data-testid="favorite-carousel-popover-m1"]',
-      ),
-    ).toBeNull();
+    await fixture.whenStable();
+
+    // Se asserta `aria-expanded` y no la desaparición del panel: el overlay se
+    // desmonta recién en el callback de la animación de cierre, que en este
+    // entorno de test no corre. `aria-expanded` refleja el estado real del
+    // trigger y además es el contrato de accesibilidad del botón.
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
   });
 
   it('carrusel: carga favoritos reactivo cuando el user hace login después de mount (C2)', async () => {
@@ -753,6 +787,10 @@ describe('CompareComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
+              // `paramMap` siempre existe en un ActivatedRoute real, y el
+              // componente lo consulta cuando no hay `slug` en el query string.
+              // Sin esto el mock revienta con "reading 'get' of undefined".
+              paramMap: convertToParamMap({}),
               queryParamMap: {
                 get: () => null,
                 has: () => false,

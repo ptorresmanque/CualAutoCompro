@@ -1,1 +1,25 @@
 :host { display: block; width: 100%; }
+
+/*
+ * Chip de un ítem que la entidad no tiene propio, sino que hereda (equipamiento
+ * de serie de la marca o del modelo). El motivo va en el `title` del chip.
+ * `--engine-100` es el token de "chips destacados" del design system.
+ */
+/*
+ * Los tokens van con prefijo `--mat-`, NO `--mdc-`: Material ya no lee los
+ * `--mdc-chip-*` y setearlos no hace nada (mismo caso que
+ * `--mat-button-filled-container-color` documentado en apps/frontend/AGENTS.md §3).
+ */
+.chip-inherited {
+  --mat-chip-elevated-container-color: var(--engine-100);
+  --mat-chip-label-text-color: var(--engine-dark);
+  border: 1px solid var(--engine-200);
+}
+
+.chip-inherited-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  margin-right: 0.25rem;
+  color: var(--engine-dark);
+}

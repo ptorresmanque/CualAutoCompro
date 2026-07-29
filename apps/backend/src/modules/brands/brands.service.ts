@@ -20,6 +20,11 @@ export class BrandsService {
       orderBy: { name: "asc" },
       include: {
         dealers: { include: { dealer: { select: { id: true, name: true, url: true, logoUrl: true } } } },
+        // Equipamiento de serie de la marca: lo consume el multi-select del
+        // diálogo admin para prellenar la selección.
+        equipmentItems: {
+          include: { equipmentItem: { select: { id: true, name: true, category: true } } },
+        },
       },
     });
   }
@@ -37,6 +42,9 @@ export class BrandsService {
         take: params.take,
         include: {
           dealers: { include: { dealer: { select: { id: true, name: true, url: true, logoUrl: true } } } },
+          equipmentItems: {
+            include: { equipmentItem: { select: { id: true, name: true, category: true } } },
+          },
         },
       }),
       this.prisma.brand.count({ where }),

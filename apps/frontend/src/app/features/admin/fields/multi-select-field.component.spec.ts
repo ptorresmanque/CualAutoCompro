@@ -108,6 +108,39 @@ describe('MultiSelectFieldComponent', () => {
     expect(ctrl.dirty).toBe(true);
   });
 
+  it('marca solo los chips anotados y expone el motivo como title', async () => {
+    const { fixture, http } = setup(['e1', 'e2']);
+    fixture.componentRef.setInput('annotations', { e2: 'Heredado de la marca Toyota' });
+    await settle(http, fixture);
+
+    const chips = fixture.nativeElement.querySelectorAll('[data-testid="ms-chip"]');
+    expect(chips[0].getAttribute('data-inherited')).toBeNull();
+    expect(chips[1].getAttribute('data-inherited')).toBe('true');
+    expect(chips[1].getAttribute('title')).toBe('Heredado de la marca Toyota');
+    expect(chips[1].querySelectorAll('.chip-inherited-icon').length).toBe(1);
+    expect(chips[0].querySelectorAll('.chip-inherited-icon').length).toBe(0);
+  });
+
+  it('un chip anotado se puede quitar igual que uno propio', async () => {
+    const { fixture, ctrl, http } = setup(['e1', 'e2']);
+    fixture.componentRef.setInput('annotations', { e2: 'Heredado del modelo Corolla' });
+    await settle(http, fixture);
+
+    const removeButtons = fixture.nativeElement.querySelectorAll('[data-testid="ms-chip-remove"]');
+    (removeButtons[1] as HTMLElement).click();
+    fixture.detectChanges();
+
+    expect(ctrl.value).toEqual(['e1']);
+  });
+
+  it('sin annotations ningún chip queda marcado', async () => {
+    const { fixture, http } = setup(['e1']);
+    await settle(http, fixture);
+
+    const chips = fixture.nativeElement.querySelectorAll('[data-testid="ms-chip"]');
+    expect(chips[0].getAttribute('data-inherited')).toBeNull();
+  });
+
   it('excluye opciones ya seleccionadas del dropdown', async () => {
     const { fixture, http } = setup(['e1']);
     await settle(http, fixture);

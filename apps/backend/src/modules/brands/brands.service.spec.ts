@@ -12,6 +12,23 @@ describe("BrandsService.update dealerIds sync", () => {
     await prisma.$disconnect();
   });
 
+  it("listPaged/listAll traen equipmentItems para prellenar el diálogo admin", async () => {
+    const svc = new BrandsService(prisma);
+    const brand = await prisma.brand.create({ data: { name: "Toyota" } });
+    const item = await prisma.equipmentItem.create({
+      data: { name: "Airbag conductor", category: "Seguridad" },
+    });
+    await prisma.brandEquipment.create({ data: { brandId: brand.id, equipmentItemId: item.id } });
+
+    const { rows } = await svc.listPaged(undefined, { skip: 0, take: 10, page: 1, pageSize: 10 });
+    expect(rows[0]?.equipmentItems.map((e) => e.equipmentItem)).toEqual([
+      { id: item.id, name: "Airbag conductor", category: "Seguridad" },
+    ]);
+
+    const all = await svc.listAll();
+    expect(all[0]?.equipmentItems).toHaveLength(1);
+  });
+
   it("update con dealerIds[] reemplaza la lista completa de BrandDealer", async () => {
     const svc = new BrandsService(prisma);
     const brand = await prisma.brand.create({ data: { name: "Toyota" } });

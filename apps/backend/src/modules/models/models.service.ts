@@ -10,6 +10,10 @@ import { mergeEnumFacets, type EnumFacet } from "../../shared/enum-facets.js";
 import { SEGMENTS, type CreateModelInput, type UpdateModelInput } from "./models.dto.admin.js";
 import type { PaginationParams } from "../../shared/pagination.js";
 import { slugify } from "../../shared/slug.js";
+import {
+  resolveEffectiveEquipment,
+  type EffectiveEquipmentEntry,
+} from "../../shared/effective-equipment.js";
 
 export class ModelsService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -63,16 +67,13 @@ export class ModelsService {
           versions: {
             where: versionIncludeWhere,
             orderBy: { priceClp: "asc" },
-            include: {
-              equipmentItems: {
-                include: { equipmentItem: { select: { id: true, name: true, category: true } } },
-              },
-            },
           },
         },
         orderBy: { name: "asc" },
       }),
     ]);
+
+    const equipmentByVersion = await this.equipmentFor(items);
 
     const enriched = items.map((m) => {
       const prices = m.versions.map((v) => v.priceClp);
@@ -106,9 +107,7 @@ export class ModelsService {
         torqueNm: v.torqueNm,
         consumptionCityKmL: v.consumptionCityKmL,
         consumptionHighwayKmL: v.consumptionHighwayKmL,
-        equipmentItems: v.equipmentItems.map((ei) => ({
-          equipmentItem: { id: ei.equipmentItem.id, name: ei.equipmentItem.name, category: ei.equipmentItem.category },
-        })),
+        equipmentItems: equipmentByVersion.get(v.id) ?? [],
       }));
       const galleryUrls = toGalleryUrls(m.galleryUrls);
       return {
@@ -200,7 +199,14 @@ export class ModelsService {
         orderBy: { name: "asc" },
         skip: params.skip,
         take: params.take,
-        include: { brand: { select: { id: true, name: true } } },
+        include: {
+          brand: { select: { id: true, name: true } },
+          // Equipamiento de serie del modelo: lo consume el multi-select del
+          // diálogo admin para prellenar la selección.
+          equipmentItems: {
+            include: { equipmentItem: { select: { id: true, name: true, category: true } } },
+          },
+        },
       }),
       this.prisma.model.count({ where }),
     ]);
@@ -232,16 +238,35 @@ export class ModelsService {
         versions: {
           where: { deletedAt: null },
           orderBy: { priceClp: "asc" },
-          include: {
-            equipmentItems: {
-              include: { equipmentItem: { select: { id: true, name: true, category: true } } },
-            },
-          },
         },
       },
     });
     if (!m) throw notFound("Modelo no encontrado");
-    return m;
+    const equipmentByVersion = await this.equipmentFor([m]);
+    return {
+      ...m,
+      versions: m.versions.map((v) => ({
+        ...v,
+        equipmentItems: equipmentByVersion.get(v.id) ?? [],
+      })),
+    };
+  }
+
+  /**
+   * Equipamiento efectivo (propio + heredado de modelo/marca − exclusiones) de
+   * todas las versiones de los modelos dados, en una sola pasada. Reemplaza al
+   * `include` de `equipmentItems` que había en estas queries: la herencia se
+   * resuelve al leer, ver `shared/effective-equipment.ts`.
+   */
+  private equipmentFor(
+    models: Array<{ id: string; brandId: string; versions: Array<{ id: string }> }>,
+  ): Promise<Map<string, EffectiveEquipmentEntry[]>> {
+    return resolveEffectiveEquipment(
+      this.prisma,
+      models.flatMap((m) =>
+        m.versions.map((v) => ({ versionId: v.id, modelId: m.id, brandId: m.brandId })),
+      ),
+    );
   }
 
   async create(input: CreateModelInput) {

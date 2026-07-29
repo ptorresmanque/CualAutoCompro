@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { badRequest, notFound } from "../../shared/errors.js";
+import { resolveEffectiveEquipment } from "../../shared/effective-equipment.js";
 import type { FuelPricesService } from "../fuel-prices/fuel-prices.service.js";
 
 const DIFF_KEYS = [
@@ -29,9 +30,6 @@ export class CompareService {
           },
         },
         maintenanceCosts: { where: { deletedAt: null } },
-        equipmentItems: {
-          include: { equipmentItem: { select: { id: true, name: true, category: true } } },
-        },
       },
     });
     if (versions.length !== versionIds.length) throw notFound("Alguna versión no existe");
@@ -39,10 +37,22 @@ export class CompareService {
     const fuelPrices = await this.fuelPriceService.current();
     const priceByFuelType = new Map(fuelPrices.map((fp) => [fp.fuelType, fp]));
 
+    // El equipamiento es el efectivo (propio + heredado de modelo/marca −
+    // exclusiones), no un `include`. Ver `shared/effective-equipment.ts`.
+    const equipmentByVersion = await resolveEffectiveEquipment(
+      this.prisma,
+      versions.map((v) => ({
+        versionId: v.id,
+        modelId: v.modelId,
+        brandId: v.model.brandId,
+      })),
+    );
+
     const enriched = versions.map((v) => {
       const fillCost = this.computeFillCost(v, priceByFuelType);
       return {
         ...v,
+        equipmentItems: equipmentByVersion.get(v.id) ?? [],
         model: v.model
           ? {
               ...v.model,

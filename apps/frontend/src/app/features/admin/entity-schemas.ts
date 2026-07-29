@@ -33,6 +33,9 @@ export const brandSchema = z.object({
   name: z.string().min(2).max(80),
   logoUrl: imageUrlField.nullable().optional(),
   dealerIds: z.array(z.string()).optional(),
+  // No viaja en el payload de la marca: se sincroniza aparte contra
+  // PUT /admin/equipment/brand/:id (ver brands-admin.component.ts).
+  equipment: z.array(z.string()).optional(),
 });
 
 export const modelSchema = z.object({
@@ -41,6 +44,7 @@ export const modelSchema = z.object({
   segment: z.string().min(1).max(40).regex(ENUM_REGEX),
   imageUrl: imageUrlField.nullable().optional(),
   galleryUrls: z.array(imageUrlField).default([]),
+  equipment: z.array(z.string()).optional(),
 });
 
 export const versionSchema = z.object({
@@ -152,6 +156,12 @@ export interface FieldMeta {
   sticky?: boolean;
   /** When provided, hides the field unless the form's `fuel` value is in this list. */
   showWhenFuels?: string[];
+  /**
+   * Clave de la entidad que trae un `Record<id, motivo>` para anotar las
+   * opciones ya seleccionadas de un `multiSelect`. La usa el diálogo para
+   * marcar el equipamiento que la versión hereda de su marca o su modelo.
+   */
+  annotationsFrom?: string;
   placeholder?: string;
   help?: string;
   group?: string;
@@ -194,6 +204,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'name', label: 'Nombre', kind: 'text' },
     { field: 'logoUrl', label: 'Logo', kind: 'imageUrl' },
     { field: 'dealerIds', label: 'Concesionarios', kind: 'multiSelect', optionsApi: '/admin/dealers/options', optionLabel: 'name' },
+    { field: 'equipment', label: 'Equipamiento de serie', kind: 'multiSelect', optionsApi: '/admin/equipment/options', optionLabel: 'name', placeholder: 'Buscar equipamiento…', help: 'Lo heredan todas las versiones de la marca, existentes y nuevas. Cada versión puede excluirlo individualmente.' },
   ],
   model: [
     { field: 'brandId', label: 'Marca', kind: 'foreignKey', optionsApi: '/brands', optionLabel: 'name', sticky: true },
@@ -204,6 +215,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'segment', label: 'Segmento', kind: 'enumWithOther', optionsApi: '/models/segments', placeholder: 'Buscar o crear segmento…', sticky: true },
     { field: 'imageUrl', label: 'Imagen principal', kind: 'imageUrl' },
     { field: 'galleryUrls', label: 'Galería', kind: 'gallery' },
+    { field: 'equipment', label: 'Equipamiento de serie', kind: 'multiSelect', optionsApi: '/admin/equipment/options', optionLabel: 'name', placeholder: 'Buscar equipamiento…', help: 'Lo heredan todas las versiones del modelo, existentes y nuevas. Cada versión puede excluirlo individualmente.' },
   ],
   version: [
     { field: 'modelId', label: 'Modelo', kind: 'foreignKey', optionsApi: '/admin/models/options', optionLabel: 'name', group: 'Identificación', sticky: true },
@@ -236,7 +248,10 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'heightMm', label: 'Alto mm', kind: 'number', group: 'Dimensiones' },
     { field: 'weightKg', label: 'Peso kg', kind: 'number', group: 'Dimensiones' },
     { field: 'trunkLiters', label: 'Maleta L', kind: 'number', group: 'Dimensiones' },
-    { field: 'equipment', label: 'Equipamiento', kind: 'multiSelect', optionsApi: '/admin/equipment/options', optionLabel: 'name', group: 'Equipamiento' },
+    // La lista es el equipamiento **efectivo**: incluye lo heredado de la marca
+    // y del modelo, marcado vía `annotationsFrom`. Quitar un heredado no lo
+    // borra del origen, crea una excepción para esta versión.
+    { field: 'equipment', label: 'Equipamiento', kind: 'multiSelect', optionsApi: '/admin/equipment/options', optionLabel: 'name', group: 'Equipamiento', annotationsFrom: 'equipmentInherited' },
     { field: 'colors', label: 'Colores', kind: 'multiSelect', optionsApi: '/admin/colors/options', optionLabel: 'name', placeholder: 'Buscar color…', group: 'Apariencia' },
     { field: 'circulationPermitClp', label: 'Permiso circulación CLP', kind: 'number', optional: true, help: 'Permiso de circulación anual del vehículo en pesos chilenos', group: 'Seguros y permisos' },
     { field: 'mandatoryInsuranceClp', label: 'SOAP CLP', kind: 'number', optional: true, help: 'Seguro Obligatorio de Accidentes Personales (SOAP) en pesos chilenos', group: 'Seguros y permisos' },

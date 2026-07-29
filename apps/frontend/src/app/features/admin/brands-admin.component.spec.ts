@@ -17,6 +17,7 @@ interface BrandRow {
   logoUrl: string | null;
   dealers?: { dealer: { id: string } }[];
   dealerIds?: string[];
+  equipmentItems?: { equipmentItem: { id: string; name: string; category: string } }[];
 }
 
 const flushPaged = (http: HttpTestingController, rows: BrandRow[]) => {
@@ -160,6 +161,89 @@ describe('BrandsAdminComponent', () => {
     const dialogEntity = cmp.crud.dialogEntity() as BrandRow | null;
     expect(dialogEntity).not.toBeNull();
     expect(dialogEntity!.dealerIds).toEqual(['d1', 'd2']);
+  });
+
+  it('openEdit proyecta equipmentItems -> equipment', async () => {
+    TestBed.configureTestingModule({
+      imports: [BrandsAdminComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(BrandsAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    flushPaged(http, []);
+    await fixture.whenStable();
+
+    const cmp = fixture.componentInstance;
+    cmp.crud.openEdit({
+      id: 'b1',
+      name: 'Toyota',
+      logoUrl: null,
+      equipmentItems: [{ equipmentItem: { id: 'e1', name: 'ABS', category: 'Seguridad' } }],
+    });
+
+    const entity = cmp.crud.dialogEntity() as Record<string, unknown>;
+    expect(entity['equipment']).toEqual(['e1']);
+  });
+
+  it('al guardar sincroniza el equipamiento de serie por PUT y no lo manda en el PATCH', async () => {
+    TestBed.configureTestingModule({
+      imports: [BrandsAdminComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(BrandsAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    flushPaged(http, [{ id: 'b1', name: 'Toyota', logoUrl: null }]);
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+
+    const cmp = fixture.componentInstance;
+    cmp.crud.openEdit({ id: 'b1', name: 'Toyota', logoUrl: null });
+    void cmp.crud.save({ name: 'Toyota', logoUrl: null, equipment: ['e1', 'e2'] });
+
+    const patch = http.expectOne((r) => r.method === 'PATCH' && r.url.endsWith('/admin/brands/b1'));
+    expect((patch.request.body as Record<string, unknown>)['equipment']).toBeUndefined();
+    patch.flush({ data: { id: 'b1' }, error: null });
+
+    await new Promise((r) => setTimeout(r, 0));
+    const put = http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/admin/equipment/brand/b1'));
+    expect(put.request.body).toEqual({ itemIds: ['e1', 'e2'] });
+    put.flush({ data: { attached: 2, detached: 0 }, error: null });
+
+    await new Promise((r) => setTimeout(r, 0));
+    flushPaged(http, []);
+    await fixture.whenStable();
+  });
+
+  it('al crear marca también sincroniza el equipamiento contra el id nuevo', async () => {
+    TestBed.configureTestingModule({
+      imports: [BrandsAdminComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(BrandsAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    flushPaged(http, []);
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+
+    const cmp = fixture.componentInstance;
+    cmp.crud.openCreate();
+    void cmp.crud.save({ name: 'NuevaMarca', logoUrl: null, equipment: ['e1'] });
+
+    const post = http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/admin/brands'));
+    expect((post.request.body as Record<string, unknown>)['equipment']).toBeUndefined();
+    post.flush({ data: { id: 'bNew', name: 'NuevaMarca', logoUrl: null }, error: null });
+
+    await new Promise((r) => setTimeout(r, 0));
+    const put = http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/admin/equipment/brand/bNew'));
+    expect(put.request.body).toEqual({ itemIds: ['e1'] });
+    put.flush({ data: { attached: 1, detached: 0 }, error: null });
+
+    await new Promise((r) => setTimeout(r, 0));
+    flushPaged(http, []);
+    await fixture.whenStable();
   });
 
   it('al crear marca, POST no envía dealerIds', async () => {

@@ -24,7 +24,7 @@ const seed = async () => {
       { versionId: version.id, equipmentItemId: b.id },
     ],
   });
-  return { version, a, b, c };
+  return { brand, model, version, a, b, c };
 };
 
 const attachedIds = async (versionId: string): Promise<string[]> => {
@@ -55,7 +55,7 @@ describe("PUT /api/v1/admin/equipment/version/:versionId", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.error).toBeNull();
-    expect(res.body.data).toEqual({ attached: 1, detached: 1 });
+    expect(res.body.data).toEqual({ attached: 1, detached: 1, excluded: 0 });
     expect(await attachedIds(version.id)).toEqual([b.id, c.id].sort());
     // `a` quedó desasociado pero el ítem sigue existiendo.
     expect(await prisma.equipmentItem.findUnique({ where: { id: a.id } })).not.toBeNull();
@@ -72,7 +72,7 @@ describe("PUT /api/v1/admin/equipment/version/:versionId", () => {
       .send({ itemIds: [a.id, b.id] });
 
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual({ attached: 0, detached: 0 });
+    expect(res.body.data).toEqual({ attached: 0, detached: 0, excluded: 0 });
     expect(await attachedIds(version.id)).toEqual([a.id, b.id].sort());
   });
 
@@ -86,7 +86,7 @@ describe("PUT /api/v1/admin/equipment/version/:versionId", () => {
       .set("Cookie", cookie)
       .send({ itemIds: [] });
 
-    expect(res.body.data).toEqual({ attached: 0, detached: 2 });
+    expect(res.body.data).toEqual({ attached: 0, detached: 2, excluded: 0 });
     expect(await attachedIds(version.id)).toEqual([]);
   });
 
@@ -131,5 +131,237 @@ describe("PUT /api/v1/admin/equipment/version/:versionId", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe("VALIDATION");
+  });
+
+  it("quitar un ítem heredado de la marca crea una exclusión, no borra la asociación de marca", async () => {
+    const { brand, version, a, b, c } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+    await prisma.brandEquipment.create({ data: { brandId: brand.id, equipmentItemId: c.id } });
+
+    // El form muestra a, b (propios) y c (heredado); el admin saca c.
+    const res = await request(app)
+      .put(`/api/v1/admin/equipment/version/${version.id}`)
+      .set("Cookie", cookie)
+      .send({ itemIds: [a.id, b.id] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ attached: 0, detached: 0, excluded: 1 });
+    expect(await attachedIds(version.id)).toEqual([a.id, b.id].sort());
+    expect(await prisma.brandEquipment.count({ where: { brandId: brand.id } })).toBe(1);
+  });
+
+  it("un ítem heredado que sigue seleccionado no se guarda como propio", async () => {
+    const { brand, version, a, b, c } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+    await prisma.brandEquipment.create({ data: { brandId: brand.id, equipmentItemId: c.id } });
+
+    const res = await request(app)
+      .put(`/api/v1/admin/equipment/version/${version.id}`)
+      .set("Cookie", cookie)
+      .send({ itemIds: [a.id, b.id, c.id] });
+
+    expect(res.body.data).toEqual({ attached: 0, detached: 0, excluded: 0 });
+    expect(await attachedIds(version.id)).toEqual([a.id, b.id].sort());
+  });
+
+  it("un ítem que ya era propio sigue siendo propio aunque la marca lo agregue después", async () => {
+    const { brand, version, a, b } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+    await prisma.brandEquipment.create({ data: { brandId: brand.id, equipmentItemId: a.id } });
+
+    await request(app)
+      .put(`/api/v1/admin/equipment/version/${version.id}`)
+      .set("Cookie", cookie)
+      .send({ itemIds: [a.id, b.id] });
+
+    expect(await attachedIds(version.id)).toEqual([a.id, b.id].sort());
+  });
+
+  it("volver a seleccionar un ítem excluido borra la exclusión", async () => {
+    const { brand, version, a, b, c } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+    await prisma.brandEquipment.create({ data: { brandId: brand.id, equipmentItemId: c.id } });
+    await prisma.versionEquipmentExclusion.create({
+      data: { versionId: version.id, equipmentItemId: c.id },
+    });
+
+    await request(app)
+      .put(`/api/v1/admin/equipment/version/${version.id}`)
+      .set("Cookie", cookie)
+      .send({ itemIds: [a.id, b.id, c.id] });
+
+    expect(await prisma.versionEquipmentExclusion.count({ where: { versionId: version.id } })).toBe(0);
+  });
+
+  it("una exclusión de un ítem que ya no se hereda sobrevive al sync", async () => {
+    const { version, a, b, c } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+    // `c` fue excluido cuando la marca lo traía; ya no está en la marca.
+    await prisma.versionEquipmentExclusion.create({
+      data: { versionId: version.id, equipmentItemId: c.id },
+    });
+
+    await request(app)
+      .put(`/api/v1/admin/equipment/version/${version.id}`)
+      .set("Cookie", cookie)
+      .send({ itemIds: [a.id, b.id] });
+
+    expect(await prisma.versionEquipmentExclusion.count({ where: { versionId: version.id } })).toBe(1);
+  });
+});
+
+describe("PUT /api/v1/admin/equipment/brand/:brandId", () => {
+  beforeEach(async () => {
+    setupTestPrisma();
+    await resetTestDb(prisma);
+  });
+
+  it("sin auth → 401", async () => {
+    const res = await request(createApp()).put("/api/v1/admin/equipment/brand/x").send({ itemIds: [] });
+    expect(res.status).toBe(401);
+  });
+
+  it("sincroniza el equipamiento de serie y lo heredan las versiones", async () => {
+    const { brand, version, c } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .put(`/api/v1/admin/equipment/brand/${brand.id}`)
+      .set("Cookie", cookie)
+      .send({ itemIds: [c.id] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ attached: 1, detached: 0 });
+
+    const detail = await request(app).get(`/api/v1/versions/${version.id}`);
+    expect(detail.body.data.equipmentItems.map((e: { equipmentItem: { id: string } }) => e.equipmentItem.id))
+      .toContain(c.id);
+  });
+
+  it("marca inexistente → 404", async () => {
+    const { c } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .put("/api/v1/admin/equipment/brand/no-existe")
+      .set("Cookie", cookie)
+      .send({ itemIds: [c.id] });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("lista vacía desasocia todo", async () => {
+    const { brand, c } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+    await prisma.brandEquipment.create({ data: { brandId: brand.id, equipmentItemId: c.id } });
+
+    const res = await request(app)
+      .put(`/api/v1/admin/equipment/brand/${brand.id}`)
+      .set("Cookie", cookie)
+      .send({ itemIds: [] });
+
+    expect(res.body.data).toEqual({ attached: 0, detached: 1 });
+    expect(await prisma.brandEquipment.count({ where: { brandId: brand.id } })).toBe(0);
+  });
+});
+
+describe("PUT /api/v1/admin/equipment/model/:modelId", () => {
+  beforeEach(async () => {
+    setupTestPrisma();
+    await resetTestDb(prisma);
+  });
+
+  it("sincroniza el equipamiento de serie del modelo", async () => {
+    const { model, version, c } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .put(`/api/v1/admin/equipment/model/${model.id}`)
+      .set("Cookie", cookie)
+      .send({ itemIds: [c.id] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ attached: 1, detached: 0 });
+
+    const detail = await request(app).get(`/api/v1/versions/${version.id}`);
+    expect(detail.body.data.equipmentItems.map((e: { equipmentItem: { id: string } }) => e.equipmentItem.id))
+      .toContain(c.id);
+  });
+
+  it("modelo inexistente → 404", async () => {
+    const { c } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .put("/api/v1/admin/equipment/model/no-existe")
+      .set("Cookie", cookie)
+      .send({ itemIds: [c.id] });
+
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("DELETE /api/v1/admin/equipment/:id con asociaciones de marca/modelo", () => {
+  beforeEach(async () => {
+    setupTestPrisma();
+    await resetTestDb(prisma);
+  });
+
+  it("no deja borrar un ítem asociado a una marca", async () => {
+    const { brand, c } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+    await prisma.brandEquipment.create({ data: { brandId: brand.id, equipmentItemId: c.id } });
+
+    const res = await request(app)
+      .delete(`/api/v1/admin/equipment/${c.id}`)
+      .set("Cookie", cookie);
+
+    expect(res.status).toBe(409);
+    // `details` se spreadea dentro de `error` — ver shared/response.ts.
+    expect(res.body.error).toMatchObject({
+      code: "EQUIPMENT_IN_USE",
+      brandCount: 1,
+      modelCount: 0,
+      versionCount: 0,
+    });
+    expect((await prisma.equipmentItem.findUnique({ where: { id: c.id } }))?.deletedAt).toBeNull();
+  });
+
+  it("no deja borrar un ítem asociado a un modelo", async () => {
+    const { model, c } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+    await prisma.modelEquipment.create({ data: { modelId: model.id, equipmentItemId: c.id } });
+
+    const res = await request(app)
+      .delete(`/api/v1/admin/equipment/${c.id}`)
+      .set("Cookie", cookie);
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatchObject({ code: "EQUIPMENT_IN_USE", modelCount: 1 });
+  });
+
+  it("deja borrar un ítem sin asociaciones", async () => {
+    const { c } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .delete(`/api/v1/admin/equipment/${c.id}`)
+      .set("Cookie", cookie);
+
+    expect(res.status).toBe(200);
+    expect((await prisma.equipmentItem.findUnique({ where: { id: c.id } }))?.deletedAt).not.toBeNull();
   });
 });

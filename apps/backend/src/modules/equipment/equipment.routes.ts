@@ -19,4 +19,7 @@ equipmentAdminRouter.delete("/:id", equipmentController.softDelete);
 equipmentAdminRouter.post("/:id/restore", equipmentController.restore);
 equipmentAdminRouter.post("/attach", equipmentController.attach);
 equipmentAdminRouter.put("/version/:versionId", equipmentController.syncVersion);
+// Equipamiento de serie: lo heredan todas las versiones de la marca / del modelo.
+equipmentAdminRouter.put("/brand/:brandId", equipmentController.syncBrand);
+equipmentAdminRouter.put("/model/:modelId", equipmentController.syncModel);
 equipmentAdminRouter.delete("/version/:versionId/item/:itemId", equipmentController.detach);

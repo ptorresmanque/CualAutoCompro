@@ -12,7 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../../core/api.service';
-import { ApiCallError } from '../../core/api-error';
+import { toApiCallError } from '../../core/api-error';
 
 interface CostBreakdown {
   kmPerYear: number;
@@ -161,6 +161,11 @@ export class AnnualCostCardComponent {
   });
 
   constructor() {
+    // Único punto de fetch: el effect depende de `versionId` y de `km`, así que
+    // reacciona tanto al montaje como a cada cambio de km/año. `onKmChange` NO
+    // debe llamar a `fetch` además de esto — hacerlo emitía dos requests
+    // idénticos por cada tecla, y forzaba a leer `versionId()` (input
+    // requerido) antes de que el padre lo hubiera bindeado.
     effect(() => {
       const vid = this.versionId();
       if (!vid) return;
@@ -177,30 +182,31 @@ export class AnnualCostCardComponent {
     return Math.round(value * 100);
   }
 
+  /** Solo normaliza el valor; el fetch lo dispara el effect del constructor. */
   onKmChange(value: number | string): void {
     const n = typeof value === 'string' ? Number.parseInt(value, 10) : value;
     if (Number.isFinite(n)) {
       this.km.set(Math.max(0, Math.min(200_000, n)));
-      void this.fetch(this.versionId(), this.km());
     }
   }
 
   private async fetch(versionId: string, km: number): Promise<void> {
     this.loading.set(true);
     try {
-      const data = await this.api.get<{ data: CostBreakdown }>(
+      // `getUnwrapped` y no `get`: el backend puede responder el sobre
+      // `{ data: null, error }`, y `get` lo resolvía como éxito dejando la
+      // tarjeta en blanco sin mostrar nunca el motivo.
+      const data = await this.api.getUnwrapped<CostBreakdown>(
         `/cost/version/${encodeURIComponent(versionId)}`,
         { kmPerYear: km },
       );
-      this.cost.set(data.data);
+      this.cost.set(data);
       this.error.set(null);
     } catch (e) {
       this.cost.set(null);
-      if (e instanceof ApiCallError) {
-        this.error.set(e.backend.message);
-      } else {
-        this.error.set((e as Error).message);
-      }
+      // `toApiCallError` traduce el HttpErrorResponse de un 4xx al sobre del
+      // backend; sin él, un 404 pintaba el mensaje genérico de HttpClient.
+      this.error.set(toApiCallError(e)?.backend.message ?? (e as Error).message);
     } finally {
       this.loading.set(false);
     }

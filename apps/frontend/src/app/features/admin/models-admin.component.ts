@@ -1,13 +1,20 @@
-import { ChangeDetectionStrategy, Component, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { ApiService } from '../../core/api.service';
 import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { PaginationComponent } from '../../shared/ui/pagination.component';
 import { AdminCrudStore } from '../../shared/ui/admin-crud.store';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { STICKY_FIELDS } from './entity-schemas';
 
-interface ModelRow { id: string; name: string; segment: string; brand: { name: string } | null; }
+interface ModelRow {
+  id: string;
+  name: string;
+  segment: string;
+  brand: { name: string } | null;
+  equipmentItems?: { equipmentItem: { id: string; name: string; category: string } }[];
+}
 
 @Component({
   selector: 'app-models-admin',
@@ -17,6 +24,8 @@ interface ModelRow { id: string; name: string; segment: string; brand: { name: s
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ModelsAdminComponent {
+  private api = inject(ApiService);
+
   readonly editDialog = viewChild<AdminEditDialogComponent>(AdminEditDialogComponent);
 
   readonly crud = new AdminCrudStore<ModelRow>({
@@ -30,6 +39,27 @@ export class ModelsAdminComponent {
     // selector del siguiente alta sin recargar la página.
     invalidates: ['/admin/models/options', '/models/segments'],
     stickyFields: STICKY_FIELDS.model,
+
+    // Proyecta la relación a los ids que espera el multi-select del diálogo.
+    toDialogEntity: (row) => ({
+      ...row,
+      equipment: row.equipmentItems?.map((ei) => ei.equipmentItem.id) ?? [],
+    }),
+
+    // `equipment` no va al endpoint del modelo: se sincroniza aparte.
+    beforeSave: (value) => {
+      const { equipment: _eq, equipmentItems: _ei, ...rest } = value;
+      return rest;
+    },
+
+    // El equipamiento de serie del modelo lo heredan todas sus versiones; el
+    // backend calcula el diff con la selección completa.
+    afterSave: async ({ id, value }) => {
+      await this.api.put(`/admin/equipment/model/${id}`, {
+        itemIds: (value['equipment'] as string[] | null) ?? [],
+      });
+    },
+
     onValidationError: (fields) => this.editDialog()?.applyBackendErrors(fields),
   });
 

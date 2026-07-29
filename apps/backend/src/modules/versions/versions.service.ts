@@ -10,6 +10,10 @@ import {
 } from "./versions.dto.admin.js";
 import type { PaginationParams } from "../../shared/pagination.js";
 import { mergeEnumFacets, type EnumFacet } from "../../shared/enum-facets.js";
+import {
+  resolveEffectiveEquipment,
+  type EffectiveEquipmentEntry,
+} from "../../shared/effective-equipment.js";
 
 type VersionRow = {
   id: string;
@@ -72,19 +76,14 @@ export class VersionsService {
   }
 
   async listAll() {
-    return this.prisma.version.findMany({
+    const rows = await this.prisma.version.findMany({
       where: {
         deletedAt: null,
         model: { deletedAt: null, brand: { deletedAt: null } },
       },
       orderBy: { createdAt: "desc" },
       include: {
-        model: { select: { id: true, name: true } },
-        equipmentItems: {
-          include: {
-            equipmentItem: { select: { id: true, name: true, category: true } },
-          },
-        },
+        model: { select: { id: true, name: true, brandId: true } },
         colorItems: {
           include: {
             color: { select: { id: true, name: true, hex: true } },
@@ -92,6 +91,22 @@ export class VersionsService {
         },
       },
     });
+    return this.withEffectiveEquipment(rows);
+  }
+
+  /**
+   * `equipmentItems` ya no sale de un `include`: es el equipamiento efectivo
+   * (propio + heredado de modelo/marca − exclusiones). Ver
+   * `shared/effective-equipment.ts`.
+   */
+  private async withEffectiveEquipment<
+    T extends { id: string; modelId: string; model: { brandId: string } },
+  >(rows: T[]): Promise<Array<T & { equipmentItems: EffectiveEquipmentEntry[] }>> {
+    const equipment = await resolveEffectiveEquipment(
+      this.prisma,
+      rows.map((v) => ({ versionId: v.id, modelId: v.modelId, brandId: v.model.brandId })),
+    );
+    return rows.map((v) => ({ ...v, equipmentItems: equipment.get(v.id) ?? [] }));
   }
 
   /**
@@ -167,12 +182,7 @@ export class VersionsService {
         skip: params.skip,
         take: params.take,
         include: {
-          model: { select: { id: true, name: true } },
-          equipmentItems: {
-            include: {
-              equipmentItem: { select: { id: true, name: true, category: true } },
-            },
-          },
+          model: { select: { id: true, name: true, brandId: true } },
           colorItems: {
             include: {
               color: { select: { id: true, name: true, hex: true } },
@@ -182,7 +192,7 @@ export class VersionsService {
       }),
       this.prisma.version.count({ where }),
     ]);
-    return { rows, total };
+    return { rows: await this.withEffectiveEquipment(rows), total };
   }
 
   async detail(id: string) {
@@ -194,12 +204,12 @@ export class VersionsService {
       },
       include: {
         model: { include: { brand: true } },
-        equipmentItems: { include: { equipmentItem: true } },
         maintenanceCosts: { where: { deletedAt: null } },
       },
     });
     if (!v) throw notFound("Versión no encontrada");
-    return v;
+    const [withEquipment] = await this.withEffectiveEquipment([v]);
+    return withEquipment!;
   }
 
   async create(input: CreateVersionInput) {

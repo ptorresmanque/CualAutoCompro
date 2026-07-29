@@ -41,8 +41,14 @@
       @for (id of selectedIds(); track id) {
         <mat-chip
           [attr.data-testid]="'ms-chip'"
+          [class.chip-inherited]="annotationOf(id)"
+          [attr.data-inherited]="annotationOf(id) ? 'true' : null"
+          [attr.title]="annotationOf(id)"
           (removed)="removeAt(id)"
         >
+          @if (annotationOf(id); as reason) {
+            <mat-icon class="chip-inherited-icon" [attr.aria-label]="reason">account_tree</mat-icon>
+          }
           {{ labelOf(id) }}
           <button
             matChipRemove

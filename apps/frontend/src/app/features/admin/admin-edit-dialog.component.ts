@@ -462,6 +462,17 @@ effect(() => {
     return this.form().get(field) as FormControl;
   }
 
+  /**
+   * Anotaciones por opción para los `multiSelect` que declaran
+   * `annotationsFrom`. La entidad las trae ya armadas (ver
+   * `versions-admin.component.ts`); acá solo se leen.
+   */
+  annotationsFor(meta: FieldMeta): Record<string, string> {
+    if (!meta.annotationsFrom) return {};
+    const raw = this.entity()?.[meta.annotationsFrom];
+    return raw && typeof raw === 'object' ? (raw as Record<string, string>) : {};
+  }
+
   isFieldRequired(meta: FieldMeta): boolean {
     return isFieldRequired(meta);
   }

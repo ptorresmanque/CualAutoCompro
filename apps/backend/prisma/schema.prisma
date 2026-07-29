@@ -36,13 +36,14 @@ datasource db {
 }
 
 model Brand {
-  id        String        @id @default(cuid())
-  name      String        @unique
-  logoUrl   String?
-  models    Model[]
-  dealers   BrandDealer[]
-  deletedAt DateTime?
-  createdAt DateTime      @default(now())
+  id             String           @id @default(cuid())
+  name           String           @unique
+  logoUrl        String?
+  models         Model[]
+  dealers        BrandDealer[]
+  equipmentItems BrandEquipment[]
+  deletedAt      DateTime?
+  createdAt      DateTime         @default(now())
 
   @@index([deletedAt])
 }
@@ -58,6 +59,7 @@ model Model {
   versions   Version[]
   favorites  Favorite[]
   popularity PopularityCounter?
+  equipmentItems ModelEquipment[]
   deletedAt   DateTime?
   createdAt DateTime  @default(now())
 
@@ -101,6 +103,7 @@ model Version {
   recallUrl             String?
   model                 Model              @relation(fields: [modelId], references: [id], onDelete: Cascade)
   equipmentItems        VersionEquipment[]
+  equipmentExclusions   VersionEquipmentExclusion[]
   colorItems            VersionColor[]
   maintenanceCosts      MaintenanceCost[]
   comparisonItems       ComparisonItem[]
@@ -137,15 +140,32 @@ model VersionColor {
 }
 
 model EquipmentItem {
-  id        String             @id @default(cuid())
-  name      String             @unique
-  category  String
-  versions  VersionEquipment[]
-  deletedAt DateTime?
+  id         String                      @id @default(cuid())
+  name       String                      @unique
+  category   String
+  versions   VersionEquipment[]
+  brands     BrandEquipment[]
+  models     ModelEquipment[]
+  exclusions VersionEquipmentExclusion[]
+  deletedAt  DateTime?
 
   @@index([deletedAt])
 }
 
+// ----------------------------------------------------------------------------
+// Equipamiento: tres niveles de asociación con herencia calculada al leer.
+//
+//   efectivo(versión) = (propio ∪ modelo ∪ marca) − exclusiones(versión)
+//
+// `VersionEquipment` es el equipamiento **propio** de la versión.
+// `BrandEquipment` / `ModelEquipment` son el equipamiento de serie que heredan
+// todas las versiones de esa marca / modelo, existentes y futuras.
+// `VersionEquipmentExclusion` es la excepción explícita: esta versión NO trae
+// un ítem que su marca o modelo sí traen.
+//
+// La resolución vive en `src/shared/effective-equipment.ts` y NO se materializa:
+// desasociar un ítem de la marca lo quita al instante de todas sus versiones.
+// ----------------------------------------------------------------------------
 model VersionEquipment {
   versionId       String
   equipmentItemId String
@@ -153,6 +173,36 @@ model VersionEquipment {
   equipmentItem   EquipmentItem @relation(fields: [equipmentItemId], references: [id], onDelete: Cascade)
 
   @@id([versionId, equipmentItemId])
+}
+
+model BrandEquipment {
+  brandId         String
+  equipmentItemId String
+  brand           Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  equipmentItem   EquipmentItem @relation(fields: [equipmentItemId], references: [id], onDelete: Cascade)
+
+  @@id([brandId, equipmentItemId])
+  @@index([equipmentItemId])
+}
+
+model ModelEquipment {
+  modelId         String
+  equipmentItemId String
+  model           Model         @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  equipmentItem   EquipmentItem @relation(fields: [equipmentItemId], references: [id], onDelete: Cascade)
+
+  @@id([modelId, equipmentItemId])
+  @@index([equipmentItemId])
+}
+
+model VersionEquipmentExclusion {
+  versionId       String
+  equipmentItemId String
+  version         Version       @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  equipmentItem   EquipmentItem @relation(fields: [equipmentItemId], references: [id], onDelete: Cascade)
+
+  @@id([versionId, equipmentItemId])
+  @@index([equipmentItemId])
 }
 
 model VersionPriceHistory {
