@@ -31,6 +31,7 @@ import { AuthService } from '../../core/auth.service';
 import { CompareStore } from '../../core/compare-store.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { slugify } from '../../core/slug';
+import { PageMetaService } from '../../core/page-meta.service';
 import { VehicleCardInput } from '../../shared/ui/vehicle-card.component';
 import { versionFieldLabel } from '../../core/types/version-labels';
 import { fuelLabel, segmentLabel, transmissionLabel } from '../../core/types/catalog-labels';
@@ -177,6 +178,7 @@ export class CompareComponent {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
+  private pageMeta = inject(PageMetaService);
 
   readonly user = this.auth.currentUser;
 
@@ -500,6 +502,27 @@ export class CompareComponent {
       } else {
         this.favoriteModels.set([]);
       }
+    });
+
+    // Título de la comparación, para que compartir el link diga qué se está
+    // comparando. Corre después del default de la ruta (que se aplica en
+    // `NavigationEnd`) y sirve igual entrando por /compare que por /c/:slug,
+    // porque depende de `versions()` y no de cómo se cargaron.
+    effect(() => {
+      const vs = this.versions();
+      // Con menos de dos autos no hay comparación que anunciar: se deja el
+      // título genérico que declara la ruta.
+      if (vs.length < 2) return;
+      const names = vs.map((v) => this.fullName(v));
+      this.pageMeta.set({
+        title: `${names.join(' vs ')} — comparación | cualautocompro`,
+        description:
+          `Comparación lado a lado de ${names.join(' vs ')}: precio, ` +
+          `rendimiento, equipamiento y costo anual estimado.`,
+        // Coherente con el default de la ruta: las comparaciones guardadas se
+        // comparten por link, pero no se indexan.
+        noindex: true,
+      });
     });
 
     // Suscripción y no `route.snapshot`: estando ya en /compare, navegar a

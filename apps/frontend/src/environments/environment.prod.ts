@@ -12,4 +12,8 @@
 export const environment = {
   production: true,
   apiBase: 'https://api.cualautocompro.cl/api/v1',
+  // Mismo valor que en environment.ts, a proposito: el canonical y el og:url
+  // nunca deben apuntar a localhost, asi que el origen del sitio no depende
+  // del entorno. El dominio sale de WEB_ORIGIN en apps/backend/.env.
+  siteUrl: 'https://cualautocompro.cl',
 } as const;

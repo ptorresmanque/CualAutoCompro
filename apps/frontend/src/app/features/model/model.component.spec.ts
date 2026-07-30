@@ -12,6 +12,10 @@ import {
 } from '@angular/router';
 import { of } from 'rxjs';
 import { ModelComponent } from './model.component';
+import {
+  PageMetaService,
+  SITE_DEFAULT_META,
+} from '../../core/page-meta.service';
 
 /**
  * Carrusel spec — tests the carousel logic by manually stubbing the model
@@ -411,5 +415,96 @@ describe('ModelComponent — recall badge + dealers', () => {
     expect(rows.length).toBe(2);
     const equipV2 = fixture.nativeElement.querySelector('[data-testid="spec-group-v2-Equipamiento"]');
     expect(equipV2).toBeNull();
+  });
+});
+
+/**
+ * Metadata para compartir. Lo que se demuestra acá es el **orden**: primero se
+ * aplica el default declarado en la ruta (lo que hace `PageMetaService` en
+ * `NavigationEnd`) y después, cuando ya hay modelo cargado, el `effect` de la
+ * ficha lo sobreescribe. Si el orden se invirtiera, compartir una ficha
+ * mandaría el título genérico del sitio.
+ */
+describe('ModelComponent — metadata para compartir', () => {
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    for (const el of Array.from(
+      document.head.querySelectorAll('link[rel="canonical"], meta[name="description"]'),
+    )) {
+      el.remove();
+    }
+    const paramMap: ParamMap = convertToParamMap({
+      brandSlug: 'great-wall',
+      modelSlug: 'poer',
+    });
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(paramMap), snapshot: { paramMap } },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    for (const req of http.match(() => true)) {
+      req.flush({ data: [] });
+    }
+  });
+
+  it('termina con el título del modelo y no con el default de la ruta', () => {
+    const pageMeta = TestBed.inject(PageMetaService);
+
+    // Lo que deja `applyRouteDefaults()` al entrar a la ficha: ninguna ruta
+    // estática declara meta para /brand/:brandSlug/model/:modelSlug.
+    pageMeta.set(SITE_DEFAULT_META);
+    expect(document.title).toBe(SITE_DEFAULT_META.title);
+
+    const fixture = TestBed.createComponent(ModelComponent);
+    const cmp = fixture.componentInstance as ModelComponent;
+    (cmp as any).brand.set({ id: 'b1', name: 'Great Wall' });
+    (cmp as any).model.set({
+      id: 'm1',
+      name: 'Poer',
+      segment: 'PICKUP',
+      brandId: 'b1',
+      brandName: 'Great Wall',
+      brand: { name: 'Great Wall' },
+      galleryUrls: ['https://cdn.example.cl/poer-frontal.png'],
+      versions: [
+        { id: 'v1', name: 'Cabina doble 4x2', priceClp: 21990000, year: 2026 },
+        { id: 'v2', name: 'Cabina doble 4x4', priceClp: 24990000, year: 2026 },
+      ],
+    });
+    fixture.detectChanges();
+
+    expect(document.title).toBe(
+      'Great Wall Poer — ficha técnica y precios en Chile',
+    );
+    expect(
+      document.head
+        .querySelector('meta[name="description"]')
+        ?.getAttribute('content'),
+    ).toBe(
+      'Ficha técnica del Great Wall Poer: 2 versiones, precios desde $21.990.000, equipamiento y costo anual estimado.',
+    );
+    // `slugify`, no `toLowerCase()`: "Great Wall" tiene que quedar great-wall.
+    expect(
+      document.head
+        .querySelector('link[rel="canonical"]')
+        ?.getAttribute('href'),
+    ).toBe('https://cualautocompro.cl/brand/great-wall/model/poer');
+    expect(
+      document.head
+        .querySelector('meta[property="og:image"]')
+        ?.getAttribute('content'),
+    ).toBe('https://cdn.example.cl/poer-frontal.png');
   });
 });

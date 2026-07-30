@@ -11,6 +11,13 @@ export const routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
+        data: {
+          meta: {
+            title: 'cualautocompro — compara autos nuevos en Chile',
+            description:
+              'Explora el catálogo de autos nuevos en Chile, filtra por lo que necesitas y compara modelos de distintas marcas antes de decidir.',
+          },
+        },
         loadComponent: () =>
           import('./features/landing/landing.component').then(
             (m) => m.LandingComponent,
@@ -18,6 +25,13 @@ export const routes: Routes = [
       },
       {
         path: 'catalogo',
+        data: {
+          meta: {
+            title: 'Catálogo de autos nuevos en Chile — cualautocompro',
+            description:
+              'Busca entre los autos nuevos disponibles en Chile y filtra por precio, segmento, combustible, transmisión y rendimiento.',
+          },
+        },
         loadComponent: () =>
           import('./features/catalog/catalog.component').then(
             (m) => m.CatalogComponent,
@@ -25,6 +39,14 @@ export const routes: Routes = [
       },
       {
         path: 'compare',
+        data: {
+          meta: {
+            title: 'Comparador de autos — cualautocompro',
+            description:
+              'Compara hasta 3 versiones lado a lado: precio, rendimiento, equipamiento y costo anual.',
+            noindex: true,
+          },
+        },
         loadComponent: () =>
           import('./features/compare/compare.component').then(
             (m) => m.CompareComponent,
@@ -32,6 +54,14 @@ export const routes: Routes = [
       },
       {
         path: 'c/:slug',
+        data: {
+          meta: {
+            title: 'Comparador de autos — cualautocompro',
+            description:
+              'Compara hasta 3 versiones lado a lado: precio, rendimiento, equipamiento y costo anual.',
+            noindex: true,
+          },
+        },
         loadComponent: () =>
           import('./features/compare/compare.component').then(
             (m) => m.CompareComponent,
@@ -39,6 +69,14 @@ export const routes: Routes = [
       },
       {
         path: 'login',
+        data: {
+          meta: {
+            title: 'Iniciar sesión — cualautocompro',
+            description:
+              'Entra a tu cuenta para guardar comparaciones y favoritos.',
+            noindex: true,
+          },
+        },
         loadComponent: () =>
           import('./features/auth/login.component').then(
             (m) => m.LoginComponent,
@@ -46,6 +84,14 @@ export const routes: Routes = [
       },
       {
         path: 'register',
+        data: {
+          meta: {
+            title: 'Crear cuenta — cualautocompro',
+            description:
+              'Crea una cuenta para guardar tus comparaciones y favoritos.',
+            noindex: true,
+          },
+        },
         loadComponent: () =>
           import('./features/auth/register.component').then(
             (m) => m.RegisterComponent,
@@ -53,6 +99,14 @@ export const routes: Routes = [
       },
       {
         path: 'account/comparisons',
+        data: {
+          meta: {
+            title: 'Tus comparaciones — cualautocompro',
+            description:
+              'Las comparaciones que guardaste.',
+            noindex: true,
+          },
+        },
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/account/comparisons.component').then(
@@ -61,6 +115,14 @@ export const routes: Routes = [
       },
       {
         path: 'account/settings',
+        data: {
+          meta: {
+            title: 'Tu cuenta — cualautocompro',
+            description:
+              'Ajustes de tu cuenta.',
+            noindex: true,
+          },
+        },
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/account/settings.component').then(
@@ -69,6 +131,14 @@ export const routes: Routes = [
       },
       {
         path: 'account/forgot-password',
+        data: {
+          meta: {
+            title: 'Recuperar contraseña — cualautocompro',
+            description:
+              'Te enviamos un enlace para restablecer tu contraseña.',
+            noindex: true,
+          },
+        },
         loadComponent: () =>
           import('./features/account/forgot-password.component').then(
             (m) => m.ForgotPasswordComponent,
@@ -76,6 +146,14 @@ export const routes: Routes = [
       },
       {
         path: 'account/reset-password',
+        data: {
+          meta: {
+            title: 'Nueva contraseña — cualautocompro',
+            description:
+              'Define una contraseña nueva para tu cuenta.',
+            noindex: true,
+          },
+        },
         loadComponent: () =>
           import('./features/account/reset-password.component').then(
             (m) => m.ResetPasswordComponent,
@@ -84,6 +162,14 @@ export const routes: Routes = [
 
       {
         path: 'favoritos',
+        data: {
+          meta: {
+            title: 'Tus favoritos — cualautocompro',
+            description:
+              'Los autos que guardaste para revisar después.',
+            noindex: true,
+          },
+        },
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/favorites/favorites.component').then(
@@ -92,7 +178,14 @@ export const routes: Routes = [
       },
       {
         path: 'legal/privacidad',
-        data: { doc: 'privacidad' },
+        data: {
+          doc: 'privacidad',
+          meta: {
+            title: 'Política de privacidad — cualautocompro',
+            description:
+              'Qué datos guardamos, qué cookies usamos y cómo puedes pedirnos que los borremos.',
+          },
+        },
         loadComponent: () =>
           import('./features/legal/legal.component').then(
             (m) => m.LegalComponent,
@@ -100,7 +193,14 @@ export const routes: Routes = [
       },
       {
         path: 'legal/terminos',
-        data: { doc: 'terminos' },
+        data: {
+          doc: 'terminos',
+          meta: {
+            title: 'Términos de uso — cualautocompro',
+            description:
+              'Condiciones de uso del comparador y alcance de la información publicada.',
+          },
+        },
         loadComponent: () =>
           import('./features/legal/legal.component').then(
             (m) => m.LegalComponent,
@@ -115,6 +215,14 @@ export const routes: Routes = [
       },
       {
         path: 'admin',
+        data: {
+          meta: {
+            title: 'Administración — cualautocompro',
+            description:
+              'Panel interno.',
+            noindex: true,
+          },
+        },
         canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/admin/admin-shell.component').then(
@@ -202,6 +310,14 @@ export const routes: Routes = [
       },
       {
         path: '**',
+        data: {
+          meta: {
+            title: 'Página no encontrada — cualautocompro',
+            description:
+              'La página que buscas no existe o cambió de dirección.',
+            noindex: true,
+          },
+        },
         loadComponent: () =>
           import('./features/not-found.component').then(
             (m) => m.NotFoundComponent,

@@ -18,4 +18,7 @@ export const ENV = {
       (window as { __env?: { apiBase?: string } }).__env?.apiBase) ||
     environment.apiBase,
   production: environment.production,
+  // Origen publico del sitio (canonical / og:url / og:image). Deliberadamente
+  // igual en dev y prod: ver el comentario en environments/environment.ts.
+  siteUrl: environment.siteUrl,
 } as const;

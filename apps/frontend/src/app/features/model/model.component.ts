@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   HostListener,
   inject,
   signal,
@@ -18,6 +19,7 @@ import { PopularityService } from '../../core/popularity.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { slugify } from '../../core/slug';
+import { PageMetaService } from '../../core/page-meta.service';
 import { DisclaimerComponent } from '../../shared/ui/disclaimer.component';
 import { AnnualCostCardComponent } from './annual-cost-card.component';
 import { versionFieldLabel } from '../../core/types/version-labels';
@@ -110,6 +112,7 @@ export class ModelComponent {
   private popularity = inject(PopularityService);
   readonly favorites = inject(FavoritesStore);
   private route = inject(ActivatedRoute);
+  private pageMeta = inject(PageMetaService);
 
   private params = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
 
@@ -257,7 +260,42 @@ export class ModelComponent {
       this.navAlwaysVisible.set(mq.matches);
       mq.addEventListener('change', (e) => this.navAlwaysVisible.set(e.matches));
     }
+    this.updatePageMeta();
     this.initialLoad = this.bootstrap();
+  }
+
+  /**
+   * Título y previsualización de la ficha, una vez que llegó el modelo.
+   *
+   * El default de la ruta ya se aplicó en `NavigationEnd`; este `effect` corre
+   * después, cuando resuelve el HTTP, y lo sobreescribe. Mientras no haya
+   * modelo no toca nada: pisar la metadata con un título a medio armar es peor
+   * que dejar el default.
+   */
+  private updatePageMeta(): void {
+    effect(() => {
+      const model = this.model();
+      if (!model) return;
+      const brandName = this.brand()?.name ?? model.brandName ?? model.brand?.name ?? '';
+      const fullName = [brandName, model.name].filter(Boolean).join(' ');
+      const versions = this.versions();
+      const prices = versions
+        .map((v) => v.priceClp)
+        .filter((p): p is number => typeof p === 'number' && Number.isFinite(p));
+      const from = prices.length > 0 ? this.formatPrice(Math.min(...prices)) : '—';
+
+      this.pageMeta.set({
+        title: `${fullName} — ficha técnica y precios en Chile`,
+        description:
+          `Ficha técnica del ${fullName}: ${versions.length} versiones, ` +
+          `precios desde ${from}, equipamiento y costo anual estimado.`,
+        image: this.galleryUrlsAbsolute()[0],
+        // `slugify` y no `toLowerCase()`: es el mismo slug que resuelve el
+        // backend, así que marcas con espacio o acento ("Great Wall",
+        // "Citroën") apuntan a la URL que realmente existe.
+        path: `/brand/${slugify(brandName)}/model/${slugify(model.name)}`,
+      });
+    });
   }
 
   prev(): void {

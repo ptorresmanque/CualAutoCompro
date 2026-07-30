@@ -12,6 +12,7 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { CompareComponent } from './compare.component';
 import { CompareStore } from '../../core/compare-store.service';
 import { AuthService, type User } from '../../core/auth.service';
+import { PageMetaService } from '../../core/page-meta.service';
 
 class AuthServiceStub {
   currentUser = signal<User | null>(null);
@@ -1576,5 +1577,134 @@ describe('CompareComponent carrusel — estilo ficha', () => {
     const btn = item.querySelector('[data-testid="favorite-carousel-btn-m1"]');
     expect(btn).not.toBeNull();
     expect(btn.classList.contains('ficha-compare')).toBe(true);
+  });
+});
+
+/**
+ * Metadata para compartir. El comparador es la pantalla que más se comparte
+ * por link, así que el título tiene que decir qué se está comparando — y tiene
+ * que funcionar igual entrando por /compare que por /c/:slug, que carga los
+ * datos en dos requests.
+ */
+describe('CompareComponent — metadata para compartir', () => {
+  const ROUTE_DEFAULT = {
+    title: 'Comparador de autos — cualautocompro',
+    description:
+      'Compara hasta 3 versiones lado a lado: precio, rendimiento, equipamiento y costo anual.',
+    noindex: true,
+  };
+
+  let http: HttpTestingController;
+
+  function configure(route: unknown) {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        provideNoopAnimations(),
+        CompareStore,
+        { provide: ActivatedRoute, useValue: route },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    TestBed.inject(AuthService).currentUser.set(null);
+    // Lo que deja `applyRouteDefaults()` al entrar a la ruta.
+    TestBed.inject(PageMetaService).set(ROUTE_DEFAULT);
+  }
+
+  afterEach(() => {
+    for (const req of http.match(() => true)) req.flush({ data: null });
+    localStorage.clear();
+  });
+
+  it('entrando por /c/:slug termina con el título de los autos comparados', async () => {
+    configure(routeStub({}, { slug: 'abc123' }));
+    const fixture = TestBed.createComponent(CompareComponent);
+    const ready = fixture.componentInstance.ready;
+
+    expect(document.title).toBe(ROUTE_DEFAULT.title);
+
+    const bySlug = http.expectOne((r) => r.url.includes('/comparisons/abc123'));
+    bySlug.flush({
+      data: {
+        id: 'c1',
+        slug: 'abc123',
+        userId: 'u1',
+        createdAt: '2026-07-01T00:00:00.000Z',
+        items: [
+          { versionId: 'a', position: 0, version: { id: 'a', name: 'XLI' } },
+          { versionId: 'b', position: 1, version: { id: 'b', name: 'EX' } },
+        ],
+      },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    const full = http.expectOne(
+      (r) => r.method === 'POST' && r.url.includes('/api/v1/compare'),
+    );
+    full.flush({
+      data: {
+        versions: [
+          {
+            id: 'a',
+            name: 'XLI',
+            model: { name: 'Corolla', brand: { name: 'Toyota' } },
+          },
+          {
+            id: 'b',
+            name: 'EX',
+            model: { name: 'Rio', brand: { name: 'Kia' } },
+          },
+        ],
+        diffHighlights: {},
+      },
+    });
+    await ready;
+    fixture.detectChanges();
+
+    expect(document.title).toBe(
+      'Toyota Corolla XLI vs Kia Rio EX — comparación | cualautocompro',
+    );
+    expect(
+      document.head
+        .querySelector('meta[name="description"]')
+        ?.getAttribute('content'),
+    ).toBe(
+      'Comparación lado a lado de Toyota Corolla XLI vs Kia Rio EX: precio, rendimiento, equipamiento y costo anual estimado.',
+    );
+    // Las comparaciones se comparten por link, pero no se indexan.
+    expect(
+      document.head
+        .querySelector('meta[name="robots"]')
+        ?.getAttribute('content'),
+    ).toBe('noindex, nofollow');
+  });
+
+  it('con una sola versión deja el título por defecto de la ruta', async () => {
+    configure(routeStub({ ids: 'a' }, {}));
+    const fixture = TestBed.createComponent(CompareComponent);
+    const ready = fixture.componentInstance.ready;
+
+    const req = http.expectOne(
+      (r) => r.method === 'GET' && r.url.includes('/api/v1/compare'),
+    );
+    req.flush({
+      data: {
+        versions: [
+          {
+            id: 'a',
+            name: 'XLI',
+            model: { name: 'Corolla', brand: { name: 'Toyota' } },
+          },
+        ],
+        diffHighlights: {},
+      },
+    });
+    await ready;
+    fixture.detectChanges();
+
+    expect(document.title).toBe(ROUTE_DEFAULT.title);
   });
 });
