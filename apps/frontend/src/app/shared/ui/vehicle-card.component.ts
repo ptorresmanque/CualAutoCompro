@@ -15,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { VehicleVersion } from '../../core/types/vehicle';
 import { AuthService } from '../../core/auth.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
+import { slugify } from '../../core/slug';
 import { versionFieldLabel } from '../../core/types/version-labels';
 import { fuelLabel, segmentLabel, transmissionLabel } from '../../core/types/catalog-labels';
 
@@ -103,11 +104,13 @@ export class VehicleCardComponent {
       : '';
   });
 
+  // `slugify` y no `toLowerCase()`: el backend resuelve la ficha comparando
+  // `slugify(brand.name)` / `slugify(model.name)`, así que con toLowerCase
+  // cualquier nombre con espacio o acento no matcheaba el endpoint rápido y
+  // caía al fallback legacy de tres requests. Ver core/slug.ts.
   readonly detailUrl = computed(() => {
     const m = this.model();
-    const brandSlug = m.brand.name.toLowerCase();
-    const modelSlug = m.name.toLowerCase();
-    return ['/brand', brandSlug, 'model', modelSlug];
+    return ['/brand', slugify(m.brand.name), 'model', slugify(m.name)];
   });
 
   onCompare(event: Event): void {

@@ -239,6 +239,34 @@ describe('VehicleCardComponent', () => {
     expect(link.getAttribute('href')).toBe('/brand/hyundai/model/tucson');
   });
 
+  // Con `toLowerCase()` el href quedaba "/brand/great%20wall/..." y el
+  // endpoint `by-slug` del backend (que compara contra `slugify`) devolvía 404,
+  // forzando el fallback legacy de tres requests.
+  it('el link al detalle slugifica espacios y acentos como el backend', () => {
+    const f = TestBed.createComponent(TestHostComponent);
+    f.componentInstance.car.set(
+      carFixture({ brand: { name: 'Great Wall' }, name: 'Poer Cannon' }),
+    );
+    f.detectChanges();
+
+    let link = f.nativeElement.querySelector(
+      'a[data-testid="card-image-link"]',
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe(
+      '/brand/great-wall/model/poer-cannon',
+    );
+
+    f.componentInstance.car.set(
+      carFixture({ brand: { name: 'Citroën' }, name: 'C3 Aircross' }),
+    );
+    f.detectChanges();
+
+    link = f.nativeElement.querySelector(
+      'a[data-testid="card-image-link"]',
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/brand/citroen/model/c3-aircross');
+  });
+
   it('click en el botón Comparar NO navega al detalle (stopPropagation)', () => {
     const f = TestBed.createComponent(TestHostComponent);
     f.componentInstance.car.set(carFixture());
