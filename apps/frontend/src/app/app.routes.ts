@@ -91,6 +91,22 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'legal/privacidad',
+        data: { doc: 'privacidad' },
+        loadComponent: () =>
+          import('./features/legal/legal.component').then(
+            (m) => m.LegalComponent,
+          ),
+      },
+      {
+        path: 'legal/terminos',
+        data: { doc: 'terminos' },
+        loadComponent: () =>
+          import('./features/legal/legal.component').then(
+            (m) => m.LegalComponent,
+          ),
+      },
+      {
         path: 'brand/:brandSlug/model/:modelSlug',
         loadComponent: () =>
           import('./features/model/model.component').then(
