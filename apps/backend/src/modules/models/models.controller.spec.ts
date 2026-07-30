@@ -68,6 +68,70 @@ describe("GET /api/v1/models", () => {
     expect(res.status).toBe(400);
   });
 
+  // Multi-selección: el catálogo manda los tokens separados por coma cuando el
+  // usuario marca más de una opción ("SUV o Crossover").
+  describe("multi-selección por CSV", () => {
+    it("segment acepta varios tokens y devuelve la unión", async () => {
+      const res = await request(createApp()).get("/api/v1/models?segment=HATCHBACK,SUV");
+      expect(res.status).toBe(200);
+      const segments = res.body.data.items.map((m: { segment: string }) => m.segment);
+      expect(segments.length).toBeGreaterThanOrEqual(2);
+      expect(new Set(segments)).toEqual(new Set(["HATCHBACK", "SUV"]));
+    });
+
+    it("un solo token sigue funcionando igual que antes", async () => {
+      const res = await request(createApp()).get("/api/v1/models?segment=SUV");
+      expect(res.status).toBe(200);
+      expect(
+        res.body.data.items.every((m: { segment: string }) => m.segment === "SUV"),
+      ).toBe(true);
+    });
+
+    it("tolera espacios y comas sobrantes", async () => {
+      const res = await request(createApp()).get("/api/v1/models?segment=%20SUV%20,,HATCHBACK,");
+      expect(res.status).toBe(200);
+      expect(res.body.data.items.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("rechaza la lista si algún token tiene formato inválido", async () => {
+      const res = await request(createApp()).get("/api/v1/models?segment=SUV,mini%20van");
+      expect(res.status).toBe(400);
+    });
+
+    it("rechaza una lista vacía", async () => {
+      const res = await request(createApp()).get("/api/v1/models?segment=,,");
+      expect(res.status).toBe(400);
+    });
+
+    it("fuel acepta varios combustibles", async () => {
+      const toyota = await prisma.brand.findFirstOrThrow({ where: { name: "Toyota" } });
+      const prius = await prisma.model.create({
+        data: { brandId: toyota.id, name: "Prius", segment: "HATCHBACK" },
+      });
+      await prisma.version.create({
+        data: { modelId: prius.id, name: "Hybrid", year: 2026, priceClp: 25000000,
+          transmission: "CVT", fuel: "HYBRID", engineDisplacementCc: 1800, powerHp: 120,
+          torqueNm: 142, consumptionCityKmL: 24, consumptionHighwayKmL: 26,
+          lengthMm: 4600, widthMm: 1780, heightMm: 1470, weightKg: 1400, trunkLiters: 500 },
+      });
+
+      const soloHybrid = await request(createApp()).get("/api/v1/models?fuel=HYBRID");
+      expect(soloHybrid.body.data.items.map((m: { name: string }) => m.name)).toEqual(["Prius"]);
+
+      const ambos = await request(createApp()).get("/api/v1/models?fuel=HYBRID,BENCINA");
+      const names = ambos.body.data.items.map((m: { name: string }) => m.name);
+      expect(names).toContain("Prius");
+      expect(names).toContain("Yaris");
+    });
+
+    it("transmission acepta varias cajas", async () => {
+      const res = await request(createApp()).get("/api/v1/models?transmission=MANUAL,CVT");
+      expect(res.status).toBe(200);
+      // Yaris tiene una versión CVT y otra MANUAL: entra por las dos.
+      expect(res.body.data.items.map((m: { name: string }) => m.name)).toContain("Yaris");
+    });
+  });
+
   it("GET /api/v1/models/segments lista canónicos y creados, sin chocar con /:id", async () => {
     const toyota = await prisma.brand.findFirstOrThrow({ where: { name: "Toyota" } });
     await prisma.model.create({
@@ -220,6 +284,107 @@ describe("GET /api/v1/models sort + order + minConsumption", () => {
     await seedModels();
     const res = await request(createApp()).get("/api/v1/models?transmission=MANUAL");
     expect(res.body.data.items).toHaveLength(1);
+  });
+
+  // El campo está en km/L (más = mejor). El filtro histórico `consumptionMax`
+  // (lte) descartaba justo los autos eficientes cuando el usuario pedía "que
+  // gaste poco"; `consumptionMinKmL` (gte) es el que expresa esa intención.
+  describe("filtro consumptionMinKmL (rendimiento mínimo, gte)", () => {
+    it("incluye solo modelos con alguna versión de al menos ese rendimiento", async () => {
+      await seedModels();
+      const res = await request(createApp()).get("/api/v1/models?consumptionMinKmL=14");
+      expect(res.status).toBe(200);
+      const names = res.body.data.items.map((m: { name: string }) => m.name).sort();
+      // Alpha rinde 10 km/L: queda fuera. Charlie (14) y Zeta (16) entran.
+      expect(names).toEqual(["Charlie", "Zeta"]);
+    });
+
+    it("un rendimiento mínimo alto deja la lista vacía", async () => {
+      await seedModels();
+      const res = await request(createApp()).get("/api/v1/models?consumptionMinKmL=30");
+      expect(res.body.data.items).toHaveLength(0);
+    });
+
+    it("se combina con consumptionMax formando un rango", async () => {
+      await seedModels();
+      const res = await request(createApp()).get(
+        "/api/v1/models?consumptionMinKmL=12&consumptionMax=15",
+      );
+      const names = res.body.data.items.map((m: { name: string }) => m.name);
+      expect(names).toEqual(["Charlie"]);
+    });
+
+    it("consumptionHighwayMinKmL filtra por el rendimiento en carretera", async () => {
+      await seedModels();
+      const res = await request(createApp()).get("/api/v1/models?consumptionHighwayMinKmL=19");
+      const names = res.body.data.items.map((m: { name: string }) => m.name);
+      // Carretera: Alpha 14, Charlie 18, Zeta 20.
+      expect(names).toEqual(["Zeta"]);
+    });
+  });
+
+  describe("sort=efficiency (mejor rendimiento del modelo)", () => {
+    it("order=desc pone primero el modelo más eficiente", async () => {
+      await seedModels();
+      const res = await request(createApp()).get("/api/v1/models?sort=efficiency&order=desc");
+      const names = res.body.data.items.map((m: { name: string }) => m.name);
+      expect(names).toEqual(["Zeta", "Charlie", "Alpha"]);
+    });
+
+    it("order=asc pone primero el menos eficiente", async () => {
+      await seedModels();
+      const res = await request(createApp()).get("/api/v1/models?sort=efficiency&order=asc");
+      const names = res.body.data.items.map((m: { name: string }) => m.name);
+      expect(names).toEqual(["Alpha", "Charlie", "Zeta"]);
+    });
+
+    it("ordena por la MEJOR versión del modelo, no por la peor", async () => {
+      const { a } = await seedModels();
+      // Alpha rinde 10 km/L, pero le agregamos una versión de 25: pasa a ser el
+      // modelo más eficiente de la lista aunque su peor versión siga siendo la
+      // peor de todas (eso es lo que mira `minConsumption`).
+      await prisma.version.create({
+        data: { modelId: a.id, name: "A2-eco", year: 2026, priceClp: 21000000,
+          transmission: "CVT", fuel: "HYBRID", engineDisplacementCc: 1500, powerHp: 120,
+          torqueNm: 145, consumptionCityKmL: 25, consumptionHighwayKmL: 28,
+          lengthMm: 4200, widthMm: 1760, heightMm: 1480, weightKg: 1150, trunkLiters: 360 },
+      });
+      const res = await request(createApp()).get("/api/v1/models?sort=efficiency&order=desc");
+      const names = res.body.data.items.map((m: { name: string }) => m.name);
+      expect(names[0]).toBe("Alpha");
+    });
+
+    it("los modelos sin dato de consumo van al final en ambas direcciones", async () => {
+      await seedModels();
+      const b = await prisma.brand.findFirstOrThrow({ where: { name: "T" } });
+      const sinDato = await prisma.model.create({
+        data: { brandId: b.id, name: "SinDato", segment: "SUV" },
+      });
+      // Con una versión, pero sin consumo declarado: el modelo existe en la
+      // lista y no tiene con qué ordenarse por rendimiento.
+      await prisma.version.create({
+        data: { modelId: sinDato.id, name: "S1", year: 2026, priceClp: 18000000,
+          transmission: "AUTOMATIC", fuel: "BENCINA", engineDisplacementCc: 1600,
+          powerHp: 120, torqueNm: 150, lengthMm: 4300, widthMm: 1800,
+          heightMm: 1600, weightKg: 1400, trunkLiters: 400 },
+      });
+
+      const desc = await request(createApp()).get("/api/v1/models?sort=efficiency&order=desc");
+      const descNames = desc.body.data.items.map((m: { name: string }) => m.name);
+      expect(descNames[descNames.length - 1]).toBe("SinDato");
+
+      const asc = await request(createApp()).get("/api/v1/models?sort=efficiency&order=asc");
+      const ascNames = asc.body.data.items.map((m: { name: string }) => m.name);
+      expect(ascNames[ascNames.length - 1]).toBe("SinDato");
+    });
+  });
+
+  it("expone maxConsumption junto a minConsumption", async () => {
+    await seedModels();
+    const res = await request(createApp()).get("/api/v1/models?sort=name");
+    const alpha = res.body.data.items.find((m: { name: string }) => m.name === "Alpha");
+    expect(alpha.minConsumption).toBe(10);
+    expect(alpha.maxConsumption).toBe(10);
   });
 
   it("busca por nombre de modelo case-insensitive (q=alp)", async () => {

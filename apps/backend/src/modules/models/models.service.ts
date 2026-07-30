@@ -33,11 +33,13 @@ export class ModelsService {
       }
     }
     if (q.brand) where.brandId = q.brand;
-    if (q.segment) where.segment = q.segment;
+    // `in` incluso con un solo token: el DTO normaliza el param a array, así
+    // que "SUV" y "SUV,CROSSOVER" siguen el mismo camino.
+    if (q.segment?.length) where.segment = { in: q.segment };
 
     const vWhere: Prisma.VersionWhereInput = {};
-    if (q.transmission) vWhere.transmission = q.transmission;
-    if (q.fuel) vWhere.fuel = q.fuel;
+    if (q.transmission?.length) vWhere.transmission = { in: q.transmission };
+    if (q.fuel?.length) vWhere.fuel = { in: q.fuel };
     if (q.priceMin !== undefined || q.priceMax !== undefined) {
       vWhere.priceClp = {
         ...(q.priceMin !== undefined ? { gte: q.priceMin } : {}),
@@ -45,8 +47,20 @@ export class ModelsService {
       };
     }
     if (q.powerMin !== undefined) vWhere.powerHp = { gte: q.powerMin };
-    if (q.consumptionMax !== undefined) vWhere.consumptionCityKmL = { lte: q.consumptionMax };
-    if (q.consumptionHighwayMax !== undefined) vWhere.consumptionHighwayKmL = { lte: q.consumptionHighwayMax };
+    // Los cuatro filtros de consumo pueden combinarse (rango): se acumulan en
+    // el mismo objeto en vez de sobrescribirse.
+    if (q.consumptionMax !== undefined) {
+      vWhere.consumptionCityKmL = { ...(vWhere.consumptionCityKmL as object), lte: q.consumptionMax };
+    }
+    if (q.consumptionMinKmL !== undefined) {
+      vWhere.consumptionCityKmL = { ...(vWhere.consumptionCityKmL as object), gte: q.consumptionMinKmL };
+    }
+    if (q.consumptionHighwayMax !== undefined) {
+      vWhere.consumptionHighwayKmL = { ...(vWhere.consumptionHighwayKmL as object), lte: q.consumptionHighwayMax };
+    }
+    if (q.consumptionHighwayMinKmL !== undefined) {
+      vWhere.consumptionHighwayKmL = { ...(vWhere.consumptionHighwayKmL as object), gte: q.consumptionHighwayMinKmL };
+    }
 
     const hasVersionFilters = Object.keys(vWhere).length > 0;
     if (hasVersionFilters) {
@@ -81,7 +95,12 @@ export class ModelsService {
         .map((v) => v.consumptionCityKmL)
         .filter((c): c is number => typeof c === "number");
       const minPrice = prices.length ? Math.min(...prices) : null;
+      // `minConsumption` = el PEOR rendimiento del modelo (menor km/L).
+      // `maxConsumption` = el MEJOR. La UI ordena por el mejor: si un modelo
+      // tiene una versión de 22 km/L, es un modelo eficiente aunque otra de
+      // sus versiones rinda 12.
       const minConsumption = consumptions.length ? Math.min(...consumptions) : null;
+      const maxConsumption = consumptions.length ? Math.max(...consumptions) : null;
       const maxPrice = prices.length ? Math.max(...prices) : null;
       const firstVersion = m.versions[0];
       const defaultVersion = firstVersion
@@ -117,7 +136,7 @@ export class ModelsService {
         // a primary image.
         imageUrl: m.imageUrl ?? galleryUrls[0] ?? null,
         galleryUrls, brand: m.brand,
-        minPrice, minConsumption, maxPrice, versionCount: m.versions.length,
+        minPrice, minConsumption, maxConsumption, maxPrice, versionCount: m.versions.length,
         defaultVersion,
         versions,
       };
@@ -130,6 +149,16 @@ export class ModelsService {
         cmp = ((a.minPrice ?? Infinity) - (b.minPrice ?? Infinity));
       } else if (q.sort === "minConsumption") {
         cmp = ((a.minConsumption ?? Infinity) - (b.minConsumption ?? Infinity));
+      } else if (q.sort === "efficiency") {
+        // Los modelos sin dato de consumo van al final en las dos direcciones:
+        // con `order=desc` (mejor rendimiento primero) un `Infinity` los
+        // pondría arriba, que es justo lo que no se quiere mostrar.
+        const av = a.maxConsumption;
+        const bv = b.maxConsumption;
+        if (av === null && bv === null) cmp = 0;
+        else if (av === null) return 1;
+        else if (bv === null) return -1;
+        else cmp = av - bv;
       } else {
         cmp = a.name.localeCompare(b.name);
       }
