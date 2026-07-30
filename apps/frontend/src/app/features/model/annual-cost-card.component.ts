@@ -5,35 +5,20 @@ import {
   effect,
   inject,
   input,
+  linkedSignal,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
-import { ApiService } from '../../core/api.service';
-import { toApiCallError } from '../../core/api-error';
-
-interface CostBreakdown {
-  kmPerYear: number;
-  fuelClp: number;
-  maintenanceClp: number;
-  circulationPermitClp: number;
-  mandatoryInsuranceClp: number;
-  voluntaryInsuranceClp: number;
-  depreciationClp: number;
-  totalClp: number;
-  meta: {
-    consumptionCityKmL: number | null;
-    consumptionHighwayKmL: number | null;
-    fuelType: string | null;
-    fuelUnit: string | null;
-    fuelPricePerUnit: number | null;
-    cityShare: number;
-    highwayShare: number;
-    maintenanceMileages: number[];
-  };
-}
+import {
+  AnnualCostService,
+  clampKmPerYear,
+  DEFAULT_KM_PER_YEAR,
+  MAX_KM_PER_YEAR,
+  type CostBreakdown,
+} from '../../core/annual-cost.service';
 
 const formatter = new Intl.NumberFormat('es-CL', {
   style: 'currency',
@@ -64,7 +49,7 @@ interface Row {
             type="number"
             inputmode="numeric"
             min="0"
-            max="200000"
+            [max]="maxKm"
             step="1000"
             [ngModel]="km()"
             (ngModelChange)="onKmChange($event)"
@@ -105,9 +90,11 @@ interface Row {
   `,
   styles: [
     `
+      /* Radio 2px, no 12px: el sistema "Pizarra Digital" es rectangular
+       * (ver apps/frontend/AGENTS.md §"Lo que NO se hace"). */
       .annual-cost-card {
         border: 1px solid var(--rule-strong);
-        border-radius: 12px;
+        border-radius: 2px;
         padding: 1rem;
         background: var(--paper-cool);
       }
@@ -137,12 +124,15 @@ interface Row {
   ],
 })
 export class AnnualCostCardComponent {
-  private api = inject(ApiService);
+  private costs = inject(AnnualCostService);
 
   readonly versionId = input.required<string>();
-  readonly initialKm = input<number>(15_000);
+  readonly initialKm = input<number>(DEFAULT_KM_PER_YEAR);
+  /** Espera antes de pedir el cálculo tras editar km/año. 0 en tests. */
+  readonly debounceMs = input<number>(400);
 
-  readonly km = signal<number>(15_000);
+  /** Editable por el usuario; vuelve a `initialKm` si el padre lo cambia. */
+  readonly km = linkedSignal(() => this.initialKm());
   readonly cost = signal<CostBreakdown | null>(null);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -160,23 +150,37 @@ export class AnnualCostCardComponent {
     ];
   });
 
+  /** Versión para la que ya se disparó una carga: la primera no se debouncea. */
+  private fetchedFor: string | null = null;
+
   constructor() {
     // Único punto de fetch: el effect depende de `versionId` y de `km`, así que
     // reacciona tanto al montaje como a cada cambio de km/año. `onKmChange` NO
     // debe llamar a `fetch` además de esto — hacerlo emitía dos requests
     // idénticos por cada tecla, y forzaba a leer `versionId()` (input
     // requerido) antes de que el padre lo hubiera bindeado.
-    effect(() => {
+    //
+    // El timer + `onCleanup` es el debounce: cada re-ejecución del effect
+    // cancela el fetch pendiente, así que escribir "25000" en el campo de
+    // km/año dispara un request y no cinco (uno por tecla). La primera carga
+    // de cada versión no espera, para no agregarle latencia a la ficha.
+    effect((onCleanup) => {
       const vid = this.versionId();
       if (!vid) return;
-      // Reset km when version changes
-      const initial = this.initialKm();
-      if (this.km() === 0) this.km.set(initial);
-      void this.fetch(vid, this.km());
+      const km = this.km();
+      const delay = this.fetchedFor === vid ? this.debounceMs() : 0;
+      this.fetchedFor = vid;
+      if (delay <= 0) {
+        void this.fetch(vid, km);
+        return;
+      }
+      const handle = setTimeout(() => void this.fetch(vid, km), delay);
+      onCleanup(() => clearTimeout(handle));
     });
   }
 
   fmt = fmt;
+  readonly maxKm = MAX_KM_PER_YEAR;
 
   percent(value: number): number {
     return Math.round(value * 100);
@@ -184,29 +188,18 @@ export class AnnualCostCardComponent {
 
   /** Solo normaliza el valor; el fetch lo dispara el effect del constructor. */
   onKmChange(value: number | string): void {
-    const n = typeof value === 'string' ? Number.parseInt(value, 10) : value;
-    if (Number.isFinite(n)) {
-      this.km.set(Math.max(0, Math.min(200_000, n)));
-    }
+    const km = clampKmPerYear(value);
+    if (km !== null) this.km.set(km);
   }
 
   private async fetch(versionId: string, km: number): Promise<void> {
     this.loading.set(true);
     try {
-      // `getUnwrapped` y no `get`: el backend puede responder el sobre
-      // `{ data: null, error }`, y `get` lo resolvía como éxito dejando la
-      // tarjeta en blanco sin mostrar nunca el motivo.
-      const data = await this.api.getUnwrapped<CostBreakdown>(
-        `/cost/version/${encodeURIComponent(versionId)}`,
-        { kmPerYear: km },
-      );
-      this.cost.set(data);
+      this.cost.set(await this.costs.fetch(versionId, km));
       this.error.set(null);
     } catch (e) {
       this.cost.set(null);
-      // `toApiCallError` traduce el HttpErrorResponse de un 4xx al sobre del
-      // backend; sin él, un 404 pintaba el mensaje genérico de HttpClient.
-      this.error.set(toApiCallError(e)?.backend.message ?? (e as Error).message);
+      this.error.set(this.costs.errorMessage(e));
     } finally {
       this.loading.set(false);
     }

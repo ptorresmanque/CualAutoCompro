@@ -271,6 +271,111 @@ describe('ModelComponent — recall badge + dealers', () => {
     ).toBeNull();
   });
 
+
+  // ---------------------------------------------------------------------------
+  // Equipamiento agrupado. Antes cada fila era `label = nombre / value =
+  // categoría` y se leía "Airbags | Seguridad", como si la categoría fuera el
+  // valor del ítem.
+  // ---------------------------------------------------------------------------
+
+  it('agrupa el equipamiento por categoría, con los ítems como valor', () => {
+    const { cmp } = createWithVersions([
+      {
+        ...{ id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450 },
+        equipmentItems: [
+          { equipmentItem: { name: 'Airbags', category: 'Seguridad' } },
+          { equipmentItem: { name: 'ABS', category: 'Seguridad' } },
+          { equipmentItem: { name: 'Apple CarPlay', category: 'Conectividad' } },
+        ],
+      },
+    ]);
+
+    const equipo = cmp
+      .specGroupsFor('v1')
+      .find((g) => g.title === 'Equipamiento');
+    expect(equipo).toBeDefined();
+    // Una fila por categoría, ordenadas alfabéticamente.
+    expect(equipo!.rows.map((r) => r.label)).toEqual([
+      'Conectividad',
+      'Seguridad',
+    ]);
+    // Y el valor son los ítems de esa categoría, no la categoría repetida.
+    expect(equipo!.rows[0].value).toBe('Apple CarPlay');
+    expect(equipo!.rows[1].value).toBe('ABS, Airbags');
+  });
+
+  it('manda a "Otros" el equipamiento sin categoría', () => {
+    const { cmp } = createWithVersions([
+      {
+        ...{ id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450 },
+        equipmentItems: [{ equipmentItem: { name: 'Extra', category: '' } }],
+      },
+    ]);
+    const equipo = cmp.specGroupsFor('v1').find((g) => g.title === 'Equipamiento');
+    expect(equipo!.rows[0].label).toBe('Otros');
+    expect(equipo!.rows[0].value).toBe('Extra');
+  });
+
+  it('usa km/L y lo llama rendimiento, igual que el catálogo y el comparador', () => {
+    const { cmp } = createWithVersions([{ id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450 }]);
+    const motor = cmp.specGroupsFor('v1').find((g) => g.title === 'Motorización');
+    const fila = motor!.rows.find((r) => r.label.startsWith('Rendimiento'));
+    expect(fila).toBeDefined();
+    expect(fila!.value).toBe('12 / 16 km/L');
+  });
+
+  it('specGroupsFor devuelve la misma referencia mientras no cambien las versiones', () => {
+    const { cmp } = createWithVersions([{ id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450 }]);
+    // Era un método llamado desde el template: se re-ejecutaba en cada
+    // detección de cambios y recreaba todos los arrays.
+    expect(cmp.specGroupsFor('v1')).toBe(cmp.specGroupsFor('v1'));
+  });
+
+  // ---------------------------------------------------------------------------
+  // Selector de versión: antes repetía marca, modelo, transmisión, combustible
+  // y potencia, todo lo que ya está en la tabla de la tab.
+  // ---------------------------------------------------------------------------
+
+  it('elegir una versión en el aside cambia la tab activa', () => {
+    const { cmp, fixture } = createWithVersions([{ id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450 }, { id: 'v2', name: 'Limited', year: 2025, priceClp: 18000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 180, engineDisplacementCc: 2500, torqueNm: 250, consumptionCityKmL: 11, consumptionHighwayKmL: 15, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450 }]);
+    fixture.detectChanges();
+
+    expect(cmp.activeTabIndex()).toBe(0);
+    expect(cmp.activeVersion()?.id).toBe('v1');
+
+    fixture.nativeElement
+      .querySelector('[data-testid="version-select-v2"]')
+      .click();
+    fixture.detectChanges();
+
+    expect(cmp.activeTabIndex()).toBe(1);
+    expect(cmp.activeVersion()?.id).toBe('v2');
+    expect(
+      fixture.nativeElement
+        .querySelector('[data-testid="version-v2"]')
+        .getAttribute('data-active'),
+    ).toBe('true');
+    expect(
+      fixture.nativeElement
+        .querySelector('[data-testid="version-v1"]')
+        .getAttribute('data-active'),
+    ).toBe('false');
+  });
+
+  it('el aside no repite los datos que ya muestra la ficha técnica', () => {
+    const { fixture } = createWithVersions([{ id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450 }]);
+    fixture.detectChanges();
+
+    const aside = fixture.nativeElement.querySelector('[data-testid="versions"]');
+    // Nombre y precio sí; marca, transmisión, combustible y potencia no.
+    expect(aside.textContent).toContain('Sport');
+    expect(aside.textContent).toContain('15.000.000');
+    expect(aside.textContent).not.toContain('Toyota');
+    expect(aside.textContent).not.toContain('Automática');
+    expect(aside.textContent).not.toContain('Bencina');
+    expect(aside.textContent).not.toContain('150');
+  });
+
   it('crea una tab por versión con su contenido independiente', () => {
     const { cmp, fixture } = createWithVersions([
       { id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450 },

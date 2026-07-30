@@ -54,6 +54,7 @@ describe('AnnualCostCardComponent', () => {
     });
     const fixture = TestBed.createComponent(AnnualCostCardComponent);
     fixture.componentRef.setInput('versionId', 'v1');
+    fixture.componentRef.setInput('debounceMs', 0);
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -66,7 +67,9 @@ describe('AnnualCostCardComponent', () => {
 
     // Trigger km change
     fixture.componentInstance.onKmChange(25000);
+    fixture.detectChanges();
     await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
 
     const req = http.expectOne(
       (r) => r.url.includes('/cost/version/v1') && r.params.get('kmPerYear') === '25000',
@@ -74,6 +77,39 @@ describe('AnnualCostCardComponent', () => {
     expect(req).toBeTruthy();
     req.flush({ data: { ...sampleCost, kmPerYear: 25000 }, error: null });
     await fixture.whenStable();
+  });
+
+  // Cada tecla en el campo de km/año re-ejecuta el effect; el debounce tiene
+  // que colapsar esa ráfaga en un único request con el valor final.
+  it('colapsa una ráfaga de cambios de km/año en un solo request', async () => {
+    TestBed.configureTestingModule({
+      imports: [AnnualCostCardComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideAnimations()],
+    });
+    const fixture = TestBed.createComponent(AnnualCostCardComponent);
+    fixture.componentRef.setInput('versionId', 'v1');
+    fixture.componentRef.setInput('debounceMs', 20);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const http = TestBed.inject(HttpTestingController);
+    http
+      .expectOne((r) => r.params.get('kmPerYear') === '15000')
+      .flush({ data: sampleCost, error: null });
+    await fixture.whenStable();
+
+    // "2", "25", "250", "2500", "25000" — como al tipear.
+    for (const km of [2, 25, 250, 2500, 25000]) {
+      fixture.componentInstance.onKmChange(km);
+      fixture.detectChanges();
+      await fixture.whenStable();
+    }
+    await new Promise((r) => setTimeout(r, 40));
+
+    const req = http.expectOne((r) => r.url.includes('/cost/version/v1'));
+    expect(req.request.params.get('kmPerYear')).toBe('25000');
+    req.flush({ data: { ...sampleCost, kmPerYear: 25000 }, error: null });
+    http.verify();
   });
 
   it('clamp km/año al rango [0, 200000]', async () => {

@@ -17,6 +17,7 @@ import { CompareStore } from '../../core/compare-store.service';
 import { PopularityService } from '../../core/popularity.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
+import { slugify } from '../../core/slug';
 import { DisclaimerComponent } from '../../shared/ui/disclaimer.component';
 import { AnnualCostCardComponent } from './annual-cost-card.component';
 import { versionFieldLabel } from '../../core/types/version-labels';
@@ -136,7 +137,19 @@ export class ModelComponent {
   private readonly _hovered = signal(false);
   readonly hovered = this._hovered.asReadonly();
 
+  /**
+   * En touch no hay hover, así que las flechas del carrusel quedaban en
+   * `opacity-0` + `pointer-events-none` de forma permanente: en celular solo se
+   * podía cambiar de imagen con los dots. Acá se fuerzan visibles.
+   */
+  readonly navAlwaysVisible = signal(false);
+
   readonly activeTabIndex = signal(0);
+
+  /** Versión de la tab abierta: es la que alimenta el costo anual. */
+  readonly activeVersion = computed<ModelVersion | null>(
+    () => this.versions()[this.activeTabIndex()] ?? null,
+  );
 
   setActiveTabIndex(i: number): void {
     this.activeTabIndex.set(i);
@@ -148,9 +161,22 @@ export class ModelComponent {
   readonly fuelLabel = fuelLabel;
   readonly transmissionLabel = transmissionLabel;
 
-  readonly specGroupsByVersion = computed<{ version: ModelVersion; groups: SpecGroup[] }[]>(() => {
-    return this.versions().map((v) => ({ version: v, groups: this.buildSpecGroups(v) }));
+  /**
+   * Grupos de ficha técnica por versión, indexados por id.
+   *
+   * Es un `computed` y no una llamada desde el template: `buildSpecGroups(v)`
+   * en la plantilla se re-ejecutaba en cada detección de cambios para cada
+   * versión, recreando todos los arrays.
+   */
+  readonly specGroupsByVersion = computed<Map<string, SpecGroup[]>>(() => {
+    const out = new Map<string, SpecGroup[]>();
+    for (const v of this.versions()) out.set(v.id, this.buildSpecGroups(v));
+    return out;
   });
+
+  specGroupsFor(versionId: string): SpecGroup[] {
+    return this.specGroupsByVersion().get(versionId) ?? [];
+  }
 
   buildSpecGroups(v: ModelVersion): SpecGroup[] {
     const groups: SpecGroup[] = [
@@ -166,13 +192,15 @@ export class ModelComponent {
           { label: 'Tracción', value: versionFieldLabel(v.traction), zebra: true },
           ...(v.fuel !== 'ELECTRIC' ? [{ label: 'Tipo motor', value: versionFieldLabel(v.engineType), zebra: false }] : []),
           {
-            label: 'Consumo ciudad / carretera',
+            // "Rendimiento" y `km/L`, igual que el catálogo y el comparador:
+            // acá decía "Consumo" y "km/l", tres nombres para el mismo dato.
+            label: 'Rendimiento ciudad / carretera',
             value: v.consumptionCityKmL && v.consumptionHighwayKmL
-              ? `${v.consumptionCityKmL} / ${v.consumptionHighwayKmL} km/l`
+              ? `${v.consumptionCityKmL} / ${v.consumptionHighwayKmL} km/L`
               : '—',
             zebra: true,
           },
-        ].filter((r) => r.value !== '—' || true),
+        ],
       },
       {
         title: 'Dimensiones y Pesos',
@@ -192,19 +220,27 @@ export class ModelComponent {
       },
     ];
 
+    // Equipamiento agrupado por categoría, igual que el comparador: antes cada
+    // fila era `label = nombre / value = categoría`, y se leía "Airbags |
+    // Seguridad", como si la categoría fuera el valor del ítem.
     const items = v.equipmentItems ?? [];
     if (items.length > 0) {
-      const sorted = [...items].sort((a, b) => {
-        const nameCmp = a.equipmentItem.name.localeCompare(b.equipmentItem.name);
-        if (nameCmp !== 0) return nameCmp;
-        return a.equipmentItem.category.localeCompare(b.equipmentItem.category);
-      });
+      const byCategory = new Map<string, string[]>();
+      for (const ei of items) {
+        const category = ei.equipmentItem.category || 'Otros';
+        const list = byCategory.get(category) ?? [];
+        list.push(ei.equipmentItem.name);
+        byCategory.set(category, list);
+      }
+      const categories = [...byCategory.keys()].sort((a, b) => a.localeCompare(b));
       groups.push({
         title: 'Equipamiento',
         icon: 'inventory_2',
-        rows: sorted.map((ei, idx) => ({
-          label: ei.equipmentItem.name,
-          value: ei.equipmentItem.category || '—',
+        rows: categories.map((category, idx) => ({
+          label: category,
+          value: (byCategory.get(category) ?? [])
+            .sort((a, b) => a.localeCompare(b))
+            .join(', '),
           zebra: idx % 2 === 1,
         })),
       });
@@ -216,6 +252,11 @@ export class ModelComponent {
   readonly initialLoad: Promise<void>;
 
   constructor() {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const mq = window.matchMedia('(hover: none)');
+      this.navAlwaysVisible.set(mq.matches);
+      mq.addEventListener('change', (e) => this.navAlwaysVisible.set(e.matches));
+    }
     this.initialLoad = this.bootstrap();
   }
 
@@ -328,7 +369,7 @@ export class ModelComponent {
   private async bootstrapLegacy(brandSlug: string, modelSlug: string): Promise<{ data: ModelDetail | null }> {
     const brandsRes = await this.api.get<{ data: Brand[] }>('/brands');
     const brand = brandsRes.data.find(
-      (b) => b.name.toLowerCase() === brandSlug.toLowerCase(),
+      (b) => slugify(b.name) === slugify(brandSlug),
     );
     if (!brand) {
       this.error.set(`Marca "${brandSlug}" no encontrada.`);
@@ -339,7 +380,7 @@ export class ModelComponent {
       `/brands/${brand.id}/models`,
     );
     const brandModel = modelsRes.data.find(
-      (m) => m.name.toLowerCase() === modelSlug.toLowerCase(),
+      (m) => slugify(m.name) === slugify(modelSlug),
     );
     if (!brandModel) {
       this.error.set(

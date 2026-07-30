@@ -4,10 +4,15 @@
     aria-label="Ruta"
     class="flex items-center gap-1 text-xs uppercase tracking-wider text-ink-muted mb-4"
   >
-    <a routerLink="/" class="hover:text-engine">Marcas</a>
+    <a routerLink="/catalogo" class="hover:text-engine">Catálogo</a>
     <mat-icon class="crumb-icon">chevron_right</mat-icon>
     @if (brand(); as b) {
-      <a routerLink="/" class="hover:text-engine">{{ b.name }}</a>
+      <a
+        routerLink="/catalogo"
+        [queryParams]="{ brand: b.id }"
+        class="hover:text-engine"
+        data-testid="crumb-brand"
+      >{{ b.name }}</a>
       <mat-icon class="crumb-icon">chevron_right</mat-icon>
       <span class="font-bold text-ink">{{ model()?.name }}</span>
     } @else {
@@ -77,9 +82,8 @@
               mat-icon-button
               type="button"
               class="carousel-nav carousel-nav-left"
-              [class.opacity-0]="!hovered()"
-              [class.pointer-events-none]="!hovered()"
-              [class.group-hover:opacity-100]="true"
+              [class.opacity-0]="!hovered() && !navAlwaysVisible()"
+              [class.pointer-events-none]="!hovered() && !navAlwaysVisible()"
               (click)="prev()"
               aria-label="Imagen anterior"
               data-testid="carousel-prev"
@@ -90,9 +94,8 @@
               mat-icon-button
               type="button"
               class="carousel-nav carousel-nav-right"
-              [class.opacity-0]="!hovered()"
-              [class.pointer-events-none]="!hovered()"
-              [class.group-hover:opacity-100]="true"
+              [class.opacity-0]="!hovered() && !navAlwaysVisible()"
+              [class.pointer-events-none]="!hovered() && !navAlwaysVisible()"
               (click)="next()"
               aria-label="Imagen siguiente"
               data-testid="carousel-next"
@@ -115,7 +118,7 @@
       @if (galleryUrls().length > 1) {
         <div
           class="mt-3 flex justify-center gap-2"
-          role="tablist"
+          role="group"
           aria-label="Selector de imagen"
         >
           @for (url of galleryUrls(); track $index) {
@@ -162,7 +165,7 @@
                       {{ formatPrice(v.priceClp) }}
                     </p>
                   </header>
-                  @if (buildSpecGroups(v); as groups) {
+                  @if (specGroupsFor(v.id); as groups) {
                     <div class="space-y-4">
                       @for (group of groups; track group.title) {
                         <article
@@ -195,81 +198,85 @@
               </mat-tab>
             }
           </mat-tab-group>
+
+          <!-- Una sola tarjeta, para la versión de la tab abierta. Antes había
+               una por versión dentro del aside, así que abrir la ficha de un
+               modelo con 6 versiones disparaba 6 requests a /cost/version. -->
+          @if (activeVersion(); as av) {
+            <div class="mt-6" data-testid="annual-cost">
+              <app-annual-cost-card [versionId]="av.id" />
+            </div>
+          }
         } @else {
           <p class="text-sm text-ink-muted">Sin versiones publicadas.</p>
         }
       </div>
 
-      <aside class="space-y-3" data-testid="versions">
-        <h3 class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted">Versiones</h3>
-        @for (v of versions(); track v.id) {
+      <!-- Selector de versión. Antes cada item repetía marca, modelo,
+           transmisión, combustible y potencia — todo lo que ya está en la tabla
+           de la tab de al lado. Ahora es solo lo que sirve para elegir (nombre
+           y precio) más las dos acciones, y elegir acá cambia la tab. -->
+      <aside class="version-picker" data-testid="versions">
+        <h3 class="version-picker-title">Versiones</h3>
+        @for (v of versions(); track v.id; let i = $index) {
           <article
-            class="bg-paper-cool border border-ink p-4 transition-transform hover:-translate-y-0.5"
+            class="version-item"
+            [class.is-active]="i === activeTabIndex()"
             [attr.data-testid]="'version-' + v.id"
+            [attr.data-active]="i === activeTabIndex() ? 'true' : 'false'"
           >
-            <div class="flex justify-between items-start mb-1 gap-2">
-              <div class="min-w-0">
-                <p
-                  class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted"
-                >
-                  {{ model()?.brand?.name }} {{ model()?.name }}
-                </p>
-                <p class="font-semibold text-lg text-ink truncate">
-                  {{ v.name }}
-                </p>
-              </div>
-              @if (v.transmission) {
-                <span
-                  class="flex-shrink-0 bg-engine-100 text-engine-dark px-2 py-0.5 font-mono text-[10px] uppercase tracking-stamp font-bold"
-                >
-                  {{ transmissionLabel(v.transmission) }}
-                </span>
-              }
-            </div>
-            @if (v.fuel) {
-              <p class="font-mono text-[11px] text-ink-muted uppercase tracking-stamp">{{ fuelLabel(v.fuel) }} · {{ v.powerHp ?? '—' }} HP</p>
-            }
-            <p class="mt-2 font-display text-3xl text-ink leading-none">
-              {{ formatPrice(v.priceClp) }}
-            </p>
             <button
               type="button"
-              class="mt-3 inline-flex items-center gap-2 text-sm text-engine hover:underline"
-              (click)="toggleFavorite(v.id)"
-              [attr.aria-pressed]="favorites.isFavorite(v.id)"
-              [attr.data-testid]="'favorite-' + v.id"
+              class="version-item-main"
+              (click)="setActiveTabIndex(i)"
+              [attr.aria-pressed]="i === activeTabIndex() ? 'true' : 'false'"
+              [attr.aria-label]="'Ver ficha técnica de ' + v.name"
+              [attr.data-testid]="'version-select-' + v.id"
             >
-              <mat-icon class="text-base">{{ favorites.isFavorite(v.id) ? 'favorite' : 'favorite_border' }}</mat-icon>
-              {{ favorites.isFavorite(v.id) ? 'En favoritos' : 'Guardar favorito' }}
+              <span class="version-item-name">{{ v.name }}</span>
+              <span class="version-item-price">{{ formatPrice(v.priceClp) }}</span>
             </button>
-            @if (v.hasRecall) {
+
+            @if (v.hasRecall && v.recallUrl) {
               <a
                 [href]="v.recallUrl"
                 target="_blank"
                 rel="noopener"
-                class="mt-2 inline-flex items-center gap-1 text-engine font-mono text-[10px] uppercase tracking-stamp border border-engine px-2 py-0.5"
+                class="version-item-recall"
                 [attr.data-testid]="'recall-' + v.id"
               >
                 <mat-icon class="text-base">warning</mat-icon>
                 Recall publicado
               </a>
             }
-            <mat-checkbox
-              class="!mt-3 w-full"
-              [checked]="isSelected(v.id)"
-              [disabled]="!isSelected(v.id) && maxSelected()"
-              (change)="toggleVersion(v.id)"
-              [attr.data-testid]="'compare-' + v.id"
-            >
-              Agregar a comparación
-            </mat-checkbox>
-            <div class="mt-4">
-              <app-annual-cost-card [versionId]="v.id" />
+
+            <div class="version-item-actions">
+              <mat-checkbox
+                [checked]="isSelected(v.id)"
+                [disabled]="!isSelected(v.id) && maxSelected()"
+                (change)="toggleVersion(v.id)"
+                [attr.data-testid]="'compare-' + v.id"
+              >
+                Comparar
+              </mat-checkbox>
+              <button
+                type="button"
+                class="version-item-fav"
+                (click)="toggleFavorite(v.id)"
+                [attr.aria-pressed]="favorites.isFavorite(v.id)"
+                [attr.aria-label]="
+                  (favorites.isFavorite(v.id) ? 'Quitar ' : 'Guardar ') +
+                  v.name + ' en favoritos'
+                "
+                [attr.data-testid]="'favorite-' + v.id"
+              >
+                <mat-icon class="text-base">{{ favorites.isFavorite(v.id) ? 'favorite' : 'favorite_border' }}</mat-icon>
+              </button>
             </div>
           </article>
         }
         @if (maxSelected()) {
-          <p class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted px-1">
+          <p class="version-picker-note">
             Máximo 3 versiones en la comparación.
           </p>
         }
