@@ -33,6 +33,7 @@
         [step]="step()"
         [value]="lowEffective()"
         (input)="onLowInput($event)"
+        (change)="onLowCommit($event)"
         [attr.data-testid]="(testid() ?? 'rs') + '-low'"
         [attr.aria-label]="label() ? (label() + ' mínimo') : 'mínimo'"
       >
@@ -44,6 +45,7 @@
         [step]="step()"
         [value]="highEffective()"
         (input)="onHighInput($event)"
+        (change)="onHighCommit($event)"
         [attr.data-testid]="(testid() ?? 'rs') + '-high'"
         [attr.aria-label]="label() ? (label() + ' máximo') : 'máximo'"
       >
@@ -56,6 +58,7 @@
         [step]="step()"
         [value]="lowEffective()"
         (input)="onLowInput($event)"
+        (change)="onLowCommit($event)"
         [attr.data-testid]="(testid() ?? 'rs') + '-low'"
         [attr.aria-label]="label() || 'valor'"
       >
