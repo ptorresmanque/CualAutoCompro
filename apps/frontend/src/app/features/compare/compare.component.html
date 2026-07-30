@@ -166,8 +166,10 @@
         Comparativa de modelos
       </h1>
       <p class="mt-2 text-sm text-ink-muted max-w-2xl">
-        Analizá cada detalle técnico y comercial de tus opciones favoritas.
-        Las celdas donde difieren se resaltan en engine-red.
+        Analiza cada detalle técnico y comercial de tus opciones. Las filas
+        donde las versiones difieren quedan marcadas, y en las que hay un mejor
+        valor objetivo —precio, potencia, rendimiento, maletero— se señala cuál
+        es.
       </p>
     </header>
 
@@ -233,7 +235,7 @@
           >
             <mat-icon class="!right-1.5 !-top-2">close</mat-icon>
           </button>
-          @if (v.hasRecall) {
+          @if (v.hasRecall && v.recallUrl) {
             <a
               [href]="v.recallUrl"
               target="_blank"
@@ -263,7 +265,17 @@
             </span>
           </div>
           <h3 class="font-semibold text-lg leading-tight text-ink mb-2 pr-8">
-            {{ v.model?.name }} {{ v.name }}
+            @if (detailUrl(v); as url) {
+              <!-- El comparador era un callejón sin salida: se veía el nombre
+                   del auto pero no había cómo abrir su ficha. -->
+              <a
+                [routerLink]="url"
+                class="compare-model-link"
+                [attr.data-testid]="'model-link-' + v.id"
+              >{{ v.model?.name }} {{ v.name }}</a>
+            } @else {
+              {{ v.model?.name }} {{ v.name }}
+            }
           </h3>
           <p class="font-display text-2xl text-engine mb-3 leading-none">
             {{ formatPrice(v.priceClp) }}
@@ -347,13 +359,54 @@
           </div>
         </article>
       }
+
+      <!-- Hueco para seguir sumando candidatos sin tener que volver atrás con
+           el botón del navegador. -->
+      @if (freeSlots() > 0) {
+        <a
+          routerLink="/catalogo"
+          class="compare-add-slot"
+          data-testid="add-slot"
+        >
+          <mat-icon>add</mat-icon>
+          <span class="compare-add-slot-title">Agregar otro auto</span>
+          <span class="compare-add-slot-hint">
+            {{ freeSlots() === 1 ? 'Queda 1 lugar' : 'Quedan ' + freeSlots() + ' lugares' }}
+          </span>
+        </a>
+      }
     </div>
 
-
+    <!-- Barra de control de la tabla -->
+    <div class="compare-table-toolbar">
+      <button
+        type="button"
+        class="compare-toggle"
+        [class.is-on]="onlyDiffs()"
+        [attr.aria-pressed]="onlyDiffs() ? 'true' : 'false'"
+        (click)="toggleOnlyDiffs()"
+        data-testid="only-diffs-toggle"
+      >
+        <mat-icon>{{ onlyDiffs() ? 'filter_alt' : 'filter_alt_off' }}</mat-icon>
+        <span>Solo diferencias</span>
+      </button>
+      @if (onlyDiffs() && hiddenRowCount() > 0) {
+        <span class="compare-toggle-hint" data-testid="only-diffs-hint">
+          {{ hiddenRowCount() }}
+          {{ hiddenRowCount() === 1 ? 'fila oculta' : 'filas ocultas' }}
+          porque coinciden
+        </span>
+      }
+    </div>
 
     <!-- Collapsible sections -->
     <div class="space-y-3">
-      @for (s of sections(); track s.name) {
+      @if (visibleSections().length === 0) {
+        <p class="compare-toggle-hint" data-testid="only-diffs-empty">
+          Estas versiones coinciden en todo lo que comparamos.
+        </p>
+      }
+      @for (s of visibleSections(); track s.name) {
         <mat-expansion-panel
           class="compare-section"
           [expanded]="s.name === 'specs'"
@@ -379,11 +432,20 @@
             <table class="w-full text-sm min-w-[28rem]">
               <thead>
                 <tr class="bg-surface-muted">
-                  <th class="w-1/4 px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-ink-muted">
+                  <!-- `compare-sticky-col`: en móvil la tabla scrollea en
+                       horizontal y sin esto se perdía de vista qué atributo se
+                       estaba mirando. -->
+                  <th
+                    scope="col"
+                    class="compare-sticky-col w-1/4 px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-ink-muted"
+                  >
                     Atributo
                   </th>
                   @for (v of versions(); track v.id) {
-                    <th class="w-1/4 px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-ink-muted">
+                    <th
+                      scope="col"
+                      class="w-1/4 px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-ink-muted"
+                    >
                       {{ v.model?.name }} {{ v.name }}
                     </th>
                   }
@@ -392,13 +454,33 @@
               <tbody class="divide-y divide-border">
                 @for (row of s.rows; track trackByRow($index, row)) {
                   <tr [attr.data-testid]="'row-' + trackByRow($index, row)">
-                    <th scope="row" class="px-4 py-2 text-left font-bold text-ink-muted text-xs uppercase tracking-wider">
+                    <th
+                      scope="row"
+                      class="compare-sticky-col px-4 py-2 text-left font-bold text-ink-muted text-xs uppercase tracking-wider"
+                    >
                       {{ row.label }}
                     </th>
                     @if (row.kind === 'simple') {
                       @for (v of versions(); track v.id) {
-                        <td class="px-4 py-2 text-ink" [class.row-diff]="isDiff(row.key)">
-                          {{ row.format(v) }}
+                        <td
+                          class="px-4 py-2 text-ink"
+                          [class.row-diff]="isDiff(row.key)"
+                          [class.is-winner]="isWinner(row, v.id)"
+                          [attr.data-winner]="isWinner(row, v.id) ? 'true' : null"
+                        >
+                          <span class="compare-cell">
+                            <span>{{ row.format(v) }}</span>
+                            @if (isWinner(row, v.id)) {
+                              <!-- Sello de "mejor valor de la fila". Solo aparece
+                                   cuando todas las versiones tienen el dato: ver
+                                   `rowWinners` en el .ts. -->
+                              <span
+                                class="compare-winner"
+                                [attr.aria-label]="winnerAriaLabel(row)"
+                                [attr.data-testid]="'winner-' + row.key + '-' + v.id"
+                              >{{ winnerLabel(row) }}</span>
+                            }
+                          </span>
                         </td>
                       }
                     } @else if (row.kind === 'equipmentList') {
@@ -451,12 +533,157 @@
           </div>
         </mat-expansion-panel>
       }
+
+      <!-- Costo anual de uso. Vivía solo en la ficha del modelo, que es donde
+           menos sirve: comparar cuánto cuesta tener cada auto un año es lo que
+           realmente decide entre dos alternativas de precio parecido.
+           Se calcula al abrir la sección para no sumar 3 requests a la carga. -->
+      <mat-expansion-panel
+        class="compare-section"
+        (opened)="onCostsPanelOpened()"
+        data-testid="section-costo-uso"
+      >
+        <mat-expansion-panel-header>
+          <mat-panel-title class="!flex items-center gap-3">
+            <mat-icon class="text-engine">savings</mat-icon>
+            <h2 class="font-bold text-base !m-0">Costo anual de uso</h2>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div class="compare-costs">
+          <div class="compare-costs-controls">
+            <label class="compare-costs-label" for="compare-km">
+              Kilómetros al año
+            </label>
+            <input
+              id="compare-km"
+              class="compare-costs-input"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              [max]="maxKm"
+              step="1000"
+              [value]="kmPerYear()"
+              (input)="onKmPerYearChange($any($event.target).value)"
+              data-testid="compare-km"
+            />
+            <span class="compare-toggle-hint">
+              El mismo supuesto para las {{ versions().length }} versiones
+            </span>
+          </div>
+
+          @if (costsLoading()) {
+            <p class="compare-toggle-hint" data-testid="costs-loading">Calculando…</p>
+          } @else if (costsError(); as msg) {
+            <p
+              class="border border-danger bg-danger-light px-3 py-2 text-sm text-danger-dark"
+              role="alert"
+              data-testid="costs-error"
+            >{{ msg }}</p>
+          } @else if (costs().size > 0) {
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm min-w-[28rem]">
+                <thead>
+                  <tr class="bg-surface-muted">
+                    <th
+                      scope="col"
+                      class="compare-sticky-col w-1/4 px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-ink-muted"
+                    >Ítem</th>
+                    @for (v of versions(); track v.id) {
+                      <th
+                        scope="col"
+                        class="w-1/4 px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-ink-muted"
+                      >{{ v.model?.name }} {{ v.name }}</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-border">
+                  @for (row of costRows; track row.label) {
+                    <tr [attr.data-testid]="'cost-row-' + row.label">
+                      <th
+                        scope="row"
+                        class="compare-sticky-col px-4 py-2 text-left font-bold text-ink-muted text-xs uppercase tracking-wider"
+                      >{{ row.label }}</th>
+                      @for (v of versions(); track v.id) {
+                        <td class="px-4 py-2 text-ink">
+                          @if (costFor(v.id); as c) {
+                            @if (row.pick(c) > 0) {
+                              {{ formatPrice(row.pick(c)) }}
+                            } @else {
+                              <!-- El backend devuelve 0 tanto para "no aplica"
+                                   como para "no hay dato": mostrar "$0" haría
+                                   parecer gratis algo que solo falta cargar. -->
+                              <span class="compare-costs-nodata">Sin dato</span>
+                            }
+                          } @else {
+                            —
+                          }
+                        </td>
+                      }
+                    </tr>
+                  }
+                  <tr class="compare-costs-total" data-testid="cost-row-total">
+                    <th
+                      scope="row"
+                      class="compare-sticky-col px-4 py-2 text-left font-bold text-ink text-xs uppercase tracking-wider"
+                    >Total al año</th>
+                    @for (v of versions(); track v.id) {
+                      <td class="px-4 py-2 text-ink font-semibold">
+                        <span class="compare-cell">
+                          @if (costFor(v.id); as c) {
+                            <span>{{ formatPrice(c.totalClp) }}</span>
+                            @if (isCheapestToOwn(v.id)) {
+                              <span
+                                class="compare-winner"
+                                [attr.aria-label]="'El más barato de mantener al año'"
+                                [attr.data-testid]="'cheapest-' + v.id"
+                              >Más barato</span>
+                            }
+                          } @else {
+                            <span>—</span>
+                          }
+                        </span>
+                      </td>
+                    }
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            @if (costsMissing().length > 0) {
+              <!-- Sin este aviso, el auto con menos datos cargados aparecía como
+                   "el más barato de mantener" solo porque su total era casi
+                   pura depreciación. -->
+              <p
+                class="compare-costs-warning"
+                role="note"
+                data-testid="costs-incomplete"
+              >
+                <span class="stamp-label">Ojo</span>
+                Faltan datos de {{ costsMissing().join(', ').toLowerCase() }} en
+                alguna de estas versiones, así que los totales no son
+                comparables entre sí
+                @if (!costsComparable()) {
+                  — por eso no marcamos cuál sale más barato.
+                }
+              </p>
+            }
+            <p class="compare-costs-note">
+              Estimación referencial a partir de los datos publicados: combustible,
+              mantención, permiso, seguros y depreciación. Sirve para comparar
+              alternativas entre sí, no para presupuestar.
+            </p>
+          }
+        </div>
+      </mat-expansion-panel>
     </div>
   }
   }
 
-  <!-- Barra fija: guardar comparación (estilo "ficha" del sitio) -->
-  @if (user() && !savedSlug()) {
+  <!-- Barra fija: guardar comparación (estilo "ficha" del sitio).
+       `versions().length > 0` es necesario: sin eso la barra aparecía sobre el
+       estado vacío y "Guardar" no hacía nada (saveComparison() corta cuando no
+       hay ids). -->
+  @if (user() && !savedSlug() && versions().length > 0) {
     <div class="compare-save-bar" data-testid="save-bar">
       <label class="sr-only" for="comparison-name">Nombre de comparación</label>
       <input

@@ -194,13 +194,100 @@
 .compare-swap-button:hover { text-decoration: underline; }
 
 /* Tabla comparativa: la estructura y la tipografía vienen de utilidades
- * Tailwind en la plantilla (misma convención que .admin-table). Acá solo
- * vive el resaltado de las celdas que difieren entre versiones. */
+ * Tailwind en la plantilla (misma convención que .admin-table). Acá viven el
+ * resaltado de las filas que difieren, el sello de mejor valor y la columna
+ * fija de atributos. */
+
+/* Antes esto pintaba el fondo con `--engine-50`, el mismo token que el sistema
+ * reserva para los mensajes informativos: una fila que difiere terminaba
+ * leyéndose como un aviso. Ahora es un borde izquierdo, que marca la fila sin
+ * competir con las cajas de info. */
 td.row-diff {
-  background: var(--engine-50);
-  color: var(--engine-dark);
+  background: transparent;
+  color: var(--ink);
   font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--engine);
 }
+
+.compare-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+/* Sello de "mejor valor de la fila". Verde = confirmación, la misma semántica
+ * que el resto del sistema (ver apps/frontend/AGENTS.md). */
+.compare-winner {
+  display: inline-block;
+  padding: 0.0625rem 0.25rem;
+  border: 1px solid var(--success);
+  background: var(--success-light);
+  color: var(--success-dark);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Columna de atributos fija: la tabla scrollea en horizontal en móvil y sin
+ * esto se perdía de vista qué atributo se estaba mirando. */
+.compare-sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--paper-warm);
+}
+
+.compare-table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.compare-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3125rem 0.625rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  background: var(--paper-cool);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.compare-toggle:hover { border-color: var(--ink); }
+
+.compare-toggle.is-on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.compare-toggle mat-icon {
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
+}
+
+.compare-toggle-hint {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+}
+
 
 @media (prefers-reduced-motion: reduce) {
   .compare-card, .compare-section .mat-expansion-panel-header { transition: none !important; }

@@ -7,9 +7,11 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
+import { combineLatest } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatExpansionModule } from '@angular/material/expansion';
@@ -18,9 +20,17 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../core/api.service';
+import {
+  AnnualCostService,
+  clampKmPerYear,
+  DEFAULT_KM_PER_YEAR,
+  MAX_KM_PER_YEAR,
+  type CostBreakdown,
+} from '../../core/annual-cost.service';
 import { AuthService } from '../../core/auth.service';
 import { CompareStore } from '../../core/compare-store.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
+import { slugify } from '../../core/slug';
 import { VehicleCardInput } from '../../shared/ui/vehicle-card.component';
 import { versionFieldLabel } from '../../core/types/version-labels';
 import { fuelLabel, segmentLabel, transmissionLabel } from '../../core/types/catalog-labels';
@@ -95,8 +105,25 @@ type DiffKey =
   | 'voluntaryInsuranceClp'
   | 'computedFillCostClp';
 
+/**
+ * Dirección en la que un atributo es "mejor". Sin esto la tabla muestra datos
+ * pero no ayuda a decidir: el usuario tiene que comparar números a ojo y saber
+ * de memoria si en km/L conviene más o menos.
+ *
+ * `undefined` = no hay mejor ni peor (transmisión, combustible, año…).
+ */
+type Better = 'lower' | 'higher';
+
 type CompareRow =
-  | { kind: 'simple'; key: DiffKey; label: string; format: (v: CompareVersion) => string }
+  | {
+      kind: 'simple';
+      key: DiffKey;
+      label: string;
+      format: (v: CompareVersion) => string;
+      better?: Better;
+      /** Valor numérico para comparar. Solo hace falta si hay `better`. */
+      numeric?: (v: CompareVersion) => number | null | undefined;
+    }
   | { kind: 'maintenanceBreakdown'; label: string }
   | { kind: 'equipmentList'; label: string; category: string };
 
@@ -144,6 +171,7 @@ interface ComparisonBySlugResponse {
 })
 export class CompareComponent {
   private api = inject(ApiService);
+  private annualCost = inject(AnnualCostService);
   private auth = inject(AuthService);
   private compareStore = inject(CompareStore);
   private route = inject(ActivatedRoute);
@@ -168,8 +196,10 @@ export class CompareComponent {
 
   readonly count = computed(() => this.versions().length);
 
+  // El texto decía "ámbar", el landing y el encabezado decían "engine-red" y el
+  // CSS pintaba azul pálido: tres descripciones y ninguna era el color real.
   readonly disclaimerText =
-    'Las celdas resaltadas en ámbar indican diferencias relevantes entre las versiones seleccionadas.';
+    'Las filas resaltadas son las que difieren entre las versiones comparadas.';
 
   readonly empty = computed(() => {
     this.versions();
@@ -214,24 +244,33 @@ export class CompareComponent {
           key: 'powerHp',
           label: 'Potencia',
           format: (v) => (v.powerHp ? `${v.powerHp} hp` : '—'),
+          better: 'higher',
+          numeric: (v) => v.powerHp,
         },
         {
           kind: 'simple',
           key: 'torqueNm',
           label: 'Torque',
           format: (v) => (v.torqueNm ? `${v.torqueNm} Nm` : '—'),
+          better: 'higher',
+          numeric: (v) => v.torqueNm,
         },
         {
           kind: 'simple',
           key: 'consumptionCityKmL',
-          label: 'Consumo ciudad',
+          // km/L: más es mejor (rinde más con el mismo litro).
+          label: 'Rendimiento ciudad',
           format: (v) => (v.consumptionCityKmL ? `${v.consumptionCityKmL} km/L` : '—'),
+          better: 'higher',
+          numeric: (v) => v.consumptionCityKmL,
         },
         {
           kind: 'simple',
           key: 'consumptionHighwayKmL',
-          label: 'Consumo carretera',
+          label: 'Rendimiento carretera',
           format: (v) => (v.consumptionHighwayKmL ? `${v.consumptionHighwayKmL} km/L` : '—'),
+          better: 'higher',
+          numeric: (v) => v.consumptionHighwayKmL,
         },
         {
           kind: 'simple',
@@ -276,6 +315,8 @@ export class CompareComponent {
           key: 'trunkLiters',
           label: 'Maletero',
           format: (v) => (v.trunkLiters ? `${v.trunkLiters} L` : '—'),
+          better: 'higher',
+          numeric: (v) => v.trunkLiters,
         },
       ],
     },
@@ -288,6 +329,8 @@ export class CompareComponent {
           key: 'priceClp',
           label: 'Precio (CLP)',
           format: (v) => (v.priceClp ? this.formatPrice(v.priceClp) : '—'),
+          better: 'lower',
+          numeric: (v) => v.priceClp,
         },
         {
           kind: 'simple',
@@ -310,24 +353,32 @@ export class CompareComponent {
           key: 'circulationPermitClp',
           label: 'Permiso de circulación',
           format: (v) => (v.circulationPermitClp ? this.formatPrice(v.circulationPermitClp) : '—'),
+          better: 'lower',
+          numeric: (v) => v.circulationPermitClp,
         },
         {
           kind: 'simple',
           key: 'mandatoryInsuranceClp',
           label: 'Seguro obligatorio (SOAP)',
           format: (v) => (v.mandatoryInsuranceClp ? this.formatPrice(v.mandatoryInsuranceClp) : '—'),
+          better: 'lower',
+          numeric: (v) => v.mandatoryInsuranceClp,
         },
         {
           kind: 'simple',
           key: 'voluntaryInsuranceClp',
           label: 'Seguro automotriz',
           format: (v) => (v.voluntaryInsuranceClp ? this.formatPrice(v.voluntaryInsuranceClp) : '—'),
+          better: 'lower',
+          numeric: (v) => v.voluntaryInsuranceClp,
         },
         {
           kind: 'simple',
           key: 'computedFillCostClp',
           label: 'Llenar estanque',
           format: (v) => (v.computedFillCostClp ? this.formatPrice(v.computedFillCostClp) : '—'),
+          better: 'lower',
+          numeric: (v) => v.computedFillCostClp,
         },
       ],
     },
@@ -370,6 +421,67 @@ export class CompareComponent {
   });
 
   /**
+   * Por cada fila con dirección "mejor", los ids de versión que ganan.
+   *
+   * Reglas deliberadas:
+   * - Si a alguna versión le falta el dato, la fila **no** se marca: decir que
+   *   un auto "gana" en maletero porque el otro no tiene el dato cargado sería
+   *   mentirle al usuario.
+   * - Si todas empatan, tampoco se marca: no hay nada que decidir ahí.
+   * - Si empatan varias en el mejor valor (pero no todas), se marcan todas y la
+   *   UI lo dice como empate.
+   */
+  readonly rowWinners = computed<Map<string, Set<string>>>(() => {
+    const out = new Map<string, Set<string>>();
+    const vs = this.versions();
+    if (vs.length < 2) return out;
+
+    for (const section of this.sections()) {
+      for (const row of section.rows) {
+        if (row.kind !== 'simple' || !row.better || !row.numeric) continue;
+        const values = vs.map((v) => {
+          const n = row.numeric!(v);
+          return typeof n === 'number' && Number.isFinite(n) ? n : null;
+        });
+        if (values.some((n) => n === null)) continue;
+        const nums = values as number[];
+        const best = row.better === 'lower' ? Math.min(...nums) : Math.max(...nums);
+        if (nums.every((n) => n === best)) continue;
+        const winners = new Set<string>();
+        vs.forEach((v, i) => {
+          if (nums[i] === best) winners.add(v.id);
+        });
+        out.set(row.key, winners);
+      }
+    }
+    return out;
+  });
+
+  isWinner(row: CompareRow, versionId: string): boolean {
+    if (row.kind !== 'simple') return false;
+    return this.rowWinners().get(row.key)?.has(versionId) ?? false;
+  }
+
+  /** Un empate en el mejor valor entre varias versiones (pero no todas). */
+  isTie(row: CompareRow): boolean {
+    if (row.kind !== 'simple') return false;
+    return (this.rowWinners().get(row.key)?.size ?? 0) > 1;
+  }
+
+  /** Texto del sello: "mejor" o "empate", según corresponda. */
+  winnerLabel(row: CompareRow): string {
+    return this.isTie(row) ? 'Empate' : 'Mejor';
+  }
+
+  winnerAriaLabel(row: CompareRow): string {
+    if (row.kind !== 'simple') return '';
+    const dir = row.better === 'lower' ? 'el más bajo' : 'el más alto';
+    return this.isTie(row)
+      ? `Empate en ${row.label}: ${dir} junto a otra versión`
+      : `Mejor ${row.label}: ${dir} de las versiones comparadas`;
+  }
+
+  /**
    * Devuelve los nombres de los items de una categoría para una versión,
    * separados por coma. `—` si la versión no tiene items en esa categoría.
    */
@@ -389,16 +501,44 @@ export class CompareComponent {
         this.favoriteModels.set([]);
       }
     });
-    this.ready = this.bootstrap();
+
+    // Suscripción y no `route.snapshot`: estando ya en /compare, navegar a
+    // /compare?slug=xxx (lo que hace el link "Ver enlace público") no recrea el
+    // componente, así que con el snapshot la URL cambiaba y la vista no.
+    // `queryParamMap` y `paramMap` emiten el valor actual al suscribirse, así
+    // que la primera pasada equivale al bootstrap de antes.
+    let resolveReady!: () => void;
+    this.ready = new Promise<void>((resolve) => (resolveReady = resolve));
+    let firstRun = true;
+    combineLatest([this.route.queryParamMap, this.route.paramMap])
+      .pipe(takeUntilDestroyed())
+      .subscribe(([queryParams, params]) => {
+        const key = this.routeKey(queryParams, params);
+        if (key === this.lastRouteKey) return;
+        this.lastRouteKey = key;
+        const done = this.bootstrapInner(queryParams, params);
+        if (firstRun) {
+          firstRun = false;
+          void done.then(resolveReady);
+        }
+      });
   }
 
-  private bootstrap(): Promise<void> {
-    return this.bootstrapInner();
+  /** Identidad de la ruta para no re-bootstrapear con los mismos params. */
+  private lastRouteKey: string | null = null;
+
+  private routeKey(queryParams: ParamMap, params: ParamMap): string {
+    return [
+      queryParams.get('slug') ?? params.get('slug') ?? '',
+      queryParams.get('ids') ?? '',
+    ].join('|');
   }
 
-  private async bootstrapInner(): Promise<void> {
-    const qp = this.route.snapshot.queryParamMap;
-    const slug = qp.get('slug') ?? this.route.snapshot.paramMap.get('slug');
+  private async bootstrapInner(
+    qp: ParamMap,
+    routeParams: ParamMap,
+  ): Promise<void> {
+    const slug = qp.get('slug') ?? routeParams.get('slug');
     if (slug) {
       await this.loadBySlug(slug);
       return;
@@ -447,23 +587,38 @@ export class CompareComponent {
         `/comparisons/${encodeURIComponent(slug)}`,
       );
       const cmp = res.data;
-      this.versions.set(
-        Array.isArray(cmp.items)
-          ? cmp.items
-              .slice()
-              .sort((a, b) => a.position - b.position)
-              .map((it) => it.version)
-          : [],
-      );
-      this.diffHighlights.set({});
+      const items = Array.isArray(cmp.items)
+        ? cmp.items.slice().sort((a, b) => a.position - b.position)
+        : [];
       this.sharedMeta.set({
         slug: cmp.slug,
         createdAt: cmp.createdAt,
         userId: cmp.userId,
       });
-      this.compareStore.hydrateFromUrl(
-        cmp.items.map((it) => it.versionId).join(','),
-      );
+      const ids = items.map((it) => it.versionId);
+      this.compareStore.hydrateFromUrl(ids.join(','));
+
+      if (ids.length === 0) {
+        this.versions.set([]);
+        this.diffHighlights.set({});
+        return;
+      }
+
+      // `/comparisons/:slug` devuelve la versión "pelada" (solo model + brand) y
+      // sin `diffHighlights`, así que quien abría el link compartido veía una
+      // comparación degradada: sin equipamiento, sin mantención, sin "Cambiar
+      // versión" y sin las diferencias resaltadas. Pedimos el payload completo
+      // a `/compare` con los ids recuperados.
+      try {
+        const full = await this.api.post<{ data: CompareResponse }>('/compare', {
+          versionIds: ids,
+        });
+        this.applyResponse(full.data);
+      } catch {
+        // Si `/compare` falla, mostramos al menos lo que trajo el slug.
+        this.versions.set(items.map((it) => it.version));
+        this.diffHighlights.set({});
+      }
     } catch {
       this.loadError.set('No encontramos esta comparación guardada.');
     } finally {
@@ -518,6 +673,23 @@ export class CompareComponent {
     };
   }
 
+  /**
+   * Ruta a la ficha del modelo. El comparador era un callejón sin salida: se
+   * veía el nombre del auto pero no había forma de abrir su ficha para mirar
+   * fotos o el resto del equipamiento.
+   *
+   * `null` si falta la marca o el modelo, para no armar un link roto.
+   */
+  detailUrl(v: CompareVersion): unknown[] | null {
+    const brand = v.model?.brand?.name;
+    const model = v.model?.name;
+    if (!brand || !model) return null;
+    return ['/brand', slugify(brand), 'model', slugify(model)];
+  }
+
+  /** Cuántos huecos quedan para llegar a 3. */
+  readonly freeSlots = computed(() => Math.max(0, 3 - this.versions().length));
+
   fullName(v: CompareVersion): string {
     const brand = v.model?.brand?.name ?? '';
     const model = v.model?.name ?? '';
@@ -533,6 +705,213 @@ export class CompareComponent {
   isDiff(key: DiffKey): boolean {
     return Boolean(this.diffHighlights()[key]);
   }
+
+  /**
+   * ¿Esta fila difiere entre las versiones comparadas?
+   *
+   * Para las filas `simple` manda `diffHighlights`, que calcula el backend. Las
+   * de equipamiento y mantención no viajan ahí, así que se comparan acá con lo
+   * que ya se muestra en pantalla — si dos versiones traen el mismo texto, la
+   * fila no aporta a la decisión.
+   */
+  rowDiffers(row: CompareRow): boolean {
+    const vs = this.versions();
+    if (vs.length < 2) return true;
+    if (row.kind === 'simple') return this.isDiff(row.key);
+    if (row.kind === 'equipmentList') {
+      const first = this.formatEquipmentByCategory(vs[0], row.category);
+      return vs.some((v) => this.formatEquipmentByCategory(v, row.category) !== first);
+    }
+    const key = (v: CompareVersion) =>
+      JSON.stringify(
+        [...(v.maintenanceCosts ?? [])]
+          .sort((a, b) => a.mileageTag - b.mileageTag)
+          .map((m) => [m.mileageTag, m.costClp]),
+      );
+    const first = key(vs[0]);
+    return vs.some((v) => key(v) !== first);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Costo anual de uso
+  //
+  // Vivía solo en la ficha del modelo, que es donde menos sirve: comparar el
+  // costo de tener el auto un año es exactamente lo que decide entre dos
+  // alternativas de precio parecido. El input de km/año es uno solo para las
+  // tres columnas — comparar con supuestos distintos por versión no diría nada.
+  // ---------------------------------------------------------------------------
+
+  readonly kmPerYear = signal(DEFAULT_KM_PER_YEAR);
+  readonly maxKm = MAX_KM_PER_YEAR;
+  readonly costs = signal<Map<string, CostBreakdown>>(new Map());
+  readonly costsLoading = signal(false);
+  readonly costsError = signal<string | null>(null);
+  /** Espera antes de recalcular al editar km/año. Los tests lo bajan a 0. */
+  costDebounceMs = 400;
+  private costDebounce: ReturnType<typeof setTimeout> | null = null;
+
+  onKmPerYearChange(value: number | string): void {
+    const km = clampKmPerYear(value);
+    if (km === null) return;
+    this.kmPerYear.set(km);
+    if (this.costDebounce !== null) clearTimeout(this.costDebounce);
+    if (this.costDebounceMs <= 0) {
+      void this.loadCosts();
+      return;
+    }
+    this.costDebounce = setTimeout(() => {
+      this.costDebounce = null;
+      void this.loadCosts();
+    }, this.costDebounceMs);
+  }
+
+  /** Un request por versión (máximo 3). Si una falla, las demás se muestran. */
+  async loadCosts(): Promise<void> {
+    const vs = this.versions();
+    if (vs.length === 0) {
+      this.costs.set(new Map());
+      return;
+    }
+    const km = this.kmPerYear();
+    this.costsLoading.set(true);
+    this.costsError.set(null);
+    const results = await Promise.all(
+      vs.map(async (v) => {
+        try {
+          return [v.id, await this.annualCost.fetch(v.id, km)] as const;
+        } catch {
+          return [v.id, null] as const;
+        }
+      }),
+    );
+    const map = new Map<string, CostBreakdown>();
+    for (const [id, cost] of results) {
+      if (cost) map.set(id, cost);
+    }
+    this.costs.set(map);
+    this.costsLoading.set(false);
+    if (map.size === 0) {
+      this.costsError.set('No pudimos calcular el costo anual de estas versiones.');
+    }
+  }
+
+  costFor(versionId: string): CostBreakdown | null {
+    return this.costs().get(versionId) ?? null;
+  }
+
+  /**
+   * Se calcula al abrir la sección, no al cargar la comparación: son hasta 3
+   * requests y no tiene sentido pagarlos si el usuario no mira esta sección.
+   * Si ya están calculados para estas mismas versiones, no se repite.
+   */
+  onCostsPanelOpened(): void {
+    const vs = this.versions();
+    const map = this.costs();
+    if (vs.length > 0 && vs.every((v) => map.has(v.id))) return;
+    void this.loadCosts();
+  }
+
+  /** Filas del desglose, en el mismo orden que la tarjeta de la ficha. */
+  readonly costRows: ReadonlyArray<{
+    label: string;
+    pick: (c: CostBreakdown) => number;
+  }> = [
+    { label: 'Combustible', pick: (c) => c.fuelClp },
+    { label: 'Mantención', pick: (c) => c.maintenanceClp },
+    { label: 'Permiso de circulación', pick: (c) => c.circulationPermitClp },
+    { label: 'Seguro obligatorio', pick: (c) => c.mandatoryInsuranceClp },
+    { label: 'Seguro automotriz', pick: (c) => c.voluntaryInsuranceClp },
+    { label: 'Depreciación', pick: (c) => c.depreciationClp },
+  ];
+
+  /**
+   * Qué componentes del costo tienen dato (> 0) para una versión.
+   *
+   * El backend devuelve 0 tanto para "no aplica" como para "no hay dato
+   * cargado", así que un auto sin precio de combustible ni seguros registrados
+   * termina con un total que es solo depreciación — y parecería el más barato
+   * de mantener sin serlo.
+   */
+  private costSignature(c: CostBreakdown): string {
+    return this.costRows.map((r) => (r.pick(c) > 0 ? '1' : '0')).join('');
+  }
+
+  /**
+   * ¿Los desgloses son comparables entre sí? Solo lo son si todas las versiones
+   * tienen dato en los mismos componentes; si no, comparar los totales es
+   * comparar peras con manzanas.
+   */
+  readonly costsComparable = computed(() => {
+    const vs = this.versions();
+    const map = this.costs();
+    if (vs.length < 2 || map.size !== vs.length) return false;
+    const sigs = vs.map((v) => this.costSignature(map.get(v.id)!));
+    return sigs.every((s) => s === sigs[0]);
+  });
+
+  /** Nombres de los componentes sin dato en alguna versión, para avisarlo. */
+  readonly costsMissing = computed<string[]>(() => {
+    const vs = this.versions();
+    const map = this.costs();
+    if (map.size === 0) return [];
+    return this.costRows
+      .filter((r) =>
+        vs.some((v) => {
+          const c = map.get(v.id);
+          return !c || r.pick(c) === 0;
+        }),
+      )
+      .map((r) => r.label);
+  });
+
+  /**
+   * Ids de las versiones con el costo anual más bajo. Mismo criterio que
+   * `rowWinners`: si a alguna le falta el cálculo —o si los desgloses no son
+   * comparables— no se marca nada.
+   */
+  readonly cheapestToOwn = computed<Set<string>>(() => {
+    const vs = this.versions();
+    const map = this.costs();
+    if (!this.costsComparable()) return new Set();
+    const totals = vs.map((v) => map.get(v.id)!.totalClp);
+    const best = Math.min(...totals);
+    if (totals.every((t) => t === best)) return new Set();
+    const winners = new Set<string>();
+    vs.forEach((v, i) => {
+      if (totals[i] === best) winners.add(v.id);
+    });
+    return winners;
+  });
+
+  isCheapestToOwn(versionId: string): boolean {
+    return this.cheapestToOwn().has(versionId);
+  }
+
+  /**
+   * "Solo diferencias": la razón por la que alguien abre un comparador es ver
+   * en qué se distinguen dos autos, no releer las 20 filas donde son idénticos.
+   */
+  readonly onlyDiffs = signal(false);
+
+  toggleOnlyDiffs(): void {
+    this.onlyDiffs.update((v) => !v);
+  }
+
+  /** Secciones ya filtradas por el toggle; las que quedan vacías se omiten. */
+  readonly visibleSections = computed<ReadonlyArray<Section>>(() => {
+    const all = this.sections();
+    if (!this.onlyDiffs()) return all;
+    return all
+      .map((s) => ({ ...s, rows: s.rows.filter((r) => this.rowDiffers(r)) }))
+      .filter((s) => s.rows.length > 0);
+  });
+
+  /** Cuántas filas esconde el toggle, para poder decirlo en la UI. */
+  readonly hiddenRowCount = computed(() => {
+    const total = this.sections().reduce((n, s) => n + s.rows.length, 0);
+    const shown = this.visibleSections().reduce((n, s) => n + s.rows.length, 0);
+    return total - shown;
+  });
 
   sectionIcon(name: string): string {
     switch (name) {

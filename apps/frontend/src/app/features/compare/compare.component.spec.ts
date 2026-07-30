@@ -6,6 +6,7 @@ import {
   HttpTestingController,
 } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { BehaviorSubject, of } from 'rxjs';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { CompareComponent } from './compare.component';
@@ -23,6 +24,25 @@ class AuthServiceStub {
   template: `<app-compare />`,
 })
 class TestHostComponent {}
+
+/**
+ * Mock de ActivatedRoute con `snapshot` **y** observables: el componente se
+ * suscribe a `queryParamMap` / `paramMap` para reaccionar cuando la URL cambia
+ * sin que se recree el componente (ej. "Ver enlace público"). `of()` emite
+ * sincrónicamente igual que el ActivatedRoute real.
+ */
+function routeStub(
+  queryParams: Record<string, string> = {},
+  params: Record<string, string> = {},
+) {
+  const queryParamMap = convertToParamMap(queryParams);
+  const paramMap = convertToParamMap(params);
+  return {
+    snapshot: { paramMap, queryParamMap },
+    paramMap: of(paramMap),
+    queryParamMap: of(queryParamMap),
+  };
+}
 
 describe('CompareComponent', () => {
   let http: HttpTestingController;
@@ -128,19 +148,7 @@ describe('CompareComponent', () => {
         CompareStore,
         {
           provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              // `paramMap` siempre existe en un ActivatedRoute real, y el
-              // componente lo consulta cuando no hay `slug` en el query string.
-              // Sin esto el mock revienta con "reading 'get' of undefined".
-              paramMap: convertToParamMap({}),
-              queryParamMap: {
-                get: (key: string) => (key === 'ids' ? 'a,b,c' : null),
-                has: (key: string) => key === 'ids',
-                keys: ['ids'],
-              },
-            },
-          },
+          useValue: routeStub({ ids: 'a,b,c' }),
         },
       ],
     });
@@ -181,19 +189,7 @@ describe('CompareComponent', () => {
         CompareStore,
         {
           provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              // `paramMap` siempre existe en un ActivatedRoute real, y el
-              // componente lo consulta cuando no hay `slug` en el query string.
-              // Sin esto el mock revienta con "reading 'get' of undefined".
-              paramMap: convertToParamMap({}),
-              queryParamMap: {
-                get: (key: string) => (key === 'slug' ? 'abc12345' : null),
-                has: (key: string) => key === 'slug',
-                keys: ['slug'],
-              },
-            },
-          },
+          useValue: routeStub({ slug: 'abc12345' }),
         },
       ],
     });
@@ -238,11 +234,181 @@ describe('CompareComponent', () => {
         ],
       },
     });
+
+    // El POST sale en el microtask siguiente al flush del GET.
+    await new Promise((r) => setTimeout(r, 0));
+
+    // `/comparisons/:slug` trae la versión pelada y sin diffHighlights, así que
+    // el componente pide el payload completo a `/compare` con los ids del slug:
+    // sin esto, la comparación compartida se veía degradada (sin equipamiento,
+    // sin mantención y sin diferencias resaltadas) respecto de la original.
+    const fullReq = http.expectOne(
+      (r) => r.url.includes('/api/v1/compare') && r.method === 'POST',
+    );
+    expect(fullReq.request.body).toEqual({ versionIds: ['v1', 'v2'] });
+    fullReq.flush({
+      data: {
+        versions: [
+          {
+            id: 'v1',
+            name: 'XLS',
+            priceClp: 14990000,
+            year: 2026,
+            model: { name: 'Yaris', brand: { name: 'Toyota' } },
+          },
+          {
+            id: 'v2',
+            name: 'Sport',
+            priceClp: 11500000,
+            year: 2025,
+            model: { name: 'Yaris', brand: { name: 'Toyota' } },
+          },
+        ],
+        diffHighlights: { priceClp: true },
+      },
+    });
     await ready;
     fixture.detectChanges();
     expect(
       fixture.nativeElement.querySelectorAll('[data-testid="card"]').length,
     ).toBe(2);
+    expect(fixture.nativeElement.textContent).toMatch(/guardada/i);
+
+    // Las diferencias siguen resaltadas en la vista compartida.
+    const priceCells: HTMLElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('[data-testid="row-priceClp"] td'),
+    );
+    expect(priceCells.length).toBe(2);
+    for (const cell of priceCells) {
+      expect(cell.classList.contains('row-diff')).toBe(true);
+    }
+  });
+
+  it('si /compare falla, la comparación guardada cae a las versiones del slug', async () => {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        CompareStore,
+        { provide: ActivatedRoute, useValue: routeStub({ slug: 'abc12345' }) },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    store = TestBed.inject(CompareStore);
+
+    const fixture = TestBed.createComponent(CompareComponent);
+    const ready = fixture.componentInstance.ready;
+    http.expectOne((r) => r.url.includes('/api/v1/comparisons/abc12345')).flush({
+      data: {
+        id: 'cmp-1',
+        slug: 'abc12345',
+        userId: 'user-1',
+        createdAt: '2026-06-15T12:00:00.000Z',
+        items: [
+          {
+            versionId: 'v1',
+            position: 1,
+            version: {
+              id: 'v1',
+              name: 'XLS',
+              model: { name: 'Yaris', brand: { name: 'Toyota' } },
+            },
+          },
+        ],
+      },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    http
+      .expectOne((r) => r.url.includes('/api/v1/compare') && r.method === 'POST')
+      .error(new ProgressEvent('error'), { status: 500, statusText: 'Boom' });
+    await ready;
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelectorAll('[data-testid="card"]').length,
+    ).toBe(1);
+    expect(fixture.componentInstance.loadError()).toBeNull();
+  });
+
+  // Bug real: "Ver enlace público" navega a /compare?slug=xxx estando ya en
+  // /compare. Angular no recrea el componente, así que leyendo solo
+  // `route.snapshot` la URL cambiaba y la vista se quedaba igual.
+  it('recarga cuando cambia el query param slug sin recrear el componente', async () => {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+    const queryParams = new BehaviorSubject(convertToParamMap({}));
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        CompareStore,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              paramMap: convertToParamMap({}),
+              queryParamMap: queryParams.value,
+            },
+            paramMap: of(convertToParamMap({})),
+            queryParamMap: queryParams.asObservable(),
+          },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    store = TestBed.inject(CompareStore);
+
+    const fixture = TestBed.createComponent(CompareComponent);
+    await fixture.componentInstance.ready;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toMatch(/no has seleccionado/i);
+
+    // Llega el slug por la URL, sin recrear el componente.
+    queryParams.next(convertToParamMap({ slug: 'abc12345' }));
+    http.expectOne((r) => r.url.includes('/api/v1/comparisons/abc12345')).flush({
+      data: {
+        id: 'cmp-1',
+        slug: 'abc12345',
+        userId: 'user-1',
+        createdAt: '2026-06-15T12:00:00.000Z',
+        items: [
+          {
+            versionId: 'v1',
+            position: 1,
+            version: {
+              id: 'v1',
+              name: 'XLS',
+              model: { name: 'Yaris', brand: { name: 'Toyota' } },
+            },
+          },
+        ],
+      },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    http
+      .expectOne((r) => r.url.includes('/api/v1/compare') && r.method === 'POST')
+      .flush({
+        data: {
+          versions: [
+            {
+              id: 'v1',
+              name: 'XLS',
+              model: { name: 'Yaris', brand: { name: 'Toyota' } },
+            },
+          ],
+          diffHighlights: {},
+        },
+      });
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelectorAll('[data-testid="card"]').length,
+    ).toBe(1);
     expect(fixture.nativeElement.textContent).toMatch(/guardada/i);
   });
 
@@ -257,19 +423,7 @@ describe('CompareComponent', () => {
         CompareStore,
         {
           provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              // `paramMap` siempre existe en un ActivatedRoute real, y el
-              // componente lo consulta cuando no hay `slug` en el query string.
-              // Sin esto el mock revienta con "reading 'get' of undefined".
-              paramMap: convertToParamMap({}),
-              queryParamMap: {
-                get: (key: string) => (key === 'slug' ? 'noexiste' : null),
-                has: (key: string) => key === 'slug',
-                keys: ['slug'],
-              },
-            },
-          },
+          useValue: routeStub({ slug: 'noexiste' }),
         },
       ],
     });
@@ -465,19 +619,7 @@ describe('CompareComponent', () => {
         AuthService,
         {
           provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              // `paramMap` siempre existe en un ActivatedRoute real, y el
-              // componente lo consulta cuando no hay `slug` en el query string.
-              // Sin esto el mock revienta con "reading 'get' of undefined".
-              paramMap: convertToParamMap({}),
-              queryParamMap: {
-                get: () => null,
-                has: () => false,
-                keys: [],
-              },
-            },
-          },
+          useValue: routeStub({}),
         },
       ],
     });
@@ -574,19 +716,7 @@ describe('CompareComponent', () => {
         AuthService,
         {
           provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              // `paramMap` siempre existe en un ActivatedRoute real, y el
-              // componente lo consulta cuando no hay `slug` en el query string.
-              // Sin esto el mock revienta con "reading 'get' of undefined".
-              paramMap: convertToParamMap({}),
-              queryParamMap: {
-                get: () => null,
-                has: () => false,
-                keys: [],
-              },
-            },
-          },
+          useValue: routeStub({}),
         },
       ],
     });
@@ -678,19 +808,7 @@ describe('CompareComponent', () => {
         AuthService,
         {
           provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              // `paramMap` siempre existe en un ActivatedRoute real, y el
-              // componente lo consulta cuando no hay `slug` en el query string.
-              // Sin esto el mock revienta con "reading 'get' of undefined".
-              paramMap: convertToParamMap({}),
-              queryParamMap: {
-                get: () => null,
-                has: () => false,
-                keys: [],
-              },
-            },
-          },
+          useValue: routeStub({}),
         },
       ],
     });
@@ -785,19 +903,7 @@ describe('CompareComponent', () => {
         AuthService,
         {
           provide: ActivatedRoute,
-          useValue: {
-            snapshot: {
-              // `paramMap` siempre existe en un ActivatedRoute real, y el
-              // componente lo consulta cuando no hay `slug` en el query string.
-              // Sin esto el mock revienta con "reading 'get' of undefined".
-              paramMap: convertToParamMap({}),
-              queryParamMap: {
-                get: () => null,
-                has: () => false,
-                keys: [],
-              },
-            },
-          },
+          useValue: routeStub({}),
         },
       ],
     });
@@ -971,6 +1077,419 @@ describe('CompareComponent', () => {
 
     expect(
       fixture.nativeElement.querySelector('[data-testid="recall-card-b"]'),
+    ).toBeNull();
+  });
+  // ---------------------------------------------------------------------------
+  // Mejor valor por fila. La tabla mostraba datos pero no ayudaba a decidir:
+  // había que comparar números a ojo y saber de memoria si en km/L conviene
+  // más o menos.
+  // ---------------------------------------------------------------------------
+
+  /** Monta el comparador con las versiones dadas ya cargadas. */
+  async function mountWith(versions: unknown[], diffHighlights: Record<string, boolean> = {}) {
+    store.hydrateFromUrl(versions.map((v) => (v as { id: string }).id).join(','));
+    const fixture = TestBed.createComponent(CompareComponent);
+    const ready = fixture.componentInstance.ready;
+    http
+      .expectOne((r) => r.url.includes('/api/v1/compare'))
+      .flush({ data: { versions, diffHighlights } });
+    await ready;
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('marca el precio más bajo y la potencia más alta', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A', priceClp: 15_000_000, powerHp: 100 },
+      { id: 'b', name: 'B', priceClp: 12_000_000, powerHp: 150 },
+    ]);
+
+    // Precio: gana el más barato (b). Potencia: gana el más potente (b).
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="winner-priceClp-b"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="winner-priceClp-a"]'),
+    ).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="winner-powerHp-b"]'),
+    ).not.toBeNull();
+  });
+
+  it('marca el mayor rendimiento en km/L, no el menor', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A', consumptionCityKmL: 10 },
+      { id: 'b', name: 'B', consumptionCityKmL: 21 },
+    ]);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="winner-consumptionCityKmL-b"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="winner-consumptionCityKmL-a"]'),
+    ).toBeNull();
+  });
+
+  // Decir que un auto "gana" en maletero porque al otro no le cargaron el dato
+  // sería mentirle al usuario.
+  it('no marca nada si a alguna versión le falta el dato', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A', trunkLiters: 400 },
+      { id: 'b', name: 'B' },
+    ]);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="winner-trunkLiters-a"]'),
+    ).toBeNull();
+  });
+
+  it('no marca nada si todas empatan (no hay nada que decidir)', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A', priceClp: 12_000_000 },
+      { id: 'b', name: 'B', priceClp: 12_000_000 },
+    ]);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="winner-priceClp-a"]'),
+    ).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="winner-priceClp-b"]'),
+    ).toBeNull();
+  });
+
+  it('marca empate cuando dos comparten el mejor valor y una tercera no', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A', priceClp: 12_000_000 },
+      { id: 'b', name: 'B', priceClp: 12_000_000 },
+      { id: 'c', name: 'C', priceClp: 18_000_000 },
+    ]);
+    const a = fixture.nativeElement.querySelector('[data-testid="winner-priceClp-a"]');
+    const b = fixture.nativeElement.querySelector('[data-testid="winner-priceClp-b"]');
+    expect(a).not.toBeNull();
+    expect(b).not.toBeNull();
+    expect(a.textContent.trim()).toBe('Empate');
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="winner-priceClp-c"]'),
+    ).toBeNull();
+  });
+
+  it('no marca ganador en atributos sin dirección mejor (año, transmisión)', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A', year: 2024, transmission: 'MANUAL' },
+      { id: 'b', name: 'B', year: 2026, transmission: 'CVT' },
+    ]);
+    expect(fixture.nativeElement.querySelector('[data-testid="winner-year-b"]')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="winner-transmission-b"]'),
+    ).toBeNull();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Toggle "Solo diferencias"
+  // ---------------------------------------------------------------------------
+
+  it('el toggle deja solo las filas que difieren', async () => {
+    const fixture = await mountWith(
+      [
+        { id: 'a', name: 'A', priceClp: 15_000_000, year: 2026 },
+        { id: 'b', name: 'B', priceClp: 12_000_000, year: 2026 },
+      ],
+      { priceClp: true },
+    );
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="row-year"]'),
+    ).not.toBeNull();
+
+    fixture.componentInstance.toggleOnlyDiffs();
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="row-priceClp"]'),
+    ).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="row-year"]')).toBeNull();
+    expect(fixture.componentInstance.hiddenRowCount()).toBeGreaterThan(0);
+  });
+
+  it('el toggle informa cuántas filas escondió', async () => {
+    const fixture = await mountWith(
+      [
+        { id: 'a', name: 'A', priceClp: 15_000_000 },
+        { id: 'b', name: 'B', priceClp: 12_000_000 },
+      ],
+      { priceClp: true },
+    );
+
+    fixture.componentInstance.toggleOnlyDiffs();
+    fixture.detectChanges();
+
+    const hint = fixture.nativeElement.querySelector('[data-testid="only-diffs-hint"]');
+    expect(hint).not.toBeNull();
+    expect(hint.textContent).toMatch(/filas? ocultas?/i);
+  });
+
+  it('avisa cuando las versiones coinciden en todo', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A', priceClp: 12_000_000 },
+      { id: 'b', name: 'B', priceClp: 12_000_000 },
+    ]);
+
+    fixture.componentInstance.toggleOnlyDiffs();
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="only-diffs-empty"]'),
+    ).not.toBeNull();
+  });
+
+  it('el equipamiento entra en "solo diferencias" si difiere', async () => {
+    const eq = (name: string) => ({
+      equipmentItem: { id: name, name, category: 'Seguridad' },
+    });
+    const fixture = await mountWith([
+      { id: 'a', name: 'A', equipmentItems: [eq('Airbags')] },
+      { id: 'b', name: 'B', equipmentItems: [eq('Airbags'), eq('ABS')] },
+    ]);
+
+    fixture.componentInstance.toggleOnlyDiffs();
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="row-equipment-Seguridad"]'),
+    ).not.toBeNull();
+  });
+
+  it('el equipamiento idéntico se oculta con "solo diferencias"', async () => {
+    const eq = { equipmentItem: { id: 'ab', name: 'Airbags', category: 'Seguridad' } };
+    const fixture = await mountWith([
+      { id: 'a', name: 'A', equipmentItems: [eq] },
+      { id: 'b', name: 'B', equipmentItems: [eq] },
+    ]);
+
+    fixture.componentInstance.toggleOnlyDiffs();
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="row-equipment-Seguridad"]'),
+    ).toBeNull();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Costo anual de uso y salidas del comparador
+  // ---------------------------------------------------------------------------
+
+  const costFixture = (total: number) => ({
+    kmPerYear: 15000,
+    fuelClp: total * 0.4,
+    maintenanceClp: total * 0.1,
+    circulationPermitClp: total * 0.1,
+    mandatoryInsuranceClp: total * 0.05,
+    voluntaryInsuranceClp: total * 0.1,
+    depreciationClp: total * 0.25,
+    totalClp: total,
+    meta: {
+      consumptionCityKmL: 14,
+      consumptionHighwayKmL: 18,
+      fuelType: 'BENCINA',
+      fuelUnit: 'L',
+      fuelPricePerUnit: 1300,
+      cityShare: 0.33,
+      highwayShare: 0.67,
+      maintenanceMileages: [10000],
+    },
+  });
+
+  it('no pide el costo anual hasta que se abre la sección', async () => {
+    await mountWith([
+      { id: 'a', name: 'A', priceClp: 15_000_000 },
+      { id: 'b', name: 'B', priceClp: 12_000_000 },
+    ]);
+    // Sin abrir la sección no debería haber ningún request de costo: son hasta
+    // 3 y no se pagan si el usuario no mira esa sección.
+    http.expectNone((r) => r.url.includes('/cost/version/'));
+  });
+
+  it('al abrir la sección calcula el costo de cada versión y marca el más barato', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A', priceClp: 15_000_000 },
+      { id: 'b', name: 'B', priceClp: 12_000_000 },
+    ]);
+
+    fixture.componentInstance.onCostsPanelOpened();
+    await new Promise((r) => setTimeout(r, 0));
+
+    http
+      .expectOne((r) => r.url.includes('/cost/version/a'))
+      .flush({ data: costFixture(3_000_000), error: null });
+    http
+      .expectOne((r) => r.url.includes('/cost/version/b'))
+      .flush({ data: costFixture(2_000_000), error: null });
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.costFor('a')?.totalClp).toBe(3_000_000);
+    expect(fixture.componentInstance.isCheapestToOwn('b')).toBe(true);
+    expect(fixture.componentInstance.isCheapestToOwn('a')).toBe(false);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="cheapest-b"]'),
+    ).not.toBeNull();
+  });
+
+  it('no marca el más barato si a alguna versión le falta el cálculo', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A' },
+      { id: 'b', name: 'B' },
+    ]);
+
+    fixture.componentInstance.onCostsPanelOpened();
+    await new Promise((r) => setTimeout(r, 0));
+
+    http
+      .expectOne((r) => r.url.includes('/cost/version/a'))
+      .flush({ data: costFixture(3_000_000), error: null });
+    http
+      .expectOne((r) => r.url.includes('/cost/version/b'))
+      .error(new ProgressEvent('error'), { status: 500, statusText: 'Boom' });
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    // La versión que sí calculó se muestra; el sello no aparece para nadie.
+    expect(fixture.componentInstance.costFor('a')).not.toBeNull();
+    expect(fixture.componentInstance.isCheapestToOwn('a')).toBe(false);
+  });
+
+  // El backend devuelve 0 tanto para "no aplica" como para "no hay dato", así
+  // que un auto sin combustible ni seguros cargados terminaba con un total que
+  // era casi pura depreciación y se llevaba el sello de "más barato".
+  it('no corona al más barato si a una versión le faltan componentes del costo', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A' },
+      { id: 'b', name: 'B' },
+    ]);
+
+    fixture.componentInstance.onCostsPanelOpened();
+    await new Promise((r) => setTimeout(r, 0));
+
+    const completo = costFixture(3_000_000);
+    // A B solo le calculamos depreciación: sin combustible, mantención,
+    // permiso ni seguros. Su total sale más bajo por falta de datos.
+    const incompleto = {
+      ...costFixture(1_000_000),
+      fuelClp: 0,
+      maintenanceClp: 0,
+      circulationPermitClp: 0,
+      mandatoryInsuranceClp: 0,
+      voluntaryInsuranceClp: 0,
+      depreciationClp: 1_000_000,
+      totalClp: 1_000_000,
+    };
+    http
+      .expectOne((r) => r.url.includes('/cost/version/a'))
+      .flush({ data: completo, error: null });
+    http
+      .expectOne((r) => r.url.includes('/cost/version/b'))
+      .flush({ data: incompleto, error: null });
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.costsComparable()).toBe(false);
+    expect(fixture.componentInstance.isCheapestToOwn('b')).toBe(false);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid^="cheapest-"]'),
+    ).toBeNull();
+
+    // Y se dice por qué.
+    const aviso = fixture.nativeElement.querySelector('[data-testid="costs-incomplete"]');
+    expect(aviso).not.toBeNull();
+    expect(aviso.textContent).toMatch(/no marcamos cuál sale más barato/i);
+  });
+
+  it('muestra "sin dato" en vez de $0 en los componentes sin información', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A' },
+      { id: 'b', name: 'B' },
+    ]);
+
+    fixture.componentInstance.onCostsPanelOpened();
+    await new Promise((r) => setTimeout(r, 0));
+    const sinCombustible = { ...costFixture(2_000_000), fuelClp: 0 };
+    http.match((r) => r.url.includes('/cost/version/')).forEach((r) =>
+      r.flush({ data: sinCombustible, error: null }),
+    );
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    const fila = fixture.nativeElement.querySelector('[data-testid="cost-row-Combustible"]');
+    expect(fila.textContent).toContain('Sin dato');
+    expect(fila.textContent).not.toContain('$0');
+  });
+
+  it('cambiar km/año recalcula con el nuevo supuesto', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A' },
+      { id: 'b', name: 'B' },
+    ]);
+    fixture.componentInstance.costDebounceMs = 0;
+
+    fixture.componentInstance.onCostsPanelOpened();
+    await new Promise((r) => setTimeout(r, 0));
+    http.match((r) => r.url.includes('/cost/version/')).forEach((r) =>
+      r.flush({ data: costFixture(3_000_000), error: null }),
+    );
+    await new Promise((r) => setTimeout(r, 0));
+
+    fixture.componentInstance.onKmPerYearChange(30000);
+    await new Promise((r) => setTimeout(r, 0));
+
+    const reqs = http.match((r) => r.url.includes('/cost/version/'));
+    expect(reqs.length).toBe(2);
+    expect(reqs[0].request.params.get('kmPerYear')).toBe('30000');
+    reqs.forEach((r) => r.flush({ data: costFixture(4_000_000), error: null }));
+    await new Promise((r) => setTimeout(r, 0));
+  });
+
+  it('el título de la tarjeta linkea a la ficha del modelo', async () => {
+    const fixture = await mountWith([
+      {
+        id: 'a',
+        name: 'XLS',
+        model: { name: 'C3 Aircross', brand: { name: 'Citroën' } },
+      },
+      { id: 'b', name: 'B', model: { name: 'Yaris', brand: { name: 'Toyota' } } },
+    ]);
+
+    const link = fixture.nativeElement.querySelector('[data-testid="model-link-a"]');
+    expect(link).not.toBeNull();
+    // Mismo slug que espera el backend (ver core/slug.ts).
+    expect(link.getAttribute('href')).toBe('/brand/citroen/model/c3-aircross');
+  });
+
+  it('no arma link si falta la marca o el modelo', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A' },
+      { id: 'b', name: 'B' },
+    ]);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="model-link-a"]'),
+    ).toBeNull();
+  });
+
+  it('ofrece agregar otro auto mientras haya menos de 3', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A' },
+      { id: 'b', name: 'B' },
+    ]);
+    const slot = fixture.nativeElement.querySelector('[data-testid="add-slot"]');
+    expect(slot).not.toBeNull();
+    expect(slot.getAttribute('href')).toBe('/catalogo');
+    expect(slot.textContent).toContain('Queda 1 lugar');
+  });
+
+  it('no ofrece agregar cuando ya hay 3', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A' },
+      { id: 'b', name: 'B' },
+      { id: 'c', name: 'C' },
+    ]);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="add-slot"]'),
     ).toBeNull();
   });
 });
