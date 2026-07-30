@@ -6,6 +6,7 @@
   >
     <mat-sidenav
       #filtersDrawer
+      id="catalog-filters-drawer"
       class="catalog-filters-drawer"
       [mode]="sidenavMode()"
       [opened]="!isHandset() || filtersOpen()"
@@ -32,18 +33,24 @@
           </header>
 
           <div class="filter-section">
-            <span class="filter-label">Segmento</span>
-            <mat-radio-group
-              aria-label="Segmento"
-              class="filter-radio-group"
-              [value]="filters().segment ?? null"
-              (change)="updateFilter({ segment: $any($event).value || undefined })"
+            <span class="filter-label" [attr.id]="'filter-label-segment'">Segmento</span>
+            <!-- Checkboxes y no radios: marcar dos segmentos es una unión
+                 ("SUV o Crossover"), no una elección excluyente. Sin ninguno
+                 marcado = cualquiera. -->
+            <div
+              class="filter-check-group"
+              role="group"
+              [attr.aria-labelledby]="'filter-label-segment'"
             >
-              <mat-radio-button [value]="null">Cualquiera</mat-radio-button>
-              @for (s of segments(); track s.value) {
-                <mat-radio-button [value]="s.value">{{ s.label }}</mat-radio-button>
+              @for (opt of segments(); track opt.value) {
+                <mat-checkbox
+                  class="filter-check"
+                  [checked]="isMultiSelected('segment', opt.value)"
+                  (change)="toggleMulti('segment', opt.value)"
+                  [attr.data-testid]="'filter-segment-' + opt.value"
+                >{{ opt.label }}</mat-checkbox>
               }
-            </mat-radio-group>
+            </div>
           </div>
 
           <div class="filter-section">
@@ -63,33 +70,43 @@
           </div>
 
           <div class="filter-section">
-            <span class="filter-label">Transmisión</span>
-            <mat-radio-group
-              aria-label="Transmisión"
-              class="filter-radio-group"
-              [value]="filters().transmission ?? null"
-              (change)="updateFilter({ transmission: $any($event).value || undefined })"
+            <span class="filter-label" [attr.id]="'filter-label-transmission'">Transmisión</span>
+            <!-- Varias opciones marcadas son una unión; sin ninguna marcada,
+                 cualquiera. -->
+            <div
+              class="filter-check-group"
+              role="group"
+              [attr.aria-labelledby]="'filter-label-transmission'"
             >
-              <mat-radio-button [value]="null">Cualquiera</mat-radio-button>
-              @for (t of transmissions(); track t.value) {
-                <mat-radio-button [value]="t.value">{{ t.label }}</mat-radio-button>
+              @for (opt of transmissions(); track opt.value) {
+                <mat-checkbox
+                  class="filter-check"
+                  [checked]="isMultiSelected('transmission', opt.value)"
+                  (change)="toggleMulti('transmission', opt.value)"
+                  [attr.data-testid]="'filter-transmission-' + opt.value"
+                >{{ opt.label }}</mat-checkbox>
               }
-            </mat-radio-group>
+            </div>
           </div>
 
           <div class="filter-section">
-            <span class="filter-label">Combustible</span>
-            <mat-radio-group
-              aria-label="Combustible"
-              class="filter-radio-group"
-              [value]="filters().fuel ?? null"
-              (change)="updateFilter({ fuel: $any($event).value || undefined })"
+            <span class="filter-label" [attr.id]="'filter-label-fuel'">Combustible</span>
+            <!-- Varias opciones marcadas son una unión; sin ninguna marcada,
+                 cualquiera. -->
+            <div
+              class="filter-check-group"
+              role="group"
+              [attr.aria-labelledby]="'filter-label-fuel'"
             >
-              <mat-radio-button [value]="null">Cualquiera</mat-radio-button>
-              @for (f of fuels(); track f.value) {
-                <mat-radio-button [value]="f.value">{{ f.label }}</mat-radio-button>
+              @for (opt of fuels(); track opt.value) {
+                <mat-checkbox
+                  class="filter-check"
+                  [checked]="isMultiSelected('fuel', opt.value)"
+                  (change)="toggleMulti('fuel', opt.value)"
+                  [attr.data-testid]="'filter-fuel-' + opt.value"
+                >{{ opt.label }}</mat-checkbox>
               }
-            </mat-radio-group>
+            </div>
           </div>
 
           <div class="filter-section">
@@ -121,29 +138,32 @@
             />
           </div>
 
+          <!-- "Rendimiento mínimo", no "consumo máximo": el dato está en km/L,
+               donde más es mejor. El filtro anterior mandaba `consumptionMax`
+               (lte) y por lo tanto descartaba los autos más eficientes. -->
           <div class="filter-section">
-            <span class="filter-label">Consumo máx. ciudad</span>
+            <span class="filter-label">Rendimiento mín. ciudad</span>
             <app-range-slider
               [minBound]="consumptionBounds.min"
               [maxBound]="consumptionBounds.max"
               [step]="consumptionBounds.step"
-              [low]="filters().consumptionMax"
+              [low]="filters().consumptionMinKmL"
               [format]="kmLFormatter"
-              testid="filter-consumptionMax"
-              (lowChange)="onConsumptionMaxChange($event)"
+              testid="filter-consumptionMinKmL"
+              (lowChange)="onConsumptionMinChange($event)"
             />
           </div>
 
           <div class="filter-section">
-            <span class="filter-label">Consumo máx. carretera</span>
+            <span class="filter-label">Rendimiento mín. carretera</span>
             <app-range-slider
               [minBound]="consumptionBounds.min"
               [maxBound]="consumptionBounds.max"
               [step]="consumptionBounds.step"
-              [low]="filters().consumptionHighwayMax"
+              [low]="filters().consumptionHighwayMinKmL"
               [format]="kmLFormatter"
-              testid="filter-consumptionHighwayMax"
-              (lowChange)="onConsumptionHighwayMaxChange($event)"
+              testid="filter-consumptionHighwayMinKmL"
+              (lowChange)="onConsumptionHighwayMinChange($event)"
             />
           </div>
 
@@ -170,6 +190,17 @@
 
     <mat-sidenav-content class="catalog-content">
       <div class="catalog-toolbar">
+        <!-- Búsqueda por texto. La API soporta `q` desde siempre, pero el
+             catálogo no tenía campo y el de la navbar solo aparecía en ≥1280px:
+             bajo eso no había forma de buscar un modelo por nombre. -->
+        <app-search-input
+          class="catalog-search"
+          placeholder="Buscar marca o modelo…"
+          [value]="searchTerm()"
+          (changed)="onSearchInput($event)"
+          data-testid="catalog-search"
+        />
+
         <button
           mat-stroked-button
           type="button"
@@ -191,7 +222,7 @@
             <mat-label>Ordenar por</mat-label>
             <mat-select
               [value]="filters().sort ?? 'name'"
-              (selectionChange)="updateFilter({ sort: $any($event).value })"
+              (selectionChange)="onSortChange($any($event).value)"
               [attr.title]="sortTip()"
               data-testid="sort-select"
             >
@@ -229,9 +260,51 @@
         </div>
       </div>
 
-      @if (loading()) {
-        <p class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted" data-testid="loading">Cargando…</p>
+      <!-- Chips de filtros activos: con el drawer cerrado en móvil no había
+           ninguna señal de qué estaba filtrado. -->
+      @if (hasActiveFilters()) {
+        <div class="catalog-chips" data-testid="active-filters">
+          <span class="stamp-label catalog-chips-label">Filtros</span>
+          @for (chip of activeFilters(); track chip.id) {
+            <button
+              type="button"
+              class="catalog-chip"
+              (click)="removeFilter(chip.key, chip.value)"
+              [attr.aria-label]="chip.removeLabel"
+              [attr.data-testid]="'active-filter-' + chip.id"
+            >
+              <span>{{ chip.label }}</span>
+              <mat-icon aria-hidden="true">close</mat-icon>
+            </button>
+          }
+          <button
+            type="button"
+            class="catalog-chips-clear"
+            (click)="clearFilters()"
+            data-testid="active-filters-clear"
+          >
+            Limpiar todo
+          </button>
+        </div>
       }
+
+      <!-- `aria-live`: al cambiar un filtro, un lector de pantalla no tenía
+           forma de saber cuántos resultados quedaron. -->
+      <p
+        class="catalog-results-count"
+        role="status"
+        aria-live="polite"
+        data-testid="results-count"
+      >
+        @if (loading()) {
+          Buscando modelos…
+        } @else {
+          {{ total() }} {{ total() === 1 ? 'modelo' : 'modelos' }}
+          @if (hasActiveFilters()) {
+            con los filtros aplicados
+          }
+        }
+      </p>
 
       @if (loadError(); as error) {
         <div class="border border-danger bg-danger-light px-4 py-3 text-sm text-danger-dark" role="alert">
@@ -240,7 +313,10 @@
         </div>
       }
 
-      @if (items().length === 0 && !loading()) {
+      <!-- `!loadError()`: sin esto, un fallo de carga pintaba la caja de error y
+           además "No se encontraron modelos", como si el filtro no tuviera
+           resultados. -->
+      @if (items().length === 0 && !loading() && !loadError()) {
         <div class="empty-card">
           <p class="font-semibold text-ink mb-2">No se encontraron modelos</p>
           <p class="text-sm text-ink-muted mb-4">Prueba ajustar los filtros o limpiarlos.</p>

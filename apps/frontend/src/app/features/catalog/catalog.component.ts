@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatRadioModule } from '@angular/material/radio';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { ApiService, QueryParams } from '../../core/api.service';
@@ -17,6 +17,7 @@ import {
   VehicleCardInput,
 } from '../../shared/ui/vehicle-card.component';
 import { RangeSliderComponent } from '../../shared/ui/range-slider.component';
+import { SearchInputComponent } from '../../shared/ui/search-input.component';
 import { VehicleVersion } from '../../core/types/vehicle';
 import {
   CANONICAL_FUELS,
@@ -30,7 +31,10 @@ import {
 // Segmento, transmisión y combustible son tokens abiertos, no uniones
 // cerradas: el admin puede dar de alta valores nuevos con la opción "Otro" y
 // las opciones reales llegan desde la API (ver `loadFacets`).
-type Sort = 'name' | 'minPrice' | 'minConsumption';
+// `efficiency` ordena por el mejor rendimiento del modelo (mayor km/L).
+// `minConsumption` sigue existiendo en la API pero ordena por el PEOR, que es
+// lo contrario de lo que espera quien elige "Rendimiento" en la UI.
+type Sort = 'name' | 'minPrice' | 'efficiency';
 type Order = 'asc' | 'desc';
 
 export interface FilterOption {
@@ -38,17 +42,35 @@ export interface FilterOption {
   label: string;
 }
 
+/** Filtro activo, para los chips que se muestran sobre la grilla. */
+export interface ActiveFilterChip {
+  key: keyof CatalogFilters;
+  /** Presente solo en filtros multi-valor: el valor puntual que quita el chip. */
+  value?: string;
+  label: string;
+  /** Texto del `aria-label` del botón de quitar. */
+  removeLabel: string;
+  /** Identidad estable para el `track` del `@for`. */
+  id: string;
+}
+
 export interface CatalogFilters {
   q?: string;
   brand?: string;
-  segment?: string;
+  /**
+   * Multi-selección: varios segmentos son una unión ("SUV o Crossover"). Viaja
+   * a la API como CSV (`segment=SUV,CROSSOVER`); vacío o ausente = cualquiera.
+   */
+  segment?: string[];
   priceMin?: number;
   priceMax?: number;
-  transmission?: string;
-  fuel?: string;
+  transmission?: string[];
+  fuel?: string[];
   powerMin?: number;
-  consumptionMax?: number;
-  consumptionHighwayMax?: number;
+  /** Rendimiento mínimo en km/L (ciudad). Más km/L = gasta menos. */
+  consumptionMinKmL?: number;
+  /** Rendimiento mínimo en km/L (carretera). */
+  consumptionHighwayMinKmL?: number;
   sort?: Sort;
   order?: Order;
   page?: number;
@@ -74,11 +96,12 @@ const CONSUMPTION_BOUNDS = { min: 0, max: 40, step: 0.5 };
     RouterLink,
     VehicleCardComponent,
     RangeSliderComponent,
+    SearchInputComponent,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
     MatIconModule,
-    MatRadioModule,
+    MatCheckboxModule,
     MatSelectModule,
     MatSidenavModule,
   ],
@@ -96,10 +119,21 @@ export class CatalogComponent {
   readonly transmissions = signal<FilterOption[]>(toOptions(CANONICAL_TRANSMISSIONS, transmissionLabel));
   readonly fuels = signal<FilterOption[]>(toOptions(CANONICAL_FUELS, fuelLabel));
 
-  readonly sortOptions: ReadonlyArray<{ value: Sort; label: string; tip?: string }> = [
-    { value: 'name', label: 'Nombre' },
-    { value: 'minPrice', label: 'Precio' },
-    { value: 'minConsumption', label: 'Rendimiento', tip: 'Rendimiento = menor consumo de combustible en ciudad (km/L).' },
+  readonly sortOptions: ReadonlyArray<{
+    value: Sort;
+    label: string;
+    tip?: string;
+    /** Dirección natural del criterio: en rendimiento, más es mejor. */
+    defaultOrder: Order;
+  }> = [
+    { value: 'name', label: 'Nombre', defaultOrder: 'asc' },
+    { value: 'minPrice', label: 'Precio', defaultOrder: 'asc' },
+    {
+      value: 'efficiency',
+      label: 'Rendimiento',
+      tip: 'Rendimiento = kilómetros por litro en ciudad. Más km/L es mejor.',
+      defaultOrder: 'desc',
+    },
   ];
 
   readonly priceBounds = PRICE_BOUNDS;
@@ -116,9 +150,83 @@ export class CatalogComponent {
 
   readonly selectedVersions = signal<Record<string, string>>({});
 
+  /**
+   * Filtros activos como chips removibles. Existe porque con el drawer cerrado
+   * en móvil no había ninguna señal de qué estaba filtrado: la grilla mostraba
+   * 3 resultados y no se veía por qué.
+   */
+  readonly activeFilters = computed<ActiveFilterChip[]>(() => {
+    const f = this.filters();
+    const chips: ActiveFilterChip[] = [];
+    const push = (key: keyof CatalogFilters, label: string, what: string) =>
+      chips.push({ key, label, removeLabel: `Quitar filtro ${what}`, id: key });
+    /** Un chip por valor: con dos segmentos marcados salen dos chips. */
+    const pushEach = (
+      key: 'segment' | 'transmission' | 'fuel',
+      values: string[] | undefined,
+      label: (v: string) => string,
+      what: string,
+    ) => {
+      for (const value of values ?? []) {
+        chips.push({
+          key,
+          value,
+          label: label(value),
+          removeLabel: `Quitar filtro de ${what} ${label(value)}`,
+          id: `${key}:${value}`,
+        });
+      }
+    };
+
+    if (f.q) push('q', `“${f.q}”`, `de búsqueda “${f.q}”`);
+    if (f.brand) {
+      const name = this.brands().find((b) => b.id === f.brand)?.name;
+      push('brand', name ?? 'Marca', `de marca ${name ?? ''}`.trim());
+    }
+    pushEach('segment', f.segment, segmentLabel, 'segmento');
+    pushEach('transmission', f.transmission, transmissionLabel, 'transmisión');
+    pushEach('fuel', f.fuel, fuelLabel, 'combustible');
+    if (f.priceMin !== undefined) {
+      push('priceMin', `Desde ${this.priceFormatter(f.priceMin)}`, 'de precio mínimo');
+    }
+    if (f.priceMax !== undefined) {
+      push('priceMax', `Hasta ${this.priceFormatter(f.priceMax)}`, 'de precio máximo');
+    }
+    if (f.powerMin !== undefined) {
+      push('powerMin', `Desde ${this.hpFormatter(f.powerMin)}`, 'de potencia mínima');
+    }
+    if (f.consumptionMinKmL !== undefined) {
+      push(
+        'consumptionMinKmL',
+        `Ciudad ${this.kmLFormatter(f.consumptionMinKmL)}+`,
+        'de rendimiento en ciudad',
+      );
+    }
+    if (f.consumptionHighwayMinKmL !== undefined) {
+      push(
+        'consumptionHighwayMinKmL',
+        `Carretera ${this.kmLFormatter(f.consumptionHighwayMinKmL)}+`,
+        'de rendimiento en carretera',
+      );
+    }
+    return chips;
+  });
+
+  readonly hasActiveFilters = computed(() => this.activeFilters().length > 0);
+
   readonly selectedIds = this.compare.ids;
   readonly selectionCount = computed(() => this.selectedIds().length);
   readonly maxReached = computed(() => this.selectionCount() >= 3);
+
+  /**
+   * Texto visible en el campo de búsqueda. Se separa de `filters().q` para que
+   * el input responda a cada tecla mientras el request va debounceado: sin
+   * debounce, cada letra dispararía un `router.navigate` + un GET `/models`.
+   */
+  readonly searchTerm = signal('');
+  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
+  /** Espera antes de buscar. Los tests lo bajan a 0 para no depender de timers. */
+  searchDebounceMs = 350;
 
   readonly isHandset = signal(false);
   readonly sidenavMode = computed<'over' | 'side'>(() =>
@@ -146,6 +254,7 @@ export class CatalogComponent {
       });
     }
     this.filters.set(this.filtersFromParams(this.route.snapshot.queryParamMap));
+    this.searchTerm.set(this.filters().q ?? '');
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       const next = this.filtersFromParams(params);
       const queryKey = this.queryKey(next);
@@ -155,6 +264,9 @@ export class CatalogComponent {
       }
       if (JSON.stringify(next) === JSON.stringify(this.filters())) return;
       this.filters.set(next);
+      // El término puede venir de afuera (buscador de la navbar, link
+      // compartido, botón atrás), así que el campo se sincroniza con la URL.
+      this.searchTerm.set(next.q ?? '');
       void this.load();
     });
     this.initialLoad = Promise.all([this.loadBrands(), this.loadFacets(), this.load()]);
@@ -263,7 +375,51 @@ readonly initialLoad: Promise<unknown>;
     this.compare.clear();
   }
 
+  /**
+   * Cada tecla actualiza el campo; el request espera `searchDebounceMs` sin
+   * tipeo. Devuelve la promesa del filtro aplicado (o `null` si todavía está
+   * esperando) para que los tests puedan await-earla.
+   */
+  onSearchInput(value: string): void {
+    this.searchTerm.set(value);
+    if (this.searchDebounce !== null) clearTimeout(this.searchDebounce);
+    const apply = (): void => {
+      this.searchDebounce = null;
+      const term = value.trim();
+      if ((this.filters().q ?? '') === term) return;
+      void this.updateFilter({ q: term || undefined });
+    };
+    if (this.searchDebounceMs <= 0) {
+      apply();
+      return;
+    }
+    this.searchDebounce = setTimeout(apply, this.searchDebounceMs);
+  }
+
+  /**
+   * Quita un filtro desde su chip. En los multi-valor saca solo ese valor y
+   * deja los demás: quitar "SUV" no debería borrar también "Crossover".
+   */
+  removeFilter(key: keyof CatalogFilters, value?: string): Promise<void> {
+    if (key === 'q') {
+      if (this.searchDebounce !== null) {
+        clearTimeout(this.searchDebounce);
+        this.searchDebounce = null;
+      }
+      this.searchTerm.set('');
+    }
+    if (value !== undefined) {
+      return this.toggleMulti(key as 'segment' | 'transmission' | 'fuel', value);
+    }
+    return this.updateFilter({ [key]: undefined } as Partial<CatalogFilters>);
+  }
+
   async clearFilters(): Promise<void> {
+    if (this.searchDebounce !== null) {
+      clearTimeout(this.searchDebounce);
+      this.searchDebounce = null;
+    }
+    this.searchTerm.set('');
     this.filters.set({ sort: 'name', order: 'asc', page: 1, pageSize: 20 });
     this.selectedVersions.set({});
     this.lastWrittenQueryKey = this.queryKey(this.filters());
@@ -272,6 +428,34 @@ readonly initialLoad: Promise<unknown>;
     if (this.isHandset()) {
       this.filtersOpen.set(false);
     }
+  }
+
+  /** Claves de filtro que aceptan varios valores a la vez. */
+  private static readonly MULTI_KEYS = [
+    'segment',
+    'transmission',
+    'fuel',
+  ] as const satisfies ReadonlyArray<keyof CatalogFilters>;
+
+  isMultiSelected(key: 'segment' | 'transmission' | 'fuel', value: string): boolean {
+    return (this.filters()[key] ?? []).includes(value);
+  }
+
+  /**
+   * Marca / desmarca un valor de un filtro multi-selección. Sin ninguno marcado
+   * el filtro desaparece de la URL, que es la forma de decir "cualquiera".
+   */
+  toggleMulti(
+    key: 'segment' | 'transmission' | 'fuel',
+    value: string,
+  ): Promise<void> {
+    const current = this.filters()[key] ?? [];
+    const next = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    return this.updateFilter({
+      [key]: next.length > 0 ? next : undefined,
+    } as Partial<CatalogFilters>);
   }
 
   toggleFilters(): void {
@@ -310,16 +494,31 @@ readonly initialLoad: Promise<unknown>;
     });
   }
 
-  onConsumptionMaxChange(v: number): Promise<void> {
+  /**
+   * Rendimiento **mínimo**: el slider arranca en el bound bajo (sin filtro) y
+   * subirlo exige más km/L. Antes esto mandaba `consumptionMax` (lte), así que
+   * mover el slider descartaba justo los autos más eficientes.
+   */
+  onConsumptionMinChange(v: number): Promise<void> {
     return this.updateFilter({
-      consumptionMax: v < this.consumptionBounds.max ? v : undefined,
+      consumptionMinKmL: v > this.consumptionBounds.min ? v : undefined,
     });
   }
 
-  onConsumptionHighwayMaxChange(v: number): Promise<void> {
+  onConsumptionHighwayMinChange(v: number): Promise<void> {
     return this.updateFilter({
-      consumptionHighwayMax: v < this.consumptionBounds.max ? v : undefined,
+      consumptionHighwayMinKmL: v > this.consumptionBounds.min ? v : undefined,
     });
+  }
+
+  /**
+   * Cambiar de criterio resetea la dirección a la natural del criterio: elegir
+   * "Rendimiento" tiene que mostrar primero el más eficiente, no el que más
+   * gasta.
+   */
+  onSortChange(sort: Sort): Promise<void> {
+    const opt = this.sortOptions.find((o) => o.value === sort);
+    return this.updateFilter({ sort, order: opt?.defaultOrder ?? 'asc' });
   }
 
   sortTip(): string {
@@ -332,6 +531,12 @@ readonly initialLoad: Promise<unknown>;
   private cleanParams(f: CatalogFilters): QueryParams {
     const out: QueryParams = {};
     for (const [k, v] of Object.entries(f)) {
+      // Los filtros multi-valor viajan como CSV (`segment=SUV,CROSSOVER`); un
+      // array vacío equivale a "sin filtro" y se omite.
+      if (Array.isArray(v)) {
+        if (v.length > 0) out[k] = v.join(',');
+        continue;
+      }
       if (v !== undefined && v !== null && v !== '') {
         out[k] = v as QueryParams[string];
       }
@@ -348,9 +553,17 @@ readonly initialLoad: Promise<unknown>;
     };
     const sort = params.get('sort');
     const order = params.get('order');
+    const parsedSort: Sort =
+      sort === 'minPrice' || sort === 'efficiency' ? sort : 'name';
     const next: CatalogFilters = {
-      sort: sort === 'minPrice' || sort === 'minConsumption' ? sort : 'name',
-      order: order === 'desc' ? 'desc' : 'asc',
+      sort: parsedSort,
+      // Sin `order` explícito manda la dirección natural del criterio, para que
+      // un link a `?sort=efficiency` muestre el más eficiente primero.
+      order:
+        order === 'desc' || order === 'asc'
+          ? order
+          : (this.sortOptions.find((o) => o.value === parsedSort)?.defaultOrder ??
+            'asc'),
       page: Math.max(1, Math.trunc(numberParam('page') ?? 1)),
       pageSize: Math.min(50, Math.max(1, Math.trunc(numberParam('pageSize') ?? 20))),
     };
@@ -358,13 +571,24 @@ readonly initialLoad: Promise<unknown>;
     if (text) next.q = text;
     const brand = params.get('brand');
     if (brand) next.brand = brand;
-    const segment = params.get('segment');
-    if (segment) next.segment = segment;
-    const transmission = params.get('transmission');
-    if (transmission) next.transmission = transmission;
-    const fuel = params.get('fuel');
-    if (fuel) next.fuel = fuel;
-    for (const key of ['priceMin', 'priceMax', 'powerMin', 'consumptionMax', 'consumptionHighwayMax'] as const) {
+    // CSV → array. Un solo valor (`segment=SUV`, la forma histórica del link)
+    // entra igual, así que las URLs viejas siguen funcionando.
+    for (const key of CatalogComponent.MULTI_KEYS) {
+      const raw = params.get(key);
+      if (!raw) continue;
+      const values = raw
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
+      if (values.length > 0) next[key] = values;
+    }
+    for (const key of [
+      'priceMin',
+      'priceMax',
+      'powerMin',
+      'consumptionMinKmL',
+      'consumptionHighwayMinKmL',
+    ] as const) {
       const value = numberParam(key);
       if (value !== undefined) next[key] = value;
     }

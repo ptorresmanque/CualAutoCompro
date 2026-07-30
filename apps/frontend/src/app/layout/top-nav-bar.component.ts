@@ -3,8 +3,9 @@ import {
   Component,
   computed,
   inject,
-  signal,
+  linkedSignal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -51,9 +52,16 @@ export class TopNavBarComponent {
   readonly user = this.auth.currentUser;
   readonly compareCount = computed(() => this.compareStore.ids().length);
 
-  readonly searchTerm = signal(
-    this.route.snapshot.queryParamMap.get('q') ?? '',
-  );
+  /**
+   * `linkedSignal` sobre el `q` de la URL: sigue siendo escribible (el usuario
+   * tipea) pero se resincroniza cuando el término cambia por fuera — al buscar
+   * desde el campo del catálogo, al limpiar filtros o con el botón atrás. Antes
+   * leía `route.snapshot` una sola vez y quedaba con el término viejo.
+   */
+  private readonly queryParams = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+  readonly searchTerm = linkedSignal(() => this.queryParams().get('q') ?? '');
 
   readonly initials = computed(() => {
     const u = this.user();

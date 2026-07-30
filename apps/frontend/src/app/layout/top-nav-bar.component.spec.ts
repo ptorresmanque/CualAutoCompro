@@ -1,7 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
 import { TopNavBarComponent } from './top-nav-bar.component';
 import { AuthService, type User } from '../core/auth.service';
 import { CompareStore } from '../core/compare-store.service';
@@ -196,5 +197,64 @@ describe('TopNavBarComponent', () => {
     ) as HTMLAnchorElement[];
     const catalogLink = links.find((a) => a.getAttribute('href') === '/catalogo');
     expect(catalogLink).toBeDefined();
+  });
+  // El buscador de la navbar leía `route.snapshot` una sola vez, así que se
+  // quedaba con el término viejo al buscar desde el catálogo, limpiar filtros o
+  // usar el botón atrás.
+  it('sincroniza el buscador con el q de la URL cuando cambia por fuera', async () => {
+    const queryParams = new BehaviorSubject(convertToParamMap({ q: 'yaris' }));
+    TestBed.configureTestingModule({
+      imports: [TestHostComponent],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: authStub },
+        { provide: CompareStore, useClass: CompareStoreStub },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: queryParams.value },
+            queryParamMap: queryParams.asObservable(),
+          },
+        },
+      ],
+    });
+    const f = TestBed.createComponent(TestHostComponent);
+    f.detectChanges();
+    await f.whenStable();
+
+    // `ngModel` escribe el valor del input de forma asíncrona, de ahí el
+    // `whenStable()` tras cada emisión.
+    const input = (): HTMLInputElement =>
+      f.nativeElement.querySelector('[data-testid="nav-search"]');
+    expect(input().value).toBe('yaris');
+
+    // El usuario limpia el filtro desde el catálogo: la URL pierde `q`.
+    queryParams.next(convertToParamMap({}));
+    f.detectChanges();
+    await f.whenStable();
+    expect(input().value).toBe('');
+
+    // Y llega un término nuevo desde otra pantalla.
+    queryParams.next(convertToParamMap({ q: 'corolla' }));
+    f.detectChanges();
+    await f.whenStable();
+    expect(input().value).toBe('corolla');
+  });
+
+  it('el buscador es visible desde md (no solo en xl)', () => {
+    TestBed.configureTestingModule({
+      imports: [TestHostComponent],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: authStub },
+        { provide: CompareStore, useClass: CompareStoreStub },
+      ],
+    });
+    const f = TestBed.createComponent(TestHostComponent);
+    f.detectChanges();
+
+    const wrap = f.nativeElement.querySelector('.nav-search-wrap') as HTMLElement;
+    expect(wrap.className).toContain('md:flex');
+    expect(wrap.className).not.toContain('xl:flex');
   });
 });

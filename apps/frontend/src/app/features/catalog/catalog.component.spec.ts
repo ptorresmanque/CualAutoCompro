@@ -6,7 +6,7 @@ import {
   HttpTestingController,
   TestRequest,
 } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import { convertToParamMap, provideRouter } from '@angular/router';
 import { CatalogComponent } from './catalog.component';
 import { CompareStore } from '../../core/compare-store.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
@@ -111,7 +111,7 @@ describe('CatalogComponent', () => {
     await fixture.componentInstance.initialLoad;
 
     const loadPromise = fixture.componentInstance.updateFilter({
-      segment: 'SUV',
+      segment: ['SUV'],
     });
     const req = http.expectOne(
       (r) =>
@@ -547,7 +547,7 @@ describe('CatalogComponent', () => {
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
-    const p = fixture.componentInstance.updateFilter({ transmission: 'AUTOMATIC' });
+    const p = fixture.componentInstance.updateFilter({ transmission: ['AUTOMATIC'] });
     const req = http.expectOne(
       (r) =>
         r.url.endsWith('/api/v1/models') &&
@@ -679,11 +679,11 @@ describe('CatalogComponent', () => {
     ).not.toBeNull();
 
     expect(
-      fixture.nativeElement.querySelector('[data-testid="filter-consumptionMax-low"]'),
+      fixture.nativeElement.querySelector('[data-testid="filter-consumptionMinKmL-low"]'),
     ).not.toBeNull();
 
     expect(
-      fixture.nativeElement.querySelector('[data-testid="filter-consumptionHighwayMax-low"]'),
+      fixture.nativeElement.querySelector('[data-testid="filter-consumptionHighwayMinKmL-low"]'),
     ).not.toBeNull();
   });
 
@@ -771,7 +771,7 @@ describe('CatalogComponent', () => {
     await p;
   });
 
-  it('consumptionMax slider envía consumptionMax cuando v < bound máximo', async () => {
+  it('slider de rendimiento ciudad envía consumptionMinKmL cuando v > bound mínimo', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
     flushFacets();
@@ -783,14 +783,17 @@ describe('CatalogComponent', () => {
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
-    const p = fixture.componentInstance.onConsumptionMaxChange(15);
+    const p = fixture.componentInstance.onConsumptionMinChange(15);
     const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
-    expect(req.request.params.get('consumptionMax')).toBe('15');
+    expect(req.request.params.get('consumptionMinKmL')).toBe('15');
+    // El filtro es 'al menos 15 km/L', no 'a lo sumo': el param viejo
+    // (`consumptionMax`, lte) descartaba justo los autos eficientes.
+    expect(req.request.params.has('consumptionMax')).toBe(false);
     req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await p;
   });
 
-  it('consumptionHighwayMax slider envía consumptionHighwayMax cuando v < bound máximo', async () => {
+  it('slider de rendimiento carretera envía consumptionHighwayMinKmL', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
     flushFacets();
@@ -802,14 +805,14 @@ describe('CatalogComponent', () => {
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
-    const p = fixture.componentInstance.onConsumptionHighwayMaxChange(18);
+    const p = fixture.componentInstance.onConsumptionHighwayMinChange(18);
     const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
-    expect(req.request.params.get('consumptionHighwayMax')).toBe('18');
+    expect(req.request.params.get('consumptionHighwayMinKmL')).toBe('18');
     req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await p;
   });
 
-  it('consumptionMax slider omite el query param cuando está en el bound máximo', async () => {
+  it('slider de rendimiento omite el query param en el bound mínimo', async () => {
     const fixture = TestBed.createComponent(CatalogComponent);
     fixture.detectChanges();
     flushFacets();
@@ -821,11 +824,11 @@ describe('CatalogComponent', () => {
       .flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await fixture.componentInstance.initialLoad;
 
-    const p = fixture.componentInstance.onConsumptionMaxChange(
-      fixture.componentInstance.consumptionBounds.max,
+    const p = fixture.componentInstance.onConsumptionMinChange(
+      fixture.componentInstance.consumptionBounds.min,
     );
     const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
-    expect(req.request.params.has('consumptionMax')).toBe(false);
+    expect(req.request.params.has('consumptionMinKmL')).toBe(false);
     req.flush({ data: { total: 0, items: [], page: 1, pageSize: 20 } });
     await p;
   });
@@ -887,5 +890,382 @@ describe('CatalogComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.segments().map((s) => s.value)).toContain('SEDAN');
+  });
+  // ---------------------------------------------------------------------------
+  // Búsqueda por texto (`q`). La API la soportaba desde siempre; el catálogo no
+  // tenía campo y la navbar solo mostraba el buscador en ≥1280px.
+  // ---------------------------------------------------------------------------
+
+  /** Monta el catálogo con la carga inicial ya resuelta. */
+  async function mountCatalog() {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.componentInstance.searchDebounceMs = 0;
+    fixture.detectChanges();
+    flushFacets();
+    http.expectOne((r) => r.url.includes('/api/v1/brands')).flush({ data: [] });
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await fixture.componentInstance.initialLoad;
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('renderiza el campo de búsqueda', async () => {
+    const fixture = await mountCatalog();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="catalog-search"]'),
+    ).not.toBeNull();
+  });
+
+  it('buscar envía q y lo refleja en el campo', async () => {
+    const fixture = await mountCatalog();
+
+    fixture.componentInstance.onSearchInput('yaris');
+    await new Promise((r) => setTimeout(r, 0));
+
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
+    expect(req.request.params.get('q')).toBe('yaris');
+    flushItems(req, []);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.searchTerm()).toBe('yaris');
+  });
+
+  it('recorta el término y omite q cuando queda vacío', async () => {
+    const fixture = await mountCatalog();
+
+    fixture.componentInstance.onSearchInput('  corolla  ');
+    await new Promise((r) => setTimeout(r, 0));
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
+    expect(req.request.params.get('q')).toBe('corolla');
+    flushItems(req, []);
+
+    fixture.componentInstance.onSearchInput('   ');
+    await new Promise((r) => setTimeout(r, 0));
+    const cleared = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
+    expect(cleared.request.params.has('q')).toBe(false);
+    flushItems(cleared, []);
+  });
+
+  it('no repite el request si el término no cambió', async () => {
+    const fixture = await mountCatalog();
+
+    fixture.componentInstance.onSearchInput('kia');
+    await new Promise((r) => setTimeout(r, 0));
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+
+    // Mismo término (con espacios): no debe salir otro request.
+    fixture.componentInstance.onSearchInput('kia ');
+    await new Promise((r) => setTimeout(r, 0));
+    http.expectNone((r) => r.url.endsWith('/api/v1/models'));
+  });
+
+  it('una ráfaga de tecleo produce un solo request con el término final', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.componentInstance.searchDebounceMs = 20;
+    fixture.detectChanges();
+    flushFacets();
+    http.expectOne((r) => r.url.includes('/api/v1/brands')).flush({ data: [] });
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await fixture.componentInstance.initialLoad;
+
+    for (const term of ['y', 'ya', 'yar', 'yari', 'yaris']) {
+      fixture.componentInstance.onSearchInput(term);
+    }
+    await new Promise((r) => setTimeout(r, 40));
+
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
+    expect(req.request.params.get('q')).toBe('yaris');
+    flushItems(req, []);
+  });
+
+  it('limpiar filtros vacía el campo de búsqueda', async () => {
+    const fixture = await mountCatalog();
+
+    fixture.componentInstance.onSearchInput('mazda');
+    await new Promise((r) => setTimeout(r, 0));
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+
+    const p = fixture.componentInstance.clearFilters();
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await p;
+
+    expect(fixture.componentInstance.searchTerm()).toBe('');
+    expect(fixture.componentInstance.filters().q).toBeUndefined();
+  });
+  // ---------------------------------------------------------------------------
+  // Orden por rendimiento. El criterio "Rendimiento" tiene que mostrar primero
+  // el auto que MÁS rinde: con `sort=minConsumption&order=asc` (lo que hacía
+  // antes) salía primero el que más gasta.
+  // ---------------------------------------------------------------------------
+
+  it('elegir Rendimiento manda sort=efficiency con order=desc', async () => {
+    const fixture = await mountCatalog();
+
+    const p = fixture.componentInstance.onSortChange('efficiency');
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
+    expect(req.request.params.get('sort')).toBe('efficiency');
+    expect(req.request.params.get('order')).toBe('desc');
+    flushItems(req, []);
+    await p;
+  });
+
+  it('elegir Precio vuelve a order=asc (más barato primero)', async () => {
+    const fixture = await mountCatalog();
+
+    const eff = fixture.componentInstance.onSortChange('efficiency');
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await eff;
+
+    const p = fixture.componentInstance.onSortChange('minPrice');
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
+    expect(req.request.params.get('sort')).toBe('minPrice');
+    expect(req.request.params.get('order')).toBe('asc');
+    flushItems(req, []);
+    await p;
+  });
+
+  it('el usuario puede invertir la dirección después de elegir el criterio', async () => {
+    const fixture = await mountCatalog();
+
+    const eff = fixture.componentInstance.onSortChange('efficiency');
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await eff;
+
+    const p = fixture.componentInstance.updateFilter({ order: 'asc' });
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
+    expect(req.request.params.get('sort')).toBe('efficiency');
+    expect(req.request.params.get('order')).toBe('asc');
+    flushItems(req, []);
+    await p;
+  });
+
+  it('ya no ofrece el criterio minConsumption', async () => {
+    const fixture = await mountCatalog();
+    expect(
+      fixture.componentInstance.sortOptions.map((o) => o.value),
+    ).not.toContain('minConsumption');
+    expect(fixture.componentInstance.sortOptions.map((o) => o.value)).toContain(
+      'efficiency',
+    );
+  });
+  // ---------------------------------------------------------------------------
+  // Chips de filtros activos
+  // ---------------------------------------------------------------------------
+
+  it('no muestra chips cuando no hay filtros', async () => {
+    const fixture = await mountCatalog();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="active-filters"]'),
+    ).toBeNull();
+  });
+
+  it('muestra un chip por filtro activo con etiqueta legible', async () => {
+    const fixture = await mountCatalog();
+
+    const p = fixture.componentInstance.updateFilter({
+      segment: ['SUV'],
+      priceMin: 15_000_000,
+      consumptionMinKmL: 12,
+    });
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await p;
+    fixture.detectChanges();
+
+    const chips = fixture.componentInstance.activeFilters();
+    expect(chips.map((c) => c.key)).toEqual([
+      'segment',
+      'priceMin',
+      'consumptionMinKmL',
+    ]);
+    expect(chips[0].label).toBe('SUV');
+    expect(chips[1].label).toContain('Desde');
+    expect(chips[2].label).toBe('Ciudad 12 km/L+');
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="active-filter-segment:SUV"]'),
+    ).not.toBeNull();
+  });
+
+  it('el chip de marca usa el nombre, no el id', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.componentInstance.searchDebounceMs = 0;
+    fixture.detectChanges();
+    flushFacets();
+    http
+      .expectOne((r) => r.url.includes('/api/v1/brands'))
+      .flush({ data: [{ id: 'b1', name: 'Toyota' }] });
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await fixture.componentInstance.initialLoad;
+
+    const p = fixture.componentInstance.updateFilter({ brand: 'b1' });
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await p;
+
+    expect(fixture.componentInstance.activeFilters()[0].label).toBe('Toyota');
+  });
+
+  it('quitar un chip elimina solo ese filtro', async () => {
+    const fixture = await mountCatalog();
+
+    const p = fixture.componentInstance.updateFilter({
+      segment: ['SUV'],
+      fuel: ['HYBRID'],
+    });
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await p;
+
+    const removal = fixture.componentInstance.removeFilter('segment');
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
+    expect(req.request.params.has('segment')).toBe(false);
+    expect(req.request.params.get('fuel')).toBe('HYBRID');
+    flushItems(req, []);
+    await removal;
+
+    expect(fixture.componentInstance.activeFilters().map((c) => c.key)).toEqual([
+      'fuel',
+    ]);
+  });
+
+  it('quitar el chip de búsqueda también vacía el campo', async () => {
+    const fixture = await mountCatalog();
+
+    fixture.componentInstance.onSearchInput('yaris');
+    await new Promise((r) => setTimeout(r, 0));
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    expect(fixture.componentInstance.searchTerm()).toBe('yaris');
+
+    const removal = fixture.componentInstance.removeFilter('q');
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
+    expect(req.request.params.has('q')).toBe(false);
+    flushItems(req, []);
+    await removal;
+
+    expect(fixture.componentInstance.searchTerm()).toBe('');
+  });
+
+  it('el contador de resultados es una región live', async () => {
+    const fixture = await mountCatalog();
+    const el = fixture.nativeElement.querySelector('[data-testid="results-count"]');
+    expect(el).not.toBeNull();
+    expect(el.getAttribute('aria-live')).toBe('polite');
+    expect(el.getAttribute('role')).toBe('status');
+  });
+
+  it('el contador usa singular con un solo resultado', async () => {
+    const fixture = TestBed.createComponent(CatalogComponent);
+    fixture.detectChanges();
+    flushFacets();
+    http.expectOne((r) => r.url.includes('/api/v1/brands')).flush({ data: [] });
+    http.expectOne((r) => r.url.endsWith('/api/v1/models')).flush({
+      data: { total: 1, items: [], page: 1, pageSize: 20 },
+    });
+    await fixture.componentInstance.initialLoad;
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement.querySelector('[data-testid="results-count"]');
+    expect(el.textContent).toContain('1 modelo');
+    expect(el.textContent).not.toContain('modelos');
+  });
+
+  // ---------------------------------------------------------------------------
+  // Multi-selección: "SUV o Crossover" era imposible con radio buttons.
+  // ---------------------------------------------------------------------------
+
+  it('marcar dos segmentos manda los dos como CSV', async () => {
+    const fixture = await mountCatalog();
+
+    const first = fixture.componentInstance.toggleMulti('segment', 'SUV');
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await first;
+
+    const second = fixture.componentInstance.toggleMulti('segment', 'CROSSOVER');
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
+    expect(req.request.params.get('segment')).toBe('SUV,CROSSOVER');
+    flushItems(req, []);
+    await second;
+
+    expect(fixture.componentInstance.filters().segment).toEqual([
+      'SUV',
+      'CROSSOVER',
+    ]);
+  });
+
+  it('desmarcar el último valor quita el param', async () => {
+    const fixture = await mountCatalog();
+
+    const on = fixture.componentInstance.toggleMulti('fuel', 'HYBRID');
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await on;
+
+    const off = fixture.componentInstance.toggleMulti('fuel', 'HYBRID');
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
+    expect(req.request.params.has('fuel')).toBe(false);
+    flushItems(req, []);
+    await off;
+
+    expect(fixture.componentInstance.filters().fuel).toBeUndefined();
+  });
+
+  it('isMultiSelected refleja el estado de cada checkbox', async () => {
+    const fixture = await mountCatalog();
+
+    const p = fixture.componentInstance.updateFilter({
+      transmission: ['MANUAL', 'CVT'],
+    });
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await p;
+
+    expect(fixture.componentInstance.isMultiSelected('transmission', 'MANUAL')).toBe(true);
+    expect(fixture.componentInstance.isMultiSelected('transmission', 'CVT')).toBe(true);
+    expect(fixture.componentInstance.isMultiSelected('transmission', 'DCT')).toBe(false);
+  });
+
+  it('genera un chip por valor y quitar uno deja el otro', async () => {
+    const fixture = await mountCatalog();
+
+    const p = fixture.componentInstance.updateFilter({
+      segment: ['SUV', 'CROSSOVER'],
+    });
+    flushItems(http.expectOne((r) => r.url.endsWith('/api/v1/models')), []);
+    await p;
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.activeFilters().map((c) => c.id)).toEqual([
+      'segment:SUV',
+      'segment:CROSSOVER',
+    ]);
+
+    const removal = fixture.componentInstance.removeFilter('segment', 'SUV');
+    const req = http.expectOne((r) => r.url.endsWith('/api/v1/models'));
+    expect(req.request.params.get('segment')).toBe('CROSSOVER');
+    flushItems(req, []);
+    await removal;
+
+    expect(fixture.componentInstance.filters().segment).toEqual(['CROSSOVER']);
+  });
+
+  it('renderiza checkboxes, no radios, para los filtros multi-valor', async () => {
+    const fixture = await mountCatalog();
+    expect(
+      fixture.nativeElement.querySelectorAll('mat-radio-button').length,
+    ).toBe(0);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="filter-segment-SUV"]'),
+    ).not.toBeNull();
+  });
+
+  it('un link con un solo valor (formato viejo) sigue funcionando', async () => {
+    // `?segment=SUV` es la forma histórica del param: tiene que seguir
+    // hidratando el filtro, ahora como array de un elemento.
+    const fixture = await mountCatalog();
+    const parsed = fixture.componentInstance['filtersFromParams'](
+      convertToParamMap({ segment: 'SUV' }),
+    );
+    expect(parsed.segment).toEqual(['SUV']);
+
+    const multi = fixture.componentInstance['filtersFromParams'](
+      convertToParamMap({ segment: 'SUV,CROSSOVER' }),
+    );
+    expect(multi.segment).toEqual(['SUV', 'CROSSOVER']);
   });
 });

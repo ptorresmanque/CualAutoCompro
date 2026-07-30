@@ -42,7 +42,10 @@
       }
     </nav>
 
-    <div class="nav-search-wrap hidden xl:flex">
+    <!-- Desde `md`, no desde `xl`: con `hidden xl:flex` no había ninguna forma
+         de buscar por texto bajo 1280px de ancho. En móvil el buscador vive en
+         el catálogo (ver catalog.component.html) para no duplicarlo acá. -->
+    <div class="nav-search-wrap hidden md:flex">
       <form
         class="nav-search-form"
         role="search"
