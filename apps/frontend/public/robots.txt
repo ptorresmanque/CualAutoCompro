@@ -1,0 +1,28 @@
+# robots.txt de cualautocompro
+#
+# Esta lista tiene que decir lo mismo que el `noindex` declarado por ruta en
+# src/app/app.routes.ts. Si agregas una ruta privada allá, agregala acá.
+
+User-agent: *
+Allow: /
+
+# Panel interno.
+Disallow: /admin
+
+# Cuenta del usuario: comparaciones guardadas, ajustes y recuperar contraseña.
+Disallow: /account
+
+# Favoritos: dependen de la sesión, no tienen sentido para un buscador.
+Disallow: /favoritos
+
+# El comparador y los enlaces de comparaciones guardadas. Los /c/ se comparten
+# a propósito (por WhatsApp, por ejemplo), pero no se indexan: el texto de
+# privacidad del sitio le promete al usuario que no aparecen en buscadores.
+Disallow: /compare
+Disallow: /c/
+
+# Autenticación.
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://cualautocompro.cl/sitemap.xml
