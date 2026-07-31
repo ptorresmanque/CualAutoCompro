@@ -556,7 +556,7 @@ describe('CompareComponent', () => {
 
     const banner = fixture.nativeElement.querySelector('[data-testid="saved-link"]');
     expect(banner).not.toBeNull();
-    expect(banner.textContent).toContain('Ya tenés esta comparación guardada');
+    expect(banner.textContent).toContain('Ya tienes esta comparación guardada');
   });
 
   it('saveComparison con error no-409 muestra banner y NO re-throws (C3)', async () => {

@@ -1087,14 +1087,14 @@ export class CompareComponent {
       if (err?.status === 409 && dup?.code === 'COMPARISON_DUPLICATE' && dup.slug) {
         this.duplicateSlug.set(dup.slug);
         this.savedSlug.set(dup.slug);
-        this.snackBar.open('Ya tenés esta comparación guardada.', 'Cerrar', {
+        this.snackBar.open('Ya tienes esta comparación guardada.', 'Cerrar', {
           duration: 5000,
         });
       } else {
         this.saveError.set(
-          'No pudimos guardar la comparación. Intentá de nuevo.',
+          'No pudimos guardar la comparación. Intenta de nuevo.',
         );
-        this.snackBar.open('No pudimos guardar la comparación. Intentá de nuevo.', 'Cerrar', {
+        this.snackBar.open('No pudimos guardar la comparación. Intenta de nuevo.', 'Cerrar', {
           duration: 5000,
           panelClass: 'snack-error',
         });

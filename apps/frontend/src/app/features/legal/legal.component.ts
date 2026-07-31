@@ -85,9 +85,9 @@ type LegalDoc = 'privacidad' | 'terminos';
             <strong>
               cualquier persona que tenga el enlace puede verla, sin iniciar
               sesión
-            </strong>. No la publicamos en ninguna parte ni la indexamos en
-            buscadores, y solo tú puedes verla en tu lista de comparaciones,
-            renombrarla o eliminarla. Si no quieres que sea accesible, elimínala.
+            </strong>. No la publicamos en ninguna parte y le pedimos a los
+            buscadores que no la indexen. Solo tú puedes verla en tu lista de
+            comparaciones, renombrarla o eliminarla. Si no quieres que sea accesible, elimínala.
           </p>
 
           <h2>Terceros</h2>

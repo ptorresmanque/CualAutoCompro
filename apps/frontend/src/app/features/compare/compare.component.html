@@ -30,7 +30,7 @@
           No has seleccionado ningún auto todavía
         </h2>
         <p class="settings-helper">
-          Agregá hasta 3 versiones desde el catálogo y comparálas acá.
+          Agrega hasta 3 versiones desde el catálogo y compáralas acá.
         </p>
         <a
           routerLink="/catalogo"
@@ -45,7 +45,7 @@
       <section class="mb-8" data-testid="favorites-carousel">
         <header class="flex items-center justify-between mb-3">
           <h2 class="font-bold text-base">
-            Tus favoritos · Agregá uno a la comparación
+            Tus favoritos · Agrega uno a la comparación
           </h2>
         </header>
       <ul
@@ -194,7 +194,7 @@
         @if (savedSlug()) {
           <span data-testid="saved-link">
             @if (duplicateSlug()) {
-              Ya tenés esta comparación guardada.
+              Ya tienes esta comparación guardada.
             }
             <a
               [routerLink]="['/compare']"
