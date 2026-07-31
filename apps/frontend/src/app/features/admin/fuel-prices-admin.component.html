@@ -52,7 +52,7 @@
         </thead>
         <tbody>
           @for (fp of crud.displayed(); track fp.id) {
-            <tr class="border-t border-border">
+            <tr class="border-t border-rule">
               <td class="py-2">{{ fp.fuelType }}</td>
               <td class="py-2">{{ formatCurrency(fp.pricePerUnitClp) }}</td>
               <td class="py-2">{{ fp.unit }}</td>

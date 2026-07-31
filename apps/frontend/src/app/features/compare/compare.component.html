@@ -240,7 +240,7 @@
               [href]="v.recallUrl"
               target="_blank"
               rel="noopener"
-              class="absolute top-2 left-2 inline-flex items-center gap-1 text-engine font-mono text-[10px] uppercase tracking-stamp border border-engine bg-white px-1.5 py-0.5 z-10 pr-8"
+              class="absolute top-2 left-2 inline-flex items-center gap-1 text-engine font-mono text-[10px] uppercase tracking-stamp border border-engine bg-paper-cool px-1.5 py-0.5 z-10 pr-8"
               [attr.data-testid]="'recall-card-' + v.id"
             >
               <mat-icon class="text-base">warning</mat-icon>
@@ -253,7 +253,7 @@
 
           <div class="flex items-center gap-2 mb-1">
             <span
-              class="grid h-6 w-6 place-items-center bg-engine-100 text-engine-900 font-mono text-[11px] font-bold"
+              class="grid h-6 w-6 place-items-center bg-engine-100 text-engine-dark font-mono text-[11px] font-bold"
               aria-hidden="true"
             >
               {{ (v.model?.brand?.name ?? '?').charAt(0) }}
@@ -325,7 +325,7 @@
           }
           <div class="grid grid-cols-2 gap-2">
             <div
-              class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
+              class="bg-paper rounded-md px-2 py-1 flex items-center gap-1.5"
             >
               <mat-icon class="text-engine text-base">
                 settings
@@ -333,7 +333,7 @@
               <span class="text-xs font-semibold">{{ v.engineDisplacementCc ? (v.engineDisplacementCc / 1000).toFixed(1) + 'L' : '—' }}</span>
             </div>
             <div
-              class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
+              class="bg-paper rounded-md px-2 py-1 flex items-center gap-1.5"
             >
               <mat-icon class="text-engine text-base">
                 account_tree
@@ -341,7 +341,7 @@
               <span class="text-xs font-semibold">{{ transmissionLabel(v.transmission) || '—' }}</span>
             </div>
             <div
-              class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
+              class="bg-paper rounded-md px-2 py-1 flex items-center gap-1.5"
             >
               <mat-icon class="text-engine text-base">
                 local_gas_station
@@ -349,7 +349,7 @@
               <span class="text-xs font-semibold">{{ fuelLabel(v.fuel) || '—' }}</span>
             </div>
             <div
-              class="bg-surface-muted rounded-md px-2 py-1 flex items-center gap-1.5"
+              class="bg-paper rounded-md px-2 py-1 flex items-center gap-1.5"
             >
               <mat-icon class="text-engine text-base">
                 speed
@@ -428,10 +428,10 @@
               >info</mat-icon>
             </mat-panel-description>
           </mat-expansion-panel-header>
-          <div class="border-t border-border overflow-x-auto">
+          <div class="border-t border-rule overflow-x-auto">
             <table class="w-full text-sm min-w-[28rem]">
               <thead>
-                <tr class="bg-surface-muted">
+                <tr class="bg-paper">
                   <!-- `compare-sticky-col`: en móvil la tabla scrollea en
                        horizontal y sin esto se perdía de vista qué atributo se
                        estaba mirando. -->
@@ -584,7 +584,7 @@
             <div class="overflow-x-auto">
               <table class="w-full text-sm min-w-[28rem]">
                 <thead>
-                  <tr class="bg-surface-muted">
+                  <tr class="bg-paper">
                     <th
                       scope="col"
                       class="compare-sticky-col w-1/4 px-4 py-2 text-left font-bold text-xs uppercase tracking-wider text-ink-muted"

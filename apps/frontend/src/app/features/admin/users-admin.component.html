@@ -22,7 +22,7 @@
         </thead>
         <tbody>
           @for (user of items(); track user.id) {
-            <tr class="border-t border-border">
+            <tr class="border-t border-rule">
               <td class="py-2">{{ user.name }}</td>
               <td class="py-2">{{ user.email }}</td>
               <td class="py-2"><span class="font-mono text-xs">{{ user.role }}</span></td>

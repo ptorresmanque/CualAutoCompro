@@ -68,7 +68,7 @@
         </thead>
         <tbody>
           @for (m of crud.displayed(); track m.id) {
-            <tr class="border-t border-border">
+            <tr class="border-t border-rule">
               <td class="py-2">{{ m.mileageTag | number }} km</td>
               <td class="py-2">{{ formatPrice(m.costClp) }}</td>
               <td class="py-2 actions-col">

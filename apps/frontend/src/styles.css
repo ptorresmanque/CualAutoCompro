@@ -775,22 +775,10 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   text-align: center;
 }
 
-.empty-card button.btn-engine {
-  background: var(--engine);
-  color: var(--paper);
-  font-family: var(--font-sans);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 0.625rem 1.25rem;
-  border-radius: 0;
-  border: 1px solid var(--engine);
-}
-
-.empty-card button.btn-engine:hover {
-  background: var(--engine-dark);
-}
+/* El CTA de la empty-card ya no lleva una regla propia: era un relleno
+   `--engine` que competía con las utilidades del template y contradecía la
+   jerarquía del design system (CTA primario = `--ink`, hover `--engine`).
+   El botón se pinta ahora solo con utilidades, igual que el CTA del hero. */
 
 /* ===========================================================
  * "La Ficha" — sistema compartido de tarjeta.

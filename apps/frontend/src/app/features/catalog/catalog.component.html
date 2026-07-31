@@ -231,12 +231,12 @@
               }
             </mat-select>
           </mat-form-field>
-          <div class="flex items-center border border-border rounded overflow-hidden" role="group" aria-label="Dirección">
+          <div class="flex items-center border border-rule rounded overflow-hidden" role="group" aria-label="Dirección">
             <button type="button"
               (click)="updateFilter({ order: 'asc' })"
               [attr.aria-pressed]="(filters().order ?? 'asc') === 'asc'"
               [class.bg-engine]="(filters().order ?? 'asc') === 'asc'"
-              [class.text-white]="(filters().order ?? 'asc') === 'asc'"
+              [class.text-paper]="(filters().order ?? 'asc') === 'asc'"
               [class.text-ink-muted]="(filters().order ?? 'asc') !== 'asc'"
               class="sort-button"
               [class.is-active]="(filters().order ?? 'asc') === 'asc'"
@@ -248,7 +248,7 @@
               (click)="updateFilter({ order: 'desc' })"
               [attr.aria-pressed]="filters().order === 'desc'"
               [class.bg-engine]="filters().order === 'desc'"
-              [class.text-white]="filters().order === 'desc'"
+              [class.text-paper]="filters().order === 'desc'"
               [class.text-ink-muted]="filters().order !== 'desc'"
               class="sort-button"
               [class.is-active]="filters().order === 'desc'"
@@ -321,7 +321,7 @@
           <p class="font-semibold text-ink mb-2">No se encontraron modelos</p>
           <p class="text-sm text-ink-muted mb-4">Prueba ajustar los filtros o limpiarlos.</p>
           <button type="button"
-            class="inline-block px-5 py-2.5 text-sm bg-engine text-paper hover:bg-engine-dark btn-engine"
+            class="inline-block px-5 py-2.5 text-sm font-semibold uppercase tracking-stamp border border-ink bg-ink text-paper hover:bg-engine hover:border-engine transition-colors"
             (click)="clearFilters()">Limpiar filtros</button>
         </div>
       }
@@ -348,7 +348,7 @@
         <nav class="mt-8 flex items-center justify-center gap-4" aria-label="Paginación del catálogo">
           <button
             type="button"
-            class="px-4 py-2 border border-border text-sm disabled:opacity-40"
+            class="px-4 py-2 border border-rule text-sm disabled:opacity-40"
             [disabled]="!hasPreviousPage() || loading()"
             (click)="goToPage((filters().page ?? 1) - 1)"
           >Anterior</button>
@@ -357,7 +357,7 @@
           </span>
           <button
             type="button"
-            class="px-4 py-2 border border-border text-sm disabled:opacity-40"
+            class="px-4 py-2 border border-rule text-sm disabled:opacity-40"
             [disabled]="!hasNextPage() || loading()"
             (click)="goToPage((filters().page ?? 1) + 1)"
           >Siguiente</button>

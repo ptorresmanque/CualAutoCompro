@@ -51,7 +51,7 @@
         </thead>
         <tbody>
           @for (d of crud.displayed(); track d.id) {
-            <tr class="border-t border-border">
+            <tr class="border-t border-rule">
               <td class="py-2">{{ d.name }}</td>
               <td class="py-2">
                 <a [href]="d.url" target="_blank" rel="noopener" class="text-engine underline truncate max-w-xs block">{{ d.url }}</a>

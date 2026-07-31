@@ -68,7 +68,7 @@
         </thead>
         <tbody>
           @for (v of crud.displayed(); track v.id) {
-            <tr class="border-t border-border">
+            <tr class="border-t border-rule">
               <td class="py-2">{{ v.name }}</td>
               <td class="py-2">{{ v.model?.name ?? '—' }}</td>
               <td class="py-2">{{ v.year }}</td>

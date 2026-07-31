@@ -60,7 +60,7 @@
         </thead>
         <tbody>
           @for (m of crud.displayed(); track m.id) {
-            <tr class="border-t border-border">
+            <tr class="border-t border-rule">
               <td class="py-2">{{ m.name }}</td>
               <td class="py-2">{{ m.brand?.name ?? '—' }}</td>
               <td class="py-2">{{ m.segment }}</td>

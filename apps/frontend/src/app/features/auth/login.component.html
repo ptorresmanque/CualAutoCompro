@@ -11,7 +11,7 @@
 
   @if (oauthError(); as msg) {
     <div
-      class="border border-engine bg-engine-50 px-4 py-3 text-sm text-engine-dark mb-4"
+      class="border border-danger bg-danger-light px-4 py-3 text-sm text-danger-dark mb-4"
       role="alert"
       data-testid="oauth-error"
     >
@@ -61,7 +61,7 @@
 
         @if (error(); as msg) {
           <div
-            class="border border-engine bg-engine-50 px-4 py-3 text-sm text-engine-dark"
+            class="border border-danger bg-danger-light px-4 py-3 text-sm text-danger-dark"
             role="alert"
             data-testid="error"
           >

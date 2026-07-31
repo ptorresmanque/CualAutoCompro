@@ -28,13 +28,13 @@
   }
 
   @if (error(); as msg) {
-    <div class="border border-engine bg-engine-50 px-4 py-3 text-sm text-engine-dark" role="alert" data-testid="error">
+    <div class="border border-danger bg-danger-light px-4 py-3 text-sm text-danger-dark" role="alert" data-testid="error">
       <span class="stamp-label mr-2">Error</span>{{ msg }}
     </div>
   }
 
   @if (compareMessage(); as msg) {
-    <div class="mb-4 border border-engine bg-engine-50 px-4 py-3 text-sm text-engine-dark" role="alert" data-testid="compare-message">
+    <div class="mb-4 border border-caution bg-caution-light px-4 py-3 text-sm text-caution-dark" role="alert" data-testid="compare-message">
       {{ msg }}
     </div>
   }

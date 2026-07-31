@@ -46,10 +46,10 @@
         </thead>
         <tbody>
           @for (c of crud.displayed(); track c.id) {
-            <tr class="border-t border-border">
+            <tr class="border-t border-rule">
               <td class="py-2">
                 @if (c.hex) {
-                  <span class="inline-block w-5 h-5 rounded border border-border align-middle" [style.background]="c.hex" [attr.aria-label]="c.hex"></span>
+                  <span class="inline-block w-5 h-5 rounded border border-rule align-middle" [style.background]="c.hex" [attr.aria-label]="c.hex"></span>
                 }
               </td>
               <td class="py-2">{{ c.name }}</td>

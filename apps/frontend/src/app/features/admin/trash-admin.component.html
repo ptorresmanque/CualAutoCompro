@@ -23,7 +23,7 @@
                 <thead class="text-left text-xs text-ink-muted"><tr><th class="py-2">Registro</th><th class="py-2">Eliminado</th><th class="py-2">Acción</th></tr></thead>
                 <tbody>
                   @for (row of group.rows; track row.id) {
-                    <tr class="border-t border-border">
+                    <tr class="border-t border-rule">
                       <td class="py-2">{{ displayName(row) }}</td>
                       <td class="py-2">{{ row.deletedAt | date: 'short' }}</td>
                       <td class="py-2"><button mat-stroked-button type="button" [disabled]="working() === group.key + ':' + row.id" (click)="restore(group, row)">Restaurar</button></td>
