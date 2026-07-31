@@ -27,7 +27,10 @@ const RULES = [
   {
     id: 'tailwind-palette',
     test: (l) => /\b(bg|text|border)-(red|blue|green|yellow|pink|purple|indigo|orange|teal|cyan|emerald|sky|amber|fuchsia|rose|slate|zinc|gray|neutral|stone)-\d{2,3}\b/.test(l) ? 'paleta Tailwind cruda; usar tokens (--ink, --engine, etc.)' : null,
-    allow: /\b(bg-(paper|paper-warm|paper-cool|engine-100|engine-50|caution-light|surface-muted))\b/,
+    // `bg-surface-muted` vivía acá y salió con la familia `surface` de
+    // `tailwind.config.js`: sin definición la clase no compila, así que no hay
+    // nada que permitir.
+    allow: /\b(bg-(paper|paper-warm|paper-cool|engine-100|engine-50|caution-light))\b/,
   },
   {
     id: 'raw-white',

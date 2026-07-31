@@ -2,7 +2,7 @@
   @if (urls().length > 0) {
     <ul data-testid="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
       @for (url of urls(); track trackByUrl($index, url); let i = $index) {
-        <li class="relative aspect-square rounded border border-rule overflow-hidden bg-surface">
+        <li class="relative aspect-square rounded border border-rule overflow-hidden bg-paper-cool">
           <img data-testid="gallery-thumb" [src]="previewUrl(url)" alt="" class="w-full h-full object-cover" />
           <button
             mat-icon-button
