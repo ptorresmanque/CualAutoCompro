@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth.guard';
 import { adminGuard } from './core/admin.guard';
+import { COMPARE_DEFAULT_META } from './core/page-meta.service';
 
 export const routes: Routes = [
   {
@@ -39,14 +40,7 @@ export const routes: Routes = [
       },
       {
         path: 'compare',
-        data: {
-          meta: {
-            title: 'Comparador de autos — cualautocompro',
-            description:
-              'Compara hasta 3 versiones lado a lado: precio, rendimiento, equipamiento y costo anual.',
-            noindex: true,
-          },
-        },
+        data: { meta: COMPARE_DEFAULT_META },
         loadComponent: () =>
           import('./features/compare/compare.component').then(
             (m) => m.CompareComponent,
@@ -54,14 +48,7 @@ export const routes: Routes = [
       },
       {
         path: 'c/:slug',
-        data: {
-          meta: {
-            title: 'Comparador de autos — cualautocompro',
-            description:
-              'Compara hasta 3 versiones lado a lado: precio, rendimiento, equipamiento y costo anual.',
-            noindex: true,
-          },
-        },
+        data: { meta: COMPARE_DEFAULT_META },
         loadComponent: () =>
           import('./features/compare/compare.component').then(
             (m) => m.CompareComponent,

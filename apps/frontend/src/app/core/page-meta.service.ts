@@ -40,6 +40,19 @@ export const SITE_DEFAULT_META: PageMeta = {
 };
 
 /**
+ * Default del comparador. Vive acá, y no dentro de `app.routes.ts`, porque lo
+ * usan los dos: la ruta lo declara y el propio componente vuelve a escribirlo
+ * cuando la comparación se queda con menos de dos autos. Con dos copias del
+ * texto, una se iba a quedar vieja.
+ */
+export const COMPARE_DEFAULT_META: PageMeta = {
+  title: 'Comparador de autos — cualautocompro',
+  description:
+    'Compara hasta 3 versiones lado a lado: precio, rendimiento, equipamiento y costo anual.',
+  noindex: true,
+};
+
+/**
  * Único punto que escribe `<title>`, `<meta>` y `<link rel="canonical">`.
  *
  * La app es una SPA sin SSR: los crawlers modernos ejecutan JS, así que estos

@@ -1,3 +1,4 @@
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
@@ -9,6 +10,8 @@ import {
   convertToParamMap,
   ParamMap,
   provideRouter,
+  Router,
+  RouterOutlet,
 } from '@angular/router';
 import { of } from 'rxjs';
 import { ModelComponent } from './model.component';
@@ -418,40 +421,24 @@ describe('ModelComponent — recall badge + dealers', () => {
   });
 });
 
+@Component({
+  selector: 'app-meta-root',
+  imports: [RouterOutlet],
+  template: '<router-outlet />',
+})
+class MetaRootComponent {}
+
 /**
- * Metadata para compartir. Lo que se demuestra acá es el **orden**: primero se
- * aplica el default declarado en la ruta (lo que hace `PageMetaService` en
- * `NavigationEnd`) y después, cuando ya hay modelo cargado, el `effect` de la
- * ficha lo sobreescribe. Si el orden se invirtiera, compartir una ficha
- * mandaría el título genérico del sitio.
+ * Metadata para compartir. Lo que se demuestra acá es el **orden**, y por eso
+ * todo pasa por el router de verdad: se registra la ruta de la ficha —que a
+ * propósito no declara `data.meta`, igual que en `app.routes.ts`—, se llama
+ * `applyRouteDefaults()` y se entra navegando. Primero llega el default
+ * genérico del sitio por el `NavigationEnd` real; recién cuando resuelve el
+ * HTTP el `effect()` de la ficha lo sobreescribe. Si el orden fuera el
+ * inverso, compartir una ficha mandaría el título genérico.
  */
 describe('ModelComponent — metadata para compartir', () => {
   let http: HttpTestingController;
-
-  beforeEach(() => {
-    TestBed.resetTestingModule();
-    for (const el of Array.from(
-      document.head.querySelectorAll('link[rel="canonical"], meta[name="description"]'),
-    )) {
-      el.remove();
-    }
-    const paramMap: ParamMap = convertToParamMap({
-      brandSlug: 'great-wall',
-      modelSlug: 'poer',
-    });
-    TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        provideRouter([]),
-        {
-          provide: ActivatedRoute,
-          useValue: { paramMap: of(paramMap), snapshot: { paramMap } },
-        },
-      ],
-    });
-    http = TestBed.inject(HttpTestingController);
-  });
 
   afterEach(() => {
     for (const req of http.match(() => true)) {
@@ -459,30 +446,64 @@ describe('ModelComponent — metadata para compartir', () => {
     }
   });
 
-  it('termina con el título del modelo y no con el default de la ruta', () => {
-    const pageMeta = TestBed.inject(PageMetaService);
+  it('el default de la ruta llega primero y el modelo cargado lo sobreescribe', async () => {
+    TestBed.resetTestingModule();
+    for (const el of Array.from(
+      document.head.querySelectorAll(
+        'link[rel="canonical"], meta[name="description"], meta[property="og:image"]',
+      ),
+    )) {
+      el.remove();
+    }
+    document.title = '(sin metadata)';
 
-    // Lo que deja `applyRouteDefaults()` al entrar a la ficha: ninguna ruta
-    // estática declara meta para /brand/:brandSlug/model/:modelSlug.
-    pageMeta.set(SITE_DEFAULT_META);
-    expect(document.title).toBe(SITE_DEFAULT_META.title);
-
-    const fixture = TestBed.createComponent(ModelComponent);
-    const cmp = fixture.componentInstance as ModelComponent;
-    (cmp as any).brand.set({ id: 'b1', name: 'Great Wall' });
-    (cmp as any).model.set({
-      id: 'm1',
-      name: 'Poer',
-      segment: 'PICKUP',
-      brandId: 'b1',
-      brandName: 'Great Wall',
-      brand: { name: 'Great Wall' },
-      galleryUrls: ['https://cdn.example.cl/poer-frontal.png'],
-      versions: [
-        { id: 'v1', name: 'Cabina doble 4x2', priceClp: 21990000, year: 2026 },
-        { id: 'v2', name: 'Cabina doble 4x4', priceClp: 24990000, year: 2026 },
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([
+          {
+            // Sin `data.meta`, igual que la ruta real: la metadata la pone el
+            // componente cuando llegan los datos.
+            path: 'brand/:brandSlug/model/:modelSlug',
+            component: ModelComponent,
+          },
+        ]),
       ],
     });
+    http = TestBed.inject(HttpTestingController);
+    TestBed.inject(PageMetaService).applyRouteDefaults();
+
+    const fixture = TestBed.createComponent(MetaRootComponent);
+    fixture.detectChanges();
+    await TestBed.inject(Router).navigateByUrl('/brand/great-wall/model/poer');
+    fixture.detectChanges();
+
+    // Ninguna ruta de la cadena declara meta, así que mientras carga se
+    // anuncia el default genérico del sitio.
+    expect(document.title).toBe(SITE_DEFAULT_META.title);
+
+    http
+      .expectOne((r) =>
+        r.url.includes('/api/v1/models/by-slug/great-wall/poer'),
+      )
+      .flush({
+        data: {
+          id: 'm1',
+          name: 'Poer',
+          segment: 'PICKUP',
+          brandId: 'b1',
+          brandName: 'Great Wall',
+          brand: { name: 'Great Wall' },
+          galleryUrls: ['https://cdn.example.cl/poer-frontal.png'],
+          versions: [
+            { id: 'v1', name: 'Cabina doble 4x2', priceClp: 21990000, year: 2026 },
+            { id: 'v2', name: 'Cabina doble 4x4', priceClp: 24990000, year: 2026 },
+          ],
+        },
+        error: null,
+      });
+    await new Promise((r) => setTimeout(r, 0));
     fixture.detectChanges();
 
     expect(document.title).toBe(

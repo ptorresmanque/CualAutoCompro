@@ -31,7 +31,10 @@ import { AuthService } from '../../core/auth.service';
 import { CompareStore } from '../../core/compare-store.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import { slugify } from '../../core/slug';
-import { PageMetaService } from '../../core/page-meta.service';
+import {
+  COMPARE_DEFAULT_META,
+  PageMetaService,
+} from '../../core/page-meta.service';
 import { VehicleCardInput } from '../../shared/ui/vehicle-card.component';
 import { versionFieldLabel } from '../../core/types/version-labels';
 import { fuelLabel, segmentLabel, transmissionLabel } from '../../core/types/catalog-labels';
@@ -510,9 +513,15 @@ export class CompareComponent {
     // porque depende de `versions()` y no de cómo se cargaron.
     effect(() => {
       const vs = this.versions();
-      // Con menos de dos autos no hay comparación que anunciar: se deja el
-      // título genérico que declara la ruta.
-      if (vs.length < 2) return;
+      // Con menos de dos autos no hay comparación que anunciar, y hay que
+      // *escribir* el default, no sólo abstenerse: `removeFromCompare()` saca
+      // una columna sin navegar, así que nadie más va a corregir la metadata.
+      // Sin esto, el <title> y los og:* seguirían prometiendo una comparación
+      // de dos autos que ya no está en pantalla.
+      if (vs.length < 2) {
+        this.pageMeta.set(COMPARE_DEFAULT_META);
+        return;
+      }
       const names = vs.map((v) => this.fullName(v));
       this.pageMeta.set({
         title: `${names.join(' vs ')} — comparación | cualautocompro`,

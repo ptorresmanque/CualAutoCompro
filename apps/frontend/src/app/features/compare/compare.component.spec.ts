@@ -1,18 +1,28 @@
 import { Component, signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
   provideHttpClientTesting,
   HttpTestingController,
 } from '@angular/common/http/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import {
+  ActivatedRoute,
+  convertToParamMap,
+  provideRouter,
+  Router,
+  RouterOutlet,
+} from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
+import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { CompareComponent } from './compare.component';
 import { CompareStore } from '../../core/compare-store.service';
 import { AuthService, type User } from '../../core/auth.service';
-import { PageMetaService } from '../../core/page-meta.service';
+import {
+  COMPARE_DEFAULT_META,
+  PageMetaService,
+} from '../../core/page-meta.service';
 
 class AuthServiceStub {
   currentUser = signal<User | null>(null);
@@ -1580,39 +1590,128 @@ describe('CompareComponent carrusel — estilo ficha', () => {
   });
 });
 
+@Component({
+  selector: 'app-meta-root',
+  imports: [RouterOutlet],
+  template: '<router-outlet />',
+})
+class MetaRootComponent {}
+
 /**
- * Metadata para compartir. El comparador es la pantalla que más se comparte
- * por link, así que el título tiene que decir qué se está comparando — y tiene
- * que funcionar igual entrando por /compare que por /c/:slug, que carga los
- * datos en dos requests.
+ * Metadata para compartir.
+ *
+ * Todo acá pasa por el router de verdad: las rutas se registran con su
+ * `data.meta`, se llama `applyRouteDefaults()` y se entra navegando, así que el
+ * default llega por el `NavigationEnd` real. Si el test escribiera el default a
+ * mano, pasaría igual con `applyRouteDefaults()` borrado, con la suscripción
+ * desconectada o con el orden invertido — que es justamente lo que hay que
+ * demostrar.
  */
 describe('CompareComponent — metadata para compartir', () => {
-  const ROUTE_DEFAULT = {
-    title: 'Comparador de autos — cualautocompro',
-    description:
-      'Compara hasta 3 versiones lado a lado: precio, rendimiento, equipamiento y costo anual.',
-    noindex: true,
-  };
-
   let http: HttpTestingController;
 
-  function configure(route: unknown) {
+  interface Car {
+    id: string;
+    version: string;
+    brand: string;
+    model: string;
+  }
+
+  function title(): string {
+    return document.title;
+  }
+
+  function metaContent(selector: string): string | null {
+    return (
+      document.head
+        .querySelector<HTMLMetaElement>(selector)
+        ?.getAttribute('content') ?? null
+    );
+  }
+
+  async function mount(url: string) {
     TestBed.resetTestingModule();
     localStorage.clear();
+    for (const el of Array.from(
+      document.head.querySelectorAll(
+        'link[rel="canonical"], meta[name="description"], meta[name="robots"], meta[property="og:title"]',
+      ),
+    )) {
+      el.remove();
+    }
+    // Marca para poder afirmar que el título lo escribió la navegación y no
+    // quedó de un test anterior.
+    document.title = '(sin metadata)';
+
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([]),
         provideNoopAnimations(),
+        provideRouter([
+          {
+            path: 'compare',
+            component: CompareComponent,
+            data: { meta: COMPARE_DEFAULT_META },
+          },
+          {
+            path: 'c/:slug',
+            component: CompareComponent,
+            data: { meta: COMPARE_DEFAULT_META },
+          },
+        ]),
         CompareStore,
-        { provide: ActivatedRoute, useValue: route },
       ],
     });
     http = TestBed.inject(HttpTestingController);
     TestBed.inject(AuthService).currentUser.set(null);
-    // Lo que deja `applyRouteDefaults()` al entrar a la ruta.
-    TestBed.inject(PageMetaService).set(ROUTE_DEFAULT);
+    TestBed.inject(PageMetaService).applyRouteDefaults();
+
+    const fixture = TestBed.createComponent(MetaRootComponent);
+    fixture.detectChanges();
+    await TestBed.inject(Router).navigateByUrl(url);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function compareCmp(
+    fixture: ComponentFixture<MetaRootComponent>,
+  ): CompareComponent {
+    return fixture.debugElement.query(By.directive(CompareComponent))
+      .componentInstance as CompareComponent;
+  }
+
+  /** Responde los dos requests de /c/:slug: el GET del slug y el POST full. */
+  async function flushSlugLoad(slug: string, cars: Car[]): Promise<void> {
+    http
+      .expectOne((r) => r.url.includes(`/api/v1/comparisons/${slug}`))
+      .flush({
+        data: {
+          id: `cmp-${slug}`,
+          slug,
+          userId: 'u1',
+          createdAt: '2026-07-01T00:00:00.000Z',
+          items: cars.map((c, i) => ({
+            versionId: c.id,
+            position: i,
+            version: { id: c.id, name: c.version },
+          })),
+        },
+      });
+    await new Promise((r) => setTimeout(r, 0));
+    http
+      .expectOne((r) => r.method === 'POST' && r.url.includes('/api/v1/compare'))
+      .flush({
+        data: {
+          versions: cars.map((c) => ({
+            id: c.id,
+            name: c.version,
+            model: { name: c.model, brand: { name: c.brand } },
+          })),
+          diffHighlights: {},
+        },
+      });
+    await new Promise((r) => setTimeout(r, 0));
   }
 
   afterEach(() => {
@@ -1620,91 +1719,111 @@ describe('CompareComponent — metadata para compartir', () => {
     localStorage.clear();
   });
 
-  it('entrando por /c/:slug termina con el título de los autos comparados', async () => {
-    configure(routeStub({}, { slug: 'abc123' }));
-    const fixture = TestBed.createComponent(CompareComponent);
-    const ready = fixture.componentInstance.ready;
+  it('entrando por /c/:slug el default llega por NavigationEnd y el componente lo sobreescribe', async () => {
+    const fixture = await mount('/c/abc123');
 
-    expect(document.title).toBe(ROUTE_DEFAULT.title);
+    // Estado intermedio: navegó, el meta de la ruta ya se aplicó, el HTTP
+    // todavía no resolvió. Si `applyRouteDefaults()` no estuviera enganchado,
+    // acá seguiría diciendo "(sin metadata)".
+    expect(title()).toBe(COMPARE_DEFAULT_META.title);
 
-    const bySlug = http.expectOne((r) => r.url.includes('/comparisons/abc123'));
-    bySlug.flush({
-      data: {
-        id: 'c1',
-        slug: 'abc123',
-        userId: 'u1',
-        createdAt: '2026-07-01T00:00:00.000Z',
-        items: [
-          { versionId: 'a', position: 0, version: { id: 'a', name: 'XLI' } },
-          { versionId: 'b', position: 1, version: { id: 'b', name: 'EX' } },
-        ],
-      },
-    });
-    await new Promise((r) => setTimeout(r, 0));
-    const full = http.expectOne(
-      (r) => r.method === 'POST' && r.url.includes('/api/v1/compare'),
-    );
-    full.flush({
-      data: {
-        versions: [
-          {
-            id: 'a',
-            name: 'XLI',
-            model: { name: 'Corolla', brand: { name: 'Toyota' } },
-          },
-          {
-            id: 'b',
-            name: 'EX',
-            model: { name: 'Rio', brand: { name: 'Kia' } },
-          },
-        ],
-        diffHighlights: {},
-      },
-    });
-    await ready;
+    await flushSlugLoad('abc123', [
+      { id: 'a', version: 'XLI', brand: 'Toyota', model: 'Corolla' },
+      { id: 'b', version: 'EX', brand: 'Kia', model: 'Rio' },
+    ]);
     fixture.detectChanges();
 
-    expect(document.title).toBe(
+    expect(title()).toBe(
       'Toyota Corolla XLI vs Kia Rio EX — comparación | cualautocompro',
     );
-    expect(
-      document.head
-        .querySelector('meta[name="description"]')
-        ?.getAttribute('content'),
-    ).toBe(
+    expect(metaContent('meta[name="description"]')).toBe(
       'Comparación lado a lado de Toyota Corolla XLI vs Kia Rio EX: precio, rendimiento, equipamiento y costo anual estimado.',
     );
+    expect(metaContent('meta[property="og:title"]')).toBe(
+      'Toyota Corolla XLI vs Kia Rio EX — comparación | cualautocompro',
+    );
     // Las comparaciones se comparten por link, pero no se indexan.
-    expect(
-      document.head
-        .querySelector('meta[name="robots"]')
-        ?.getAttribute('content'),
-    ).toBe('noindex, nofollow');
+    expect(metaContent('meta[name="robots"]')).toBe('noindex, nofollow');
   });
 
-  it('con una sola versión deja el título por defecto de la ruta', async () => {
-    configure(routeStub({ ids: 'a' }, {}));
-    const fixture = TestBed.createComponent(CompareComponent);
-    const ready = fixture.componentInstance.ready;
-
-    const req = http.expectOne(
-      (r) => r.method === 'GET' && r.url.includes('/api/v1/compare'),
+  it('una segunda navegación con el componente montado no deja el título del auto anterior', async () => {
+    const fixture = await mount('/c/abc123');
+    await flushSlugLoad('abc123', [
+      { id: 'a', version: 'XLI', brand: 'Toyota', model: 'Corolla' },
+      { id: 'b', version: 'EX', brand: 'Kia', model: 'Rio' },
+    ]);
+    fixture.detectChanges();
+    expect(title()).toBe(
+      'Toyota Corolla XLI vs Kia Rio EX — comparación | cualautocompro',
     );
-    req.flush({
-      data: {
-        versions: [
-          {
-            id: 'a',
-            name: 'XLI',
-            model: { name: 'Corolla', brand: { name: 'Toyota' } },
-          },
-        ],
-        diffHighlights: {},
-      },
-    });
-    await ready;
+
+    // /c/abc123 -> /c/def456: misma configuración de ruta, así que el router
+    // reusa el componente. El NavigationEnd llega DESPUÉS de que el effect ya
+    // escribió el título dinámico.
+    await TestBed.inject(Router).navigateByUrl('/c/def456');
     fixture.detectChanges();
 
-    expect(document.title).toBe(ROUTE_DEFAULT.title);
+    // Mientras carga la comparación nueva se anuncia el genérico, no el par
+    // de autos viejo.
+    expect(title()).toBe(COMPARE_DEFAULT_META.title);
+
+    await flushSlugLoad('def456', [
+      { id: 'c', version: 'GLX', brand: 'Suzuki', model: 'Swift' },
+      { id: 'd', version: 'Dynamic', brand: 'Peugeot', model: '208' },
+    ]);
+    fixture.detectChanges();
+
+    expect(title()).toBe(
+      'Suzuki Swift GLX vs Peugeot 208 Dynamic — comparación | cualautocompro',
+    );
+  });
+
+  it('quitar un auto sin navegar devuelve el título al default del comparador', async () => {
+    const fixture = await mount('/c/abc123');
+    await flushSlugLoad('abc123', [
+      { id: 'a', version: 'XLI', brand: 'Toyota', model: 'Corolla' },
+      { id: 'b', version: 'EX', brand: 'Kia', model: 'Rio' },
+    ]);
+    fixture.detectChanges();
+    expect(title()).toBe(
+      'Toyota Corolla XLI vs Kia Rio EX — comparación | cualautocompro',
+    );
+
+    // El botón "quitar" de cada columna: muta las versiones y no navega, así
+    // que nadie más va a corregir la metadata.
+    compareCmp(fixture).removeFromCompare('b');
+    fixture.detectChanges();
+
+    expect(title()).toBe(COMPARE_DEFAULT_META.title);
+    expect(metaContent('meta[property="og:title"]')).toBe(
+      COMPARE_DEFAULT_META.title,
+    );
+    expect(metaContent('meta[name="description"]')).toBe(
+      COMPARE_DEFAULT_META.description,
+    );
+    expect(metaContent('meta[name="robots"]')).toBe('noindex, nofollow');
+  });
+
+  it('con una sola versión cargada se queda en el default del comparador', async () => {
+    const fixture = await mount('/compare?ids=a');
+
+    http
+      .expectOne((r) => r.method === 'GET' && r.url.includes('/api/v1/compare'))
+      .flush({
+        data: {
+          versions: [
+            {
+              id: 'a',
+              name: 'XLI',
+              model: { name: 'Corolla', brand: { name: 'Toyota' } },
+            },
+          ],
+          diffHighlights: {},
+        },
+      });
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    expect(title()).toBe(COMPARE_DEFAULT_META.title);
   });
 });
