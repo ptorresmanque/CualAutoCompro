@@ -19,7 +19,7 @@
   flex-direction: column;
   overflow: hidden;
   background: var(--mat-sys-surface);
-  border-radius: 0.75rem;
+  border-radius: 4px;
   border: 1px solid var(--mat-sys-outline-variant);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
 }
@@ -161,7 +161,7 @@
   gap: 0.25rem;
   padding: 0.5rem;
   background: var(--mat-sys-surface-container);
-  border-radius: 0.5rem;
+  border-radius: 4px;
   border: 1px solid var(--mat-sys-outline-variant);
   max-height: calc(100vh - 12rem);
   overflow-y: auto;
@@ -253,7 +253,7 @@
 }
 
 .dialog-error {
-  border-radius: 0.5rem;
+  border-radius: 4px;
   border: 1px solid var(--caution);
   background: var(--caution-light);
   padding: 0.5rem 0.75rem;
@@ -272,7 +272,7 @@
   height: 24rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace, monospace;
   font-size: 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: 4px;
   border: 1px solid var(--mat-sys-outline-variant);
   padding: 0.5rem;
   background: var(--mat-sys-surface);

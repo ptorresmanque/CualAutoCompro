@@ -132,8 +132,11 @@ en estado normal (no en hover), hay que arreglarlo.
 
 ## 3. Lo que NO se hace
 
-- ❌ `rounded-xl`, `rounded-2xl`, `rounded-3xl`, `rounded-full` (radio es 2px o 0)
-- ❌ `border-radius` en CSS crudo fuera de `0`, `2px` o `4px`.
+**El radio del sistema es `0`, `2px` o `4px`** (o sus equivalentes en `rem`:
+`0.125rem` y `0.25rem`). No hay un cuarto valor.
+
+- ❌ `rounded-xl`, `rounded-2xl`, `rounded-3xl`, `rounded-full`
+- ❌ `border-radius` en CSS crudo con cualquier otro valor.
   **Excepción:** `50%` y `9999px` están permitidos. Son formas —círculo y
   píldora— dictadas por el control, no decisiones de branding: los usan los
   thumbs del range slider y un chip del admin. No la borres por "limpieza".
@@ -159,7 +162,17 @@ en estado normal (no en hover), hay que arreglarlo.
 - Datos tabulares: `<dl class="ficha-data">` con `<div class="ficha-row"><dt/><dd/></div>`.
 - Botones primarios: `.ficha-compare` con `<span>Label</span>` adentro.
 - Botones de peligro: `.settings-btn-danger` (outline engine, sin relleno rojo).
-- Mensajes: contenedor con `border border-engine bg-engine-50 ...` + `stamp-label` al inicio.
+- Mensajes: contenedor + `stamp-label` al inicio. **La paleta depende de qué
+  mensaje es**, y el linter la hace cumplir (regla `semantic-alert`):
+  - **Informativo** (contexto, no pasó nada malo):
+    `border border-engine bg-engine-50 px-4 py-3 text-sm text-engine-dark`,
+    **sin** `role="alert"`. Ej.: el banner "estás viendo una comparación
+    guardada" en el comparador.
+  - **Error** (falló algo, el usuario tiene que actuar):
+    `border border-danger bg-danger-light px-4 py-3 text-sm text-danger-dark`
+    **con** `role="alert"`. Un error pintado con la paleta informativa es
+    indistinguible del banner de arriba, así que `check:design` lo rechaza.
+  - **Aviso / nota legal**: el trío `caution-*`.
 
 ## 5. Validar antes de commitear
 
@@ -179,9 +192,8 @@ explicando por qué.
 
 Reglas línea a línea que corre hoy: `rounded-soft`, `shadow-soft`,
 `tailwind-palette`, `raw-white`, `raw-radius`, `mat-fab-primary`,
-`mat-card-layout`. `raw-radius` solo evalúa los valores en `px` y `%`; los
-`rem` quedan fuera hasta que se migren los 7 radios preexistentes del admin
-(ver el comentario de la regla).
+`mat-card-layout`. `raw-radius` evalúa `px`, `%` y `rem`, y entiende el
+shorthand (`0 0 2px 2px`) y los `!important`.
 
 Además de las reglas línea a línea, el linter corre tres chequeos que miran
 más que una línea:

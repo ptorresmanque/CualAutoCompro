@@ -13,12 +13,12 @@ const SRC_ROOT = path.join(FRONTEND_ROOT, 'src');
 const EXTS = new Set(['.html', '.ts', '.css']);
 
 /** Valores de `border-radius` que el sistema acepta. Ver la regla `raw-radius`. */
-const RADIUS_OK = /^(0|0px|2px|4px|50%|9999px)$/;
+const RADIUS_OK = /^(0|0px|2px|4px|0\.125rem|0\.25rem|50%|9999px)$/;
 
 const RULES = [
   {
     id: 'rounded-soft',
-    test: (l) => /\brounded-(full|3xl|2xl|xl)\b/.test(l) ? 'rounded-* no permitido (radio es 0 o 2px)' : null,
+    test: (l) => /\brounded-(full|3xl|2xl|xl)\b/.test(l) ? 'rounded-* no permitido (radio es 0, 2px o 4px)' : null,
   },
   {
     id: 'shadow-soft',
@@ -49,20 +49,17 @@ const RULES = [
     // del admin (features/admin/admin-edit-dialog.component.css:42). Si borrás
     // esta excepción por "limpieza", esos tres controles se vuelven cuadrados.
     //
-    // Limitación conocida y deliberada: solo se evalúan los valores en `px`
-    // y `%`. Los valores en `rem` se saltean porque el panel de admin arrastra
-    // 7 radios preexistentes fuera del sistema (0.375rem, 0.5rem ×4,
-    // 0.75rem ×2) cuya migración quedó fuera del alcance de esta tarea. Si
-    // esos 7 se migran, sacá `hasRelativeUnit` y agregá `0.125rem` (2px) y
-    // `0.25rem` (4px) a RADIUS_OK.
+    // Los valores en `rem` también se evalúan: `0.125rem` (2px) y `0.25rem`
+    // (4px) son las únicas formas relativas del sistema. Antes quedaban fuera
+    // del chequeo porque el repo arrastraba 7 radios preexistentes —seis en el
+    // panel de admin y uno en los botones de login social— que ya se migraron
+    // a `4px`; el hueco está cerrado.
     test: (l) => {
       const m = /border-radius\s*:\s*([^;{}]+)/.exec(l);
       if (!m) return null;
       const value = m[1].replace(/!important/g, '').trim();
       const parts = value.split(/[\s/]+/).filter(Boolean);
       if (parts.length === 0) return null;
-      const hasRelativeUnit = parts.some((p) => /\d(rem|em|ex|ch|vh|vw)$/.test(p));
-      if (hasRelativeUnit) return null;
       return parts.every((p) => RADIUS_OK.test(p))
         ? null
         : 'border-radius fuera del sistema (0, 2px o 4px; 50% y 9999px para formas circulares)';
@@ -124,8 +121,9 @@ const report = (id, loc, msg, detail) => {
 // nada y pasaría la verificación sin haber chequeado nada.
 //
 // Por eso: por cada `role="alert"` se recorta la etiqueta que lo contiene
-// (desde el `<` anterior hasta el `>` siguiente) y se evalúa el `class` de esa
-// etiqueta. Se reporta el archivo y la línea del `role`.
+// (ver `sliceTagAround`, que ignora los `<` y `>` que viven adentro de un
+// atributo) y se evalúa el `class` de esa etiqueta. Se reporta el archivo y la
+// línea del `role`.
 // ---------------------------------------------------------------------------
 
 /** Paleta informativa: lo que una caja con `role="alert"` no puede usar. */
@@ -138,18 +136,66 @@ const INFO_PALETTE = /\b(bg-engine-\d{2,3}|border-engine(?:-\d{2,3})?|text-engin
  */
 const SEMANTIC_PALETTE = /\b(bg|border|text)-(danger|caution|warn|success)(-[a-z]+)?\b/;
 
+/** Ninguna etiqueta del repo se acerca a esto; acota el escaneo hacia adelante. */
+const TAG_WINDOW = 8000;
+
+/**
+ * Reemplaza por espacios el contenido de los valores entrecomillados, dejando
+ * las comillas y el largo intactos (los índices siguen valiendo sobre el texto
+ * original).
+ *
+ * Existe porque `<` y `>` viven adentro de los atributos todo el tiempo en
+ * Angular — `[class.mb-4]="items.length > 0"`, `title="antes > despues"` — y
+ * confundirlos con el cierre de la etiqueta hacía que `semantic-alert` se
+ * apagara **en silencio**: recortaba mal la etiqueta, no encontraba el
+ * `class`, y no reportaba nada. Un linter que falla callado es peor que no
+ * tenerlo.
+ */
+function maskAttributeValues(s) {
+  let out = '';
+  let quote = null;
+  for (const ch of s) {
+    if (quote) {
+      out += ch === quote ? ch : ' ';
+      if (ch === quote) quote = null;
+    } else {
+      if (ch === '"' || ch === "'") quote = ch;
+      out += ch;
+    }
+  }
+  return out;
+}
+
+/**
+ * Recorta la etiqueta que contiene la posición `at`. Va probando los `<`
+ * hacia atrás: el candidato vale si abre una etiqueta (letra después del `<`)
+ * y si, ignorando lo que está entrecomillado, no hay un `>` entre él y `at`.
+ * Así también se descarta el `<` que vive adentro de un atributo
+ * (`[attr.x]="a < b"`), que antes hacía perder la etiqueta entera.
+ */
+function sliceTagAround(text, at) {
+  let open = text.lastIndexOf('<', at);
+  for (let tries = 0; open !== -1 && at - open <= TAG_WINDOW && tries < 16; tries += 1) {
+    if (/[A-Za-z]/.test(text[open + 1] ?? '')) {
+      const raw = text.slice(open, Math.min(text.length, at + TAG_WINDOW));
+      const masked = maskAttributeValues(raw);
+      const rel = at - open;
+      if (!masked.slice(0, rel).includes('>')) {
+        const close = masked.indexOf('>', rel);
+        if (close !== -1) return raw.slice(0, close + 1);
+      }
+    }
+    open = text.lastIndexOf('<', open - 1);
+  }
+  return null;
+}
+
 function checkSemanticAlert(relFile, text) {
   for (const m of text.matchAll(/role\s*=\s*["']alert["']/g)) {
     const at = m.index;
-    const open = text.lastIndexOf('<', at);
-    if (open === -1) continue;
-    // `a < b` en un .ts, o un `<` que no abre la etiqueta del role.
-    if (!/[A-Za-z]/.test(text[open + 1] ?? '')) continue;
-    if (text.slice(open, at).includes('>')) continue;
-    const close = text.indexOf('>', at);
-    if (close === -1) continue;
+    const tag = sliceTagAround(text, at);
+    if (!tag) continue;
 
-    const tag = text.slice(open, close + 1);
     const cls = [...tag.matchAll(/\bclass\s*=\s*"([^"]*)"/g)].map((c) => c[1]).join(' ');
     if (!INFO_PALETTE.test(cls)) continue;
     if (SEMANTIC_PALETTE.test(cls)) continue;

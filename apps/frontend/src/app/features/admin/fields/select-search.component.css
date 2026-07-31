@@ -26,7 +26,7 @@
   overflow-y: auto;
   background: var(--mat-sys-surface);
   border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 0.5rem;
+  border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
