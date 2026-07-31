@@ -13,7 +13,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Gate: los tests corren ANTES de tocar el server. `test.yml` se deja llamar
+  # con `workflow_call` justamente para esto — `needs:` solo cruza jobs del
+  # mismo workflow, así que llamarlo es la única forma de que el deploy dependa
+  # de verdad de los tests.
+  tests:
+    uses: ./.github/workflows/test.yml
+
   deploy:
+    needs: tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

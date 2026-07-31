@@ -1,0 +1,121 @@
+name: Tests
+
+# Hasta acá `.github/workflows/` solo tenía deploys: ningún test corría en CI y
+# no hay hooks de git. Los 447 tests de frontend, el linter del design system y
+# los 320 del backend eran opcionales en la práctica — corrían si alguien se
+# acordaba.
+#
+# Este workflow es la puerta. Corre en cada pull request y además se deja
+# **llamar** por los dos workflows de deploy (`workflow_call`), que ponen
+# `needs:` sobre su job de deploy.
+#
+# Por qué `workflow_call` y no `workflow_run`: en GitHub Actions `needs:` solo
+# cruza jobs del mismo workflow, así que un workflow no puede "depender" de otro
+# workflow suelto. `workflow_run` existe, pero dispara **después** de que el otro
+# terminó: serviría para reaccionar a los tests, no para bloquear el deploy. Con
+# `workflow_call` los jobs de acá pasan a ser jobs del workflow de deploy y
+# `needs:` funciona de verdad.
+
+on:
+  pull_request:
+  workflow_call:
+
+concurrency:
+  # `github.workflow` es el workflow **llamador**: así el gate de "Deploy
+  # Backend" no cancela el de "Deploy Frontend" cuando los dos salen del mismo
+  # push a main. Y solo cancelamos en PR, donde la corrida vieja no le importa a
+  # nadie; en un deploy cancelar el gate lo haría fallar.
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  frontend:
+    name: Frontend — design system + unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Antes que los tests: es el chequeo más barato y el que más seguido se
+      # rompe (una clase `rounded-xl` pegada de otro proyecto).
+      - name: Design system linter
+        run: npm -w apps/frontend run check:design
+
+      # `ng test` usa el builder @angular/build:unit-test sobre vitest + jsdom.
+      # No necesita navegador ni descargar binarios.
+      - name: Unit tests
+        run: npm -w apps/frontend run test
+
+  backend:
+    name: Backend — unit + integración contra MariaDB
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # Los tests del backend pegan contra una base real: `__tests__/helpers/db.ts`
+    # corre `prisma migrate deploy` y `resetTestDb()` limpia tabla por tabla. No
+    # hay mocks de Prisma. Todo lo que hace falta está en el repo (las 15
+    # migraciones + el schema), así que un service container alcanza: no hay
+    # secrets, ni seed, ni dump externo.
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: cualautocompro_test
+          MARIADB_USER: cualauto
+          MARIADB_PASSWORD: cualauto
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      # `__tests__/setup.ts` carga `apps/backend/.env.test` con `override:
+      # false` — el archivo está gitignoreado y acá no existe, así que gana esta
+      # variable. Los demás valores (JWT_SECRET, WEB_ORIGIN, PORT) los pone el
+      # propio setup.ts con defaults de test.
+      #
+      # Los parámetros del pool no son decorativos: replican el contrato que
+      # `__tests__/env-connection-limit.spec.ts` le exige a los `.env.example`.
+      NODE_ENV: test
+      DATABASE_URL: mysql://cualauto:cualauto@127.0.0.1:3306/cualautocompro_test?charset=utf8mb4&connection_limit=5&connect_timeout=10&socket_timeout=30&pool_timeout=10&max_idle_connection_lifetime=300
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # El `pretest` del workspace ya corre `prisma generate`; las migraciones
+      # las aplica `setupTestPrisma()` la primera vez que un spec toca la base.
+      - name: Unit + integration tests
+        run: npm -w apps/backend run test
+
+# Playwright queda FUERA del gate a propósito.
+#
+# La suite e2e (`npm -w apps/frontend run test:e2e`) arranca hoy con 6 fallas
+# preexistentes que dependen del estado de la base local, no del código. Meterla
+# en este workflow bloquearía todos los merges desde el primer día, y un gate
+# que falla siempre se termina ignorando o desactivando — que es exactamente el
+# problema que este archivo viene a resolver.
+#
+# Siguiente paso: arreglar esas 6, hacer que el spec levante sus propios datos
+# (o corra contra un backend sembrado en CI, que necesita el mismo service
+# container de acá más `npm -w apps/backend run db:seed`), y recién ahí sumar un
+# tercer job `e2e` a este mismo workflow.
