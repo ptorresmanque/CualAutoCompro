@@ -5,6 +5,7 @@ import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { ShellComponent } from './shell.component';
 import { AuthService, type User } from '../core/auth.service';
 import { CompareStore } from '../core/compare-store.service';
+import { PopularityService } from '../core/popularity.service';
 import { appConfig } from '../app.config';
 
 class AuthServiceStub {
@@ -50,16 +51,11 @@ describe('ShellComponent — skip link', () => {
     expect(focusables[0]).toBe(skip);
   });
 
-  it('no oculta el skip link con display/visibility (lo sacaría del tab order)', () => {
-    const host = createShell().nativeElement as HTMLElement;
-    const skip = host.querySelector<HTMLElement>('.skip-link')!;
-
-    // `styles.css` no se carga en el TestBed, así que el chequeo va sobre los
-    // estilos inline del elemento: nadie debe apagarlo desde el template.
-    expect(skip.style.display).not.toBe('none');
-    expect(skip.style.visibility).not.toBe('hidden');
-    expect(skip.hasAttribute('hidden')).toBe(false);
-  });
+  // Que el skip link siga siendo enfocable (o sea, que nadie lo esconda con
+  // `display: none` ni `visibility: hidden`) NO se puede afirmar acá: el
+  // TestBed no carga `styles.css`, así que `getComputedStyle` devuelve siempre
+  // los defaults y la aserción pasaría hiciera lo que hiciera el CSS. Ese
+  // requisito vive en `e2e/tests/skip-link.spec.ts`, donde el CSS sí se aplica.
 
   it('el <main> tiene id="main" y tabindex="-1" para recibir el foco', () => {
     const host = createShell().nativeElement as HTMLElement;
@@ -106,15 +102,37 @@ function routerScrollerToken(): unknown {
 
 describe('appConfig — restauración de scroll', () => {
   it('configura el router con scrollPositionRestoration y anchorScrolling en "enabled"', () => {
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({ providers: [...appConfig.providers] });
+    // `appConfig` es la config de arranque real: instanciar su injector corre
+    // los `provideAppInitializer`, y con `provideHttpClient(withFetch())` de
+    // verdad eso significa GET /auth/me y GET /popular/models contra el backend
+    // local, con promesas vivas después del teardown. Los dos servicios se
+    // tragan el error, así que nunca se ponía rojo. El spy deja el hecho a la
+    // vista en vez de confiar en que los stubs alcanzan.
+    const fetchSpy = vi.fn();
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = fetchSpy as unknown as typeof globalThis.fetch;
 
-    const scroller = TestBed.inject(
-      routerScrollerToken() as never,
-    ) as unknown as { options: { scrollPositionRestoration?: string; anchorScrolling?: string } };
+    try {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          ...appConfig.providers,
+          // Van después para ganarle al `providedIn: 'root'` de cada servicio.
+          { provide: AuthService, useValue: { bootstrap: async () => {} } },
+          { provide: PopularityService, useValue: { refresh: async () => {} } },
+        ],
+      });
 
-    expect(scroller).toBeTruthy();
-    expect(scroller.options.scrollPositionRestoration).toBe('enabled');
-    expect(scroller.options.anchorScrolling).toBe('enabled');
+      const scroller = TestBed.inject(routerScrollerToken() as never) as unknown as {
+        options: { scrollPositionRestoration?: string; anchorScrolling?: string };
+      };
+
+      expect(scroller).toBeTruthy();
+      expect(scroller.options.scrollPositionRestoration).toBe('enabled');
+      expect(scroller.options.anchorScrolling).toBe('enabled');
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });
