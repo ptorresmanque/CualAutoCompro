@@ -1,7 +1,10 @@
 # robots.txt de cualautocompro
 #
-# Esta lista tiene que decir lo mismo que el `noindex` declarado por ruta en
-# src/app/app.routes.ts. Si agregas una ruta privada allá, agregala acá.
+# Esta lista tiene que decir lo mismo que el `noindex` de cada ruta. Ese
+# `noindex` vive en dos archivos: la mayoría se declara ruta por ruta en
+# src/app/app.routes.ts, pero el del comparador (/compare y /c/:slug) sale de
+# COMPARE_DEFAULT_META, en src/app/core/page-meta.service.ts. Si agregas una
+# ruta privada, mirá los dos y agregala acá.
 
 User-agent: *
 Allow: /
@@ -15,11 +18,23 @@ Disallow: /account
 # Favoritos: dependen de la sesión, no tienen sentido para un buscador.
 Disallow: /favoritos
 
-# El comparador y los enlaces de comparaciones guardadas. Los /c/ se comparten
-# a propósito (por WhatsApp, por ejemplo), pero no se indexan: el texto de
-# privacidad del sitio le promete al usuario que no aparecen en buscadores.
+# El comparador vacío: una pantalla transitoria, no se comparte y el sitio no
+# le promete nada al usuario sobre ella. Por eso acá sí bloqueamos el rastreo.
 Disallow: /compare
-Disallow: /c/
+
+# Los enlaces de comparaciones guardadas (/c/:slug) NO están bloqueados, y esa
+# ausencia es deliberada: no la "normalices" con la regla de arriba.
+#
+# `Disallow` prohíbe rastrear, no indexar. Si bloqueáramos /c/, el crawler
+# nunca descargaría la página, nunca ejecutaría el JS y nunca leería el
+# `<meta name="robots" content="noindex">` que ese JS inyecta. Bastaría con que
+# alguien pegara un enlace en un foro rastreable —y el producto justamente
+# empuja a compartirlos— para que Google indexara la URL desnuda, sin snippet.
+# Bloquear lograba lo contrario de lo que buscábamos.
+#
+# Dejando pasar al crawler, este descarga la página, lee el `noindex` y la
+# desindexa de verdad. El noindex sale de COMPARE_DEFAULT_META, en
+# src/app/core/page-meta.service.ts.
 
 # Autenticación.
 Disallow: /login

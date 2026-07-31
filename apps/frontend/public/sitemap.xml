@@ -6,9 +6,14 @@
   propósito. Son dinámicas y listarlas exige consultar el catálogo en tiempo de
   build, que es trabajo de otra fase. Su ausencia es deliberada, no un olvido.
 
-  Las rutas privadas (/admin, /account, /favoritos, /compare, /c/, /login,
-  /register) quedan fuera porque están bloqueadas en robots.txt y marcadas
-  noindex en src/app/app.routes.ts.
+  Las rutas privadas también quedan fuera. Su noindex se declara en dos
+  archivos: ruta por ruta en src/app/app.routes.ts (/admin, /account,
+  /favoritos, /login, /register), y para el comparador (/compare y /c/:slug)
+  en COMPARE_DEFAULT_META, dentro de src/app/core/page-meta.service.ts.
+
+  robots.txt bloquea el rastreo de casi todas ellas, pero a propósito NO el de
+  /c/: ahí el crawler tiene que poder entrar para leer el noindex que inyecta
+  el JS. El detalle está explicado en robots.txt.
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
