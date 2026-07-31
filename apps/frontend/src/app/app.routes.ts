@@ -1,7 +1,10 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth.guard';
 import { adminGuard } from './core/admin.guard';
-import { COMPARE_DEFAULT_META } from './core/page-meta.service';
+import {
+  COMPARE_DEFAULT_META,
+  SITE_DEFAULT_META,
+} from './core/page-meta.service';
 
 export const routes: Routes = [
   {
@@ -12,13 +15,12 @@ export const routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        data: {
-          meta: {
-            title: 'cualautocompro — compara autos nuevos en Chile',
-            description:
-              'Explora el catálogo de autos nuevos en Chile, filtra por lo que necesitas y compara modelos de distintas marcas antes de decidir.',
-          },
-        },
+        // El landing y el default del sitio son la misma página: el default se
+        // aplica cuando ninguna ruta declara `data.meta`, y esa portada es la
+        // que describe. Referenciarlo —en vez de copiar las dos cadenas— evita
+        // que editar el título del landing haga divergir el default en silencio.
+        // Mismo patrón que `COMPARE_DEFAULT_META`.
+        data: { meta: SITE_DEFAULT_META },
         loadComponent: () =>
           import('./features/landing/landing.component').then(
             (m) => m.LandingComponent,

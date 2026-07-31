@@ -90,7 +90,7 @@ Definidos en `src/styles.css`. Reusá; no reinventes.
 | `.compare-save-bar/.compare-save-input/.compare-save-btn` | Barra "Guardar" |
 | `.settings-form/.settings-input/.settings-message/.settings-btn-danger` | Formularios |
 | `.ficha--static`  | Variante sin hover (formularios, settings)    |
-| `.ficha--danger`  | Variante con paleta engine (zonas peligrosas)  |
+| `.ficha--danger`  | Variante con paleta danger (zonas peligrosas)  |
 
 ## 3. Jerarquía de color de los CTAs
 
@@ -161,7 +161,11 @@ en estado normal (no en hover), hay que arreglarlo.
 - Layout principal dentro de `mx-auto max-w-7xl px-4 md:px-8`.
 - Datos tabulares: `<dl class="ficha-data">` con `<div class="ficha-row"><dt/><dd/></div>`.
 - Botones primarios: `.ficha-compare` con `<span>Label</span>` adentro.
-- Botones de peligro: `.settings-btn-danger` (outline engine, sin relleno rojo).
+- Botones de peligro: `.settings-btn-danger` (outline `danger`, sin relleno).
+  Es outline y no relleno rojo porque no es la acción principal de la pantalla,
+  pero el color es `danger`: borrar la cuenta es "el usuario tiene que actuar",
+  que es lo que §1 le reserva a esa paleta. En azul `engine` —como estuvo— una
+  acción irreversible se veía igual que un mensaje informativo.
 - Mensajes: contenedor + `stamp-label` al inicio. **La paleta depende de qué
   mensaje es**, y el linter la hace cumplir (regla `semantic-alert`):
   - **Informativo** (contexto, no pasó nada malo):

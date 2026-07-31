@@ -451,7 +451,7 @@
                   }
                 </tr>
               </thead>
-              <tbody class="divide-y divide-border">
+              <tbody class="divide-y divide-rule">
                 @for (row of s.rows; track trackByRow($index, row)) {
                   <tr [attr.data-testid]="'row-' + trackByRow($index, row)">
                     <th
@@ -597,7 +597,7 @@
                     }
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-border">
+                <tbody class="divide-y divide-rule">
                   @for (row of costRows; track row.label) {
                     <tr [attr.data-testid]="'cost-row-' + row.label">
                       <th
@@ -652,18 +652,29 @@
             @if (costsMissing().length > 0) {
               <!-- Sin este aviso, el auto con menos datos cargados aparecía como
                    "el más barato de mantener" solo porque su total era casi
-                   pura depreciación. -->
+                   pura depreciación.
+                   El mensaje se parte en dos porque los dos estados son
+                   distintos y la versión única los contradecía: con
+                   `costsComparable()` en true el sello "Más barato" SÍ aparece,
+                   y decir ahí que los totales "no son comparables entre sí" era
+                   coronar a un ganador y desmentirlo en la misma pantalla. -->
               <p
                 class="compare-costs-warning"
                 role="note"
                 data-testid="costs-incomplete"
               >
-                <span class="stamp-label">Ojo</span>
-                Faltan datos de {{ costsMissing().join(', ').toLowerCase() }} en
-                alguna de estas versiones, así que los totales no son
-                comparables entre sí
-                @if (!costsComparable()) {
-                  — por eso no marcamos cuál sale más barato.
+                @if (costsComparable()) {
+                  <span class="stamp-label">Ojo</span>
+                  Faltan los mismos datos —{{ costsMissing().join(', ').toLowerCase() }}—
+                  en todas las versiones, así que el total subestima el costo
+                  real de cada una por igual: te sirve para compararlas entre
+                  sí, no para saber cuánto vas a gastar.
+                } @else {
+                  <span class="stamp-label">Ojo</span>
+                  Faltan datos de {{ costsMissing().join(', ').toLowerCase() }} en
+                  alguna de estas versiones, así que los totales no son
+                  comparables entre sí — por eso no marcamos cuál sale más
+                  barato.
                 }
               </p>
             }
@@ -684,26 +695,40 @@
        estado vacío y "Guardar" no hacía nada (saveComparison() corta cuando no
        hay ids). -->
   @if (user() && !savedSlug() && versions().length > 0) {
-    <div class="compare-save-bar" data-testid="save-bar">
-      <label class="sr-only" for="comparison-name">Nombre de comparación</label>
-      <input
-        id="comparison-name"
-        class="compare-save-input"
-        maxlength="80"
-        placeholder="Nombre opcional"
-        [value]="saveName()"
-        (input)="saveName.set($any($event.target).value)"
-      />
-      <button
-        type="button"
-        (click)="saveComparison()"
-        [disabled]="saving()"
-        data-testid="save-fab"
-        class="compare-save-btn"
+    <div class="compare-save-dock">
+      <!-- El aviso va acá, antes de guardar. En /account/comparisons el
+           disclaimer largo se lee después, o sea después de haber decidido.
+           `caution` porque es un aviso, no un error (AGENTS.md §1). -->
+      <p
+        class="compare-save-note"
+        role="note"
+        data-testid="save-privacy-note"
       >
-        <mat-icon>save</mat-icon>
-        <span>{{ saving() ? 'Guardando…' : 'Guardar' }}</span>
-      </button>
+        <span class="stamp-label">Ojo</span>
+        Si la guardas queda con un enlace propio: cualquiera que lo tenga puede
+        abrirla sin iniciar sesión.
+      </p>
+      <div class="compare-save-bar" data-testid="save-bar">
+        <label class="sr-only" for="comparison-name">Nombre de comparación</label>
+        <input
+          id="comparison-name"
+          class="compare-save-input"
+          maxlength="80"
+          placeholder="Nombre opcional"
+          [value]="saveName()"
+          (input)="saveName.set($any($event.target).value)"
+        />
+        <button
+          type="button"
+          (click)="saveComparison()"
+          [disabled]="saving()"
+          data-testid="save-fab"
+          class="compare-save-btn"
+        >
+          <mat-icon>save</mat-icon>
+          <span>{{ saving() ? 'Guardando…' : 'Guardar' }}</span>
+        </button>
+      </div>
     </div>
   }
 </section>

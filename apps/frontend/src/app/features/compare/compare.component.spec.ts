@@ -1410,6 +1410,55 @@ describe('CompareComponent', () => {
     const aviso = fixture.nativeElement.querySelector('[data-testid="costs-incomplete"]');
     expect(aviso).not.toBeNull();
     expect(aviso.textContent).toMatch(/no marcamos cuál sale más barato/i);
+    // El otro mensaje —el de "faltan los mismos datos en todas"— no puede
+    // aparecer acá: los desgloses justamente no son comparables.
+    expect(aviso.textContent).not.toMatch(/por igual/i);
+  });
+
+  // `costsMissing()` y `costsComparable()` pueden ser verdaderos a la vez, y el
+  // caso es común: a ninguna de las versiones le cargaron el seguro voluntario.
+  // Ahí el sello "Más barato" SÍ aparece, así que el aviso no puede decir que
+  // los totales "no son comparables entre sí" — sería coronar a un ganador y
+  // desmentirlo en la misma pantalla.
+  it('con los mismos datos faltantes en todas, corona al más barato y lo explica sin contradecirse', async () => {
+    const fixture = await mountWith([
+      { id: 'a', name: 'A' },
+      { id: 'b', name: 'B' },
+    ]);
+
+    fixture.componentInstance.onCostsPanelOpened();
+    await new Promise((r) => setTimeout(r, 0));
+
+    // Misma firma de desglose en las dos: a las dos les falta el mismo ítem.
+    const sinSeguro = (total: number) => ({
+      ...costFixture(total),
+      voluntaryInsuranceClp: 0,
+      totalClp: total,
+    });
+    http
+      .expectOne((r) => r.url.includes('/cost/version/a'))
+      .flush({ data: sinSeguro(3_000_000), error: null });
+    http
+      .expectOne((r) => r.url.includes('/cost/version/b'))
+      .flush({ data: sinSeguro(2_000_000), error: null });
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.costsComparable()).toBe(true);
+    expect(fixture.componentInstance.costsMissing()).toEqual(['Seguro automotriz']);
+
+    // El sello aparece…
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="cheapest-b"]'),
+    ).not.toBeNull();
+
+    // …y el aviso dice la verdad que corresponde a ese estado.
+    const aviso = fixture.nativeElement.querySelector('[data-testid="costs-incomplete"]');
+    expect(aviso).not.toBeNull();
+    expect(aviso.textContent).toMatch(/seguro automotriz/i);
+    expect(aviso.textContent).toMatch(/por igual/i);
+    expect(aviso.textContent).not.toMatch(/no son comparables entre sí/i);
+    expect(aviso.textContent).not.toMatch(/no marcamos cuál sale más barato/i);
   });
 
   it('muestra "sin dato" en vez de $0 en los componentes sin información', async () => {
@@ -1825,5 +1874,91 @@ describe('CompareComponent — metadata para compartir', () => {
     fixture.detectChanges();
 
     expect(title()).toBe(COMPARE_DEFAULT_META.title);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Aviso de privacidad ANTES de guardar.
+//
+// El disclaimer largo vive en /account/comparisons, dentro de un `@if
+// (hasItems())`: se lee después de guardar, o sea después de haber decidido.
+// En el momento de decidir —el botón "Guardar" del comparador— no había
+// ninguna señal de que el enlace resultante abre sin sesión.
+// ---------------------------------------------------------------------------
+describe('CompareComponent — aviso antes de guardar', () => {
+  const mountLogged = async (versions: unknown[] | null) => {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+    const auth = new AuthServiceStub();
+    auth.currentUser.set({ id: 'u1', email: 'u@test.cl', name: 'U', role: 'USER' });
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        CompareStore,
+        { provide: AuthService, useValue: auth },
+        { provide: ActivatedRoute, useValue: routeStub({}) },
+      ],
+    });
+    const localHttp = TestBed.inject(HttpTestingController);
+    const store = TestBed.inject(CompareStore);
+    if (versions) {
+      store.hydrateFromUrl(versions.map((v) => (v as { id: string }).id).join(','));
+    }
+    const fixture = TestBed.createComponent(CompareComponent);
+    const ready = fixture.componentInstance.ready;
+    if (versions) {
+      localHttp
+        .expectOne((r) => r.url.includes('/api/v1/compare'))
+        .flush({ data: { versions, diffHighlights: {} } });
+    }
+    await ready;
+    fixture.detectChanges();
+    localHttp
+      .match((r) => r.url.includes('/me/favorites/models'))
+      .forEach((r) => r.flush({ data: [] }));
+    fixture.detectChanges();
+    return { fixture, localHttp };
+  };
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it('el aviso aparece junto a la barra de guardar', async () => {
+    const { fixture, localHttp } = await mountLogged([
+      { id: 'a', name: 'A' },
+      { id: 'b', name: 'B' },
+    ]);
+
+    const bar = fixture.nativeElement.querySelector('[data-testid="save-bar"]');
+    const nota = fixture.nativeElement.querySelector(
+      '[data-testid="save-privacy-note"]',
+    );
+    expect(bar).not.toBeNull();
+    expect(nota).not.toBeNull();
+    // "Junto a": mismo contenedor, no en otra parte de la página.
+    expect(nota.parentElement).toBe(bar.parentElement);
+    // El hecho central, sin repetir los tres del disclaimer largo.
+    expect(nota.textContent).toMatch(/sin iniciar sesión/i);
+    expect(nota.textContent).toMatch(/enlace/i);
+    // Es aviso, no error: nada de role="alert".
+    expect(nota.getAttribute('role')).toBe('note');
+
+    localHttp.verify();
+  });
+
+  it('sin comparación no hay barra ni aviso', async () => {
+    const { fixture, localHttp } = await mountLogged(null);
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="save-bar"]'),
+    ).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="save-privacy-note"]'),
+    ).toBeNull();
+
+    localHttp.verify();
   });
 });

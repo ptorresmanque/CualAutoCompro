@@ -327,6 +327,11 @@ const CONTRAST_PAIRS = [
   ['--danger-dark', '--danger-light', 4.5, 'mensaje de error'],
   ['--success-dark', '--success-light', 4.5, 'mensaje de confirmación'],
   ['--paper', '--danger', 4.5, 'label sobre relleno destructivo'],
+  // Botón destructivo outline (`.settings-btn-danger`, "Eliminar mi cuenta"):
+  // texto y borde `danger` sobre la tarjeta blanca. Antes esas dos reglas eran
+  // `engine` y por eso no había par declarado.
+  ['--danger-dark', '--paper-cool', 4.5, 'texto del botón destructivo outline'],
+  ['--danger', '--paper-cool', 3.0, 'borde del botón destructivo (WCAG 1.4.11)'],
   ['--rule-strong', '--paper-cool', 3.0, 'borde de control (WCAG 1.4.11)'],
   ['--rule-strong', '--paper', 3.0, 'borde de control sobre el fondo'],
 ];

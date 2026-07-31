@@ -37,8 +37,6 @@
   --engine-50:    #EFF6FF;
   --engine-100:   #DBEAFE;
   --engine-200:   #BFDBFE;
-  --blueprint:       var(--engine);
-  --blueprint-light: var(--engine-100);
 
   /* ---- Estados semánticos ----
    * caution = aviso / nota legal. danger = error. success = confirmación.
@@ -1109,12 +1107,51 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
  * sin acoplar al scope de un componente.
  * =========================================================== */
 
-.compare-save-bar {
+/* El dock fijo: el aviso de privacidad arriba y la barra de guardar abajo.
+ * Antes el `position: fixed` vivía en `.compare-save-bar`; se subió acá para
+ * que el aviso viaje pegado a la barra en vez de flotar por su cuenta. */
+.compare-save-dock {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
   bottom: 1.5rem;
   z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.375rem;
+  max-width: calc(100vw - 1.5rem);
+}
+
+@media (min-width: 768px) {
+  .compare-save-dock {
+    right: 1.5rem;
+    left: auto;
+    transform: none;
+    max-width: 26rem;
+  }
+}
+
+/* Aviso previo a guardar. `caution` y no `danger`: no falló nada, se le está
+ * informando al usuario de una consecuencia antes de que apriete el botón.
+ * Vive junto a la barra —y no solo en /account/comparisons— porque allá se lee
+ * después de guardar, o sea después de decidir. */
+.compare-save-note {
+  margin: 0;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--caution);
+  background: var(--caution-light);
+  color: var(--caution-dark);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.compare-save-note .stamp-label {
+  margin-right: 0.375rem;
+  color: var(--caution-dark);
+}
+
+.compare-save-bar {
   display: flex;
   align-items: stretch;
   gap: 0.5rem;
@@ -1123,15 +1160,6 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   border: 1px solid var(--ink);
   box-shadow: 0 6px 0 -2px rgba(11, 18, 32, 0.18);
   border-radius: 0;
-  max-width: calc(100vw - 1.5rem);
-}
-
-@media (min-width: 768px) {
-  .compare-save-bar {
-    right: 1.5rem;
-    left: auto;
-    transform: none;
-  }
 }
 
 .compare-save-input {
@@ -1210,13 +1238,23 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   box-shadow: none;
 }
 
+/* Zona peligrosa ("Eliminar mi cuenta"). Va en la paleta `danger` y no en
+ * `engine`: AGENTS.md §1 reserva `danger` para "el usuario tiene que actuar" y
+ * borrar la cuenta es exactamente eso. Pintada de azul era indistinguible de un
+ * mensaje informativo, que es justo lo que la fase F4 salió a corregir. */
 .ficha--danger .ficha-head {
-  background: var(--engine-50);
-  border-bottom-color: var(--engine);
+  background: var(--danger-light);
+  border-bottom-color: var(--danger);
 }
 
 .ficha--danger .ficha-brand {
-  color: var(--engine-dark);
+  color: var(--danger-dark);
+}
+
+/* `.stamp-label` es `--engine` por defecto: sobre `--danger-light` quedaría un
+ * "Zona peligrosa" azul dentro de una cabecera roja. */
+.ficha--danger .ficha-head .stamp-label {
+  color: var(--danger-dark);
 }
 
 /* ===========================================================
@@ -1540,6 +1578,11 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   align-self: flex-start;
 }
 
+/* Botón destructivo: outline `danger`, sin relleno. Se queda en outline —y no
+ * pasa a relleno rojo— porque no es la acción principal de la pantalla; lo que
+ * cambia respecto de antes es el color, que era `engine` (información) para una
+ * acción irreversible. Contrastes: texto 10.02:1, borde 6.47:1 sobre
+ * `--paper-cool`; los dos pares están declarados en CONTRAST_PAIRS. */
 .settings-btn-danger {
   margin-top: 0.75rem;
   display: inline-flex;
@@ -1549,8 +1592,8 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   height: 40px;
   padding: 0 1rem;
   background: var(--paper-cool);
-  color: var(--engine-dark);
-  border: 1px solid var(--engine);
+  color: var(--danger-dark);
+  border: 1px solid var(--danger);
   border-radius: 0;
   font-family: var(--font-sans);
   font-size: 0.8125rem;
@@ -1562,8 +1605,8 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
 }
 
 .settings-btn-danger:hover {
-  background: var(--engine-50);
-  color: var(--engine-dark);
+  background: var(--danger-light);
+  color: var(--danger-dark);
 }
 
 .settings-btn-danger mat-icon {

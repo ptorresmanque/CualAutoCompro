@@ -231,13 +231,17 @@
               }
             </mat-select>
           </mat-form-field>
+          <!-- El estado activo lo pinta `.sort-button.is-active` en styles.css:
+               fondo `ink`, texto `paper`. Acá va solo `[class.is-active]`.
+               Antes había además `[class.bg-engine]` / `[class.text-paper]` /
+               `[class.text-ink-muted]`: utilidades de especificidad (0,1,0) que
+               nunca ganaban contra el (0,2,0) del CSS, así que no pintaban nada
+               y encima decían que el activo era azul cuando el sistema dice
+               que es `ink`. -->
           <div class="flex items-center border border-rule rounded overflow-hidden" role="group" aria-label="Dirección">
             <button type="button"
               (click)="updateFilter({ order: 'asc' })"
               [attr.aria-pressed]="(filters().order ?? 'asc') === 'asc'"
-              [class.bg-engine]="(filters().order ?? 'asc') === 'asc'"
-              [class.text-paper]="(filters().order ?? 'asc') === 'asc'"
-              [class.text-ink-muted]="(filters().order ?? 'asc') !== 'asc'"
               class="sort-button"
               [class.is-active]="(filters().order ?? 'asc') === 'asc'"
               data-testid="sort-asc"
@@ -247,9 +251,6 @@
             <button type="button"
               (click)="updateFilter({ order: 'desc' })"
               [attr.aria-pressed]="filters().order === 'desc'"
-              [class.bg-engine]="filters().order === 'desc'"
-              [class.text-paper]="filters().order === 'desc'"
-              [class.text-ink-muted]="filters().order !== 'desc'"
               class="sort-button"
               [class.is-active]="filters().order === 'desc'"
               data-testid="sort-desc"

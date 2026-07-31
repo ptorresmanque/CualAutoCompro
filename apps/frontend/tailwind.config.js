@@ -50,10 +50,6 @@ module.exports = {
           800: '#1E40AF',
           900: '#1E3A8A',
         },
-        blueprint: {
-          DEFAULT: '#1D4ED8',
-          light:   '#DBEAFE',
-        },
         caution: {
           DEFAULT: '#B45309',
           light:   '#FEF3C7',
@@ -76,18 +72,14 @@ module.exports = {
           light:   '#DCFCE7',
           dark:    '#14532D',
         },
-        border: {
-          DEFAULT: '#D8E1EC',
-          control: '#7A8CA5',
-          strong:  '#0B1220',
-        },
-        surface: {
-          DEFAULT: '#FFFFFF',
-          muted:   '#F5F8FC',
-          container:   '#E9EFF6',
-          'container-low': '#F5F8FC',
-          'container-high': '#D8E1EC',
-        },
+        // Acá vivían tres familias de alias —`blueprint`, `border` y `surface`—
+        // que duplicaban hex ya nombrados (`engine`, `rule`, `paper`). Se
+        // retiraron porque mientras existieran, `border-border` y `bg-surface`
+        // seguían compilando: la migración anterior los dejó definidos y en la
+        // misma rama volvió a nacer un `divide-border` nuevo. Sin la definición,
+        // la clase queda sin salida CSS y el estilo se pierde de forma visible.
+        // Los nombres vigentes son: `engine-*` (acento), `rule` / `rule-strong`
+        // (bordes) y `paper` / `paper-warm` / `paper-cool` (superficies).
       },
       fontFamily: {
         sans:    ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],

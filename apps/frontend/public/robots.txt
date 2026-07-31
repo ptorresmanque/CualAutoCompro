@@ -4,7 +4,7 @@
 # `noindex` vive en dos archivos: la mayoría se declara ruta por ruta en
 # src/app/app.routes.ts, pero el del comparador (/compare y /c/:slug) sale de
 # COMPARE_DEFAULT_META, en src/app/core/page-meta.service.ts. Si agregas una
-# ruta privada, mirá los dos y agregala acá.
+# ruta privada, mira los dos y agrégala acá.
 
 User-agent: *
 Allow: /
