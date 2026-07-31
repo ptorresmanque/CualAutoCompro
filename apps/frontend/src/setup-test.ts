@@ -25,6 +25,12 @@ Object.defineProperty(window, 'matchMedia', {
 
 globalThis.matchMedia = window.matchMedia;
 
+// jsdom no implementa `scrollIntoView` (no hay layout que scrollear). Sin este
+// stub, cualquier componente que lo llame revienta solo en los tests.
+if (typeof Element !== 'undefined' && !Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = function scrollIntoView(): void {};
+}
+
 function createMemoryStorage(): Storage {
   const data = new Map<string, string>();
   return {

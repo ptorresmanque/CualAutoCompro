@@ -193,6 +193,50 @@ h1, .display {
   color: var(--ink);
 }
 
+/* ------------------------------------------------------------
+ * Skip link
+ *
+ * Vive acá y no en shell.component.css por dos razones: es un elemento
+ * de la base del documento (igual que `body`), y la convención del
+ * proyecto de sacar bloques del CSS por componente cuando crecen
+ * (misma razón que `.selection-bar` y `.version-picker`).
+ *
+ * Se oculta moviéndolo fuera de pantalla, NUNCA con `display: none` ni
+ * `visibility: hidden`: esos lo sacan del orden de tabulación y anulan
+ * justo lo que el link existe para resolver.
+ * ------------------------------------------------------------ */
+.skip-link {
+  /* `fixed` y no `absolute`: con la restauración de scroll el usuario puede
+     tabular a mitad de página, y un `absolute` aparecería fuera de vista.
+     z-index sobre el 50 de la barra superior. */
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  transform: translateY(-150%);
+  padding: 0.75rem 1.25rem;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--engine);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skip-link { transition: transform 120ms ease-out; }
+}
+
 /* Hairlines — único separador estructural */
 .hairline {
   border: 0;

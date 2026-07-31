@@ -1,3 +1,7 @@
+<!-- Primer elemento enfocable del documento: un Tab con la página recién
+     cargada lo revela y salta directo al contenido, sin recorrer la barra. -->
+<a class="skip-link" href="#main" (click)="skipToMain($event)">Saltar al contenido</a>
+
 <mat-sidenav-container class="app-shell" [hasBackdrop]="sidenav.isHandset()" autosize>
   @if (sidenav.isHandset()) {
     <mat-sidenav
@@ -95,7 +99,9 @@
 
   <mat-sidenav-content class="app-sidenav-content">
     <app-top-nav-bar></app-top-nav-bar>
-    <main class="app-main" id="main">
+    <!-- `tabindex="-1"`: sin esto el salto mueve el scroll pero no el foco, y
+         el siguiente Tab vuelve a la barra de navegación. -->
+    <main class="app-main" id="main" tabindex="-1" #mainContent>
       <router-outlet></router-outlet>
     </main>
     <app-footer></app-footer>

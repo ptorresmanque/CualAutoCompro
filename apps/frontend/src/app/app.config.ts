@@ -5,7 +5,7 @@ import {
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import {
   provideHttpClient,
   withFetch,
@@ -22,7 +22,17 @@ import { PopularityService } from './core/popularity.service';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
+    // `withInMemoryScrolling` restaura el scroll de la VENTANA. Acá alcanza:
+    // el shell usa `mat-sidenav-container`, pero ni `.app-shell` ni
+    // `.app-sidenav-content` imponen alto fijo, así que crecen con el
+    // contenido y el que scrollea de verdad es el documento.
+    provideRouter(
+      routes,
+      withInMemoryScrolling({
+        scrollPositionRestoration: 'enabled',
+        anchorScrolling: 'enabled',
+      }),
+    ),
     provideAnimationsAsync(),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor, loadingInterceptor])),
     provideAppInitializer(() => inject(AuthService).bootstrap()),

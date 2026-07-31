@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  viewChild,
+} from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -65,6 +72,24 @@ export class ShellComponent {
     const parts = u.name.trim().split(/\s+/);
     return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase();
   });
+
+  private readonly mainContent = viewChild.required<ElementRef<HTMLElement>>('mainContent');
+
+  /**
+   * El salto del skip link lo hacemos a mano.
+   *
+   * `href="#main"` se resuelve contra el `<base href="/">` de `index.html`, no
+   * contra la URL actual: si dejamos que el navegador lo maneje, desde
+   * `/catalogo` el link te manda a la home. El `href` se mantiene porque es lo
+   * que hace que un lector de pantalla lo anuncie como enlace interno, pero el
+   * movimiento real de scroll y foco corre por acá.
+   */
+  skipToMain(event: Event): void {
+    event.preventDefault();
+    const main = this.mainContent().nativeElement;
+    main.scrollIntoView();
+    main.focus({ preventScroll: true });
+  }
 
   onNavLinkClick(): void {
     this.sidenav.close();
