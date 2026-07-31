@@ -57,7 +57,7 @@ export interface PageMeta {
       .page-size-select {
         background: transparent;
         border: 1px solid var(--rule-strong);
-        border-radius: 6px;
+        border-radius: 4px;
         padding: 2px 6px;
         font-size: 0.875rem;
       }

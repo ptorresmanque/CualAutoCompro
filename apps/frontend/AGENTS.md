@@ -133,8 +133,19 @@ en estado normal (no en hover), hay que arreglarlo.
 ## 3. Lo que NO se hace
 
 - ❌ `rounded-xl`, `rounded-2xl`, `rounded-3xl`, `rounded-full` (radio es 2px o 0)
+- ❌ `border-radius` en CSS crudo fuera de `0`, `2px` o `4px`.
+  **Excepción:** `50%` y `9999px` están permitidos. Son formas —círculo y
+  píldora— dictadas por el control, no decisiones de branding: los usan los
+  thumbs del range slider y un chip del admin. No la borres por "limpieza".
+- ❌ `text-white`, `bg-white`. El blanco del sistema es `--paper-cool`
+  (`bg-paper-cool` / `text-paper`); el de Tailwind saltea la paleta y con ella
+  el chequeo de contraste.
 - ❌ `shadow-lg`, `shadow-xl`, `shadow-2xl` (sombras son hairlines o 0 6px 0 -2px ink)
 - ❌ `bg-blue-500`, `bg-red-500`, `text-green-700` (usar tokens engine/warn)
+- ❌ Un contenedor con `role="alert"` pintado con la paleta informativa
+  (`bg-engine-50`, `border-engine`, `text-engine-dark`). `engine` es
+  información, `danger` es error: un error en azul pálido es indistinguible
+  del banner "estás viendo una comparación guardada".
 - ❌ `mat-flat-button color="primary"` sin override (queda azul M3 por defecto)
 - ❌ `mat-fab extended` con tokens M3 (rompe el sistema)
 - ❌ Fuentes externas (Archivo Black, IBM Plex) — usar siempre los tokens
@@ -158,15 +169,31 @@ npm -w apps/frontend run check:design # linter del design system (estricto)
 npm -w apps/frontend test             # specs
 ```
 
-`check:design` escanea **todo `apps/frontend/src/**`**. Si falla, el cambio
-introdujo una clase prohibida (rounded-*, shadow-*, paleta Tailwind cruda,
-mat-fab primary, mat-card outlined como layout). Resolvelo antes de pedir
-review. Para casos legítimos (ej. una sombra custom para un toast), agregá
-la excepción a `apps/frontend/scripts/check-design.mjs` con comentario
+`check:design` escanea **todo `apps/frontend/src/**`**, incluido el panel de
+admin. Si falla, el cambio introdujo una clase prohibida (rounded-*, shadow-*,
+paleta Tailwind cruda, `text-white`/`bg-white`, un `border-radius` fuera del
+sistema, mat-fab primary, mat-card outlined como layout). Resolvelo antes de
+pedir review. Para casos legítimos (ej. una sombra custom para un toast),
+agregá la excepción a `apps/frontend/scripts/check-design.mjs` con comentario
 explicando por qué.
 
-Además de las reglas línea a línea, el linter corre dos chequeos sobre la
-paleta completa:
+Reglas línea a línea que corre hoy: `rounded-soft`, `shadow-soft`,
+`tailwind-palette`, `raw-white`, `raw-radius`, `mat-fab-primary`,
+`mat-card-layout`. `raw-radius` solo evalúa los valores en `px` y `%`; los
+`rem` quedan fuera hasta que se migren los 7 radios preexistentes del admin
+(ver el comentario de la regla).
+
+Además de las reglas línea a línea, el linter corre tres chequeos que miran
+más que una línea:
+
+- **`semantic-alert`** — por cada `role="alert"` recorta la etiqueta que lo
+  contiene y falla si su `class` usa la paleta informativa (`bg-engine-50`,
+  `border-engine`, `text-engine-dark`) en vez de `danger`. No es línea a línea
+  porque acá el `class` y el `role` casi nunca comparten línea. Existe porque
+  ocho cajas de error nacieron en azul pálido y hubo que migrarlas; sin la
+  regla, la novena nace igual. No se reporta si la etiqueta ya trae paleta
+  `danger`/`caution`/`success` propia (ahí la mención a `engine` es otra cosa,
+  típicamente un hover).
 
 - **`undefined-token`** — junta todos los `var(--x)` de `src/**` y falla si
   alguno no está definido en el `:root` de `styles.css` y tampoco trae

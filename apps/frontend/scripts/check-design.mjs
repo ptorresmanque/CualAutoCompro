@@ -12,6 +12,9 @@ const SRC_ROOT = path.join(FRONTEND_ROOT, 'src');
 
 const EXTS = new Set(['.html', '.ts', '.css']);
 
+/** Valores de `border-radius` que el sistema acepta. Ver la regla `raw-radius`. */
+const RADIUS_OK = /^(0|0px|2px|4px|50%|9999px)$/;
+
 const RULES = [
   {
     id: 'rounded-soft',
@@ -25,6 +28,45 @@ const RULES = [
     id: 'tailwind-palette',
     test: (l) => /\b(bg|text|border)-(red|blue|green|yellow|pink|purple|indigo|orange|teal|cyan|emerald|sky|amber|fuchsia|rose|slate|zinc|gray|neutral|stone)-\d{2,3}\b/.test(l) ? 'paleta Tailwind cruda; usar tokens (--ink, --engine, etc.)' : null,
     allow: /\b(bg-(paper|paper-warm|paper-cool|engine-100|engine-50|caution-light|surface-muted))\b/,
+  },
+  {
+    id: 'raw-white',
+    // El blanco del sistema es `--paper-cool` (bg-paper-cool / text-paper).
+    // `text-white` / `bg-white` saltean la paleta y, con ella, los pares de
+    // `CONTRAST_PAIRS`: un blanco que el linter no conoce no se puede chequear.
+    // Anclado con \b para no disparar sobre `rgba(255, 255, 255, …)` ni sobre
+    // clases que contengan la subcadena (`bg-whitespace`, `text-whiteboard`).
+    test: (l) => /\b(text|bg)-white\b/.test(l) ? 'blanco crudo de Tailwind; usar text-paper / bg-paper-cool' : null,
+  },
+  {
+    id: 'raw-radius',
+    // El radio del sistema es 0, 2px o 4px. Ver AGENTS.md §3.
+    //
+    // Excepción acordada: `50%` y `9999px` están permitidos. No son decisiones
+    // de branding, son formas dictadas por el control — círculo y píldora — y
+    // el sistema no tiene un token para "redondo". Hoy los usan los thumbs del
+    // range slider (shared/ui/range-slider.component.css:82 y :106) y un chip
+    // del admin (features/admin/admin-edit-dialog.component.css:42). Si borrás
+    // esta excepción por "limpieza", esos tres controles se vuelven cuadrados.
+    //
+    // Limitación conocida y deliberada: solo se evalúan los valores en `px`
+    // y `%`. Los valores en `rem` se saltean porque el panel de admin arrastra
+    // 7 radios preexistentes fuera del sistema (0.375rem, 0.5rem ×4,
+    // 0.75rem ×2) cuya migración quedó fuera del alcance de esta tarea. Si
+    // esos 7 se migran, sacá `hasRelativeUnit` y agregá `0.125rem` (2px) y
+    // `0.25rem` (4px) a RADIUS_OK.
+    test: (l) => {
+      const m = /border-radius\s*:\s*([^;{}]+)/.exec(l);
+      if (!m) return null;
+      const value = m[1].replace(/!important/g, '').trim();
+      const parts = value.split(/[\s/]+/).filter(Boolean);
+      if (parts.length === 0) return null;
+      const hasRelativeUnit = parts.some((p) => /\d(rem|em|ex|ch|vh|vw)$/.test(p));
+      if (hasRelativeUnit) return null;
+      return parts.every((p) => RADIUS_OK.test(p))
+        ? null
+        : 'border-radius fuera del sistema (0, 2px o 4px; 50% y 9999px para formas circulares)';
+    },
   },
   {
     id: 'mat-fab-primary',
@@ -67,12 +109,70 @@ const report = (id, loc, msg, detail) => {
 // Reglas línea a línea
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Regla `semantic-alert` (chequeo sobre el texto completo, no línea a línea)
+//
+// `AGENTS.md` §1 reserva `engine` para información y `danger` para errores.
+// Una caja de error pintada de azul pálido es indistinguible del banner
+// "estás viendo una comparación guardada". Ocho cajas nacieron así y hubo que
+// migrarlas; sin esta regla, la novena vuelve a nacer igual.
+//
+// No es una regla línea a línea a propósito: en este repo el `class="…"` y el
+// `role="alert"` casi nunca comparten línea (mirá model.component.html o
+// login.component.html — el `class` va arriba y el `role` una o dos líneas más
+// abajo). Una regla que solo mirara la línea del `role` no encontraría nunca
+// nada y pasaría la verificación sin haber chequeado nada.
+//
+// Por eso: por cada `role="alert"` se recorta la etiqueta que lo contiene
+// (desde el `<` anterior hasta el `>` siguiente) y se evalúa el `class` de esa
+// etiqueta. Se reporta el archivo y la línea del `role`.
+// ---------------------------------------------------------------------------
+
+/** Paleta informativa: lo que una caja con `role="alert"` no puede usar. */
+const INFO_PALETTE = /\b(bg-engine-\d{2,3}|border-engine(?:-\d{2,3})?|text-engine-dark)\b/;
+
+/**
+ * Paleta semántica propia. Si la etiqueta ya la trae, la mención a `engine` es
+ * otra cosa (un hover, un link adentro) y no se reporta: el falso positivo de
+ * `bg-danger-light … hover:text-engine` es peor que el hueco.
+ */
+const SEMANTIC_PALETTE = /\b(bg|border|text)-(danger|caution|warn|success)(-[a-z]+)?\b/;
+
+function checkSemanticAlert(relFile, text) {
+  for (const m of text.matchAll(/role\s*=\s*["']alert["']/g)) {
+    const at = m.index;
+    const open = text.lastIndexOf('<', at);
+    if (open === -1) continue;
+    // `a < b` en un .ts, o un `<` que no abre la etiqueta del role.
+    if (!/[A-Za-z]/.test(text[open + 1] ?? '')) continue;
+    if (text.slice(open, at).includes('>')) continue;
+    const close = text.indexOf('>', at);
+    if (close === -1) continue;
+
+    const tag = text.slice(open, close + 1);
+    const cls = [...tag.matchAll(/\bclass\s*=\s*"([^"]*)"/g)].map((c) => c[1]).join(' ');
+    if (!INFO_PALETTE.test(cls)) continue;
+    if (SEMANTIC_PALETTE.test(cls)) continue;
+
+    const line = text.slice(0, at).split('\n').length;
+    report(
+      'semantic-alert',
+      `${relFile}:${line}`,
+      'role="alert" con paleta informativa (engine); los errores van en danger',
+      tag.replace(/\s+/g, ' ').slice(0, 140),
+    );
+  }
+}
+
 /** Todos los `var(--x)` del proyecto, con el archivo/línea donde aparecen. */
 const tokenUses = new Map(); // '--x' -> [{ file, line, hasFallback }]
 
 for await (const file of walk(SRC_ROOT)) {
   const text = await fs.readFile(file, 'utf8');
   const lines = text.split(/\r?\n/);
+  if (path.extname(file) !== '.css') {
+    checkSemanticAlert(path.relative(FRONTEND_ROOT, file), text);
+  }
   lines.forEach((line, i) => {
     for (const r of RULES) {
       if (r.allow && r.allow.test(line)) continue;
