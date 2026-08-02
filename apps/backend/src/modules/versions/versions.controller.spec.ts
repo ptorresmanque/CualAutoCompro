@@ -187,3 +187,86 @@ describe("GET /api/v1/admin/versions/options", () => {
     expect(res.body.data[0].name).toBe("Yaris Viva (2026)");
   });
 });
+
+/**
+ * Mover una versión de modelo: el admin edita o duplica y cambia el selector
+ * "Modelo". El front manda `modelId` en el payload; acá se verifica que el
+ * cambio efectivamente aterrice en la fila.
+ */
+describe("cambiar el modelo de una versión", () => {
+  beforeEach(async () => {
+    setupTestPrisma();
+    await resetTestDb(prisma);
+  });
+
+  const otherModel = async (brandId: string) =>
+    prisma.model.create({ data: { brandId, name: "Corolla", segment: "SEDAN" } });
+
+  it("PATCH /admin/versions/:id mueve la versión al modelo nuevo", async () => {
+    const { versionId, brandId } = await seed();
+    const corolla = await otherModel(brandId);
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .patch(`/api/v1/admin/versions/${versionId}`)
+      .set("Cookie", cookie)
+      .send({ name: "XLS", modelId: corolla.id });
+
+    expect(res.status).toBe(200);
+    const saved = await prisma.version.findUniqueOrThrow({ where: { id: versionId } });
+    expect(saved.modelId).toBe(corolla.id);
+  });
+
+  it("PATCH con un modelId inexistente → 404 y no toca la fila", async () => {
+    const { versionId, modelId } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .patch(`/api/v1/admin/versions/${versionId}`)
+      .set("Cookie", cookie)
+      .send({ modelId: "no-existe" });
+
+    expect(res.status).toBe(404);
+    const saved = await prisma.version.findUniqueOrThrow({ where: { id: versionId } });
+    expect(saved.modelId).toBe(modelId);
+  });
+
+  it("POST /admin/versions (duplicar) crea la versión bajo el modelo elegido", async () => {
+    const { brandId } = await seed();
+    const corolla = await otherModel(brandId);
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .post("/api/v1/admin/versions")
+      .set("Cookie", cookie)
+      .send({
+        modelId: corolla.id, name: "XLS", year: 2026, priceClp: 14_990_000,
+        transmission: "CVT", fuel: "BENCINA", powerHp: 110, torqueNm: 140,
+        lengthMm: 3940, widthMm: 1740, heightMm: 1480, weightKg: 1100, trunkLiters: 286,
+      });
+
+    expect(res.status).toBe(201);
+    const saved = await prisma.version.findUniqueOrThrow({ where: { id: res.body.data.id } });
+    expect(saved.modelId).toBe(corolla.id);
+  });
+
+  it("PATCH que además estrena un combustible mueve la versión igual", async () => {
+    const { versionId, brandId } = await seed();
+    const corolla = await otherModel(brandId);
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .patch(`/api/v1/admin/versions/${versionId}`)
+      .set("Cookie", cookie)
+      .send({ modelId: corolla.id, fuel: "HIDROGENO" });
+
+    expect(res.status).toBe(200);
+    const saved = await prisma.version.findUniqueOrThrow({ where: { id: versionId } });
+    expect(saved.modelId).toBe(corolla.id);
+    expect(saved.fuel).toBe("HIDROGENO");
+  });
+});

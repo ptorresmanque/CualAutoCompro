@@ -313,6 +313,16 @@ export class VersionsService {
   }
 
   async update(id: string, input: UpdateVersionInput) {
+    // Mover la versión a otro modelo: se valida igual que en `create`, si no
+    // un id inexistente saldría como error de FK (500) en vez de 404.
+    if (input.modelId !== undefined) {
+      const model = await this.prisma.model.findFirst({
+        where: { id: input.modelId, deletedAt: null },
+        select: { id: true },
+      });
+      if (!model) throw notFound("Modelo no encontrado");
+    }
+
     const newFuel =
       input.fuel && !FUELS.includes(input.fuel as (typeof FUELS)[number])
         ? input.fuel
@@ -333,6 +343,10 @@ export class VersionsService {
 
       const setClauses: string[] = [];
       const values: unknown[] = [];
+      if (input.modelId !== undefined) {
+        setClauses.push("`modelId` = ?");
+        values.push(input.modelId);
+      }
       if (input.name !== undefined) {
         setClauses.push("name = ?");
         values.push(input.name);
@@ -461,7 +475,8 @@ export class VersionsService {
 
     const data = Object.fromEntries(
       Object.entries(input).filter(([k, v]) => v !== undefined && k !== "priceNote"),
-    ) as Prisma.VersionUpdateInput;
+      // Unchecked: la actualización va por escalares, `modelId` incluido.
+    ) as Prisma.VersionUncheckedUpdateInput;
     const existing = await this.prisma.version.findUnique({
       where: { id, deletedAt: null },
       select: { priceClp: true },
