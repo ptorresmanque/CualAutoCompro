@@ -15,6 +15,19 @@ import {
   type EffectiveEquipmentEntry,
 } from "../../shared/effective-equipment.js";
 
+/**
+ * Choque de índice único visto desde una query cruda. MariaDB reporta el
+ * error 1062 y el driver lo envuelve en un P2010 genérico, así que hay que
+ * mirar el mensaje: no existe un código propio que distinga el caso.
+ */
+function isDuplicateEntry(e: unknown): boolean {
+  return (
+    e instanceof Prisma.PrismaClientKnownRequestError &&
+    e.code === "P2010" &&
+    /Duplicate entry/i.test(e.message)
+  );
+}
+
 export class ModelsService {
   constructor(private readonly prisma: PrismaClient) {}
 
@@ -355,6 +368,16 @@ export class ModelsService {
   }
 
   async update(id: string, input: UpdateModelInput) {
+    // Mover el modelo a otra marca: se valida igual que en `create`, si no un
+    // id inexistente saldría como error de FK (500) en vez de 404.
+    if (input.brandId !== undefined) {
+      const brand = await this.prisma.brand.findFirst({
+        where: { id: input.brandId, deletedAt: null },
+        select: { id: true },
+      });
+      if (!brand) throw notFound("Marca no encontrada");
+    }
+
     const newSegment = input.segment && !SEGMENTS.includes(input.segment as (typeof SEGMENTS)[number])
       ? input.segment
       : null;
@@ -362,6 +385,10 @@ export class ModelsService {
       await extendEnum(this.prisma, "Segment", newSegment);
       const setClauses: string[] = [];
       const values: unknown[] = [];
+      if (input.brandId !== undefined) {
+        setClauses.push("`brandId` = ?");
+        values.push(input.brandId);
+      }
       if (input.name !== undefined) {
         setClauses.push("name = ?");
         values.push(input.name);
@@ -381,10 +408,20 @@ export class ModelsService {
       // nuevo al enum runtime y Prisma's query engine lo rechazaría. En
       // MariaDB no hay RETURNING para UPDATE, así que hacemos SELECT
       // después para devolver la fila actualizada.
-      const updateResult = await this.prisma.$executeRawUnsafe(
-        `UPDATE \`Model\` SET ${setClauses.join(", ")} WHERE id = ? AND \`deletedAt\` IS NULL`,
-        ...values,
-      );
+      const updateResult = await this.prisma
+        .$executeRawUnsafe(
+          `UPDATE \`Model\` SET ${setClauses.join(", ")} WHERE id = ? AND \`deletedAt\` IS NULL`,
+          ...values,
+        )
+        .catch((e: unknown) => {
+          // El raw no da P2002: MariaDB devuelve 1062 envuelto en P2010, y el
+          // mensaje trae nombres de tabla e índice. Se traduce al mismo
+          // CONFLICT que la rama de Prisma en vez de filtrar un 500 opaco.
+          if (isDuplicateEntry(e)) {
+            throw conflict("Ya existe un modelo con ese nombre en la marca destino");
+          }
+          throw e;
+        });
       if (updateResult === 0) throw notFound("Modelo no encontrado");
       const rows = await this.prisma.$queryRawUnsafe<Array<{
         id: string;
@@ -409,15 +446,21 @@ export class ModelsService {
 
     const data = Object.fromEntries(
       Object.entries(input).filter(([, v]) => v !== undefined),
-    ) as Prisma.ModelUpdateInput;
+      // Unchecked: la actualización va por escalares, `brandId` incluido.
+    ) as Prisma.ModelUncheckedUpdateInput;
     try {
       return await this.prisma.model.update({
         where: { id, deletedAt: null },
         data,
       });
     } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
-        throw notFound("Modelo no encontrado");
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === "P2025") throw notFound("Modelo no encontrado");
+        // `@@unique([brandId, name])`: mover el modelo a una marca que ya
+        // tiene uno con ese nombre. Sin esto salía como 500 opaco.
+        if (e.code === "P2002") {
+          throw conflict("Ya existe un modelo con ese nombre en la marca destino");
+        }
       }
       throw e;
     }

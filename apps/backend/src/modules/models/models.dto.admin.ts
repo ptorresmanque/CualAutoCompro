@@ -12,7 +12,11 @@ export const createModelSchema = z.object({
   galleryUrls: imageUrlArray.default([]),
 });
 
-export const updateModelSchema = createModelSchema.partial().omit({ brandId: true });
+// `brandId` viaja acá igual que en el alta: el selector "Marca" del panel
+// admin permite mover un modelo a otra marca. Omitirlo hacía que zod lo
+// descartara en silencio y el cambio se perdiera sin ningún error visible.
+// `.partial()` lo deja opcional, que es lo que corresponde en un PATCH.
+export const updateModelSchema = createModelSchema.partial();
 
 export type CreateModelInput = z.infer<typeof createModelSchema>;
 export type UpdateModelInput = z.infer<typeof updateModelSchema>;

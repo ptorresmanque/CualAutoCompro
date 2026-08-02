@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { createApp } from "../../app.js";
 import { setupTestPrisma, resetTestDb } from "../../../__tests__/helpers/db.js";
+import { loginAsAdmin } from "../../../__tests__/helpers/auth.js";
 import { prisma } from "../../infra/prisma.js";
 
 const seed = async () => {
@@ -412,5 +413,127 @@ describe("GET /api/v1/admin/models", () => {
   it("sin auth → 401", async () => {
     const res = await request(createApp()).get("/api/v1/admin/models");
     expect(res.status).toBe(401);
+  });
+});
+
+/**
+ * Mover un modelo de marca: el selector "Marca" del panel admin es editable,
+ * así que el `brandId` del PATCH tiene que aterrizar en la fila.
+ */
+describe("cambiar la marca de un modelo", () => {
+  beforeEach(async () => {
+    setupTestPrisma();
+    await resetTestDb(prisma);
+  });
+
+  const seedModel = async () => {
+    const toyota = await prisma.brand.create({ data: { name: "Toyota" } });
+    const mazda = await prisma.brand.create({ data: { name: "Mazda" } });
+    const yaris = await prisma.model.create({
+      data: { brandId: toyota.id, name: "Yaris", segment: "HATCHBACK" },
+    });
+    return { modelId: yaris.id, toyotaId: toyota.id, mazdaId: mazda.id };
+  };
+
+  it("PATCH /admin/models/:id mueve el modelo a la marca nueva", async () => {
+    const { modelId, mazdaId } = await seedModel();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .patch(`/api/v1/admin/models/${modelId}`)
+      .set("Cookie", cookie)
+      .send({ name: "Yaris", brandId: mazdaId });
+
+    expect(res.status).toBe(200);
+    const saved = await prisma.model.findUniqueOrThrow({ where: { id: modelId } });
+    expect(saved.brandId).toBe(mazdaId);
+  });
+
+  it("PATCH con un brandId inexistente → 404 y no toca la fila", async () => {
+    const { modelId, toyotaId } = await seedModel();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .patch(`/api/v1/admin/models/${modelId}`)
+      .set("Cookie", cookie)
+      .send({ brandId: "no-existe" });
+
+    expect(res.status).toBe(404);
+    const saved = await prisma.model.findUniqueOrThrow({ where: { id: modelId } });
+    expect(saved.brandId).toBe(toyotaId);
+  });
+
+  it("PATCH con una marca borrada → 404", async () => {
+    const { modelId } = await seedModel();
+    const muerta = await prisma.brand.create({
+      data: { name: "Muerta", deletedAt: new Date() },
+    });
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .patch(`/api/v1/admin/models/${modelId}`)
+      .set("Cookie", cookie)
+      .send({ brandId: muerta.id });
+
+    expect(res.status).toBe(404);
+  });
+
+  // `@@unique([brandId, name])`: mover un modelo a una marca que ya tiene uno
+  // con ese nombre choca. Antes el brandId ni siquiera llegaba, así que este
+  // camino recién queda alcanzable.
+  it("PATCH a una marca que ya tiene un modelo con ese nombre → 409", async () => {
+    const { modelId, mazdaId } = await seedModel();
+    await prisma.model.create({
+      data: { brandId: mazdaId, name: "Yaris", segment: "SUV" },
+    });
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .patch(`/api/v1/admin/models/${modelId}`)
+      .set("Cookie", cookie)
+      .send({ brandId: mazdaId });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe("CONFLICT");
+  });
+
+  it("PATCH que además estrena un segmento mueve el modelo igual", async () => {
+    const { modelId, mazdaId } = await seedModel();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .patch(`/api/v1/admin/models/${modelId}`)
+      .set("Cookie", cookie)
+      .send({ brandId: mazdaId, segment: "MONOVOLUMEN" });
+
+    expect(res.status).toBe(200);
+    const saved = await prisma.model.findUniqueOrThrow({ where: { id: modelId } });
+    expect(saved.brandId).toBe(mazdaId);
+    expect(saved.segment).toBe("MONOVOLUMEN");
+  });
+
+  // Mismo choque que arriba pero por la rama de SQL crudo, que no produce un
+  // P2002 sino un P2010 con el mensaje del driver.
+  it("PATCH con segmento nuevo y nombre que choca → 409, sin filtrar el error de MariaDB", async () => {
+    const { modelId, mazdaId } = await seedModel();
+    await prisma.model.create({
+      data: { brandId: mazdaId, name: "Yaris", segment: "SUV" },
+    });
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+
+    const res = await request(app)
+      .patch(`/api/v1/admin/models/${modelId}`)
+      .set("Cookie", cookie)
+      .send({ brandId: mazdaId, segment: "MONOVOLUMEN" });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe("CONFLICT");
+    expect(res.body.error.message).not.toMatch(/Duplicate entry|Model_brandId_name_key/);
   });
 });
