@@ -81,9 +81,12 @@ export const createVersionSchema = versionObjectSchema
   .superRefine(validateRecall)
   .superRefine(validateFuelFields);
 
+// `modelId` viaja acá igual que en el alta: el selector "Modelo" del panel
+// admin permite mover una versión a otro modelo. Omitirlo hacía que zod lo
+// descartara en silencio y el cambio se perdiera sin ningún error visible.
+// `.partial()` lo deja opcional, que es lo que corresponde en un PATCH.
 export const updateVersionSchema = versionObjectSchema
   .partial()
-  .omit({ modelId: true })
   .extend({ priceNote: z.string().max(120).optional() })
   .superRefine(validateRecall)
   .superRefine(validateFuelFields);
