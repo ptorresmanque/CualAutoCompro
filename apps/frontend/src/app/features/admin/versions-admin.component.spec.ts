@@ -180,7 +180,7 @@ describe('VersionsAdminComponent', () => {
     const eq = http.expectOne(
       (r) => r.url.includes('/api/v1/admin/equipment/version/v1') && r.method === 'PUT',
     );
-    expect(eq.request.body).toEqual({ itemIds: ['e2', 'e3'] });
+    expect(eq.request.body).toEqual({ itemIds: ['e2', 'e3'], knownInheritedIds: [] });
     eq.flush({ data: { attached: 1, detached: 1 }, error: null });
 
     const co = http.expectOne(
@@ -210,11 +210,76 @@ describe('VersionsAdminComponent', () => {
     await tick();
 
     const puts = http.match((r) => r.method === 'PUT');
-    expect(puts.map((r) => r.request.body)).toEqual([{ itemIds: [] }, { colorIds: [] }]);
+    expect(puts.map((r) => r.request.body)).toEqual([
+      { itemIds: [], knownInheritedIds: [] },
+      { colorIds: [] },
+    ]);
     puts.forEach((r) => r.flush({ data: { attached: 0, detached: 2 }, error: null }));
 
     // Drena la recarga y las opciones que monta el diálogo, sin asertar sobre
     // ellas: lo que importa acá son los bodies de los PUT.
+    await tick();
+    http.match(() => true).forEach((r) => r.flush({ data: [], error: null }));
+    await savePromise;
+  });
+
+  it('informa como heredado lo que el diálogo mostró heredado', async () => {
+    const { fixture, http } = setup();
+    const row = {
+      ...rowWithRelations,
+      equipmentItems: [
+        { equipmentItem: { id: 'e1', name: 'A', category: 'C' }, source: 'VERSION', sourceName: null },
+        { equipmentItem: { id: 'e2', name: 'B', category: 'C' }, source: 'BRAND', sourceName: 'Toyota' },
+      ],
+    };
+    flushList(http, [row]);
+    await fixture.whenStable();
+
+    const component = fixture.componentInstance;
+    component.crud.openEdit(row as never);
+    // El admin saca el chip heredado: eso sí debe crear la exclusión.
+    const savePromise = component.crud.save({ name: 'XLI', equipment: ['e1'] });
+
+    http.expectOne((r) => r.method === 'PATCH').flush({ data: { id: 'v1' }, error: null });
+    await tick();
+
+    const eq = http.expectOne(
+      (r) => r.url.includes('/api/v1/admin/equipment/version/v1') && r.method === 'PUT',
+    );
+    expect(eq.request.body).toEqual({ itemIds: ['e1'], knownInheritedIds: ['e2'] });
+
+    // `expectOne` ya sacó `eq` de la cola: hay que flushearlo aparte del resto.
+    eq.flush({ data: {}, error: null });
+    http.match((r) => r.method === 'PUT').forEach((r) => r.flush({ data: {}, error: null }));
+    await tick();
+    http.match(() => true).forEach((r) => r.flush({ data: [], error: null }));
+    await savePromise;
+  });
+
+  it('un alta no informa heredados, así el backend no los excluye', async () => {
+    const { fixture, http } = setup();
+    flushList(http, []);
+    await fixture.whenStable();
+
+    const component = fixture.componentInstance;
+    component.crud.openCreate();
+    // El diálogo de alta no muestra lo heredado —todavía no hay versión que
+    // resolver—, así que la lista vacía no puede leerse como "excluir todo".
+    const savePromise = component.crud.save({ modelId: 'm1', name: 'Nueva' });
+
+    http
+      .expectOne((r) => r.method === 'POST')
+      .flush({ data: { id: 'v9' }, error: null });
+    await tick();
+
+    const eq = http.expectOne(
+      (r) => r.url.includes('/api/v1/admin/equipment/version/v9') && r.method === 'PUT',
+    );
+    expect(eq.request.body).toEqual({ itemIds: [], knownInheritedIds: [] });
+
+    // `expectOne` ya sacó `eq` de la cola: hay que flushearlo aparte del resto.
+    eq.flush({ data: {}, error: null });
+    http.match((r) => r.method === 'PUT').forEach((r) => r.flush({ data: {}, error: null }));
     await tick();
     http.match(() => true).forEach((r) => r.flush({ data: [], error: null }));
     await savePromise;

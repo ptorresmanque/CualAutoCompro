@@ -12,9 +12,18 @@ export const attachEquipmentSchema = z.object({
   itemId: z.string().min(1),
 });
 
-/** Body de `PUT /admin/equipment/version/:versionId`: la selección completa. */
+/**
+ * Body de `PUT /admin/equipment/version/:versionId`: la selección completa.
+ *
+ * `knownInheritedIds` es lo que el formulario **mostró** como heredado de la
+ * marca o del modelo. Sin ese dato, una selección que no incluye un ítem
+ * heredado es ambigua: puede ser "el admin lo sacó" o "el cliente nunca supo
+ * que existía" (el alta, donde todavía no hay versión que resolver). Informarlo
+ * hace que solo lo primero genere una exclusión.
+ */
 export const syncEquipmentSchema = z.object({
   itemIds: z.array(z.string().min(1)),
+  knownInheritedIds: z.array(z.string().min(1)).optional(),
 });
 
 export type CreateEquipmentInput = z.infer<typeof createEquipmentSchema>;

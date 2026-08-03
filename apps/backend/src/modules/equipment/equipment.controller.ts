@@ -64,7 +64,9 @@ export const equipmentController = {
     const versionId = req.params.versionId ?? "";
     const parsed = syncEquipmentSchema.safeParse(req.body);
     if (!parsed.success) throw validation("Datos inválidos", parsed.error.issues);
-    res.json(ok(await svc.syncVersion(versionId, parsed.data.itemIds)));
+    res.json(
+      ok(await svc.syncVersion(versionId, parsed.data.itemIds, parsed.data.knownInheritedIds)),
+    );
   }),
 
   syncBrand: ah(async (req: Request, res: Response) => {

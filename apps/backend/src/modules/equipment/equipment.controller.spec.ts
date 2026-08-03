@@ -133,6 +133,56 @@ describe("PUT /api/v1/admin/equipment/version/:versionId", () => {
     expect(res.body.error.code).toBe("VALIDATION");
   });
 
+  it("una versión recién creada hereda lo de su marca en vez de excluirlo", async () => {
+    const { brand, model, c } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+    await prisma.brandEquipment.create({ data: { brandId: brand.id, equipmentItemId: c.id } });
+
+    // El alta: el diálogo de creación no muestra lo heredado (todavía no hay
+    // versión que resolver), así que manda la selección vacía y sin
+    // `knownInheritedIds`. Eso no puede leerse como "excluir todo".
+    const nueva = await prisma.version.create({
+      data: { ...baseVersion, modelId: model.id, name: "Recién creada" },
+    });
+    const res = await request(app)
+      .put(`/api/v1/admin/equipment/version/${nueva.id}`)
+      .set("Cookie", cookie)
+      .send({ itemIds: [] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ attached: 0, detached: 0, excluded: 0 });
+    expect(await prisma.versionEquipmentExclusion.count({ where: { versionId: nueva.id } })).toBe(0);
+
+    const detail = await request(app).get(`/api/v1/versions/${nueva.id}`);
+    expect(detail.body.data.equipmentItems.map((e: { equipmentItem: { id: string } }) => e.equipmentItem.id))
+      .toContain(c.id);
+  });
+
+  it("lo que el form mostró como heredado no se guarda como propio de la versión", async () => {
+    const { brand, model, version, a, b, c } = await seed();
+    const app = createApp();
+    const cookie = await loginAsAdmin(app);
+    await prisma.brandEquipment.create({ data: { brandId: brand.id, equipmentItemId: c.id } });
+
+    // El admin cambia la versión de modelo (a uno de otra marca) sin tocar los
+    // chips: los heredados que se mostraban ya no se heredan, pero tampoco
+    // deben quedar cargados a mano en la versión.
+    const otraMarca = await prisma.brand.create({ data: { name: "Nissan" } });
+    const otroModelo = await prisma.model.create({
+      data: { brandId: otraMarca.id, name: "Versa", segment: "SEDAN" },
+    });
+    await prisma.version.update({ where: { id: version.id }, data: { modelId: otroModelo.id } });
+
+    await request(app)
+      .put(`/api/v1/admin/equipment/version/${version.id}`)
+      .set("Cookie", cookie)
+      .send({ itemIds: [a.id, b.id, c.id], knownInheritedIds: [c.id] });
+
+    expect(await attachedIds(version.id)).toEqual([a.id, b.id].sort());
+    expect(await prisma.model.count({ where: { id: model.id } })).toBe(1);
+  });
+
   it("quitar un ítem heredado de la marca crea una exclusión, no borra la asociación de marca", async () => {
     const { brand, version, a, b, c } = await seed();
     const app = createApp();
@@ -143,7 +193,7 @@ describe("PUT /api/v1/admin/equipment/version/:versionId", () => {
     const res = await request(app)
       .put(`/api/v1/admin/equipment/version/${version.id}`)
       .set("Cookie", cookie)
-      .send({ itemIds: [a.id, b.id] });
+      .send({ itemIds: [a.id, b.id], knownInheritedIds: [c.id] });
 
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual({ attached: 0, detached: 0, excluded: 1 });

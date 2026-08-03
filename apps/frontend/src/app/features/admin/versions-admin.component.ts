@@ -93,10 +93,18 @@ export class VersionsAdminComponent {
     // diff en una transacción. Antes acá había un request por ítem, en serie.
     // Para equipamiento el backend deriva de esa selección qué queda como
     // propio y qué pasa a ser una exclusión de lo heredado.
-    afterSave: async ({ id, value }) => {
+    //
+    // `knownInheritedIds` es lo que el diálogo mostró como heredado, tomado de
+    // la fila que lo pobló. En un alta `previous` es null y la lista va vacía:
+    // sin eso, el backend leía la selección vacía del form de creación como
+    // "excluir todo", y la versión nueva nacía sin el equipamiento de su marca.
+    afterSave: async ({ id, value, previous }) => {
       await Promise.all([
         this.api.put(`/admin/equipment/version/${id}`, {
           itemIds: (value['equipment'] as string[] | null) ?? [],
+          knownInheritedIds: (previous?.equipmentItems ?? [])
+            .filter((ei) => inheritedReason(ei) !== null)
+            .map((ei) => ei.equipmentItem.id),
         }),
         this.api.put(`/admin/colors/version/${id}`, {
           colorIds: (value['colors'] as string[] | null) ?? [],

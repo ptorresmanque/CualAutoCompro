@@ -166,17 +166,27 @@ export class EquipmentService {
    * diff se calcula acá, en vez de emitir un request por ítem desde el navegador.
    *
    * `itemIds` incluye lo heredado de la marca y del modelo, porque el formulario
-   * muestra una sola lista. La derivación:
+   * muestra una sola lista. `knownInheritedIds` es lo que ese formulario mostró
+   * **como heredado**, y acota qué puede excluirse:
    *
-   *   propio     = (deseado − heredado) ∪ (deseado ∩ propio actual)
-   *   exclusión  = heredado − deseado
+   *   propio     = (deseado − heredado − mostrado) ∪ (deseado ∩ propio actual)
+   *   exclusión  = (heredado ∩ mostrado) − deseado
+   *
+   * Sin `mostrado` la ausencia de un ítem es ambigua. Un alta manda la lista
+   * vacía porque el diálogo de creación no tiene versión que resolver todavía,
+   * y eso se interpretaba como "excluir todo lo heredado": la versión nueva
+   * nacía sin el equipamiento de su marca. Ahora, lo que el cliente no informa
+   * no se toca.
    *
    * El segundo término de `propio` preserva un ítem que ya era propio de la
    * versión aunque después la marca lo haya agregado también: sin eso, quitarlo
-   * de la marca lo borraría de una versión que lo tenía cargado a mano.
+   * de la marca lo borraría de una versión que lo tenía cargado a mano. El
+   * `− mostrado` es la contracara: un ítem que se mostró como heredado no pasa
+   * a ser propio si deja de heredarse (p. ej. al mover la versión de modelo).
    */
-  async syncVersion(versionId: string, itemIds: string[]) {
+  async syncVersion(versionId: string, itemIds: string[], knownInheritedIds: string[] = []) {
     const desired = new Set(itemIds);
+    const shown = new Set(knownInheritedIds);
 
     const version = await this.prisma.version.findFirst({
       where: { id: versionId, deletedAt: null, model: { deletedAt: null, brand: { deletedAt: null } } },
@@ -196,15 +206,15 @@ export class EquipmentService {
     const currentOwn = new Set(current.map((r) => r.equipmentItemId));
 
     const nextOwn = new Set(
-      [...desired].filter((id) => !inherited.has(id) || currentOwn.has(id)),
+      [...desired].filter((id) => (!inherited.has(id) && !shown.has(id)) || currentOwn.has(id)),
     );
     const toAttach = [...nextOwn].filter((id) => !currentOwn.has(id));
     const toDetach = [...currentOwn].filter((id) => !nextOwn.has(id));
 
-    // Solo se tocan las exclusiones de ítems que hoy se heredan: si un ítem
-    // dejó de estar en la marca, su exclusión queda intacta para que siga
-    // valiendo si la marca vuelve a agregarlo.
-    const toExclude = [...inherited].filter((id) => !desired.has(id));
+    // Solo se tocan las exclusiones de ítems que hoy se heredan **y** que el
+    // cliente vio: si un ítem dejó de estar en la marca, su exclusión queda
+    // intacta para que siga valiendo si la marca vuelve a agregarlo.
+    const toExclude = [...inherited].filter((id) => shown.has(id) && !desired.has(id));
     const toUnexclude = [...inherited].filter((id) => desired.has(id));
 
     await this.prisma.$transaction([
