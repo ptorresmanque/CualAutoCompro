@@ -70,8 +70,9 @@
 }
 
 /* Botón hamburguesa — solo móvil */
+/* El `--mdc-icon-button-state-layer-size: 40px` que había acá era inerte; el
+   tamaño lo fijan los `width`/`height` de abajo, que es lo que se ve. */
 .nav-hamburger.mat-mdc-icon-button {
-  --mdc-icon-button-state-layer-size: 40px;
   width: 40px !important;
   height: 40px !important;
   padding: 0 !important;
@@ -218,8 +219,11 @@
   .account-name { display: inline; }
 }
 
+/* El `--mdc-fab-container-shape: 2px` que había acá era inerte, así que el
+   mini-fab conserva la forma de M3. El token vivo sería
+   `--mat-fab-small-container-shape`; se anota en vez de aplicarlo, porque
+   cambiaría la forma en pantalla y esto es una limpieza. */
 .user-button.mat-mdc-mini-fab {
-  --mdc-fab-container-shape: 2px;
   background: var(--ink);
   color: var(--paper);
   font-family: var(--font-mono);
@@ -232,10 +236,11 @@
 }
 
 /* Auth buttons (rectangulares) */
+/* Los dos `--mdc-outlined-button-*` que había acá pedían label y borde en
+   `--ink` y no pintaban nada: el botón sale con `--mat-sys-primary` y
+   `--mat-sys-outline`. Lo que sí manda es todo lo demás del bloque. */
 .nav-login-btn.mat-mdc-outlined-button {
   display: none !important;
-  --mdc-outlined-button-label-text-color: var(--ink);
-  --mdc-outlined-button-outline-color: var(--ink);
   border-radius: 0 !important;
   font-family: var(--font-sans) !important;
   font-size: 0.8125rem !important;
@@ -245,8 +250,6 @@
 
 .nav-register-btn.mat-mdc-unelevated-button {
   display: none !important;
-  --mdc-filled-button-container-color: var(--ink);
-  --mdc-filled-button-label-text-color: var(--paper);
   --mat-button-filled-container-color: var(--ink);
   --mat-button-filled-label-text-color: var(--paper);
   border-radius: 0 !important;

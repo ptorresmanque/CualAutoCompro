@@ -107,8 +107,8 @@
   display: inline-flex !important;
   align-items: center !important;
   gap: 0.5rem !important;
-  --mdc-outlined-button-label-text-color: var(--ink);
-  --mdc-outlined-button-outline-color: var(--ink);
+  /* Había acá dos `--mdc-outlined-button-*` pidiendo label y borde en `--ink`.
+     Eran inertes: el botón sale con `--mat-sys-primary` y `--mat-sys-outline`. */
 }
 
 @media (min-width: 768px) {

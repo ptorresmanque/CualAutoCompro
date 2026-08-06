@@ -186,10 +186,11 @@
   gap: 0.5rem !important;
 }
 
-.sidenav-logout.mat-mdc-stroked-button {
-  --mdc-outlined-button-label-text-color: var(--engine-dark);
-  --mdc-outlined-button-outline-color: var(--engine-dark);
-}
+/* Acá había un bloque `.sidenav-logout.mat-mdc-stroked-button` con dos
+ * `--mdc-outlined-button-*`. Estaba muerto dos veces: `mat-mdc-stroked-button`
+ * no es una clase que Material 22 emita (la directiva `mat-stroked-button`
+ * produce `mat-mdc-outlined-button`), y aunque el selector hubiera acertado,
+ * Material no lee ninguna custom property `--mdc-*`. */
 
 @media (min-width: 768px) {
   .app-sidenav.mat-drawer {
