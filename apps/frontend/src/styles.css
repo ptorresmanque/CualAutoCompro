@@ -93,6 +93,46 @@
   /* Inversos */
   --mat-sys-inverse-primary:           var(--engine-200);
 
+  /* ---- Anillo de foco de Material (WCAG 2.4.7) ----
+   *
+   * Material dibuja su propio anillo en un `::before` de `.mat-focus-indicator`
+   * —el `<span>` que button, icon-button, chip, tab, menu-item, option, radio,
+   * checkbox y slide-toggle traen en su template—, pero lo deja apagado hasta
+   * que alguien define estos tokens: el pseudo-elemento nace con
+   * `display: var(--mat-focus-indicator-display, none)` y
+   * `border-color: var(--mat-focus-indicator-border-color, transparent)`.
+   *
+   * Este repo nunca los definió, así que los botones de Material se quedaban
+   * SIN foco visible. El `:focus-visible` global de más abajo tampoco los
+   * cubre: `.mdc-button { outline: none }` pesa lo mismo —(0,1,0)— y los
+   * estilos de componente se inyectan DESPUÉS del `<link>` de esta hoja, así
+   * que en el empate ganan por orden. Definir los tokens acá es la única
+   * salida que no necesita `!important`.
+   *
+   * `display: block` no dibuja nada por sí solo: el `content: ''` lo pone
+   * Material recién en `:focus-visible`.
+   *
+   * `border-width: 2px` iguala el `:focus-visible` global, y no es cosmético:
+   * el `::before` se posiciona con `margin: calc((border-width + 2px) * -1)`,
+   * así que 2px dejan exactamente 2px de aire entre el control y el anillo —
+   * el mismo `outline-offset: 2px` del resto del sistema. Con el default de
+   * 3px el anillo sería más grueso y más separado que el de cualquier otro
+   * control de la app.
+   *
+   * El color va en `--engine`, igual que el anillo global: 6.29:1 sobre
+   * `--paper`, 5.79:1 sobre `--paper-warm` y 6.70:1 sobre `--paper-cool`, muy
+   * por encima del 3:1 que pide WCAG 1.4.11. Que el anillo caiga siempre
+   * sobre uno de esos tres fondos y no sobre el control es justamente lo que
+   * garantiza el aire de 2px: contra el relleno `--ink` del botón filled el
+   * mismo azul daría 2.79:1 y no se distinguiría.
+   *
+   * No se toca `--mat-focus-indicator-border-radius` (default 4px): coincide
+   * con el radio máximo del sistema, y botones e icon-buttons ya declaran el
+   * radio del anillo en `inherit`. */
+  --mat-focus-indicator-display:      block;
+  --mat-focus-indicator-border-color: var(--engine);
+  --mat-focus-indicator-border-width: 2px;
+
   /* ---- Tokens de botón M3 → ink + paper ---- */
   --mdc-outlined-button-label-text-color:        var(--ink);
   --mdc-outlined-button-outline-color:           var(--rule);
@@ -416,7 +456,19 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   color: var(--ink);
 }
 
-/* Focus visible universal */
+/* Focus visible universal.
+ *
+ * OJO — sobre los controles de Material esta regla NO llega a pintar nada:
+ * `.mdc-button { outline: none }` pesa (0,1,0), lo mismo que `:focus-visible`,
+ * y los estilos de componente se inyectan DESPUÉS del `<link>` de esta hoja,
+ * así que en el empate ganan por orden.
+ *
+ * El foco de esos controles no lo da esta regla sino el anillo propio de
+ * Material, que el `:root` enciende con `--mat-focus-indicator-display`,
+ * `--mat-focus-indicator-border-color` y `--mat-focus-indicator-border-width`
+ * (ver el comentario largo de allá). Si alguien borra esos tres tokens, cada
+ * botón, chip, tab, menu-item y checkbox de Material vuelve a quedarse sin
+ * foco visible y esta regla no lo cubre. */
 :focus-visible {
   outline: 2px solid var(--engine);
   outline-offset: 2px;
