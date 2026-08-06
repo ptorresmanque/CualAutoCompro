@@ -40,7 +40,12 @@
     padding-top: 1.5rem;
     padding-left: 2rem;
   }
+  /* Material estira el drawer con `top: 0; bottom: 0`, así que la columna
+     medía lo mismo que la grilla entera (3000px+ de blanco vacío bajo el
+     último filtro). En modo `side` mide su contenido; el `over` de móvil
+     sigue a pantalla completa, que es lo que corresponde a un panel modal. */
   .catalog-filters-drawer.mat-drawer-side {
+    bottom: auto;
     border-right: 1px solid var(--rule);
   }
 }

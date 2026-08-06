@@ -373,6 +373,49 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
  * y por eso el CTA salía azul (var(--mat-sys-primary)) pese al override. Los
  * `--mdc-*` que acompañaban a estos dos se fueron: no eran un cinturón por si
  * acaso, eran texto sin lector. */
+/* La forma también es del sistema, no de cada pantalla: M3 le da a las tres
+ * variantes `--mat-sys-corner-full` (píldora) y hasta acá cada botón la
+ * corregía por su cuenta con un override local (`.filters-apply`,
+ * `.nav-register-btn`, `.action-buttons`…). El que no escribía ese override
+ * salía redondeado: los "+ Nuevo" de las ocho tablas del admin y los botones
+ * de los dos diálogos, donde el "Cancelar" outlined convivía con un "Guardar"
+ * filled rectangular. Se setean los tokens vivos, que ganan por herencia sin
+ * pelear orden de hojas ni `!important`. */
+.mat-mdc-unelevated-button {
+  --mat-button-filled-container-shape: 0;
+}
+
+.mat-mdc-outlined-button {
+  --mat-button-outlined-container-shape: 0;
+}
+
+.mat-mdc-button {
+  --mat-button-text-container-shape: 0;
+}
+
+/* Los icon-button no centran su ícono: Material los deja `inline-block` y el
+ * `mat-icon` se apoya en la línea base, cuya altura sale del `line-height:
+ * inherit` que el reset de Tailwind pone en `button`. Con los 36px que se
+ * heredan hoy, el chevron del carrusel caía 4px bajo el centro de su caja de
+ * 40px —con borde cuadrado alrededor, bien visible— y el corazón de la ficha
+ * quedaba 1px arriba en su caja de 32px. Centrado por layout: no depende de
+ * la tipografía heredada ni del tamaño del botón. Los hijos que Material
+ * posiciona en absoluto (ripple, touch target, anillo de foco) no entran en
+ * la grilla.
+ *
+ * Doble clase a propósito: `.mat-mdc-icon-button` a secas empata en (0,1,0)
+ * con el `display: inline-block` de Material, y los estilos de componente se
+ * inyectan después de esta hoja, así que en el empate gana él. */
+.mat-mdc-icon-button.mat-mdc-button-base {
+  display: inline-grid;
+  /* `place-content`, no `place-items`: el ícono de 24px es más grande que los
+     22px que dejan el padding y el borde del botón del carrusel, así que la
+     pista crece más que el área y lo que hay que centrar es la pista. Con
+     `place-items` el ítem queda centrado en una pista que arranca pegada
+     arriba, y el chevron seguía 1px bajo del centro. */
+  place-content: center;
+}
+
 .mat-mdc-unelevated-button.mat-primary {
   --mat-button-filled-container-color: var(--ink);
   --mat-button-filled-label-text-color: var(--paper);
@@ -689,7 +732,6 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
 .filters-apply.mat-mdc-unelevated-button {
   --mat-button-filled-container-color: var(--ink);
   --mat-button-filled-label-text-color: var(--paper);
-  border-radius: 0 !important;
   font-family: var(--font-sans) !important;
   font-size: 0.8125rem !important;
   letter-spacing: 0.04em;

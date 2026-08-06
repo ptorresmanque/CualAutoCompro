@@ -365,34 +365,42 @@
         </nav>
       }
 
-      @if (selectionCount() > 0) {
-        <div class="selection-bar" data-testid="selection-bar">
-          <div class="flex items-center gap-3 min-w-0">
-            <span class="selection-count-badge">{{ selectionCount() }}</span>
-            <span class="font-mono text-[11px] uppercase tracking-stamp selection-label">
-              {{ selectionCount() === 1 ? '1 versión seleccionada' : selectionCount() + ' versiones seleccionadas' }}
-              @if (!maxReached()) {
-                <span class="text-graphite"> · puedes agregar hasta 3</span>
-              }
-            </span>
-          </div>
-          <div class="flex items-center gap-2 flex-shrink-0">
-            <button type="button" (click)="clearSelection()"
-              [attr.aria-label]="'Limpiar selección de ' + selectionCount() + ' versiones'"
-              data-testid="selection-bar-clear"
-              class="selection-action ghost">
-              <mat-icon class="text-base">delete_sweep</mat-icon>
-              <span class="hidden sm:inline">Limpiar</span>
-            </button>
-            <a routerLink="/compare"
-              class="selection-action primary"
-              data-testid="selection-bar-compare">
-              <mat-icon class="text-base">compare_arrows</mat-icon>
-              <span>Comparar</span>
-            </a>
-          </div>
-        </div>
-      }
     </mat-sidenav-content>
   </mat-sidenav-container>
+
+  <!-- Fuera del `mat-sidenav-container` a propósito: `.mat-drawer-content`
+       es `position: relative; z-index: 1`, o sea un contexto de apilamiento
+       propio, y el drawer es su hermano con `z-index: 2`. Adentro, el
+       `z-index: 30` de la barra solo competía contra los hijos del content:
+       el panel de filtros la tapaba sin importar cuánto subiéramos ese 30.
+       Acá arriba sí gana contra el container entero. La barra es `fixed`,
+       así que no depende del flujo del que la sacamos. -->
+  @if (selectionCount() > 0) {
+    <div class="selection-bar" data-testid="selection-bar">
+      <div class="flex items-center gap-3 min-w-0">
+        <span class="selection-count-badge">{{ selectionCount() }}</span>
+        <span class="font-mono text-[11px] uppercase tracking-stamp selection-label">
+          {{ selectionCount() === 1 ? '1 versión seleccionada' : selectionCount() + ' versiones seleccionadas' }}
+          @if (!maxReached()) {
+            <span class="text-graphite"> · puedes agregar hasta 3</span>
+          }
+        </span>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <button type="button" (click)="clearSelection()"
+          [attr.aria-label]="'Limpiar selección de ' + selectionCount() + ' versiones'"
+          data-testid="selection-bar-clear"
+          class="selection-action ghost">
+          <mat-icon class="text-base">delete_sweep</mat-icon>
+          <span class="hidden sm:inline">Limpiar</span>
+        </button>
+        <a routerLink="/compare"
+          class="selection-action primary"
+          data-testid="selection-bar-compare">
+          <mat-icon class="text-base">compare_arrows</mat-icon>
+          <span>Comparar</span>
+        </a>
+      </div>
+    </div>
+  }
 </section>
