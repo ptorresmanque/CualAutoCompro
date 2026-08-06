@@ -548,7 +548,11 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   flex-wrap: nowrap;
 }
 
-.action-buttons .mat-mdc-stroked-button {
+/* `mat-mdc-outlined-button`, no `mat-mdc-stroked-button`: la directiva de los
+ * templates del admin es `mat-stroked-button`, pero Material 22 la emite con
+ * la clase `outlined`. Con el selector viejo este bloque no alcanzaba a
+ * ninguno de los botones de acción de las ocho tablas. */
+.action-buttons .mat-mdc-outlined-button {
   border-radius: 0 !important;
   font-family: var(--font-sans) !important;
   font-size: 0.6875rem !important;
@@ -572,7 +576,7 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   .action-buttons .action-label {
     display: none;
   }
-  .action-buttons .mat-mdc-stroked-button {
+  .action-buttons .mat-mdc-outlined-button {
     padding-left: 0.375rem !important;
     padding-right: 0.375rem !important;
   }

@@ -172,7 +172,13 @@
   letter-spacing: -0.01em;
 }
 
-.sidenav-auth-btn.mat-mdc-stroked-button,
+/* `mat-mdc-outlined-button`, no `mat-mdc-stroked-button`: la directiva del
+ * template es `mat-stroked-button`, pero Material 22 la emite con la clase
+ * `outlined`. Mientras el selector dijo `stroked` este bloque solo alcanzaba
+ * a "Crear cuenta" —el único `mat-flat-button` de los cuatro— y los otros
+ * tres salían píldora de 9999px en minúsculas al lado de un botón
+ * rectangular en mayúsculas. */
+.sidenav-auth-btn.mat-mdc-outlined-button,
 .sidenav-auth-btn.mat-mdc-unelevated-button {
   border-radius: 0 !important;
   font-family: var(--font-sans) !important;
