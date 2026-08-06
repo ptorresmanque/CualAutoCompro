@@ -323,7 +323,17 @@ const CONTRAST_PAIRS = [
   ['--ink', '--paper-warm', 4.5, 'texto principal sobre paper-warm'],
   ['--engine', '--paper-warm', 4.5, 'links sobre paper-warm'],
   ['--engine', '--paper-cool', 4.5, 'links sobre tarjeta'],
+  // El tercer fondo faltaba, y es el más común: 33 reglas ponen el texto en
+  // `--engine` y el fondo de la página es `--paper`.
+  ['--engine', '--paper', 4.5, 'links sobre el fondo'],
   ['--engine-dark', '--engine-50', 4.5, 'mensajes informativos'],
+  // Los otros dos escalones de la rampa azul contra la tinta que los acompaña:
+  // `--engine-100` pinta un fondo y `--engine-200` aparece en tres reglas,
+  // siempre debajo de texto `--engine-dark` (7 reglas). Pasan holgados, pero
+  // sin declararlos nadie garantiza que sigan pasando: tocar un hex de la
+  // rampa no rompía nada visible hasta que alguien lo mirara.
+  ['--engine-dark', '--engine-100', 4.5, 'chips y sellos de acento'],
+  ['--engine-dark', '--engine-200', 4.5, 'hover de chips de acento'],
   ['--paper', '--ink', 4.5, 'label del CTA primario'],
   ['--paper', '--engine', 4.5, 'label del CTA en hover'],
   ['--caution-dark', '--caution-light', 4.5, 'aviso / nota legal'],
@@ -337,6 +347,10 @@ const CONTRAST_PAIRS = [
   ['--danger', '--paper-cool', 3.0, 'borde del botón destructivo (WCAG 1.4.11)'],
   ['--rule-strong', '--paper-cool', 3.0, 'borde de control (WCAG 1.4.11)'],
   ['--rule-strong', '--paper', 3.0, 'borde de control sobre el fondo'],
+  // Dos reglas ponen `--success` en un `border`. Un borde es componente no
+  // textual: el umbral es 3:1, no 4.5:1.
+  ['--success', '--paper-cool', 3.0, 'borde de confirmación'],
+  ['--success', '--paper', 3.0, 'borde de confirmación sobre el fondo'],
 ];
 
 const rel = path.relative(FRONTEND_ROOT, stylesPath);

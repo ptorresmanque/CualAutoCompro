@@ -93,17 +93,66 @@
   /* Inversos */
   --mat-sys-inverse-primary:           var(--engine-200);
 
-  /* ---- Tokens de botón M3 → ink + paper ---- */
-  --mdc-outlined-button-label-text-color:        var(--ink);
-  --mdc-outlined-button-outline-color:           var(--rule);
-  --mdc-outlined-button-hover-label-text-color:  var(--engine);
-  --mdc-outlined-button-focus-label-text-color:  var(--engine);
+  /* ---- Anillo de foco de Material (WCAG 2.4.7) ----
+   *
+   * Material dibuja su propio anillo en un `::before` de `.mat-focus-indicator`
+   * —el `<span>` que button, icon-button, chip, tab, menu-item, option, radio,
+   * checkbox y slide-toggle traen en su template—, pero lo deja apagado hasta
+   * que alguien define estos tokens: el pseudo-elemento nace con
+   * `display: var(--mat-focus-indicator-display, none)` y
+   * `border-color: var(--mat-focus-indicator-border-color, transparent)`.
+   *
+   * Este repo nunca los definió, así que los botones de Material se quedaban
+   * SIN foco visible. El `:focus-visible` global de más abajo tampoco los
+   * cubre: `.mdc-button { outline: none }` pesa lo mismo —(0,1,0)— y los
+   * estilos de componente se inyectan DESPUÉS del `<link>` de esta hoja, así
+   * que en el empate ganan por orden. Definir los tokens acá es la única
+   * salida que no necesita `!important`.
+   *
+   * `display: block` no dibuja nada por sí solo: el `content: ''` lo pone
+   * Material recién en `:focus-visible`.
+   *
+   * `border-width: 2px` iguala el `:focus-visible` global, y no es cosmético:
+   * el `::before` se posiciona con `margin: calc((border-width + 2px) * -1)`,
+   * así que 2px dejan exactamente 2px de aire entre el control y el anillo —
+   * el mismo `outline-offset: 2px` del resto del sistema. Con el default de
+   * 3px el anillo sería más grueso y más separado que el de cualquier otro
+   * control de la app.
+   *
+   * El color va en `--engine`, igual que el anillo global: 6.29:1 sobre
+   * `--paper`, 5.79:1 sobre `--paper-warm` y 6.70:1 sobre `--paper-cool`, muy
+   * por encima del 3:1 que pide WCAG 1.4.11. Que el anillo caiga siempre
+   * sobre uno de esos tres fondos y no sobre el control es justamente lo que
+   * garantiza el aire de 2px: contra el relleno `--ink` del botón filled el
+   * mismo azul daría 2.79:1 y no se distinguiría.
+   *
+   * No se toca `--mat-focus-indicator-border-radius` (default 4px): coincide
+   * con el radio máximo del sistema, y botones e icon-buttons ya declaran el
+   * radio del anillo en `inherit`. */
+  --mat-focus-indicator-display:      block;
+  --mat-focus-indicator-border-color: var(--engine);
+  --mat-focus-indicator-border-width: 2px;
 
-  --mdc-filled-button-container-color:           var(--ink);
-  --mdc-filled-button-label-text-color:          var(--paper);
+  /* ---- Tokens de botón M3 → ink + paper ----
+   *
+   * Acá vivían también siete `--mdc-*`. Se fueron porque Material 22 no lee
+   * NINGUNA custom property con ese prefijo: 0 de 97 bundles .mjs y 0 de 191
+   * archivos CSS/SCSS del paquete contienen `var(--mdc-`, contra 39 y 53
+   * respectivamente que leen `var(--mat-`. El único `var(#{...})` construido
+   * por interpolación en todo el paquete arma un `calc()` de opacidad, no un
+   * nombre de token.
+   *
+   * Se veía a simple vista en el render: con
+   * `--mdc-outlined-button-label-text-color: var(--ink)` declarado acá, el
+   * botón outlined seguía pintando su label en `--engine`, y con
+   * `--mdc-outlined-button-outline-color: var(--rule)` seguía pintando su
+   * borde en `--graphite`. Lo declarado y lo pintado no coincidían.
+   *
+   * Lo que manda en el botón outlined es `--mat-sys-primary` (label) y
+   * `--mat-sys-outline` (borde), ya definidos arriba. Si alguna vez hace falta
+   * apartarse de eso, el token es `--mat-button-outlined-*`, no `--mdc-*`. */
   --mat-button-filled-container-color:           var(--ink);
   --mat-button-filled-label-text-color:          var(--paper);
-  --mdc-text-button-label-text-color:            var(--ink);
 
   /* ---- Tokens de la app (compatibilidad) ----
    * Alias, no duplicados: la fuente de verdad es la paleta base de arriba. */
@@ -281,19 +330,17 @@ h1, .display {
 
 /* ============================================================
  * Botones de acción destructivos (Eliminar en admin).
- * Override de los tokens internos de mat-stroked / flat button
- * para que `.action-danger` se pinte en rojo destructivo en
- * lugar del azul que el prebuilt theme define.
+ * Para que `.action-danger` se pinte en rojo destructivo en lugar
+ * del azul que el prebuilt theme define.
+ *
+ * Los ocho usos de `.action-danger` en los templates son todos
+ * `mat-stroked-button`, que Material 22 emite con la clase
+ * `mat-mdc-outlined-button`. Por eso el selector de abajo alcanza.
  * ============================================================ */
 .mat-mdc-outlined-button.action-danger,
 .mat-mdc-button.action-danger {
-  --mdc-outlined-button-label-text-color: var(--mat-sys-error);
-  --mdc-outlined-button-outline-color:    var(--mat-sys-error);
-  --mdc-outlined-button-hover-label-text-color:  var(--mat-sys-error);
-  --mdc-outlined-button-pressed-label-text-color:var(--mat-sys-error);
-  --mdc-outlined-button-focus-label-text-color:  var(--mat-sys-error);
-  --mdc-protected-button-label-text-color: var(--mat-sys-error);
-  --mdc-protected-button-container-color: var(--mat-sys-error-container);
+  /* Los siete `--mdc-*` que había acá eran inertes (ver el :root). El rojo lo
+     dan los dos `--mat-button-outlined-*` de abajo más el `color:` directo. */
   --mat-button-outlined-label-text-color:  var(--mat-sys-error);
   --mat-button-outlined-outline-color:    var(--mat-sys-error);
   --mat-button-protected-label-text-color: var(--mat-sys-error);
@@ -308,18 +355,13 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
 .mat-mdc-outlined-button.action-danger:disabled,
 .mat-mdc-button.action-danger:disabled {
   color: var(--ink-muted);
-  --mdc-outlined-button-outline-color: var(--rule);
 }
 
-.mat-mdc-flat-button.action-danger {
-  --mdc-filled-button-container-color: var(--danger);
-  --mdc-filled-button-label-text-color: var(--paper);
-  --mdc-filled-button-icon-color: var(--paper);
-  --mat-button-filled-container-color: var(--danger);
-  --mat-button-filled-label-text-color: var(--paper);
-  color: var(--paper);
-  background-color: var(--danger);
-}
+/* Acá había un bloque `.mat-mdc-flat-button.action-danger`. Se fue por estar
+ * muerto dos veces: `mat-mdc-flat-button` no es una clase que Material 22
+ * emita —la directiva `mat-flat-button` produce `mat-mdc-unelevated-button`—
+ * y además ningún `.action-danger` del repo es un flat button: los ocho son
+ * `mat-stroked-button`. El selector no matcheaba nada y nunca iba a hacerlo. */
 
 /* ============================================================
  * Estilo global de Material buttons para casar con la ficha.
@@ -327,13 +369,11 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
  * Los componentes consumen muchos tokens M3 que el prebuilt theme
  * (azure-blue) define. Estos overrides fuerzan coherencia.
  * ============================================================ */
-/* Material lee `--mat-button-filled-*`; `--mdc-filled-button-*` quedó
- * obsoleto y por eso el CTA salía azul (var(--mat-sys-primary)) pese al
- * override, contra la jerarquía de AGENTS.md §3. Se setean ambos: los
- * custom properties del elemento ganan sin necesidad de !important. */
+/* Material lee `--mat-button-filled-*`; `--mdc-filled-button-*` está obsoleto
+ * y por eso el CTA salía azul (var(--mat-sys-primary)) pese al override. Los
+ * `--mdc-*` que acompañaban a estos dos se fueron: no eran un cinturón por si
+ * acaso, eran texto sin lector. */
 .mat-mdc-unelevated-button.mat-primary {
-  --mdc-filled-button-container-color: var(--ink);
-  --mdc-filled-button-label-text-color: var(--paper);
   --mat-button-filled-container-color: var(--ink);
   --mat-button-filled-label-text-color: var(--paper);
   transition: background-color 160ms ease;
@@ -344,19 +384,16 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
 }
 
 .mat-mdc-unelevated-button.mat-primary:disabled {
-  --mdc-filled-button-container-color: var(--rule);
-  --mdc-filled-button-label-text-color: var(--ink-muted);
   --mat-button-filled-container-color: var(--rule);
   --mat-button-filled-label-text-color: var(--ink-muted);
 }
 
-.mat-mdc-outlined-button.mat-primary,
-.mat-mdc-button.mat-primary {
-  --mdc-outlined-button-label-text-color: var(--ink);
-  --mdc-outlined-button-outline-color: var(--ink);
-  --mdc-outlined-button-hover-label-text-color: var(--engine);
-  --mdc-outlined-button-focus-label-text-color: var(--engine);
-}
+/* Acá había un bloque `.mat-mdc-outlined-button.mat-primary` con cuatro
+ * `--mdc-outlined-button-*`. El selector sí matcheaba, pero el bloque entero
+ * no pintaba nada: pedía label y borde en `--ink` y el botón renderizaba
+ * label en `--engine` y borde en `--graphite`, que es lo que dictan
+ * `--mat-sys-primary` y `--mat-sys-outline`. Borrarlo no cambia un pixel.
+ * Para apartarse de esos valores hay que escribir `--mat-button-outlined-*`. */
 
 /* Cards Material → papel */
 .mat-mdc-card {
@@ -364,15 +401,16 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   border-radius: 4px !important;
 }
 
-/* Inputs y form-fields: hairline underline */
+/* Inputs y form-fields.
+ *
+ * Había acá seis `--mdc-outlined-text-field-*`, todos inertes. El borde real
+ * del campo no sale de `--rule-strong` como pedían, sino de `--mat-sys-outline`
+ * = `--graphite`, y eso está bien: da 5.94:1 sobre `--paper-cool` contra el
+ * 3:1 que exige WCAG 1.4.11, mejor incluso que los 3.43:1 de `--rule-strong`.
+ * El requisito se cumple; lo que no existía era la conexión entre el token
+ * escrito y el pixel pintado. Para tocarlo hay que ir a `--mat-sys-outline` o
+ * a `--mat-form-field-*`. */
 .mat-mdc-form-field {
-  /* --rule (1.3:1) no alcanza para un borde de control: WCAG 1.4.11 pide 3:1 */
-  --mdc-outlined-text-field-outline-color: var(--rule-strong);
-  --mdc-outlined-text-field-focus-outline-color: var(--ink);
-  --mdc-outlined-text-field-label-text-color: var(--ink-muted);
-  --mdc-outlined-text-field-hover-label-text-color: var(--ink);
-  --mdc-outlined-text-field-input-text-color: var(--ink);
-  --mdc-outlined-text-field-caret-color: var(--engine);
   font-family: var(--font-sans) !important;
 }
 
@@ -387,9 +425,14 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   background-color: var(--engine) !important;
 }
 
-/* Chips simples */
+/* Chips simples.
+ *
+ * Tenía un `--mdc-chip-container-shape-radius: 2px` que era inerte, así que
+ * el chip nunca tuvo el radio del sistema: usa el `corner-small` de M3. Si
+ * hace falta corregirlo, el token vivo es `--mat-chip-container-shape-radius`;
+ * se deja anotado en vez de cambiarlo, porque eso mueve la forma en pantalla
+ * y esto es una limpieza, no un ajuste visual. */
 .mat-mdc-chip {
-  --mdc-chip-container-shape-radius: 2px;
   font-family: var(--font-mono) !important;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -416,7 +459,19 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   color: var(--ink);
 }
 
-/* Focus visible universal */
+/* Focus visible universal.
+ *
+ * OJO — sobre los controles de Material esta regla NO llega a pintar nada:
+ * `.mdc-button { outline: none }` pesa (0,1,0), lo mismo que `:focus-visible`,
+ * y los estilos de componente se inyectan DESPUÉS del `<link>` de esta hoja,
+ * así que en el empate ganan por orden.
+ *
+ * El foco de esos controles no lo da esta regla sino el anillo propio de
+ * Material, que el `:root` enciende con `--mat-focus-indicator-display`,
+ * `--mat-focus-indicator-border-color` y `--mat-focus-indicator-border-width`
+ * (ver el comentario largo de allá). Si alguien borra esos tres tokens, cada
+ * botón, chip, tab, menu-item y checkbox de Material vuelve a quedarse sin
+ * foco visible y esta regla no lo cubre. */
 :focus-visible {
   outline: 2px solid var(--engine);
   outline-offset: 2px;
@@ -493,7 +548,11 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   flex-wrap: nowrap;
 }
 
-.action-buttons .mat-mdc-stroked-button {
+/* `mat-mdc-outlined-button`, no `mat-mdc-stroked-button`: la directiva de los
+ * templates del admin es `mat-stroked-button`, pero Material 22 la emite con
+ * la clase `outlined`. Con el selector viejo este bloque no alcanzaba a
+ * ninguno de los botones de acción de las ocho tablas. */
+.action-buttons .mat-mdc-outlined-button {
   border-radius: 0 !important;
   font-family: var(--font-sans) !important;
   font-size: 0.6875rem !important;
@@ -517,7 +576,7 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   .action-buttons .action-label {
     display: none;
   }
-  .action-buttons .mat-mdc-stroked-button {
+  .action-buttons .mat-mdc-outlined-button {
     padding-left: 0.375rem !important;
     padding-right: 0.375rem !important;
   }
@@ -628,8 +687,6 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
 }
 
 .filters-apply.mat-mdc-unelevated-button {
-  --mdc-filled-button-container-color: var(--ink);
-  --mdc-filled-button-label-text-color: var(--paper);
   --mat-button-filled-container-color: var(--ink);
   --mat-button-filled-label-text-color: var(--paper);
   border-radius: 0 !important;

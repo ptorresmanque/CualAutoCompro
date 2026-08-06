@@ -58,7 +58,10 @@
 
 .admin-shell-tabs.mat-mdc-tab-nav-bar {
   border-bottom: 0;
-  --mdc-tab-indicator-active-indicator-color: var(--mat-sys-primary);
+  /* El `--mdc-tab-indicator-active-indicator-color` que había acá era inerte.
+     No se nota porque pedía `--mat-sys-primary`, que es justo el default del
+     indicador. El token vivo, si algún día hay que apartarse, es
+     `--mat-tab-active-indicator-color`. */
   --mat-tab-header-active-label-text-color: var(--mat-sys-primary);
   --mat-tab-header-active-focus-indicator-color: var(--mat-sys-primary);
   --mat-tab-header-active-ripple-color: var(--mat-sys-primary);
