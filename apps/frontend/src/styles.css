@@ -15,6 +15,7 @@
  * Todos los pares fg/bg de esta paleta están verificados en WCAG AA
  * por `scripts/check-design.mjs` (regla `contrast-aa`). Si tocás un
  * hex de acá, el linter te dice si rompiste un par.
+ * ej
  * ============================================================ */
 :root {
   /* ---- Neutros ----
