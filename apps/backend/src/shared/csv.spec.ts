@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCsv, toCsv } from "./csv.js";
+import { toCsv } from "./csv.js";
 
 describe("toCsv", () => {
   it("serializes a simple header + rows with CRLF line endings", () => {
@@ -37,49 +37,3 @@ describe("toCsv", () => {
   });
 });
 
-describe("parseCsv", () => {
-  it("parses simple rows", () => {
-    expect(parseCsv("a,b,c\r\n1,2,3\r\n4,5,6")).toEqual([
-      ["a", "b", "c"],
-      ["1", "2", "3"],
-      ["4", "5", "6"],
-    ]);
-  });
-
-  it("handles quoted cells with embedded commas", () => {
-    expect(parseCsv('a,b\r\n"x,y",z')).toEqual([
-      ["a", "b"],
-      ["x,y", "z"],
-    ]);
-  });
-
-  it("decodes escaped double-quotes inside quoted cells", () => {
-    expect(parseCsv('a\r\n"he said ""hi"""')).toEqual([
-      ["a"],
-      ['he said "hi"'],
-    ]);
-  });
-
-  it("supports LF and CRLF line endings", () => {
-    expect(parseCsv("a,b\n1,2\r\n3,4")).toEqual([
-      ["a", "b"],
-      ["1", "2"],
-      ["3", "4"],
-    ]);
-  });
-
-  it("roundtrips with toCsv for non-trivial values", () => {
-    const csv = toCsv(
-      ["name", "note"],
-      [
-        ["Toyota, Inc.", 'has "double" quotes'],
-        ["multi\nline", "ok"],
-      ],
-    );
-    expect(parseCsv(csv)).toEqual([
-      ["name", "note"],
-      ["Toyota, Inc.", 'has "double" quotes'],
-      ["multi\nline", "ok"],
-    ]);
-  });
-});

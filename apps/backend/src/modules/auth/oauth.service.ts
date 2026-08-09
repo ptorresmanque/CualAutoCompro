@@ -2,7 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import { oauthError } from "../../shared/errors.js";
 import type { OAuthProvider } from "./oauth-state.js";
 
-export type ProviderIdentity = {
+type ProviderIdentity = {
   provider: OAuthProvider;
   sub: string;
   email: string | null;
@@ -10,7 +10,7 @@ export type ProviderIdentity = {
   name: string | null;
 };
 
-export type ResolvedUser = {
+type ResolvedUser = {
   id: string;
   email: string;
   name: string;

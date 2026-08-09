@@ -6,12 +6,12 @@ const DEFAULT_KEEPALIVE_TIMEOUT_MS = 30_000;
 const DEFAULT_HEADERS_TIMEOUT_MS = 31_000;
 const DEFAULT_SHUTDOWN_HARD_TIMEOUT_MS = 10_000;
 
-export interface ServerOptions {
+interface ServerOptions {
   keepAliveTimeoutMs?: number;
   headersTimeoutMs?: number;
 }
 
-export type ShutdownFn = () => Promise<void> | void;
+type ShutdownFn = () => Promise<void> | void;
 
 /**
  * Envuelve `app` en un `http.Server` con tuning de keepAlive/headers

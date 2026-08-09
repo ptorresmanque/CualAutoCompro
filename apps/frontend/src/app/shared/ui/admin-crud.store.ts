@@ -10,7 +10,7 @@ import { ConfirmDialogComponent } from './confirm-dialog.component';
 import type { BackendFieldError } from './admin-form-errors';
 import type { PageMeta, PagedResponse } from './pagination.types';
 
-export type DialogMode = 'closed' | 'create' | 'edit';
+type DialogMode = 'closed' | 'create' | 'edit';
 
 /** Claves que nunca viajan en un prefill de "duplicar". */
 const NON_CLONABLE_KEYS = ['id', 'createdAt', 'updatedAt', 'deletedAt'] as const;

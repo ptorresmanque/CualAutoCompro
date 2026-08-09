@@ -349,8 +349,13 @@ export class AdminEditDialogComponent implements AfterViewInit, OnDestroy {
       untracked(() => {
         this.loading.set(true);
         this.loadError.set(null);
-        this.optionsCache
-          .getObject<Record<string, unknown>>(`/admin/seed/template/${key}`)
+        // `get` memoiza por path y tipa el resultado como lista; la plantilla
+        // del seed es un objeto, de ahí el cast.
+        (
+          this.optionsCache.get(`/admin/seed/template/${key}`) as unknown as Promise<
+            Record<string, unknown>
+          >
+        )
           .then((tpl) => {
             this.emptyTemplate.set(tpl);
             this.loading.set(false);

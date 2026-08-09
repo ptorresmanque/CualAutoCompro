@@ -55,7 +55,7 @@ interface AvailableVersionLite {
   engineType?: string | null;
 }
 
-export interface CompareVersion {
+interface CompareVersion {
   id: string;
   name: string;
   priceClp?: number | null;

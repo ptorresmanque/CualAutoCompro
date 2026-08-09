@@ -19,8 +19,8 @@
  * ============================================================ */
 :root {
   /* ---- Neutros ----
-   * `graphite` es el token más delicado: pinta mono 11px (dt, labels,
-   * ficha-num) sobre `paper-warm`, el peor fondo. Cualquier valor más
+   * `graphite` es el token más delicado: pinta mono 11px (dt, labels)
+   * sobre `paper-warm`, el peor fondo. Cualquier valor más
    * claro que #56657A cae bajo 4.5:1 ahí. */
   --paper:        #F5F8FC;
   --paper-warm:   #E9EFF6;
@@ -222,24 +222,15 @@ h1, .display {
 }
 
 /* Etiquetas de sección — el idioma del sitio */
-.mono-label, .stamp-label {
+.stamp-label {
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 11px;
   font-weight: 600;
-  color: var(--ink-muted);
-}
-
-.stamp-label {
   color: var(--engine);
 }
 
-.big-number {
-  font-family: var(--font-display);
-  line-height: 1;
-  color: var(--ink);
-}
 
 /* ------------------------------------------------------------
  * Skip link
@@ -291,10 +282,6 @@ h1, .display {
   border-top: 1px solid var(--rule);
 }
 
-.hairline-v {
-  border: 0;
-  border-left: 1px solid var(--rule);
-}
 
 /* ============================================================
  * Material icons — sin cambios
@@ -458,16 +445,6 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   font-family: var(--font-sans) !important;
 }
 
-/* Radio buttons: a la ficha */
-.mat-mdc-radio-button .mdc-radio__background::before {
-  background-color: var(--ink) !important;
-}
-.mat-mdc-radio-button.mat-mdc-radio-checked .mdc-radio__outer-circle {
-  border-color: var(--engine) !important;
-}
-.mat-mdc-radio-button.mat-mdc-radio-checked .mdc-radio__inner-circle {
-  background-color: var(--engine) !important;
-}
 
 /* Chips simples.
  *
@@ -695,11 +672,6 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   font-weight: 600;
 }
 
-.filter-radio-group.mat-mdc-radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
 
 /* Segmento / transmisión / combustible son multi-selección (checkbox), no
  * elecciones excluyentes: ver apps/frontend/AGENTS.md y el catálogo. */
@@ -921,7 +893,6 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   letter-spacing: 0.08em;
 }
 
-.ficha-num { color: var(--graphite); font-weight: 600; }
 
 .ficha-brand {
   color: var(--ink);

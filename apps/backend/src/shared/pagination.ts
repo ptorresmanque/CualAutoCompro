@@ -1,8 +1,8 @@
 import type { Response } from "express";
 
-export const DEFAULT_PAGE = 1;
-export const DEFAULT_PAGE_SIZE = 25;
-export const MAX_PAGE_SIZE = 100;
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 25;
+const MAX_PAGE_SIZE = 100;
 
 export type PaginationParams = {
   page: number;

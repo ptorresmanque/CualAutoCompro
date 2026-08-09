@@ -37,13 +37,13 @@ import {
 type Sort = 'name' | 'minPrice' | 'efficiency';
 type Order = 'asc' | 'desc';
 
-export interface FilterOption {
+interface FilterOption {
   value: string;
   label: string;
 }
 
 /** Filtro activo, para los chips que se muestran sobre la grilla. */
-export interface ActiveFilterChip {
+interface ActiveFilterChip {
   key: keyof CatalogFilters;
   /** Presente solo en filtros multi-valor: el valor puntual que quita el chip. */
   value?: string;
@@ -54,7 +54,7 @@ export interface ActiveFilterChip {
   id: string;
 }
 
-export interface CatalogFilters {
+interface CatalogFilters {
   q?: string;
   brand?: string;
   /**

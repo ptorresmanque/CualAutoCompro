@@ -18,7 +18,7 @@ type Segment = "SEDAN" | "SUV" | "HATCHBACK" | "PICKUP" | "CROSSOVER" | "COMMERC
 type Transmission = "MANUAL" | "AUTOMATIC" | "CVT" | "DCT";
 type Fuel = "BENCINA" | "DIESEL" | "HYBRID" | "ELECTRIC";
 
-export type BrandSeed = { name: string; logoUrl: string | null };
+type BrandSeed = { name: string; logoUrl: string | null };
 function galleryUrls(name) {
   const slug = name.replace(/\s+/g, "+");
   return [
@@ -29,14 +29,14 @@ function galleryUrls(name) {
   ];
 }
 
-export type ModelSeed = {
+type ModelSeed = {
   brandName: string;
   name: string;
   segment: Segment;
   imageUrl: string | null;
   galleryUrls: string[];
 };
-export type VersionSeed = {
+type VersionSeed = {
   brandName: string;
   modelName: string;
   name: string;
@@ -55,14 +55,14 @@ export type VersionSeed = {
   weightKg: number;
   trunkLiters: number;
 };
-export type EquipmentItemSeed = { name: string; category: string };
-export type VersionEquipmentSeed = {
+type EquipmentItemSeed = { name: string; category: string };
+type VersionEquipmentSeed = {
   brandName: string;
   modelName: string;
   versionName: string;
   equipmentName: string;
 };
-export type MaintenanceCostSeed = {
+type MaintenanceCostSeed = {
   brandName: string;
   modelName: string;
   versionName: string;

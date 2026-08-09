@@ -1,6 +1,6 @@
 import type { ZodIssue } from "zod";
 
-export type ErrorCode =
+type ErrorCode =
   | "VALIDATION"
   | "NOT_FOUND"
   | "UNAUTHORIZED"

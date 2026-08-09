@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 // Esta cookie NO es PII: es un UUID random solo para deduplicar eventos
 // del mismo navegador y limitar el rate por dispositivo. Bajo GDPR/LGPD no
 // requiere consentimiento.
-export const POPULARITY_COOKIE_NAME = "cmp_uid";
+const POPULARITY_COOKIE_NAME = "cmp_uid";
 
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 

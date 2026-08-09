@@ -20,7 +20,7 @@ export const isAppleConfigured = (): boolean =>
       env.APPLE_PRIVATE_KEY,
   );
 
-export const readApplePrivateKey = (): string => {
+const readApplePrivateKey = (): string => {
   const raw = env.APPLE_PRIVATE_KEY ?? "";
   const pem = raw.replace(/\\n/g, "\n");
   if (!pem.startsWith("-----BEGIN")) {

@@ -30,7 +30,7 @@ type ImageFormat = { ext: string; mime: string };
  * el punto de vista de seguridad: la extensión con la que guardamos sale de
  * los bytes, no de lo que afirme el cliente.
  */
-export const detectImageFormat = (buffer: Buffer): ImageFormat | null => {
+const detectImageFormat = (buffer: Buffer): ImageFormat | null => {
   if (buffer.subarray(0, 8).equals(PNG_SIGNATURE)) return { ext: "png", mime: "image/png" };
   // Sólo SOI + marcador: exigir que termine en FFD9 rechaza JPEGs reales con
   // bytes de padding al final (se observó en fotos de cámaras Android).

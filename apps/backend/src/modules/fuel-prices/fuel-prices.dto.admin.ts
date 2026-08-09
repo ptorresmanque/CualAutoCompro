@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const FUELS = ["BENCINA", "DIESEL", "HYBRID", "ELECTRIC"] as const;
-export const UNITS = ["L", "kWh"] as const;
+const UNITS = ["L", "kWh"] as const;
 
 export const createFuelPriceSchema = z.object({
   fuelType: z.enum(FUELS),

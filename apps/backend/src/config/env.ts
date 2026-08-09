@@ -72,5 +72,3 @@ if (appleCount > 0 && appleCount < 4) {
     "OAuth Apple mal configurado: requiere APPLE_CLIENT_ID, APPLE_KEY_ID, APPLE_TEAM_ID y APPLE_PRIVATE_KEY.",
   );
 }
-
-export type Env = z.infer<typeof schema>;

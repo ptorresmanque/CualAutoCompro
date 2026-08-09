@@ -14,15 +14,3 @@ export interface VehicleVersion {
   consumptionCityKmL?: number | null;
   consumptionHighwayKmL?: number | null;
 }
-
-export interface VehicleLite {
-  id: string;
-  name: string;
-  segment: string;
-  brand: { name: string; id?: string };
-  imageUrl?: string | null;
-  galleryUrls?: string[];
-  minPrice: number | null;
-  defaultVersion?: VehicleVersion | null;
-  versions: VehicleVersion[];
-}

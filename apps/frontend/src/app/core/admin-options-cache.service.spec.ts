@@ -85,16 +85,4 @@ describe('AdminOptionsCacheService', () => {
     http.expectOne(() => true).flush({ data: [{ id: 'c1' }], error: null });
     expect(await retry).toEqual([{ id: 'c1' }]);
   });
-
-  it('clear() vacía todo', async () => {
-    const { cache, http } = setup();
-
-    const first = cache.get('/admin/colors/options');
-    http.expectOne(() => true).flush({ data: [], error: null });
-    await first;
-
-    cache.clear();
-    cache.get('/admin/colors/options');
-    http.expectOne(() => true).flush({ data: [], error: null });
-  });
 });

@@ -1,6 +1,6 @@
 export type SortDir = 'asc' | 'desc';
 
-export function compareValues(a: unknown, b: unknown): number {
+function compareValues(a: unknown, b: unknown): number {
   if (a == null && b == null) return 0;
   if (a == null) return 1;
   if (b == null) return -1;

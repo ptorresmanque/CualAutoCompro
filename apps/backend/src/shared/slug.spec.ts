@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { safeSlug, slugify } from "./slug.js";
+import { slugify } from "./slug.js";
 
 describe("slugify", () => {
   it("lowercases ASCII text and replaces spaces with dashes", () => {
@@ -24,14 +24,3 @@ describe("slugify", () => {
   });
 });
 
-describe("safeSlug", () => {
-  it("returns the slug when input is valid", () => {
-    expect(safeSlug("BMW X5")).toBe("bmw-x5");
-  });
-
-  it("falls back to 'n-<random>' when slug would be empty", () => {
-    const out = safeSlug("!!!");
-    expect(out.startsWith("n-")).toBe(true);
-    expect(out.length).toBeGreaterThan(2);
-  });
-});

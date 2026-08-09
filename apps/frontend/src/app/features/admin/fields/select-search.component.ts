@@ -17,7 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 import { AdminOptionsCacheService } from '../../../core/admin-options-cache.service';
 import { toEnumToken } from '../entity-schemas';
 
-export interface StaticSelectOption { value: string; label: string; }
+interface StaticSelectOption { value: string; label: string; }
 interface OptionItem { id?: string; value?: string; label: string; isOther?: boolean; }
 
 @Component({

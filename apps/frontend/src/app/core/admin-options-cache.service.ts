@@ -33,19 +33,7 @@ export class AdminOptionsCacheService {
     return promise;
   }
 
-  /**
-   * Igual que `get()` pero para respuestas que no son listas (la plantilla de
-   * `/admin/seed/template/:key` es un objeto).
-   */
-  getObject<T>(path: string): Promise<T> {
-    return this.get<T>(path) as unknown as Promise<T>;
-  }
-
   invalidate(path: string): void {
     this.inFlight.delete(path);
-  }
-
-  clear(): void {
-    this.inFlight.clear();
   }
 }

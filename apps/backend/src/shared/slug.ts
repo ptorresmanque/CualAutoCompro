@@ -13,12 +13,3 @@ export const slugify = (input: string): string => {
     .replace(/-{2,}/g, "-");
 };
 
-/**
- * Returns a guaranteed non-empty slug. If the input slugs to empty (e.g.
- * "!!!"), falls back to "n" + nanoid.
- */
-import { nanoid } from "nanoid";
-export const safeSlug = (input: string, fallbackPrefix = "n"): string => {
-  const slug = slugify(input);
-  return slug.length > 0 ? slug : `${fallbackPrefix}-${nanoid(6)}`;
-};

@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { notFound, badRequest } from "../../shared/errors.js";
 import { toGalleryUrls } from "../../shared/json.js";
 
-export interface FavoriteModelCard {
+interface FavoriteModelCard {
   id: string;
   name: string;
   segment: string;
