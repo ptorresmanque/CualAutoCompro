@@ -13,7 +13,7 @@ interface EquipmentRow { id: string; name: string; category: string; }
   selector: 'app-equipment-admin',
   imports: [AdminEditDialogComponent, SearchInputComponent, PaginationComponent, MatButtonModule, MatIconModule],
   templateUrl: './equipment-admin.component.html',
-  styleUrl: './equipment-admin.component.css',
+  styleUrl: './admin-table.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EquipmentAdminComponent {

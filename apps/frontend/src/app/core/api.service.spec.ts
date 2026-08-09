@@ -29,30 +29,6 @@ describe('ApiService.put', () => {
   });
 });
 
-describe('ApiService.putUnwrapped', () => {
-  it('desenvuelve data y lanza ApiCallError cuando el sobre trae error', async () => {
-    TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
-    });
-    const api = TestBed.inject(ApiService);
-
-    const okPromise = api.putUnwrapped('/admin/colors/version/v1', { colorIds: [] });
-    const http = TestBed.inject(HttpTestingController);
-    http.expectOne(`${ENV.apiBase}/admin/colors/version/v1`).flush({
-      data: { attached: 0, detached: 3 },
-      error: null,
-    });
-    await expect(okPromise).resolves.toEqual({ attached: 0, detached: 3 });
-
-    const failPromise = api.putUnwrapped('/admin/colors/version/v2', { colorIds: [] });
-    http.expectOne(`${ENV.apiBase}/admin/colors/version/v2`).flush({
-      data: null,
-      error: { code: 'NOT_FOUND', message: 'Versión no encontrada' },
-    });
-    await expect(failPromise).rejects.toThrow('Versión no encontrada');
-  });
-});
-
 describe('ApiService.upload', () => {
   it('envía FormData con el archivo y devuelve la URL del backend', async () => {
     TestBed.configureTestingModule({

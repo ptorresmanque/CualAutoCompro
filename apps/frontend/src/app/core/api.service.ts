@@ -44,30 +44,12 @@ export class ApiService {
     );
   }
 
-  /**
-   * Like `post()` but unwraps the `ApiResponse<T>` envelope and throws
-   * `ApiCallError` if `error !== null`.
-   */
-  async postUnwrapped<T>(path: string, body: unknown): Promise<T> {
-    const response = await this.post<ApiResponse<T>>(path, body);
-    return unwrap(response);
-  }
-
   put<T>(path: string, body: unknown): Promise<T> {
     return firstValueFrom(
       this.http.put<T>(`${ENV.apiBase}${path}`, body, {
         withCredentials: true,
       }),
     );
-  }
-
-  /**
-   * Like `put()` but unwraps the `ApiResponse<T>` envelope and throws
-   * `ApiCallError` if `error !== null`.
-   */
-  async putUnwrapped<T>(path: string, body: unknown): Promise<T> {
-    const response = await this.put<ApiResponse<T>>(path, body);
-    return unwrap(response);
   }
 
   patch<T>(path: string, body: unknown): Promise<T> {
@@ -78,15 +60,6 @@ export class ApiService {
     );
   }
 
-  /**
-   * Like `patch()` but unwraps the `ApiResponse<T>` envelope and throws
-   * `ApiCallError` if `error !== null`.
-   */
-  async patchUnwrapped<T>(path: string, body: unknown): Promise<T> {
-    const response = await this.patch<ApiResponse<T>>(path, body);
-    return unwrap(response);
-  }
-
   delete<T>(path: string, body?: unknown): Promise<T> {
     return firstValueFrom(
       this.http.delete<T>(`${ENV.apiBase}${path}`, {
@@ -94,15 +67,6 @@ export class ApiService {
         ...(body === undefined ? {} : { body }),
       }),
     );
-  }
-
-  /**
-   * Like `delete()` but unwraps the `ApiResponse<T>` envelope and throws
-   * `ApiCallError` if `error !== null`.
-   */
-  async deleteUnwrapped<T>(path: string): Promise<T> {
-    const response = await this.delete<ApiResponse<T>>(path);
-    return unwrap(response);
   }
 
   async upload(

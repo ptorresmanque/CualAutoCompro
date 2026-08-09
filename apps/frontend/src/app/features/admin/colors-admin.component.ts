@@ -13,7 +13,7 @@ interface ColorRow { id: string; name: string; hex: string | null; }
   selector: 'app-colors-admin',
   imports: [AdminEditDialogComponent, SearchInputComponent, PaginationComponent, MatButtonModule, MatIconModule],
   templateUrl: './colors-admin.component.html',
-  styleUrl: './colors-admin.component.css',
+  styleUrl: './admin-table.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ColorsAdminComponent {

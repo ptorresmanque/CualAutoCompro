@@ -1,0 +1,18 @@
+<mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+  @if (multiline()) {
+    <textarea
+      matInput
+      rows="2"
+      [formControl]="$any(control())"
+      [attr.aria-required]="required() ? 'true' : null"
+    ></textarea>
+  } @else {
+    <input
+      matInput
+      [type]="type()"
+      [formControl]="$any(control())"
+      [attr.aria-required]="required() ? 'true' : null"
+    />
+  }
+  <ng-content select="[matError]" />
+</mat-form-field>

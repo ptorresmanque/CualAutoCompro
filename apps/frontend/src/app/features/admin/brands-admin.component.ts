@@ -21,7 +21,7 @@ interface BrandRow {
   selector: 'app-brands-admin',
   imports: [AdminEditDialogComponent, SearchInputComponent, PaginationComponent, MatButtonModule, MatIconModule],
   templateUrl: './brands-admin.component.html',
-  styleUrl: './brands-admin.component.css',
+  styleUrl: './admin-table.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BrandsAdminComponent {

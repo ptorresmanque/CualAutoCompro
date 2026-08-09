@@ -29,7 +29,6 @@ export class GalleryUploadFieldComponent {
     return toAbsoluteUploadUrl(url) ?? url;
   }
 
-  trackByUrl = (_: number, url: string): string => url;
 
   async onFileChange(ev: Event): Promise<void> {
     const input = ev.target as HTMLInputElement;

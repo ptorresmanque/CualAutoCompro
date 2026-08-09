@@ -452,8 +452,8 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-rule">
-                @for (row of s.rows; track trackByRow($index, row)) {
-                  <tr [attr.data-testid]="'row-' + trackByRow($index, row)">
+                @for (row of s.rows; track rowKey(row)) {
+                  <tr [attr.data-testid]="'row-' + rowKey(row)">
                     <th
                       scope="row"
                       class="compare-sticky-col px-4 py-2 text-left font-bold text-ink-muted text-xs uppercase tracking-wider"

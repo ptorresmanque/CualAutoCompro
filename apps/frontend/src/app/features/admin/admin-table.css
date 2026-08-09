@@ -1,3 +1,15 @@
+/*
+ * Estilos de tabla del panel admin, compartidos por las 8 listas (marcas,
+ * modelos, versiones, equipamiento, colores, mantenciones, concesionarios,
+ * precios de combustible).
+ *
+ * Vivía copiado byte a byte en 8 archivos `*-admin.component.css`. Va
+ * referenciado desde el `styleUrl` de cada componente y NO desde `styles.css`
+ * a propósito: `.sort-header` y `.action-buttons` son nombres genéricos, y
+ * globalizarlos los haría aplicar en todo el sitio. Como `styleUrl`, Angular
+ * los sigue encapsulando por componente.
+ */
+
 :host {
   display: block;
 }

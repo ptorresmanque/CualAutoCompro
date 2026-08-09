@@ -1,9 +1,0 @@
-<mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-  <input
-    matInput
-    type="number"
-    [formControl]="$any(control())"
-    [attr.aria-required]="required() ? 'true' : null"
-  />
-  <ng-content select="[matError]" />
-</mat-form-field>

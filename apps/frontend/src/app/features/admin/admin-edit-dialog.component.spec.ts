@@ -412,7 +412,7 @@ describe('Required/optional markers', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const nameInput = fixture.nativeElement.querySelector('app-text-field input');
+    const nameInput = fixture.nativeElement.querySelector('app-input-field input');
     expect(nameInput).toBeTruthy();
     expect(nameInput!.getAttribute('aria-required')).toBe('true');
   });

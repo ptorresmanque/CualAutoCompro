@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ENGINE_TYPE_OPTIONS, TRACTION_OPTIONS } from '../../core/types/version-labels';
 
 export const SEGMENTS = ['SEDAN', 'SUV', 'HATCHBACK', 'PICKUP', 'CROSSOVER', 'COMMERCIAL'] as const;
 export const TRANSMISSIONS = ['MANUAL', 'AUTOMATIC', 'CVT', 'DCT'] as const;
@@ -226,17 +227,15 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     // valores creados con "Otro".
     { field: 'transmission', label: 'Transmisión', kind: 'enumWithOther', optionsApi: '/versions/transmissions', placeholder: 'Buscar o crear transmisión…', group: 'Motor', sticky: true },
     { field: 'fuel', label: 'Combustible', kind: 'enumWithOther', optionsApi: '/versions/fuels', placeholder: 'Buscar o crear combustible…', group: 'Motor', sticky: true },
-    { field: 'traction', label: 'Tracción', kind: 'enumWithOther', options: [
-      { value: 'TRACTION_FRONT', label: 'Delantera' }, { value: 'TRACTION_REAR', label: 'Trasera' },
-      { value: 'TRACTION_AWD', label: 'Integral' }, { value: 'TRACTION_4X4_LOW', label: '4x4 con reductora' },
-      // `optional` para no exigir en el form lo que versionSchema declara
-      // `.nullable().optional()`: sin esto el formulario se niega a guardar
-      // una versión sin tracción que el backend sí acepta.
-    ], optional: true, group: 'Motor' },
-    { field: 'engineType', label: 'Tipo Motor', kind: 'enumWithOther', options: [
-      { value: 'ENGINE_NA', label: 'Aspirado' }, { value: 'ENGINE_TURBO', label: 'Turbo' },
-      { value: 'ENGINE_TWIN_TURBO', label: 'Bi Turbo' },
-    ], optional: true, group: 'Motor', showWhenFuels: ['BENCINA', 'DIESEL', 'HYBRID'] },
+    // Las opciones salen de `version-labels` —la misma lista con la que la
+    // ficha y el comparador traducen el token a etiqueta— para que no haya dos
+    // copias que puedan divergir.
+    //
+    // `optional` para no exigir en el form lo que versionSchema declara
+    // `.nullable().optional()`: sin esto el formulario se niega a guardar una
+    // versión sin tracción que el backend sí acepta.
+    { field: 'traction', label: 'Tracción', kind: 'enumWithOther', options: [...TRACTION_OPTIONS], optional: true, group: 'Motor' },
+    { field: 'engineType', label: 'Tipo Motor', kind: 'enumWithOther', options: [...ENGINE_TYPE_OPTIONS], optional: true, group: 'Motor', showWhenFuels: ['BENCINA', 'DIESEL', 'HYBRID'] },
     { field: 'engineDisplacementCc', label: 'Cilindrada cc', kind: 'number', optional: true, help: 'No aplica a vehículos eléctricos', group: 'Motor', showWhenFuels: ['BENCINA', 'DIESEL', 'HYBRID'] },
     { field: 'powerHp', label: 'Potencia hp', kind: 'number', group: 'Motor' },
     { field: 'torqueNm', label: 'Torque Nm', kind: 'number', group: 'Motor' },

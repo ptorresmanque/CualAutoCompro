@@ -27,7 +27,7 @@ interface VersionOption { id: string; name: string; }
     MatSelectModule,
   ],
   templateUrl: './maintenance-admin.component.html',
-  styleUrl: './maintenance-admin.component.css',
+  styleUrl: './admin-table.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MaintenanceAdminComponent {

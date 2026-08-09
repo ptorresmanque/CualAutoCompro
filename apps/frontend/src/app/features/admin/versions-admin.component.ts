@@ -37,7 +37,7 @@ function inheritedReason(entry: EquipmentEntry): string | null {
   selector: 'app-versions-admin',
   imports: [AdminEditDialogComponent, SearchInputComponent, PaginationComponent, MatButtonModule, MatIconModule],
   templateUrl: './versions-admin.component.html',
-  styleUrl: './versions-admin.component.css',
+  styleUrl: './admin-table.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VersionsAdminComponent {

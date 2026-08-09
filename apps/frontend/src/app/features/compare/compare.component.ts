@@ -960,19 +960,14 @@ export class CompareComponent {
     }
   }
 
-  trackById(_: number, v: CompareVersion): string {
-    return v.id;
-  }
 
-  trackByRow(_: number, row: CompareRow): string {
+  /** Clave estable de una fila: la usan `@for ... track` y el data-testid. */
+  rowKey(row: CompareRow): string {
     if (row.kind === 'simple') return row.key;
     if (row.kind === 'equipmentList') return `equipment-${row.category}`;
     return 'maintenance-breakdown';
   }
 
-  trackBySection(_: number, s: Section): string {
-    return s.name;
-  }
 
   removeFromCompare(id: string): void {
     this.compareStore.remove(id);

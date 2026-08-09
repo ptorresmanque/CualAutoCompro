@@ -39,8 +39,7 @@ import { AdminOptionsCacheService } from '../../core/admin-options-cache.service
 import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
 import { applyBackendErrors, type BackendFieldError } from '../../shared/ui/admin-form-errors';
 import { entitySchemaByKey, FIELD_METAS, isFieldRequired, type EntityKey, type FieldMeta } from './entity-schemas';
-import { TextFieldComponent } from './fields/text-field.component';
-import { NumberFieldComponent } from './fields/number-field.component';
+import { InputFieldComponent } from './fields/input-field.component';
 import { ToggleFieldComponent } from './fields/toggle-field.component';
 import { SelectSearchComponent } from './fields/select-search.component';
 import { ImageUploadFieldComponent } from './fields/image-upload-field.component';
@@ -103,8 +102,7 @@ function sanitize(value: Record<string, unknown> | null): Record<string, unknown
     MatFormFieldModule,
     MatIconModule,
     MatToolbarModule,
-    TextFieldComponent,
-    NumberFieldComponent,
+    InputFieldComponent,
     ToggleFieldComponent,
     SelectSearchComponent,
     ImageUploadFieldComponent,

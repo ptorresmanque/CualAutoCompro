@@ -14,7 +14,7 @@ interface DealerRow { id: string; name: string; url: string; logoUrl: string | n
   selector: 'app-dealers-admin',
   imports: [AdminEditDialogComponent, SearchInputComponent, PaginationComponent, MatButtonModule, MatIconModule],
   templateUrl: './dealers-admin.component.html',
-  styleUrl: './dealers-admin.component.css',
+  styleUrl: './admin-table.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DealersAdminComponent {

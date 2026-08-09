@@ -20,7 +20,7 @@ interface ModelRow {
   selector: 'app-models-admin',
   imports: [AdminEditDialogComponent, SearchInputComponent, PaginationComponent, MatButtonModule, MatIconModule],
   templateUrl: './models-admin.component.html',
-  styleUrl: './models-admin.component.css',
+  styleUrl: './admin-table.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ModelsAdminComponent {

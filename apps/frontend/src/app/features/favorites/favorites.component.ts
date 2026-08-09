@@ -141,7 +141,4 @@ export class FavoritesComponent {
     await this.router.navigate(['/compare']);
   }
 
-  trackById(_: number, m: FavoriteModel): string {
-    return m.id;
-  }
 }

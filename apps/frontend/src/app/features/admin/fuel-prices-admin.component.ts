@@ -27,7 +27,7 @@ interface FuelPriceRow {
     PaginationComponent,
   ],
   templateUrl: './fuel-prices-admin.component.html',
-  styleUrl: './fuel-prices-admin.component.css',
+  styleUrl: './admin-table.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FuelPricesAdminComponent {

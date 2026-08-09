@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-2 w-full">
   @if (urls().length > 0) {
     <ul data-testid="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-      @for (url of urls(); track trackByUrl($index, url); let i = $index) {
+      @for (url of urls(); track url; let i = $index) {
         <li class="relative aspect-square rounded border border-rule overflow-hidden bg-paper-cool">
           <img data-testid="gallery-thumb" [src]="previewUrl(url)" alt="" class="w-full h-full object-cover" />
           <button
