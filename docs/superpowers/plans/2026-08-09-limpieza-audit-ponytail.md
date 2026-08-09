@@ -275,3 +275,42 @@ por pantalla, **se aborta la fase** y se queda lo migrado.
 
 Fases 1–5: **−776 líneas, −3 deps, −11 archivos**, todo de riesgo bajo o nulo.
 Fase 6 aporta el resto pero es la única que agrega una abstracción y toca 8 pantallas.
+
+---
+
+## Resultado real (ejecutado 2026-08-09, rama `chore/limpieza-audit-ponytail`)
+
+Fases 1–5 aplicadas en 4 commits. **−540 líneas de producción** (24 373 → 23 833),
+−3 deps, −14 archivos. Backend 345 tests (eran 332), frontend 447 (eran 449).
+
+Tres cosas salieron distinto de lo planeado, y las tres importan más que el conteo:
+
+1. **`extendEnum` no estaba muerto.** El plan lo daba por no-op borrable. Al sacarlo
+   se cayó un test de `models.service.spec`: el regex era un guard real del service,
+   no solo del DTO. Quedó como `shared/enum-token.ts` — el mismo guard sin el
+   `PrismaClient` que no usaba y sin la llamada no-op. La fase habría metido un
+   agujero de validación si el test no hubiera estado.
+
+2. **Los `*Unwrapped` estaban más muertos de lo estimado.** El plan decía "un caller
+   cada uno"; en realidad `post`, `patch` y `delete` no tenían ninguno — la auditoría
+   había contado la propia definición. Se fueron los cuatro.
+
+3. **La Fase 1 destapó un bug ajeno a la limpieza**, ver abajo.
+
+### Bug encontrado y NO arreglado
+
+`parsePagination` (`apps/backend/src/shared/pagination.ts:31`) pasa `DEFAULT_PAGE`
+(=1) como argumento **`max`** de `clampInt(raw, min, max, fallback)`. Toda petición
+queda clampeada a página 1: `?page=2` devuelve la página 1 con `skip=0`. Sin
+cobertura de tests, por eso sobrevivió.
+
+No se tocó: es un cambio de comportamiento y ninguna fase de esta limpieza cambia
+comportamiento. Necesita su propio commit, con un test de `parsePagination` primero.
+
+### Estado del e2e
+
+7 tests fallan, **ninguno por esta limpieza** (verificado corriéndolos contra `main`):
+6 buscan "Cerrar sesión" y el link "Admin" en la barra superior cuando el rediseño
+del nav los movió dentro del menú de usuario; el séptimo
+(`social-login-providers`) asume un backend sin OAuth configurado y este equipo
+tiene `GOOGLE_CLIENT_ID` en `.env.development`.
