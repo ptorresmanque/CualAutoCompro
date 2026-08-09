@@ -4,7 +4,7 @@ import { VersionsService } from "./versions.service.js";
 import { setupTestPrisma, resetTestDb } from "../../../__tests__/helpers/db.js";
 import { prisma } from "../../infra/prisma.js";
 
-describe("VersionsService + extendEnum", () => {
+describe("VersionsService con enums abiertos", () => {
   beforeEach(async () => {
     setupTestPrisma();
     await resetTestDb(prisma);

@@ -4,7 +4,7 @@ import { ModelsService } from "./models.service.js";
 import { setupTestPrisma, resetTestDb } from "../../../__tests__/helpers/db.js";
 import { prisma } from "../../infra/prisma.js";
 
-describe("ModelsService + extendEnum", () => {
+describe("ModelsService con enums abiertos", () => {
   beforeEach(async () => {
     setupTestPrisma();
     await resetTestDb(prisma);

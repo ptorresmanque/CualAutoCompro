@@ -1,7 +1,7 @@
+import { assertEnumToken } from "../../shared/enum-token.js";
 import { randomUUID } from "node:crypto";
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { notFound } from "../../shared/errors.js";
-import { extendEnum } from "../../shared/enum-extension.js";
 import {
   FUELS,
   TRANSMISSIONS,
@@ -232,16 +232,14 @@ export class VersionsService {
       return version;
     }
 
-    if (!knownFuel) {
-      await extendEnum(this.prisma, "Fuel", input.fuel);
-    }
-    if (!knownTrans) {
-      await extendEnum(this.prisma, "Transmission", input.transmission);
-    }
+    if (!knownFuel) assertEnumToken("fuel", input.fuel);
+    if (!knownTrans) assertEnumToken("transmission", input.transmission);
 
     const id = randomUUID();
-    // SCHEMA-DRIFT NOTE: raw SQL porque extendEnum agrega un valor nuevo
-    // al enum runtime y Prisma's query engine lo rechazaría. MariaDB usa
+    // SCHEMA-DRIFT NOTE: raw SQL porque `fuel` y `transmission` son enums
+    // abiertos —el admin da de alta valores nuevos desde "Otro"— y el query
+    // engine de Prisma rechaza cualquier token fuera del enum generado. El
+    // formato del token ya lo validó ENUM_REGEX en versions.dto.admin. MariaDB usa
     // `?` placeholders, VARCHAR (no cast de enum), backtick identifiers.
     // IMPORTANTE: `INSERT ... RETURNING` con Prisma 5.22 + MariaDB devuelve
     // columnas como `f0..fN` (no nombres), por eso hacemos INSERT y luego
@@ -334,12 +332,8 @@ export class VersionsService {
         : null;
 
     if (newFuel || newTrans) {
-      if (newFuel) {
-        await extendEnum(this.prisma, "Fuel", newFuel);
-      }
-      if (newTrans) {
-        await extendEnum(this.prisma, "Transmission", newTrans);
-      }
+      if (newFuel) assertEnumToken("fuel", newFuel);
+      if (newTrans) assertEnumToken("transmission", newTrans);
 
       const setClauses: string[] = [];
       const values: unknown[] = [];
@@ -442,8 +436,9 @@ export class VersionsService {
         values.push(input.recallUrl);
       }
       values.push(id);
-      // SCHEMA-DRIFT NOTE: raw UPDATE porque extendEnum agrega un valor
-      // nuevo al enum runtime. En MariaDB no hay RETURNING para UPDATE,
+      // SCHEMA-DRIFT NOTE: raw UPDATE por la misma razón que el INSERT de
+      // `create`: token de enum abierto que Prisma rechazaría. En MariaDB no
+      // hay RETURNING para UPDATE,
       // así que hacemos SELECT después para devolver la fila actualizada.
       const oldRow = await this.prisma.$queryRawUnsafe<Array<{ priceClp: number }>>(
         `SELECT \`priceClp\` FROM \`Version\` WHERE id = ? AND \`deletedAt\` IS NULL`,

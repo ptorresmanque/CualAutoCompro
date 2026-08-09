@@ -57,3 +57,43 @@ describe("versions.dto.admin recall validation", () => {
     expect(parsed.success).toBe(false);
   });
 });
+
+// Estos tokens son "enums abiertos": el admin puede dar de alta valores nuevos
+// desde la opción "Otro", así que `fuel` y `transmission` son strings libres
+// acotados por ENUM_REGEX. Ese regex es la ÚNICA barrera entre lo que escribe
+// el admin y el `raw SQL` de VersionsService — antes había además un
+// `extendEnum()` que validaba lo mismo, pero era un no-op en MariaDB y se
+// borró. Si estos tests se caen, el borde quedó abierto.
+describe("versions.dto.admin enums abiertos (fuel / transmission)", () => {
+  it("acepta un token nuevo que respeta el formato", () => {
+    const parsed = createVersionSchema.safeParse({
+      ...baseInput,
+      fuel: "HIDROGENO",
+      transmission: "DOBLE_EMBRAGUE",
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it.each([
+    ["minúsculas", "bencina"],
+    ["con espacio", "BAD VALUE"],
+    ["con guión", "BAD-VALUE"],
+    ["vacío", ""],
+    ["intento de inyección SQL", "'; DROP TABLE `Version`; --"],
+  ])("rechaza fuel %s", (_caso, fuel) => {
+    expect(createVersionSchema.safeParse({ ...baseInput, fuel }).success).toBe(false);
+  });
+
+  it.each([
+    ["minúsculas", "automatic"],
+    ["con espacio", "BAD VALUE"],
+    ["intento de inyección SQL", "'; DROP TABLE `Version`; --"],
+  ])("rechaza transmission %s", (_caso, transmission) => {
+    expect(createVersionSchema.safeParse({ ...baseInput, transmission }).success).toBe(false);
+  });
+
+  it("update aplica el mismo regex", () => {
+    expect(updateVersionSchema.safeParse({ fuel: "BAD VALUE" }).success).toBe(false);
+    expect(updateVersionSchema.safeParse({ transmission: "bad" }).success).toBe(false);
+  });
+});

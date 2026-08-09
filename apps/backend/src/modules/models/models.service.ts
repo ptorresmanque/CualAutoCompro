@@ -1,10 +1,10 @@
+import { assertEnumToken } from "../../shared/enum-token.js";
 import { randomUUID } from "node:crypto";
 import type { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import type { z } from "zod";
 import type { listModelsQuerySchema } from "./models.dto.js";
 import { conflict, notFound } from "../../shared/errors.js";
-import { extendEnum } from "../../shared/enum-extension.js";
 import { toGalleryUrls } from "../../shared/json.js";
 import { mergeEnumFacets, type EnumFacet } from "../../shared/enum-facets.js";
 import { SEGMENTS, type CreateModelInput, type UpdateModelInput } from "./models.dto.admin.js";
@@ -324,10 +324,13 @@ export class ModelsService {
       });
     }
 
-    await extendEnum(this.prisma, "Segment", input.segment);
+    assertEnumToken("segment", input.segment);
     const id = randomUUID();
-    // SCHEMA-DRIFT NOTE: raw SQL porque extendEnum registra un valor nuevo
-    // y queremos evitar la validación de Prisma para campos `Json`. MariaDB
+    // SCHEMA-DRIFT NOTE: raw SQL porque `segment` es un enum abierto —el
+    // admin da de alta valores nuevos desde "Otro"— y el query engine de
+    // Prisma rechaza cualquier token fuera del enum generado. El formato del
+    // token ya lo validó ENUM_REGEX en models.dto.admin. También evita la
+    // validación de Prisma para campos `Json`. MariaDB
     // usa `?` placeholders (no `$N`), backtick identifiers, y `longtext` para
     // `Json` (string plano, normalizado por `toGalleryUrls()` al leer). El
     // driver de Prisma 5 para MariaDB **no propaga los nombres de columna**
@@ -382,7 +385,7 @@ export class ModelsService {
       ? input.segment
       : null;
     if (newSegment) {
-      await extendEnum(this.prisma, "Segment", newSegment);
+      assertEnumToken("segment", newSegment);
       const setClauses: string[] = [];
       const values: unknown[] = [];
       if (input.brandId !== undefined) {
@@ -404,8 +407,8 @@ export class ModelsService {
         values.push(JSON.stringify(input.galleryUrls));
       }
       values.push(id);
-      // SCHEMA-DRIFT NOTE: raw UPDATE porque extendEnum agrega un valor
-      // nuevo al enum runtime y Prisma's query engine lo rechazaría. En
+      // SCHEMA-DRIFT NOTE: raw UPDATE por la misma razón que el INSERT de
+      // `create`: token de enum abierto que Prisma rechazaría. En
       // MariaDB no hay RETURNING para UPDATE, así que hacemos SELECT
       // después para devolver la fila actualizada.
       const updateResult = await this.prisma

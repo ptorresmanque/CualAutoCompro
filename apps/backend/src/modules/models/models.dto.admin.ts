@@ -1,13 +1,14 @@
 import { z } from "zod";
+import { ENUM_TOKEN_REGEX } from "../../shared/enum-token.js";
 import { imageUrl, imageUrlArray } from "../../shared/image-url.js";
 
 export const SEGMENTS = ["SEDAN", "SUV", "HATCHBACK", "PICKUP", "CROSSOVER", "COMMERCIAL"] as const;
-export const ENUM_REGEX = /^[A-Z0-9_]+$/;
+export { ENUM_TOKEN_REGEX as ENUM_REGEX } from "../../shared/enum-token.js";
 
 export const createModelSchema = z.object({
   brandId: z.string().min(1),
   name: z.string().min(2).max(80),
-  segment: z.string().min(1).max(40).regex(ENUM_REGEX),
+  segment: z.string().min(1).max(40).regex(ENUM_TOKEN_REGEX),
   imageUrl: imageUrl.nullable().optional(),
   galleryUrls: imageUrlArray.default([]),
 });
