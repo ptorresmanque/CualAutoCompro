@@ -46,7 +46,6 @@
      sigue a pantalla completa, que es lo que corresponde a un panel modal. */
   .catalog-filters-drawer.mat-drawer-side {
     bottom: auto;
-    border-right: 1px solid var(--rule);
   }
 }
 
