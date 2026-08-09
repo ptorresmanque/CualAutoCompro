@@ -10,7 +10,7 @@ import {
   syncColorsSchema,
 } from "./colors.dto.admin.js";
 import { validation } from "../../shared/errors.js";
-import { toCsv } from "../../shared/csv.js";
+import { sendCsv } from "../../shared/csv.js";
 import { parsePagination, sendPaged } from "../../shared/pagination.js";
 
 const svc = new ColorsService(prisma);
@@ -76,12 +76,9 @@ export const colorsController = {
 
   exportCsv: ah(async (_req: Request, res: Response) => {
     const rows = await svc.listAll();
-    const csv = toCsv(
+    sendCsv(res, "colors.csv",
       ['id', 'name', 'hex'],
       rows.map(c => [c.id, c.name, c.hex ?? '']),
     );
-    res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", 'attachment; filename="colors.csv"');
-    res.send(csv);
   }),
 };

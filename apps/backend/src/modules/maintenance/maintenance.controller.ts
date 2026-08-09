@@ -5,7 +5,7 @@ import { prisma } from "../../infra/prisma.js";
 import { MaintenanceService } from "./maintenance.service.js";
 import { createMaintenanceSchema, updateMaintenanceSchema } from "./maintenance.dto.admin.js";
 import { validation } from "../../shared/errors.js";
-import { toCsv } from "../../shared/csv.js";
+import { sendCsv } from "../../shared/csv.js";
 import { parsePagination, sendPaged } from "../../shared/pagination.js";
 
 const svc = new MaintenanceService(prisma);
@@ -67,12 +67,9 @@ export const maintenanceController = {
 
   exportCsv: ah(async (_req: Request, res: Response) => {
     const rows = await svc.listAll();
-    const csv = toCsv(
+    sendCsv(res, "maintenance.csv",
       ['id', 'versionId', 'mileageTag', 'costClp'],
       rows.map(m => [m.id, m.versionId, m.mileageTag, m.costClp]),
     );
-    res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", 'attachment; filename="maintenance.csv"');
-    res.send(csv);
   }),
 };

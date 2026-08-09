@@ -5,7 +5,7 @@ import { prisma } from "../../infra/prisma.js";
 import { VersionsService } from "./versions.service.js";
 import { createVersionSchema, updateVersionSchema } from "./versions.dto.admin.js";
 import { validation } from "../../shared/errors.js";
-import { toCsv } from "../../shared/csv.js";
+import { sendCsv } from "../../shared/csv.js";
 import { parsePagination, sendPaged } from "../../shared/pagination.js";
 
 const VERSION_LABELS: Record<string, string> = {
@@ -105,12 +105,9 @@ export const versionsController = {
 
   exportCsv: ah(async (_req: Request, res: Response) => {
     const rows = await svc.listAll();
-    const csv = toCsv(
+    sendCsv(res, "versions.csv",
       ['id', 'name', 'model', 'year', 'priceClp', 'transmission', 'fuel', 'traction', 'engineType'],
       rows.map(v => [v.id, v.name, v.model?.name ?? '', v.year ?? '', v.priceClp, v.transmission, v.fuel, VERSION_LABELS[v.traction ?? ''] ?? v.traction ?? '', VERSION_LABELS[v.engineType ?? ''] ?? v.engineType ?? '']),
     );
-    res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", 'attachment; filename="versions.csv"');
-    res.send(csv);
   }),
 };

@@ -3,7 +3,7 @@ import { ah } from "../../shared/async-handler.js";
 import { ok } from "../../shared/response.js";
 import { prisma } from "../../infra/prisma.js";
 import { validation } from "../../shared/errors.js";
-import { toCsv } from "../../shared/csv.js";
+import { sendCsv } from "../../shared/csv.js";
 import { parsePagination, sendPaged } from "../../shared/pagination.js";
 import { FuelPricesService } from "./fuel-prices.service.js";
 import { createFuelPriceSchema, updateFuelPriceSchema } from "./fuel-prices.dto.admin.js";
@@ -54,12 +54,9 @@ export const fuelPricesController = {
 
   exportCsv: ah(async (_req: Request, res: Response) => {
     const rows = await svc.listAll();
-    const csv = toCsv(
+    sendCsv(res, "fuel-prices.csv",
       ['id', 'fuelType', 'pricePerUnitClp', 'unit', 'effectiveFrom'],
       rows.map(f => [f.id, f.fuelType, f.pricePerUnitClp, f.unit, f.effectiveFrom]),
     );
-    res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", 'attachment; filename="fuel-prices.csv"');
-    res.send(csv);
   }),
 };

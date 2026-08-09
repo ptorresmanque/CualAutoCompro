@@ -1,17 +1,6 @@
-const WINDOW_MS = 15 * 60 * 1000;
-const MAX_ATTEMPTS = 10;
-const buckets = new Map<string, number[]>();
+import { rateLimiter } from "../../shared/rate-limit.js";
 
-export const isAuthRateLimited = (key: string): boolean => {
-  const cutoff = Date.now() - WINDOW_MS;
-  const fresh = (buckets.get(key) ?? []).filter((timestamp) => timestamp > cutoff);
-  if (fresh.length >= MAX_ATTEMPTS) {
-    buckets.set(key, fresh);
-    return true;
-  }
-  fresh.push(Date.now());
-  buckets.set(key, fresh);
-  return false;
-};
+const check = rateLimiter(15 * 60 * 1000, 10);
 
-export const resetAuthRateLimit = (): void => buckets.clear();
+export const isAuthRateLimited = check;
+export const resetAuthRateLimit = check.reset;

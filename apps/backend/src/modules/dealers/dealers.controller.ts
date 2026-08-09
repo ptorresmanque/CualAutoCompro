@@ -3,7 +3,7 @@ import { ah } from "../../shared/async-handler.js";
 import { ok } from "../../shared/response.js";
 import { prisma } from "../../infra/prisma.js";
 import { validation } from "../../shared/errors.js";
-import { toCsv } from "../../shared/csv.js";
+import { sendCsv } from "../../shared/csv.js";
 import { parsePagination, sendPaged } from "../../shared/pagination.js";
 import { DealersService } from "./dealers.service.js";
 import { createDealerSchema, updateDealerSchema } from "./dealers.dto.admin.js";
@@ -55,12 +55,9 @@ export const dealersController = {
 
   exportCsv: ah(async (_req: Request, res: Response) => {
     const rows = await svc.listAll();
-    const csv = toCsv(
+    sendCsv(res, "dealers.csv",
       ['id', 'name', 'url', 'logoUrl'],
       rows.map(d => [d.id, d.name, d.url ?? '', d.logoUrl ?? '']),
     );
-    res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", 'attachment; filename="dealers.csv"');
-    res.send(csv);
   }),
 };

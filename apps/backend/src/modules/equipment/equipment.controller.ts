@@ -10,7 +10,7 @@ import {
   syncEquipmentSchema,
 } from "./equipment.dto.admin.js";
 import { validation } from "../../shared/errors.js";
-import { toCsv } from "../../shared/csv.js";
+import { sendCsv } from "../../shared/csv.js";
 import { parsePagination, sendPaged } from "../../shared/pagination.js";
 
 const svc = new EquipmentService(prisma);
@@ -98,12 +98,9 @@ export const equipmentController = {
 
   exportCsv: ah(async (_req: Request, res: Response) => {
     const rows = await svc.listAll();
-    const csv = toCsv(
+    sendCsv(res, "equipment.csv",
       ['id', 'name', 'category'],
       rows.map(e => [e.id, e.name, e.category]),
     );
-    res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", 'attachment; filename="equipment.csv"');
-    res.send(csv);
   }),
 };

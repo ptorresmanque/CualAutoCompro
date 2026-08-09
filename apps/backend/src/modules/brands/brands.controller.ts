@@ -6,7 +6,7 @@ import { BrandsService } from "./brands.service.js";
 import { createBrandSchema, updateBrandSchema } from "./brands.dto.admin.js";
 import { validation } from "../../shared/errors.js";
 import { parsePagination, sendPaged } from "../../shared/pagination.js";
-import { toCsv } from "../../shared/csv.js";
+import { sendCsv } from "../../shared/csv.js";
 
 const svc = new BrandsService(prisma);
 
@@ -74,12 +74,9 @@ export const brandsController = {
 
   exportCsv: ah(async (_req: Request, res: Response) => {
     const rows = await svc.listAll();
-    const csv = toCsv(
+    sendCsv(res, "brands.csv",
       ["id", "name", "logoUrl"],
       rows.map((b) => [b.id, b.name, b.logoUrl ?? ""]),
     );
-    res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", 'attachment; filename="brands.csv"');
-    res.send(csv);
   }),
 };

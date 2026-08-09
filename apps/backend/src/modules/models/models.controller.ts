@@ -6,7 +6,7 @@ import { ModelsService } from "./models.service.js";
 import { listModelsQuerySchema } from "./models.dto.js";
 import { createModelSchema, updateModelSchema } from "./models.dto.admin.js";
 import { validation } from "../../shared/errors.js";
-import { toCsv } from "../../shared/csv.js";
+import { sendCsv } from "../../shared/csv.js";
 import { parsePagination, sendPaged } from "../../shared/pagination.js";
 
 const svc = new ModelsService(prisma);
@@ -92,12 +92,9 @@ export const modelsController = {
 
   exportCsv: ah(async (_req: Request, res: Response) => {
     const rows = await svc.listAll();
-    const csv = toCsv(
+    sendCsv(res, "models.csv",
       ['id', 'name', 'brand', 'segment', 'imageUrl'],
       rows.map(m => [m.id, m.name, m.brand?.name ?? '', m.segment ?? '', m.imageUrl ?? '']),
     );
-    res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", 'attachment; filename="models.csv"');
-    res.send(csv);
   }),
 };
