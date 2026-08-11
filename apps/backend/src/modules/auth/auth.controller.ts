@@ -61,14 +61,22 @@ export const authController = {
     return res.json(ok({ loggedOut: true }));
   }),
 
+  /**
+   * Sondeo de sesión: devuelve el usuario logueado, o `data: null` si no hay
+   * nadie. No 401 — el front lo llama en cada arranque para decidir si hidratar
+   * la sesión, y un status de error hace que el navegador escriba un error en
+   * la consola en toda visita anónima (la pantalla de login incluida) por algo
+   * que no es una falla. Los endpoints que sí exigen sesión (PATCH /me, etc.)
+   * pasan por `authenticate` y siguen respondiendo 401.
+   */
   me: ah(async (req: Request, res: Response) => {
     const token = req.cookies?.auth;
-    if (!token) throw unauthorized();
+    if (!token) return res.json(ok(null));
     try {
       const payload = verify(token);
       return res.json(ok({ id: payload.sub, email: payload.email, name: payload.name, role: payload.role }));
     } catch {
-      throw unauthorized();
+      return res.json(ok(null));
     }
   }),
 

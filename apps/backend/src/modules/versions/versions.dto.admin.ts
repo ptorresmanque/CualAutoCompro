@@ -7,10 +7,11 @@ export const TRACTIONS = ["TRACTION_FRONT", "TRACTION_REAR", "TRACTION_AWD", "TR
 export const ENGINE_TYPES = ["ENGINE_NA", "ENGINE_TURBO", "ENGINE_TWIN_TURBO"] as const;
 export { ENUM_TOKEN_REGEX as ENUM_REGEX } from "../../shared/enum-token.js";
 
+// `year` no viaja en el payload: lo pone el servidor con `currentModelYear()`
+// (ver shared/model-year.ts). Si un cliente viejo lo manda, zod lo descarta.
 const versionObjectSchema = z.object({
   modelId: z.string().min(1),
   name: z.string().min(2).max(80),
-  year: z.number().int().min(1990).max(2100),
   priceClp: z.number().int().nonnegative(),
   transmission: z.string().min(1).max(40).regex(ENUM_TOKEN_REGEX),
   fuel: z.string().min(1).max(40).regex(ENUM_TOKEN_REGEX),

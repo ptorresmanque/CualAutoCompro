@@ -7,6 +7,16 @@ import { z } from "zod";
 //   - NODE_ENV === "test"        -> no tocamos nada (setup.ts carga .env.test)
 //   - .env.development existe    -> .env.development (preferido para local dev)
 //   - sino                       -> .env (compatibilidad)
+//
+// OJO con NODE_ENV: importar @prisma/client carga por su cuenta el .env que
+// esta junto al schema, y si ese archivo es la copia local del deploy trae
+// NODE_ENV=production. Eso contamina el proceso de desarrollo: todo lo que
+// mira NODE_ENV al evaluarse (el flag `secure` de las cookies, entre otros)
+// termina en modo produccion, y una cookie Secure sobre http:// la descarta
+// Safari —Chrome la acepta en localhost, asi que el bug solo se ve en Safari—.
+// Por eso el script `dev` fija NODE_ENV=development: dotenv no pisa una
+// variable que ya existe, asi que ese .env deja de poder cambiarla.
+// Ver __tests__/dev-node-env.spec.ts.
 const envFile =
   process.env.NODE_ENV === "production"
     ? ".env"
@@ -23,6 +33,11 @@ if (envFile) {
 }
 
 const schema = z.object({
+  // Se valida acá y se consume por `isProduction` en vez de leer
+  // `process.env.NODE_ENV` suelto: este parse corre antes de que
+  // @prisma/client cargue el `.env` del deploy, así que es el único punto del
+  // proceso donde la variable es confiable. Ver __tests__/dev-node-env.spec.ts.
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DATABASE_URL: z.string().url(),
   JWT_SECRET: z.string().min(16),
   JWT_EXPIRES_IN: z.string().default("7d"),
@@ -48,7 +63,9 @@ export const env: z.infer<typeof schema> & { BACKEND_ORIGIN: string } = {
   BACKEND_ORIGIN: rawEnv.BACKEND_ORIGIN ?? `http://localhost:${rawEnv.PORT}`,
 };
 
-if (process.env.NODE_ENV === "production" && env.ADMIN_INITIAL_PASSWORD === "admin1234") {
+export const isProduction = env.NODE_ENV === "production";
+
+if (isProduction && env.ADMIN_INITIAL_PASSWORD === "admin1234") {
   throw new Error("ADMIN_INITIAL_PASSWORD must be overridden in production");
 }
 

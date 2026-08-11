@@ -116,4 +116,43 @@ describe('ModelsAdminComponent', () => {
     http.match(() => true).forEach((r) => r.flush({ data: [], error: null }));
     await savePromise;
   });
+
+  it('marca en rojo el modelo sin imagen principal y sin galería', async () => {
+    TestBed.configureTestingModule({
+      imports: [ModelsAdminComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatDialog, useValue: dialogMock }],
+    });
+    const fixture = TestBed.createComponent(ModelsAdminComponent);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    const rows = [
+      { id: 'm1', name: 'Corolla', segment: 'SEDAN', brand: { name: 'Toyota' }, imageUrl: null, galleryUrls: [] },
+      { id: 'm2', name: 'Yaris', segment: 'HATCHBACK', brand: { name: 'Toyota' }, imageUrl: '/uploads/a.jpg', galleryUrls: ['/uploads/b.jpg', '/uploads/c.jpg'] },
+    ];
+    for (const r of http.match(() => true)) {
+      if (r.request.url.includes('/brands')) r.flush({ data: [] });
+      else r.flush({ data: rows, pagination: { page: 1, pageSize: 25, total: 2, totalPages: 1 }, error: null });
+    }
+    await fixture.whenStable();
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
+
+    const cells = (rowIdx: number) =>
+      Array.from(
+        fixture.nativeElement.querySelectorAll('tbody tr')[rowIdx].querySelectorAll('td'),
+      ) as HTMLElement[];
+
+    // Columnas: Nombre, Marca, Segmento, Imagen, Galería, Acciones.
+    const [sinImagen, sinGaleria] = [cells(0)[3], cells(0)[4]];
+    expect(sinImagen.textContent?.trim()).toBe('No');
+    expect(sinImagen.classList).toContain('text-danger');
+    expect(sinGaleria.textContent?.trim()).toBe('0');
+    expect(sinGaleria.classList).toContain('text-danger');
+
+    const [conImagen, conGaleria] = [cells(1)[3], cells(1)[4]];
+    expect(conImagen.textContent?.trim()).toBe('Sí');
+    expect(conImagen.classList).not.toContain('text-danger');
+    expect(conGaleria.textContent?.trim()).toBe('2');
+    expect(conGaleria.classList).not.toContain('text-danger');
+  });
 });

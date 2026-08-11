@@ -83,7 +83,7 @@
                       }
                       @switch (meta.kind) {
                         @case ('text')          { <app-input-field         [control]="$any(controlFor(meta.field))" [required]="isFieldRequired(meta)"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-input-field> }
-                        @case ('number')        { <app-input-field         [control]="$any(controlFor(meta.field))" [type]="'number'" [required]="isFieldRequired(meta)"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-input-field> }
+                        @case ('number')        { <app-input-field         [control]="$any(controlFor(meta.field))" [type]="'number'" [thousands]="meta.thousands ?? false" [required]="isFieldRequired(meta)"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-input-field> }
                         @case ('boolean')       { <app-toggle-field        [control]="$any(controlFor(meta.field))" /> }
                         @case ('foreignKey')    { <app-select-search       [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi!" [optionLabel]="meta.optionLabel!"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-select-search> }
                         @case ('enumWithOther') { <app-select-search       [control]="$any(controlFor(meta.field))" [optionsApi]="meta.optionsApi ?? null" [options]="meta.options ?? null" [allowOther]="true"><mat-error>{{ errorMessage(meta.field) }}</mat-error></app-select-search> }

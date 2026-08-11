@@ -1,5 +1,6 @@
 import type { Response } from "express";
 import { randomUUID } from "node:crypto";
+import { isProduction } from "../../config/env.js";
 
 // Nombre publico de la cookie anonima. No debe chocar con AUTH_COOKIE_NAME.
 // Esta cookie NO es PII: es un UUID random solo para deduplicar eventos
@@ -12,7 +13,7 @@ const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 const cookieOpts = {
   httpOnly: true,
   sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production",
+  secure: isProduction,
   maxAge: ONE_YEAR_MS,
   path: "/",
 };
