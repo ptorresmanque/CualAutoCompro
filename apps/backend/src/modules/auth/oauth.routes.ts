@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import passport from "passport";
 import type { Request, Response } from "express";
 import type { VerifyCallback } from "passport-oauth2";
-import { env } from "../../config/env.js";
+import { env, isProduction } from "../../config/env.js";
 import { prisma } from "../../infra/prisma.js";
 import { sign } from "../../infra/jwt.js";
 import { OAuthService } from "./oauth.service.js";
@@ -27,7 +27,7 @@ const oauthService = new OAuthService(prisma);
 const cookieOptsState = {
   httpOnly: true,
   sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production",
+  secure: isProduction,
   maxAge: OAUTH_STATE_TTL_MS,
   path: "/api/v1/auth",
 };
@@ -142,7 +142,7 @@ oauthRouter.get("/apple/callback", callbackProvider("apple"));
 oauthRouter.post("/apple/callback", callbackProvider("apple"));
 
 // Endpoint de simulacion solo para test/dev (no se monta en prod).
-if (process.env.NODE_ENV !== "production") {
+if (!isProduction) {
   oauthRouter.post("/__test__/simulate-callback", async (req, res) => {
     const { provider, sub, email, name } = req.body as {
       provider: "google" | "apple";
