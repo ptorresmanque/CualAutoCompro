@@ -944,6 +944,36 @@ describe('Guardar y crear otro', () => {
   });
 });
 
+describe('Campos numéricos', () => {
+  const versionTemplate = {
+    modelId: '', name: '', year: 2026, priceClp: 0,
+    transmission: 'MANUAL', fuel: 'BENCINA',
+    powerHp: 0, torqueNm: 0,
+    lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0, trunkLiters: 0,
+  };
+
+  it('un input type=number emite number al form, no string', async () => {
+    const { fixture, http } = setup('version');
+    http.match(() => true).forEach((r) => r.flush({ data: versionTemplate }));
+    await new Promise((r) => setTimeout(r, 0));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector(
+      'app-input-field input[type="number"]',
+    ) as HTMLInputElement | null;
+    expect(input).toBeTruthy();
+    input!.value = '1598';
+    input!.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    const control = Object.values(fixture.componentInstance.form().controls).find(
+      (c) => c.value === 1598 || c.value === '1598',
+    );
+    expect(typeof control?.value).toBe('number');
+  });
+});
+
 describe('Secciones plegables', () => {
   const versionTemplate = {
     modelId: '', name: '', priceClp: 0,

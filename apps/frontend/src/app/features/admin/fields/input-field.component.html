@@ -16,10 +16,20 @@
       (blur)="control().markAsTouched()"
       [attr.aria-required]="required() ? 'true' : null"
     />
+  } @else if (type() === 'number') {
+    <!-- `type` estático a propósito: Angular elige el ControlValueAccessor por
+         selector en compilación, y con `[type]` dinámico no engancha
+         NumberValueAccessor — el control emitiría string en vez de number. -->
+    <input
+      matInput
+      type="number"
+      [formControl]="$any(control())"
+      [attr.aria-required]="required() ? 'true' : null"
+    />
   } @else {
     <input
       matInput
-      [type]="type()"
+      type="text"
       [formControl]="$any(control())"
       [attr.aria-required]="required() ? 'true' : null"
     />
