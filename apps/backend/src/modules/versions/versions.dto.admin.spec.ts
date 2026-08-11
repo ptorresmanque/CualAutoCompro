@@ -4,7 +4,6 @@ import { createVersionSchema, updateVersionSchema } from "./versions.dto.admin.j
 const baseInput = {
   modelId: "m1",
   name: "Sport",
-  year: 2025,
   priceClp: 15000000,
   transmission: "AUTOMATIC",
   fuel: "BENCINA",

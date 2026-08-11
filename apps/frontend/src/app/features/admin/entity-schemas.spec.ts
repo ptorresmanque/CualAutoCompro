@@ -28,7 +28,7 @@ describe('toEnumToken()', () => {
 
 describe('STICKY_FIELDS', () => {
   it('conserva el contexto de una tanda de carga de versiones', () => {
-    expect(STICKY_FIELDS.version).toEqual(['modelId', 'year', 'transmission', 'fuel']);
+    expect(STICKY_FIELDS.version).toEqual(['modelId', 'transmission', 'fuel']);
   });
 
   it('no marca como sticky el nombre, que identifica al registro', () => {

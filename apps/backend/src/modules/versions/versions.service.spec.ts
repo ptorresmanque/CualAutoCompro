@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { VersionsService } from "./versions.service.js";
 import { setupTestPrisma, resetTestDb } from "../../../__tests__/helpers/db.js";
 import { prisma } from "../../infra/prisma.js";
+import { currentModelYear } from "../../shared/model-year.js";
 
 describe("VersionsService con enums abiertos", () => {
   beforeEach(async () => {
@@ -86,7 +87,6 @@ describe("VersionsService con enums abiertos", () => {
     const created = await svc.create({
       modelId: model.id,
       name: `Versión Test ${Date.now()}`,
-      year: 2026,
       priceClp: 1000000,
       transmission: newTrans,
       fuel: newFuel,
@@ -102,6 +102,8 @@ describe("VersionsService con enums abiertos", () => {
       trunkLiters: 0,
       hasRecall: false,
     });
+    // El alta no manda `year`: lo pone el servidor (rama SQL cruda).
+    expect(created.year).toBe(currentModelYear());
     expect(created.fuel).toBe(newFuel);
     expect(created.transmission).toBe(newTrans);
   });
@@ -114,7 +116,6 @@ describe("VersionsService con enums abiertos", () => {
     await svc.create({
       modelId: model.id,
       name: `Versión Facet ${Date.now()}`,
-      year: 2026,
       priceClp: 1000000,
       transmission: newTrans,
       fuel: newFuel,
@@ -147,7 +148,6 @@ describe("VersionsService con enums abiertos", () => {
     const created = await svc.create({
       modelId: model.id,
       name: "Versión Base",
-      year: 2026,
       priceClp: 1000000,
       transmission: "MANUAL",
       fuel: "BENCINA",
@@ -193,7 +193,6 @@ describe("VersionsService price history", () => {
     const version = await svc.create({
       modelId: model.id,
       name: "XLI",
-      year: 2025,
       priceClp: 15_000_000,
       transmission: "AUTOMATIC",
       fuel: "BENCINA",
@@ -207,6 +206,8 @@ describe("VersionsService price history", () => {
       hasRecall: false,
       recallUrl: null,
     });
+    // Idem, por la rama de Prisma (fuel/transmission conocidos).
+    expect(version.year).toBe(currentModelYear());
     const history = await svc.listPriceHistory(version.id);
     expect(history.length).toBe(1);
     expect(history[0]!.priceClp).toBe(15_000_000);
@@ -222,7 +223,6 @@ describe("VersionsService price history", () => {
     const version = await svc.create({
       modelId: model.id,
       name: "Touring",
-      year: 2025,
       priceClp: 18_000_000,
       transmission: "AUTOMATIC",
       fuel: "BENCINA",
@@ -251,7 +251,6 @@ describe("VersionsService price history", () => {
     const version = await svc.create({
       modelId: model.id,
       name: "LX",
-      year: 2025,
       priceClp: 13_000_000,
       transmission: "MANUAL",
       fuel: "BENCINA",

@@ -68,7 +68,7 @@ describe('AdminEditDialogComponent', () => {
     const templateReq = http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version'));
     templateReq.flush({
       data: {
-        modelId: '', name: '', year: 2026, priceClp: 0,
+        modelId: '', name: '', priceClp: 0,
         transmission: 'MANUAL', fuel: 'BENCINA',
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
@@ -109,7 +109,7 @@ describe('AdminEditDialogComponent', () => {
     const req = http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version'));
     req.flush({
       data: {
-        modelId: '', name: '', year: 2026, priceClp: 0,
+        modelId: '', name: '', priceClp: 0,
         transmission: 'MANUAL', fuel: 'BENCINA',
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
@@ -131,7 +131,7 @@ describe('AdminEditDialogComponent', () => {
     const req = http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version'));
     req.flush({
       data: {
-        modelId: '', name: '', year: 2026, priceClp: 0,
+        modelId: '', name: '', priceClp: 0,
         transmission: 'MANUAL', fuel: 'BENCINA',
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
@@ -159,7 +159,7 @@ describe('AdminEditDialogComponent', () => {
     // Flush template.
     http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version')).flush({
       data: {
-        modelId: '', name: '', year: 2026, priceClp: 0,
+        modelId: '', name: '', priceClp: 0,
         transmission: 'MANUAL', fuel: 'BENCINA',
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
@@ -251,7 +251,7 @@ describe('AdminEditDialogComponent', () => {
     // Step 2: Template response arrives. Effect 3 runs.
     http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version')).flush({
       data: {
-        modelId: '', name: '', year: 2026, priceClp: 0,
+        modelId: '', name: '', priceClp: 0,
         transmission: 'MANUAL', fuel: 'BENCINA',
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
@@ -306,7 +306,7 @@ describe('AdminEditDialogComponent', () => {
     const req = http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version'));
     req.flush({
       data: {
-        modelId: '', name: '', year: 2026, priceClp: 0,
+        modelId: '', name: '', priceClp: 0,
         transmission: 'MANUAL', fuel: 'BENCINA',
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
@@ -344,7 +344,7 @@ describe('AdminEditDialogComponent', () => {
   // Limpia la request pendiente
   http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version')).flush({
     data: {
-      modelId: '', name: '', year: 2026, priceClp: 0,
+      modelId: '', name: '', priceClp: 0,
       transmission: 'MANUAL', fuel: 'BENCINA',
       engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
       consumptionCityKmL: 0, consumptionHighwayKmL: 0,
@@ -436,7 +436,7 @@ describe('Required/optional markers', () => {
     const req = http.expectOne((r) => r.url.includes('/api/v1/admin/seed/template/version'));
     req.flush({
       data: {
-        modelId: '', name: '', year: 2026, priceClp: 0,
+        modelId: '', name: '', priceClp: 0,
         transmission: 'MANUAL', fuel: 'BENCINA',
         engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
         consumptionCityKmL: 0, consumptionHighwayKmL: 0,
@@ -646,7 +646,7 @@ describe('Sections layout', () => {
       entityKey === 'version'
         ? {
             data: {
-              modelId: '', name: '', year: 2026, priceClp: 0,
+              modelId: '', name: '', priceClp: 0,
               transmission: 'MANUAL', fuel: 'BENCINA',
               engineDisplacementCc: 0, powerHp: 0, torqueNm: 0,
               consumptionCityKmL: 0, consumptionHighwayKmL: 0,
@@ -674,11 +674,11 @@ describe('Sections layout', () => {
       'Identificación',
       'Motor',
       'Consumo',
+      'Tanque y batería',
       'Dimensiones',
       'Equipamiento',
       'Apariencia',
       'Seguros y permisos',
-      'Tanque y batería',
       'Recalls',
     ]);
   });
@@ -693,8 +693,13 @@ describe('Sections layout', () => {
 
     const sections = fixture.componentInstance.sections();
     const byId = new Map(sections.map((s) => [s.id, s]));
+    // "Tanque y batería" va pegada a "Consumo": se llenan en la misma pasada.
+    expect(sections.map((s) => s.id)).toEqual([
+      'identificacion', 'motor', 'consumo', 'tanque-y-bateria', 'dimensiones',
+      'equipamiento', 'apariencia', 'seguros-y-permisos', 'recalls',
+    ]);
     expect(byId.get('identificacion')?.fields.map((f) => f.field)).toEqual([
-      'modelId', 'name', 'year', 'priceClp',
+      'modelId', 'name', 'priceClp',
     ]);
     expect(byId.get('motor')?.fields.map((f) => f.field)).toEqual([
       'transmission', 'fuel', 'traction', 'engineType', 'engineDisplacementCc', 'powerHp', 'torqueNm',
@@ -725,11 +730,11 @@ describe('Sections layout', () => {
       'Identificación',
       'Motor',
       'Consumo',
+      'Tanque y batería',
       'Dimensiones',
       'Equipamiento',
       'Apariencia',
       'Seguros y permisos',
-      'Tanque y batería',
       'Recalls',
     ]);
   });
@@ -856,7 +861,7 @@ describe('Sections layout', () => {
 
 describe('Guardar y crear otro', () => {
   const versionTemplate = {
-    modelId: '', name: '', year: 2026, priceClp: 0,
+    modelId: '', name: '', priceClp: 0,
     transmission: 'MANUAL', fuel: 'BENCINA',
     powerHp: 0, torqueNm: 0,
     lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0, trunkLiters: 0,
@@ -927,12 +932,12 @@ describe('Guardar y crear otro', () => {
     form.markAsDirty();
 
     // Lo que hace el store tras un saveAndNew exitoso: solo los sticky.
-    fixture.componentRef.setInput('entity', { modelId: 'm1', year: 2026 });
+    fixture.componentRef.setInput('entity', { modelId: 'm1', transmission: 'MANUAL' });
     fixture.detectChanges();
     await fixture.whenStable();
 
     expect(form.get('modelId')?.value).toBe('m1');
-    expect(form.get('year')?.value).toBe(2026);
+    expect(form.get('transmission')?.value).toBe('MANUAL');
     expect(form.get('name')?.value).toBeNull();
     expect(form.get('priceClp')?.value).toBeNull();
     expect(form.pristine).toBe(true);
@@ -941,7 +946,7 @@ describe('Guardar y crear otro', () => {
 
 describe('Secciones plegables', () => {
   const versionTemplate = {
-    modelId: '', name: '', year: 2026, priceClp: 0,
+    modelId: '', name: '', priceClp: 0,
     transmission: 'MANUAL', fuel: 'BENCINA',
     powerHp: 0, torqueNm: 0,
     lengthMm: 0, widthMm: 0, heightMm: 0, weightKg: 0, trunkLiters: 0,

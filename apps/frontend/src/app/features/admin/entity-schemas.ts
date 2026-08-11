@@ -48,10 +48,12 @@ export const modelSchema = z.object({
   equipment: z.array(z.string()).optional(),
 });
 
+// Sin `year`: es el año que va en el padrón de un 0km comprado hoy, así que
+// lo pone el backend con el calendario (apps/backend/src/shared/model-year.ts)
+// y no se carga por versión.
 export const versionSchema = z.object({
   modelId: z.string().min(1),
   name: z.string().min(2).max(80),
-  year: z.number().int().min(1990).max(2100),
   priceClp: z.number().int().nonnegative(),
   transmission: z.string().min(1).max(40).regex(ENUM_REGEX),
   fuel: z.string().min(1).max(40).regex(ENUM_REGEX),
@@ -166,6 +168,8 @@ export interface FieldMeta {
   placeholder?: string;
   help?: string;
   group?: string;
+  /** Solo `number`: muestra separador de miles mientras se escribe (montos CLP). */
+  thousands?: boolean;
 }
 
 const EXEMPT_KINDS: ReadonlySet<FieldKind> = new Set<FieldKind>([
@@ -221,8 +225,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
   version: [
     { field: 'modelId', label: 'Modelo', kind: 'foreignKey', optionsApi: '/admin/models/options', optionLabel: 'name', group: 'Identificación', sticky: true },
     { field: 'name', label: 'Nombre', kind: 'text', group: 'Identificación' },
-    { field: 'year', label: 'Año', kind: 'number', group: 'Identificación', sticky: true },
-    { field: 'priceClp', label: 'Precio CLP', kind: 'number', group: 'Identificación' },
+    { field: 'priceClp', label: 'Precio CLP', kind: 'number', thousands: true, group: 'Identificación' },
     // Igual que `segment` en model: opciones desde la DB para no perder los
     // valores creados con "Otro".
     { field: 'transmission', label: 'Transmisión', kind: 'enumWithOther', optionsApi: '/versions/transmissions', placeholder: 'Buscar o crear transmisión…', group: 'Motor', sticky: true },
@@ -242,6 +245,11 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'consumptionCityKmL', label: 'Consumo ciudad km/L', kind: 'number', optional: true, help: 'No aplica a vehículos eléctricos', group: 'Consumo', showWhenFuels: ['BENCINA', 'DIESEL', 'HYBRID'] },
     { field: 'consumptionHighwayKmL', label: 'Consumo carretera km/L', kind: 'number', optional: true, help: 'No aplica a vehículos eléctricos', group: 'Consumo', showWhenFuels: ['BENCINA', 'DIESEL', 'HYBRID'] },
     { field: 'autonomyKm', label: 'Autonomía km', kind: 'number', optional: true, help: 'Autonomía estimada con carga completa (obligatoria para eléctricos)', group: 'Consumo', showWhenFuels: ['ELECTRIC'] },
+    // El orden de este array define el orden de las secciones: "Tanque y
+    // batería" va acá para quedar pegada a "Consumo", que es lo que se llena
+    // en la misma pasada.
+    { field: 'fuelTankLiters', label: 'Capacidad estanque L', kind: 'number', optional: true, help: 'Capacidad del estanque de combustible en litros', group: 'Tanque y batería' },
+    { field: 'batteryCapacityKwh', label: 'Capacidad batería kWh', kind: 'number', optional: true, help: 'Capacidad de la batería en kWh (solo vehículos eléctricos o híbridos enchufables)', group: 'Tanque y batería' },
     { field: 'lengthMm', label: 'Largo mm', kind: 'number', group: 'Dimensiones' },
     { field: 'widthMm', label: 'Ancho mm', kind: 'number', group: 'Dimensiones' },
     { field: 'heightMm', label: 'Alto mm', kind: 'number', group: 'Dimensiones' },
@@ -255,8 +263,6 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'circulationPermitClp', label: 'Permiso circulación CLP', kind: 'number', optional: true, help: 'Permiso de circulación anual del vehículo en pesos chilenos', group: 'Seguros y permisos' },
     { field: 'mandatoryInsuranceClp', label: 'SOAP CLP', kind: 'number', optional: true, help: 'Seguro Obligatorio de Accidentes Personales (SOAP) en pesos chilenos', group: 'Seguros y permisos' },
     { field: 'voluntaryInsuranceClp', label: 'Seguro automotriz CLP', kind: 'number', optional: true, group: 'Seguros y permisos' },
-    { field: 'fuelTankLiters', label: 'Capacidad estanque L', kind: 'number', optional: true, help: 'Capacidad del estanque de combustible en litros', group: 'Tanque y batería' },
-    { field: 'batteryCapacityKwh', label: 'Capacidad batería kWh', kind: 'number', optional: true, help: 'Capacidad de la batería en kWh (solo vehículos eléctricos o híbridos enchufables)', group: 'Tanque y batería' },
     { field: 'hasRecall', label: '¿Tiene recall?', kind: 'boolean', optional: true, group: 'Recalls' },
     { field: 'recallUrl', label: 'URL del informe (si recall)', kind: 'text', optional: true, help: 'URL pública del informe de recall publicado por el fabricante o la autoridad', group: 'Recalls' },
   ],

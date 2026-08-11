@@ -55,6 +55,8 @@
                 <mat-icon class="sort-icon">{{ crud.sortKey() === 'segment' ? (crud.sortDir() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}</mat-icon>
               </button>
             </th>
+            <th class="py-2 font-bold uppercase tracking-wide">Imagen</th>
+            <th class="py-2 font-bold uppercase tracking-wide">Galería</th>
             <th class="py-2 actions-col">Acciones</th>
           </tr>
         </thead>
@@ -64,6 +66,12 @@
               <td class="py-2">{{ m.name }}</td>
               <td class="py-2">{{ m.brand?.name ?? '—' }}</td>
               <td class="py-2">{{ m.segment }}</td>
+              <td class="py-2" [class.text-danger]="!m.imageUrl" [class.font-bold]="!m.imageUrl">
+                {{ m.imageUrl ? 'Sí' : 'No' }}
+              </td>
+              <td class="py-2" [class.text-danger]="galleryCount(m) === 0" [class.font-bold]="galleryCount(m) === 0">
+                {{ galleryCount(m) }}
+              </td>
               <td class="py-2 actions-col">
                 <div class="action-buttons">
                   <button mat-stroked-button color="primary" (click)="crud.openEdit(m)">

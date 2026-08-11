@@ -12,6 +12,8 @@ interface ModelRow {
   id: string;
   name: string;
   segment: string;
+  imageUrl: string | null;
+  galleryUrls?: string[];
   brand: { name: string } | null;
   equipmentItems?: { equipmentItem: { id: string; name: string; category: string } }[];
 }
@@ -65,5 +67,10 @@ export class ModelsAdminComponent {
 
   constructor() {
     void this.crud.load();
+  }
+
+  /** `galleryUrls` llega como array del backend, pero puede faltar en filas viejas. */
+  galleryCount(row: ModelRow): number {
+    return row.galleryUrls?.length ?? 0;
   }
 }

@@ -9,6 +9,7 @@ import {
   type UpdateVersionInput,
 } from "./versions.dto.admin.js";
 import type { PaginationParams } from "../../shared/pagination.js";
+import { currentModelYear } from "../../shared/model-year.js";
 import { mergeEnumFacets, type EnumFacet } from "../../shared/enum-facets.js";
 import {
   resolveEffectiveEquipment,
@@ -224,7 +225,7 @@ export class VersionsService {
     );
     if (knownFuel && knownTrans) {
       const version = await this.prisma.version.create({
-        data: input as Prisma.VersionUncheckedCreateInput,
+        data: { ...input, year: currentModelYear() } as Prisma.VersionUncheckedCreateInput,
       });
       await this.prisma.versionPriceHistory.create({
         data: { versionId: version.id, priceClp: version.priceClp, note: "Versión creada" },
@@ -268,7 +269,7 @@ export class VersionsService {
       id,
       input.modelId,
       input.name,
-      input.year,
+      currentModelYear(),
       input.priceClp,
       input.transmission,
       input.fuel,
@@ -347,10 +348,6 @@ export class VersionsService {
       }
       if (input.traction !== undefined) { setClauses.push("`traction` = ?"); values.push(input.traction); }
       if (input.engineType !== undefined) { setClauses.push("`engineType` = ?"); values.push(input.engineType); }
-      if (input.year !== undefined) {
-        setClauses.push("year = ?");
-        values.push(input.year);
-      }
       if (input.priceClp !== undefined) {
         setClauses.push("`priceClp` = ?");
         values.push(input.priceClp);

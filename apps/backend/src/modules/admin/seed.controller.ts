@@ -6,10 +6,11 @@ import { badRequest } from "../../shared/errors.js";
 const TEMPLATES: Record<string, unknown> = {
   brand: { name: "", logoUrl: null },
   model: { brandId: "", name: "", segment: "SEDAN", imageUrl: null, galleryUrls: [] },
+  // Sin `year`: lo pone el servidor (ver shared/model-year.ts). Si estuviera
+  // acá, el diálogo admin lo renderizaría como campo extra.
   version: {
     modelId: "",
     name: "",
-    year: 2026,
     priceClp: 0,
     transmission: "MANUAL",
     fuel: "BENCINA",

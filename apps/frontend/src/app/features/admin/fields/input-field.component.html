@@ -6,6 +6,16 @@
       [formControl]="$any(control())"
       [attr.aria-required]="required() ? 'true' : null"
     ></textarea>
+  } @else if (thousands()) {
+    <input
+      matInput
+      type="text"
+      inputmode="numeric"
+      [value]="display()"
+      (input)="onThousandsInput($any($event.target))"
+      (blur)="control().markAsTouched()"
+      [attr.aria-required]="required() ? 'true' : null"
+    />
   } @else {
     <input
       matInput
