@@ -279,6 +279,28 @@ describe('VehicleCardComponent', () => {
     expect(f.componentInstance.captured()).not.toBeNull();
   });
 
+  it('muestra el icono de nota del editor solo cuando el modelo tiene comentario', () => {
+    const f = TestBed.createComponent(TestHostComponent);
+    f.componentInstance.car.set(carFixture());
+    f.detectChanges();
+    expect(
+      f.nativeElement.querySelector('[data-testid="model-comment-m1"]'),
+    ).toBeNull();
+
+    f.componentInstance.car.set(
+      carFixture({ comment: 'El único del segmento con rueda de repuesto de tamaño completo' }),
+    );
+    f.detectChanges();
+
+    const icon = f.nativeElement.querySelector(
+      '[data-testid="model-comment-m1"]',
+    ) as HTMLElement;
+    expect(icon).not.toBeNull();
+    expect(icon.getAttribute('aria-label')).toContain('rueda de repuesto');
+    // Alcanzable con teclado: en touch y navegando por Tab no hay hover.
+    expect(icon.getAttribute('tabindex')).toBe('0');
+  });
+
   describe('botón corazón (favorito)', () => {
     const testModel = carFixture();
 

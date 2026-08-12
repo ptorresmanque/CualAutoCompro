@@ -174,6 +174,68 @@ describe('LandingComponent', () => {
     expect(href.startsWith('/compare?ids=')).toBe(true);
     expect(href).toContain('v1');
     expect(href).toContain('v2');
+
+    // Regresión: el backend mandaba un `defaultVersion` sin motor ni consumo y
+    // la preview rendía los fallbacks aunque el dato viniera cargado.
+    expect(preview.textContent).toContain('1,4 L');
+    expect(preview.textContent).toContain('100 HP');
+    expect(preview.textContent).toContain('18,2 km/l ciudad');
+    expect(preview.textContent).not.toContain('Motor por confirmar');
+    expect(preview.textContent).not.toContain('Consumo por confirmar');
+  });
+
+  it('arma una pareja por segmento y los dots cambian la comparación visible', async () => {
+    const fixture = TestBed.createComponent(LandingComponent);
+    fixture.detectChanges();
+    const version = (id: string, priceClp: number) => ({
+      id,
+      name: 'Base',
+      year: 2026,
+      priceClp,
+      transmission: 'AUTOMATIC',
+      fuel: 'BENCINA',
+      powerHp: 100,
+    });
+    http.expectOne((r) => r.url.includes('/api/v1/models')).flush({
+      data: {
+        total: 4,
+        items: [
+          { id: 'm1', name: 'Rio', brand: { name: 'Kia' }, segment: 'HATCHBACK', minPrice: 14000000, versions: [version('v1', 14000000)] },
+          { id: 'm2', name: 'Tucson', brand: { name: 'Hyundai' }, segment: 'SUV', minPrice: 30000000, versions: [version('v2', 30000000)] },
+          { id: 'm3', name: 'Swift', brand: { name: 'Suzuki' }, segment: 'HATCHBACK', minPrice: 12000000, versions: [version('v3', 12000000)] },
+          { id: 'm4', name: 'CX-5', brand: { name: 'Mazda' }, segment: 'SUV', minPrice: 28000000, versions: [version('v4', 28000000)] },
+        ],
+        page: 1,
+        pageSize: 30,
+      },
+    });
+    await fixture.componentInstance.ready;
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    // Dos parejas: una por segmento. Nadie compara un SUV con un city car.
+    expect(fixture.componentInstance.pairs().length).toBe(2);
+    const pairA = html.querySelector('[data-testid="live-pair-0"]') as HTMLElement;
+    const pairB = html.querySelector('[data-testid="live-pair-1"]') as HTMLElement;
+    expect(pairA.textContent).toContain('Suzuki Swift');
+    expect(pairA.textContent).toContain('Kia Rio');
+    expect(pairB.textContent).toContain('Mazda CX-5');
+    expect(pairB.textContent).toContain('Hyundai Tucson');
+
+    // Solo la pareja activa es navegable; la otra queda inerte.
+    expect(pairA.hasAttribute('inert')).toBe(false);
+    expect(pairB.hasAttribute('inert')).toBe(true);
+
+    const dot = html.querySelector(
+      '[data-testid="live-comparison-dot-1"]',
+    ) as HTMLButtonElement;
+    dot.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.activePairIndex()).toBe(1);
+    expect(
+      (html.querySelector('[data-testid="live-pair-1"]') as HTMLElement).hasAttribute('inert'),
+    ).toBe(false);
   });
 
   it('oculta la invitación a crear cuenta cuando el usuario inicia sesión', async () => {

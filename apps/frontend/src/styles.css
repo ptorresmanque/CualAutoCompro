@@ -1007,6 +1007,35 @@ button.action-danger mat-icon { color: var(--mat-sys-error); }
   white-space: nowrap;
 }
 
+/* Segmento + nota del editor, agrupados a la derecha del nombre. */
+.ficha-name-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+}
+
+/* Icono de "nota del editor". El mismo `lightbulb` se usa en la ficha del
+ * modelo y en el comparador: un solo símbolo para un solo significado. */
+.ficha-note-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  line-height: 18px;
+  color: var(--engine);
+  cursor: help;
+}
+
+/* Ítem de equipamiento que trae nota del editor. El subrayado punteado es la
+ * única señal de que ahí hay algo que leer: sin él, el tooltip solo aparece
+ * para quien pase el puntero por casualidad. Los ítems sin nota se ven
+ * exactamente igual que antes. Vive acá porque lo usan la ficha del modelo y
+ * el comparador. */
+.equipment-note {
+  border-bottom: 1px dotted var(--rule-strong);
+  cursor: help;
+}
+
 .ficha-rule {
   border: 0;
   border-top: 1px dashed var(--rule);

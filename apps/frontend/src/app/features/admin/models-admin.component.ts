@@ -15,6 +15,7 @@ interface ModelRow {
   imageUrl: string | null;
   galleryUrls?: string[];
   brand: { name: string } | null;
+  comment?: string | null;
   equipmentItems?: { equipmentItem: { id: string; name: string; category: string } }[];
 }
 

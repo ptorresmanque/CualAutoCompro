@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   signal,
 } from '@angular/core';
@@ -12,12 +13,17 @@ import { AuthService } from '../../core/auth.service';
 import { CompareStore } from '../../core/compare-store.service';
 import { PopularityService } from '../../core/popularity.service';
 import { FavoritesStore } from '../../core/favorites-store.service';
+import { toAbsoluteUploadUrl } from '../../core/upload-url';
 import {
   VehicleCardComponent,
   VehicleCardInput,
 } from '../../shared/ui/vehicle-card.component';
 import { VehicleVersion } from '../../core/types/vehicle';
-import { fuelLabel, transmissionLabel } from '../../core/types/catalog-labels';
+import {
+  fuelLabel,
+  segmentLabel,
+  transmissionLabel,
+} from '../../core/types/catalog-labels';
 
 interface Stats {
   total: number;
@@ -29,6 +35,12 @@ interface LiveComparisonEntry {
   model: VehicleCardInput;
   version: VehicleVersion;
 }
+
+/** Cada cuánto avanza el carrusel del hero. */
+const ROTATION_MS = 7000;
+
+/** Tope de parejas: más allá de esto la fila de dots deja de ser navegable. */
+const MAX_PAIRS = 6;
 
 @Component({
   selector: 'app-landing',
@@ -51,7 +63,15 @@ export class LandingComponent {
     if (top.size === 0) return [];
     return this.allItems().filter((i) => top.has(i.id));
   });
-  readonly liveComparison = signal<LiveComparisonEntry[]>([]);
+  /** Parejas del hero: dos modelos del mismo segmento por slide. */
+  readonly pairs = signal<LiveComparisonEntry[][]>([]);
+  readonly activePairIndex = signal(0);
+  /** La pareja en pantalla. */
+  readonly liveComparison = computed(
+    () => this.pairs()[this.activePairIndex()] ?? [],
+  );
+  /** Con el puntero encima o el foco adentro el carrusel no avanza. */
+  private readonly paused = signal(false);
   readonly loading = signal(true);
   readonly loadError = signal<string | null>(null);
 
@@ -59,14 +79,42 @@ export class LandingComponent {
   readonly selectedVersions = signal<Record<string, string>>({});
   readonly selectedIds = this.compare.ids;
   readonly maxReached = computed(() => this.selectedIds().length >= 3);
-  readonly liveComparisonIds = computed(() =>
-    this.liveComparison().map((item) => item.version.id).join(','),
-  );
-  readonly priceDifference = computed(() => {
-    const entries = this.liveComparison();
-    if (entries.length < 2) return null;
-    return Math.abs(entries[1].version.priceClp - entries[0].version.priceClp);
-  });
+
+  pairIds(pair: LiveComparisonEntry[]): string {
+    return pair.map((item) => item.version.id).join(',');
+  }
+
+  pairPriceDifference(pair: LiveComparisonEntry[]): number {
+    if (pair.length < 2) return 0;
+    return Math.abs(pair[1].version.priceClp - pair[0].version.priceClp);
+  }
+
+  /**
+   * Segmento de la pareja. Es el dato que justifica la comparación: sin él
+   * la cabecera decía "2 modelos", que ya se ve en la grilla.
+   */
+  segmentLabelFor(pair: LiveComparisonEntry[]): string {
+    const first = pair[0];
+    if (!first) return '';
+    const a = first.model.segment;
+    const b = pair[1]?.model.segment;
+    return a === b ? segmentLabel(a) : 'Comparación';
+  }
+
+  /** `background-image` del thumb; `none` si el modelo no tiene imagen. */
+  modelImage(model: VehicleCardInput): string {
+    const url = toAbsoluteUploadUrl(model.imageUrl);
+    return url ? `url("${url}")` : 'none';
+  }
+
+  goToPair(index: number): void {
+    if (index < 0 || index >= this.pairs().length) return;
+    this.activePairIndex.set(index);
+  }
+
+  setPaused(value: boolean): void {
+    this.paused.set(value);
+  }
 
   selectedVersionId(item: VehicleCardInput): string | null {
     const override = this.selectedVersions()[item.id];
@@ -122,7 +170,73 @@ export class LandingComponent {
   readonly ready: Promise<void>;
 
   constructor() {
+    this.startRotation();
     this.ready = this.bootstrap();
+  }
+
+  /**
+   * Avance automático del carrusel del hero.
+   *
+   * No arranca con `prefers-reduced-motion`: ahí el slide ya está desactivado
+   * por CSS y rotar igual dejaría el contenido cambiando de golpe solo, que es
+   * exactamente lo que la preferencia pide evitar. Los dots siguen sirviendo.
+   */
+  private startRotation(): void {
+    const reduceMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) return;
+
+    const timer = setInterval(() => {
+      if (this.paused()) return;
+      const total = this.pairs().length;
+      if (total > 1) this.activePairIndex.update((i) => (i + 1) % total);
+    }, ROTATION_MS);
+    inject(DestroyRef).onDestroy(() => clearInterval(timer));
+  }
+
+  /**
+   * Parejas comparables: dos modelos **del mismo segmento** y de precio
+   * cercano. Comparar un SUV con un city car no le sirve a nadie, así que se
+   * agrupa por segmento, se ordena por precio y se enfrentan los consecutivos.
+   *
+   * Determinista a propósito (sin `random`): el orden depende solo del
+   * catálogo, así que los tests son estables y quien vuelve a la home ve lo
+   * mismo que la vez anterior.
+   */
+  private buildPairs(items: VehicleCardInput[]): LiveComparisonEntry[][] {
+    const entries = items
+      .map((model) => ({
+        model,
+        version: model.versions[0] ?? model.defaultVersion ?? null,
+      }))
+      .filter((item): item is LiveComparisonEntry => item.version !== null);
+
+    const bySegment = new Map<string, LiveComparisonEntry[]>();
+    for (const entry of entries) {
+      const list = bySegment.get(entry.model.segment) ?? [];
+      list.push(entry);
+      bySegment.set(entry.model.segment, list);
+    }
+
+    const pairs: LiveComparisonEntry[][] = [];
+    for (const list of bySegment.values()) {
+      const byPrice = [...list].sort(
+        (a, b) => a.version.priceClp - b.version.priceClp,
+      );
+      for (let i = 0; i + 1 < byPrice.length; i += 2) {
+        pairs.push([byPrice[i], byPrice[i + 1]]);
+      }
+    }
+
+    // Catálogo chico: si ningún segmento llega a dos modelos no habría ninguna
+    // pareja y el hero quedaría vacío. Ahí vale más una comparación cruzada
+    // que un hueco.
+    if (pairs.length === 0 && entries.length >= 2) {
+      pairs.push([entries[0], entries[1]]);
+    }
+    return pairs.slice(0, MAX_PAIRS);
   }
 
   private async bootstrap(): Promise<void> {
@@ -132,15 +246,7 @@ export class LandingComponent {
         data: { items: VehicleCardInput[]; total: number };
       }>('/models', { page: 1, pageSize: 30 });
       const items = res.data.items;
-      this.liveComparison.set(
-        items
-          .map((model) => ({
-            model,
-            version: model.defaultVersion ?? model.versions[0] ?? null,
-          }))
-          .filter((item): item is LiveComparisonEntry => item.version !== null)
-          .slice(0, 2),
-      );
+      this.pairs.set(this.buildPairs(items));
       this.allItems.set(items);
       const brandSet = new Set(items.map((i) => i.brand.name));
       const versions = items.reduce((acc, i) => acc + (i.versions?.length ?? 0), 0);

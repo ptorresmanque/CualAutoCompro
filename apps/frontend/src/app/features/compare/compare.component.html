@@ -263,6 +263,16 @@
             >
               {{ v.model?.brand?.name }}
             </span>
+            @if (v.model?.comment; as note) {
+              <mat-icon
+                class="ficha-note-icon"
+                [matTooltip]="note"
+                matTooltipPosition="above"
+                tabindex="0"
+                [attr.aria-label]="'Nota sobre ' + (v.model?.name ?? '') + ': ' + note"
+                [attr.data-testid]="'model-comment-' + v.id"
+              >lightbulb</mat-icon>
+            }
           </div>
           <h3 class="font-semibold text-lg leading-tight text-ink mb-2 pr-8">
             @if (detailUrl(v); as url) {
@@ -489,7 +499,27 @@
                           class="px-4 py-2 text-ink"
                           [attr.data-testid]="'equipment-cell-' + v.id + '-' + row.category"
                         >
-                          {{ formatEquipmentByCategory(v, row.category) }}
+                          @if (equipmentItemsByCategory(v, row.category); as entries) {
+                            @if (entries.length === 0) {
+                              —
+                            }
+                            <!-- Un elemento por ítem para el tooltip de su
+                                 nota; el texto resultante es el mismo. -->
+                            @for (item of entries; track item.name; let last = $last) {
+                              @if (item.comment) {
+                                <span
+                                  class="equipment-note"
+                                  [matTooltip]="item.comment"
+                                  matTooltipPosition="above"
+                                  tabindex="0"
+                                  [attr.aria-label]="item.name + ': ' + item.comment"
+                                  [attr.data-testid]="'equipment-note-' + v.id + '-' + item.name"
+                                >{{ item.name }}</span>
+                              } @else {
+                                <span>{{ item.name }}</span>
+                              }@if (!last) {<span>, </span>}
+                            }
+                          }
                         </td>
                       }
                     } @else {

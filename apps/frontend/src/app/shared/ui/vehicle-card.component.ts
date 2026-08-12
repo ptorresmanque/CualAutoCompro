@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { VehicleVersion } from '../../core/types/vehicle';
 import { AuthService } from '../../core/auth.service';
 import { toAbsoluteUploadUrl } from '../../core/upload-url';
@@ -26,13 +27,22 @@ export interface VehicleCardInput {
   brand: { name: string };
   imageUrl?: string | null;
   minPrice: number | null;
+  /** Nota del editor sobre el modelo; se muestra como tooltip. */
+  comment?: string | null;
   defaultVersion?: VehicleVersion | null;
   versions: VehicleVersion[];
 }
 
 @Component({
   selector: 'app-vehicle-card',
-  imports: [NgStyle, RouterLink, MatButtonModule, MatCardModule, MatIconModule],
+  imports: [
+    NgStyle,
+    RouterLink,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    MatTooltipModule,
+  ],
   templateUrl: './vehicle-card.component.html',
   styleUrl: './vehicle-card.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

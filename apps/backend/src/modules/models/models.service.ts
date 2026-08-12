@@ -115,15 +115,6 @@ export class ModelsService {
       const minConsumption = consumptions.length ? Math.min(...consumptions) : null;
       const maxConsumption = consumptions.length ? Math.max(...consumptions) : null;
       const maxPrice = prices.length ? Math.max(...prices) : null;
-      const firstVersion = m.versions[0];
-      const defaultVersion = firstVersion
-        ? {
-            id: firstVersion.id,
-            name: firstVersion.name,
-            priceClp: firstVersion.priceClp,
-            year: firstVersion.year,
-          }
-        : null;
       const versions = m.versions.map((v) => ({
         id: v.id,
         modelId: v.modelId,
@@ -141,6 +132,11 @@ export class ModelsService {
         consumptionHighwayKmL: v.consumptionHighwayKmL,
         equipmentItems: equipmentByVersion.get(v.id) ?? [],
       }));
+      // La versión completa, no un recorte de 4 campos: mientras `defaultVersion`
+      // y `versions[0]` fueron dos representaciones de la misma fila —una sin
+      // motor ni consumo— cualquier consumidor que prefiriera la primera
+      // terminaba mostrando "por confirmar" con el dato cargado (landing).
+      const defaultVersion = versions[0] ?? null;
       const galleryUrls = toGalleryUrls(m.galleryUrls);
       return {
         id: m.id, brandId: m.brandId, name: m.name, segment: m.segment,
@@ -148,6 +144,7 @@ export class ModelsService {
         // image is only a fallback for models where the admin didn't set
         // a primary image.
         imageUrl: m.imageUrl ?? galleryUrls[0] ?? null,
+        comment: m.comment,
         galleryUrls, brand: m.brand,
         minPrice, minConsumption, maxConsumption, maxPrice, versionCount: m.versions.length,
         defaultVersion,
@@ -340,14 +337,15 @@ export class ModelsService {
     // de columnas de las 3 queries abajo deben mantenerse en sync con
     // `Model` en prisma/schema.prisma — no hay verificación en compile-time.
     await this.prisma.$executeRawUnsafe(
-      `INSERT INTO \`Model\` (id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`createdAt\`, \`deletedAt\`)
-       VALUES (?, ?, ?, ?, ?, ?, NOW(), NULL)`,
+      `INSERT INTO \`Model\` (id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`comment\`, \`createdAt\`, \`deletedAt\`)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NULL)`,
       id,
       input.brandId,
       input.name,
       input.segment,
       input.imageUrl ?? null,
       JSON.stringify(input.galleryUrls ?? []),
+      input.comment ?? null,
     );
     const rows = await this.prisma.$queryRawUnsafe<Array<{
       id: string;
@@ -356,10 +354,11 @@ export class ModelsService {
       segment: string;
       imageUrl: string | null;
       galleryUrls: string;
+      comment: string | null;
       deletedAt: Date | null;
       createdAt: Date;
     }>>(
-      `SELECT id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`deletedAt\`, \`createdAt\`
+      `SELECT id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`comment\`, \`deletedAt\`, \`createdAt\`
        FROM \`Model\` WHERE id = ? AND \`deletedAt\` IS NULL`,
       id,
     );
@@ -406,6 +405,10 @@ export class ModelsService {
         setClauses.push("`galleryUrls` = ?");
         values.push(JSON.stringify(input.galleryUrls));
       }
+      if (input.comment !== undefined) {
+        setClauses.push("`comment` = ?");
+        values.push(input.comment);
+      }
       values.push(id);
       // SCHEMA-DRIFT NOTE: raw UPDATE por la misma razón que el INSERT de
       // `create`: token de enum abierto que Prisma rechazaría. En
@@ -433,10 +436,11 @@ export class ModelsService {
         segment: string;
         imageUrl: string | null;
         galleryUrls: string;
+        comment: string | null;
         deletedAt: Date | null;
         createdAt: Date;
       }>>(
-        `SELECT id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`deletedAt\`, \`createdAt\`
+        `SELECT id, \`brandId\`, name, segment, \`imageUrl\`, \`galleryUrls\`, \`comment\`, \`deletedAt\`, \`createdAt\`
          FROM \`Model\` WHERE id = ? AND \`deletedAt\` IS NULL`,
         id,
       );

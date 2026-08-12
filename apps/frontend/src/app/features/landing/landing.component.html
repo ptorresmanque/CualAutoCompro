@@ -36,52 +36,91 @@
 
         <!-- Preview ficha comparativa -->
         <aside class="md:col-span-5" aria-label="Vista previa de comparación">
-          <div class="bg-paper-cool border border-ink p-5 relative" data-testid="live-comparison">
+          <div
+            class="bg-paper-cool border border-ink p-5 relative"
+            data-testid="live-comparison"
+            (mouseenter)="setPaused(true)"
+            (mouseleave)="setPaused(false)"
+            (focusin)="setPaused(true)"
+            (focusout)="setPaused(false)"
+          >
             <span class="absolute -top-3 left-4 px-2 bg-paper stamp-label">Comparación en vivo</span>
             @if (loading()) {
               <div class="live-comparison-state" data-testid="live-comparison-loading">
                 <mat-icon>database</mat-icon>
                 <span>Cargando modelos del catálogo…</span>
               </div>
-            } @else if (liveComparison().length === 2) {
-              <header class="flex items-center justify-between mb-4 pb-3 border-b border-rule">
-                <span class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted">2 modelos · CLP</span>
-                <span class="stamp-label font-display">VS</span>
-              </header>
-              <div class="live-comparison-grid">
-                @for (item of liveComparison(); track item.version.id; let index = $index) {
-                  <article class="live-comparison-model" [attr.data-testid]="'live-model-' + index">
-                    <p class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted">Modelo {{ index === 0 ? 'A' : 'B' }}</p>
-                    <p class="font-semibold text-ink leading-tight">
-                      {{ item.model.brand.name }} {{ item.model.name }}
-                    </p>
-                    <p class="font-mono text-[10px] text-ink-muted mt-1">
-                      {{ item.version.name }} · {{ item.version.year }}
-                    </p>
-                    <p class="font-display text-2xl mt-2" [class.text-engine]="index === 1" [class.text-ink]="index === 0">
-                      {{ formatClp(item.version.priceClp) }}
-                    </p>
-                    <ul class="mt-3 space-y-1 font-mono text-[11px] text-ink-muted">
-                      <li>{{ engineLabel(item.version) }}</li>
-                      <li>{{ drivingLabel(item.version) }}</li>
-                    </ul>
-                  </article>
-                }
-              </div>
-              <footer class="mt-4 pt-3 border-t border-rule flex items-center justify-between gap-3">
-                <div>
-                  <span class="block font-mono text-[11px] uppercase tracking-stamp text-ink-muted">Diferencia de precio</span>
-                  <span class="font-display text-engine text-lg">{{ formatClp(priceDifference() ?? 0) }}</span>
-                </div>
-                <a
-                  routerLink="/compare"
-                  [queryParams]="{ ids: liveComparisonIds() }"
-                  class="live-comparison-link"
-                  data-testid="live-comparison-link"
+            } @else if (pairs().length > 0) {
+              <!-- Todas las parejas viven en el DOM y el track se desplaza:
+                   es lo que da el slide. Las que no están en pantalla van
+                   `inert` para que el Tab no se meta en una ficha invisible. -->
+              <div class="live-comparison-viewport" aria-live="polite">
+                <div
+                  class="live-comparison-track"
+                  [style.transform]="'translateX(' + (-activePairIndex() * 100) + '%)'"
+                  data-testid="live-comparison-track"
                 >
-                  Comparar <mat-icon>arrow_forward</mat-icon>
-                </a>
-              </footer>
+                  @for (pair of pairs(); track pairIds(pair); let pairIndex = $index) {
+                    <div
+                      class="live-comparison-slide"
+                      [attr.inert]="pairIndex === activePairIndex() ? null : ''"
+                      [attr.aria-hidden]="pairIndex === activePairIndex() ? null : 'true'"
+                      [attr.data-testid]="'live-pair-' + pairIndex"
+                    >
+                      <header class="flex items-center justify-between mb-4 pb-3 border-b border-rule">
+                        <span class="font-mono text-[11px] uppercase tracking-stamp text-ink-muted">
+                          {{ segmentLabelFor(pair) }} · CLP
+                        </span>
+                        <span class="stamp-label font-display">VS</span>
+                      </header>
+                      <div class="live-comparison-grid">
+                        @for (item of pair; track item.version.id; let index = $index) {
+                          <article class="live-comparison-model" [attr.data-testid]="'live-model-' + index">
+                            <span
+                              class="live-comparison-thumb"
+                              [style.background-image]="modelImage(item.model)"
+                              role="img"
+                              [attr.aria-label]="item.model.brand.name + ' ' + item.model.name"
+                            >
+                              @if (!item.model.imageUrl) {
+                                <mat-icon>directions_car</mat-icon>
+                              }
+                            </span>
+                            <p class="font-mono text-[10px] uppercase tracking-stamp text-ink-muted mt-2">Modelo {{ index === 0 ? 'A' : 'B' }}</p>
+                            <p class="font-semibold text-ink leading-tight">
+                              {{ item.model.brand.name }} {{ item.model.name }}
+                            </p>
+                            <p class="font-mono text-[10px] text-ink-muted mt-1">
+                              {{ item.version.name }} · {{ item.version.year }}
+                            </p>
+                            <p class="font-display text-2xl mt-2" [class.text-engine]="index === 1" [class.text-ink]="index === 0">
+                              {{ formatClp(item.version.priceClp) }}
+                            </p>
+                            <ul class="mt-3 space-y-1 font-mono text-[11px] text-ink-muted">
+                              <li>{{ engineLabel(item.version) }}</li>
+                              <li>{{ drivingLabel(item.version) }}</li>
+                            </ul>
+                          </article>
+                        }
+                      </div>
+                      <footer class="mt-4 pt-3 border-t border-rule flex items-center justify-between gap-3">
+                        <div>
+                          <span class="block font-mono text-[11px] uppercase tracking-stamp text-ink-muted">Diferencia de precio</span>
+                          <span class="font-display text-engine text-lg">{{ formatClp(pairPriceDifference(pair)) }}</span>
+                        </div>
+                        <a
+                          routerLink="/compare"
+                          [queryParams]="{ ids: pairIds(pair) }"
+                          class="live-comparison-link"
+                          data-testid="live-comparison-link"
+                        >
+                          Comparar <mat-icon>arrow_forward</mat-icon>
+                        </a>
+                      </footer>
+                    </div>
+                  }
+                </div>
+              </div>
             } @else {
               <div class="live-comparison-state" data-testid="live-comparison-empty">
                 <mat-icon>directions_car</mat-icon>
@@ -89,8 +128,31 @@
               </div>
             }
           </div>
+
+          @if (pairs().length > 1) {
+            <div
+              class="mt-3 flex justify-center gap-2"
+              role="group"
+              aria-label="Seleccionar comparación"
+              data-testid="live-comparison-dots"
+            >
+              @for (pair of pairs(); track pairIds(pair); let index = $index) {
+                <button
+                  type="button"
+                  (click)="goToPair(index)"
+                  [attr.aria-label]="'Ver comparación ' + (index + 1) + ' de ' + pairs().length"
+                  [attr.aria-current]="index === activePairIndex() ? 'true' : null"
+                  [class.bg-engine]="index === activePairIndex()"
+                  [class.bg-rule]="index !== activePairIndex()"
+                  [attr.data-testid]="'live-comparison-dot-' + index"
+                  class="h-1.5 w-6 transition-colors"
+                ></button>
+              }
+            </div>
+          }
+
           <p class="mt-2 font-mono text-[10px] uppercase tracking-stamp text-ink-muted text-right">
-            Datos cargados desde el catálogo
+            Precio de lista · no incluye bonos ni descuentos
           </p>
         </aside>
       </div>

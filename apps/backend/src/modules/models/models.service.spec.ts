@@ -249,6 +249,71 @@ describe("ModelsService con enums abiertos", () => {
     expect(v.equipmentItems?.[0]?.equipmentItem.name).toBe("Cámara 360°");
   });
 
+  it("list() expone el comentario del modelo y un defaultVersion con la ficha completa", async () => {
+    const svc = new ModelsService(prisma);
+    const brand = await prisma.brand.findFirstOrThrow({ where: { name: "Toyota" } });
+    const name = `Modelo Comment ${Date.now()}`;
+    const model = await svc.create({
+      brandId: brand.id,
+      name,
+      segment: "SEDAN",
+      imageUrl: null,
+      galleryUrls: [],
+      comment: "Único de su segmento con caja CVT de 8 marchas simuladas",
+    });
+    await prisma.version.create({
+      data: {
+        modelId: model.id,
+        name: "1.8 Hybrid",
+        year: 2026,
+        priceClp: 20000000,
+        transmission: "CVT",
+        fuel: "HYBRID",
+        engineDisplacementCc: 1800,
+        powerHp: 122,
+        torqueNm: 142,
+        consumptionCityKmL: 21.5,
+        consumptionHighwayKmL: 19,
+        lengthMm: 1, widthMm: 1, heightMm: 1, weightKg: 1, trunkLiters: 1,
+      },
+    });
+
+    const res = await svc.list({ page: 1, pageSize: 50, sort: "name", order: "asc" });
+    const found = res.items.find((m) => m.name === name)!;
+    expect(found.comment).toBe(
+      "Único de su segmento con caja CVT de 8 marchas simuladas",
+    );
+    // Regresión: `defaultVersion` traía solo id/name/priceClp/year, así que el
+    // landing —que lo prefiere sobre `versions[0]`— mostraba "Motor por
+    // confirmar" con los datos cargados.
+    expect(found.defaultVersion?.engineDisplacementCc).toBe(1800);
+    expect(found.defaultVersion?.powerHp).toBe(122);
+    expect(found.defaultVersion?.fuel).toBe("HYBRID");
+    expect(found.defaultVersion?.consumptionCityKmL).toBe(21.5);
+  });
+
+  it("create()/update() conservan el comentario con un segmento fuera del enum (raw SQL)", async () => {
+    const svc = new ModelsService(prisma);
+    const brand = await prisma.brand.findFirstOrThrow({ where: { name: "Toyota" } });
+    // La rama de raw SQL: sus listas de columnas se mantienen a mano, así que
+    // un campo nuevo se pierde en silencio si nadie lo agrega ahí.
+    const created = await svc.create({
+      brandId: brand.id,
+      name: `Modelo Raw Comment ${Date.now()}`,
+      segment: `TEST_RAW_SEG_${Date.now()}`,
+      imageUrl: null,
+      galleryUrls: [],
+      comment: "Nota que viaja por el INSERT crudo",
+    });
+    expect(created.comment).toBe("Nota que viaja por el INSERT crudo");
+
+    const updated = await svc.update(created.id, {
+      segment: `TEST_RAW_SEG_UPD_${Date.now()}`,
+      comment: "Nota actualizada",
+    });
+    expect(updated.comment).toBe("Nota actualizada");
+  });
+
   it("listPaged() trae equipmentItems del modelo para prellenar el diálogo admin", async () => {
     const svc = new ModelsService(prisma);
     const brand = await prisma.brand.findFirstOrThrow({ where: { name: "Toyota" } });

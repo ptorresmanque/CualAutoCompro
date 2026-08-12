@@ -55,6 +55,10 @@ model Model {
   segment     String
   imageUrl    String?
   galleryUrls Json      @default("[]")
+  // Nota del editor: dato curioso o aclaración que el admin quiere que el
+  // usuario vea junto al modelo (tooltip en catálogo y comparador, cuadro en
+  // la ficha). Opcional: la inmensa mayoría de los modelos no la tiene.
+  comment     String?   @db.Text
   brand        Brand             @relation(fields: [brandId], references: [id], onDelete: Cascade)
   versions   Version[]
   favorites  Favorite[]
@@ -143,6 +147,8 @@ model EquipmentItem {
   id         String                      @id @default(cuid())
   name       String                      @unique
   category   String
+  /// Nota del editor del ítem — ver `Model.comment`.
+  comment    String?                     @db.Text
   versions   VersionEquipment[]
   brands     BrandEquipment[]
   models     ModelEquipment[]

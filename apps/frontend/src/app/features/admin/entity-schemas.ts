@@ -46,6 +46,7 @@ export const modelSchema = z.object({
   imageUrl: imageUrlField.nullable().optional(),
   galleryUrls: z.array(imageUrlField).default([]),
   equipment: z.array(z.string()).optional(),
+  comment: z.string().max(500).nullable().optional(),
 });
 
 // Sin `year`: es el año que va en el padrón de un 0km comprado hoy, así que
@@ -82,6 +83,7 @@ export const versionSchema = z.object({
 export const equipmentSchema = z.object({
   name: z.string().min(2).max(120),
   category: z.string().min(2).max(60),
+  comment: z.string().max(500).nullable().optional(),
 });
 
 const HEX_REGEX = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
@@ -168,6 +170,8 @@ export interface FieldMeta {
   placeholder?: string;
   help?: string;
   group?: string;
+  /** Solo `text`: renderiza un `<textarea>` en vez de un `<input>`. */
+  multiline?: boolean;
   /** Solo `number`: muestra separador de miles mientras se escribe (montos CLP). */
   thousands?: boolean;
 }
@@ -221,6 +225,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
     { field: 'imageUrl', label: 'Imagen principal', kind: 'imageUrl' },
     { field: 'galleryUrls', label: 'Galería', kind: 'gallery' },
     { field: 'equipment', label: 'Equipamiento de serie', kind: 'multiSelect', optionsApi: '/admin/equipment/options', optionLabel: 'name', placeholder: 'Buscar equipamiento…', help: 'Lo heredan todas las versiones del modelo, existentes y nuevas. Cada versión puede excluirlo individualmente.' },
+    { field: 'comment', label: 'Comentario', kind: 'text', multiline: true, optional: true, help: 'Nota del editor: dato curioso o aclaración. El usuario la ve como tooltip en el catálogo y el comparador, y como cuadro en la ficha del modelo.' },
   ],
   version: [
     { field: 'modelId', label: 'Modelo', kind: 'foreignKey', optionsApi: '/admin/models/options', optionLabel: 'name', group: 'Identificación', sticky: true },
@@ -269,6 +274,7 @@ export const FIELD_METAS: Record<EntityKey, FieldMeta[]> = {
   equipment: [
     { field: 'name', label: 'Nombre', kind: 'text' },
     { field: 'category', label: 'Categoría', kind: 'enumWithOther', optionsApi: '/admin/equipment/categories', placeholder: 'Buscar o crear categoría…', sticky: true },
+    { field: 'comment', label: 'Comentario', kind: 'text', multiline: true, optional: true, help: 'Nota del editor del ítem. Se muestra como tooltip sobre el ítem en la ficha del modelo y en el comparador.' },
   ],
   maintenance: [
     { field: 'versionId', label: 'Versión', kind: 'foreignKey', optionsApi: '/admin/versions/options', optionLabel: 'name', hidden: true, sticky: true },

@@ -7,7 +7,7 @@ import { AdminCrudStore } from '../../shared/ui/admin-crud.store';
 import { AdminEditDialogComponent } from './admin-edit-dialog.component';
 import { STICKY_FIELDS } from './entity-schemas';
 
-interface EquipmentRow { id: string; name: string; category: string; }
+interface EquipmentRow { id: string; name: string; category: string; comment?: string | null; }
 
 @Component({
   selector: 'app-equipment-admin',

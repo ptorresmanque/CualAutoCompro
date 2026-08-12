@@ -42,6 +42,8 @@ import { fuelLabel, segmentLabel, transmissionLabel } from '../../core/types/cat
 interface ModelLite {
   name: string;
   brand: { name: string };
+  /** Nota del editor sobre el modelo; se muestra como tooltip en la tarjeta. */
+  comment?: string | null;
 }
 
 interface AvailableVersionLite {
@@ -75,7 +77,14 @@ interface CompareVersion {
   weightKg?: number | null;
   trunkLiters?: number | null;
   circulationPermitClp?: number | null;
-  equipmentItems?: { equipmentItem: { id: string; name: string; category: string } }[];
+  equipmentItems?: {
+    equipmentItem: {
+      id: string;
+      name: string;
+      category: string;
+      comment?: string | null;
+    };
+  }[];
   mandatoryInsuranceClp?: number | null;
   voluntaryInsuranceClp?: number | null;
   fuelTankLiters?: number | null;
@@ -495,6 +504,22 @@ export class CompareComponent {
       .filter((ei) => ei.equipmentItem.category === category)
       .map((ei) => ei.equipmentItem.name);
     return names.length > 0 ? names.join(', ') : '—';
+  }
+
+  /**
+   * Los mismos ítems, sin unir: la celda los renderiza uno por uno para poder
+   * colgarle a cada uno el tooltip de su nota del editor.
+   */
+  equipmentItemsByCategory(
+    v: CompareVersion,
+    category: string,
+  ): Array<{ name: string; comment?: string | null }> {
+    return (v.equipmentItems ?? [])
+      .filter((ei) => ei.equipmentItem.category === category)
+      .map((ei) => ({
+        name: ei.equipmentItem.name,
+        comment: ei.equipmentItem.comment,
+      }));
   }
 
   constructor() {

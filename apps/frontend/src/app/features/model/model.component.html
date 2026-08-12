@@ -186,7 +186,29 @@
                                 [attr.data-testid]="'spec-row-' + v.id + '-' + group.title + '-' + row.label"
                               >
                                 <dt class="font-mono text-[11px] uppercase tracking-stamp text-graphite">{{ row.label }}</dt>
-                                <dd class="font-semibold text-ink font-sans">{{ row.value }}</dd>
+                                <dd class="font-semibold text-ink font-sans">
+                                  @if (row.items; as entries) {
+                                    <!-- Un elemento por ítem para poder colgar
+                                         el tooltip de su nota. El texto sale
+                                         igual que antes: "Airbags, ABS". -->
+                                    @for (item of entries; track item.name; let last = $last) {
+                                      @if (item.comment) {
+                                        <span
+                                          class="equipment-note"
+                                          [matTooltip]="item.comment"
+                                          matTooltipPosition="above"
+                                          tabindex="0"
+                                          [attr.aria-label]="item.name + ': ' + item.comment"
+                                          [attr.data-testid]="'equipment-note-' + item.name"
+                                        >{{ item.name }}</span>
+                                      } @else {
+                                        <span>{{ item.name }}</span>
+                                      }@if (!last) {<span>, </span>}
+                                    }
+                                  } @else {
+                                    {{ row.value }}
+                                  }
+                                </dd>
                               </div>
                             }
                           </dl>
@@ -212,6 +234,10 @@
         }
       </div>
 
+      <!-- Columna derecha: selector de versión + nota del editor. Van dentro
+           de un mismo wrapper porque el grid es de 3 columnas: sueltos, el
+           cuadro de la nota caería a la fila de abajo en la primera columna. -->
+      <div class="space-y-4">
       <!-- Selector de versión. Antes cada item repetía marca, modelo,
            transmisión, combustible y potencia — todo lo que ya está en la tabla
            de la tab de al lado. Ahora es solo lo que sirve para elegir (nombre
@@ -281,6 +307,20 @@
           </p>
         }
       </aside>
+
+      @if (m.comment; as note) {
+        <aside
+          class="bg-paper-cool border border-ink p-4"
+          data-testid="model-comment"
+        >
+          <h3 class="flex items-center gap-2 font-mono text-[11px] uppercase tracking-stamp text-ink-muted mb-2">
+            <mat-icon class="ficha-note-icon">lightbulb</mat-icon>
+            Nota del editor
+          </h3>
+          <p class="text-sm text-ink-muted leading-relaxed">{{ note }}</p>
+        </aside>
+      }
+      </div>
     </div>
 
     @if (dealers().length > 0) {

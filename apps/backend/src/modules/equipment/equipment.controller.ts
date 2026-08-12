@@ -99,8 +99,8 @@ export const equipmentController = {
   exportCsv: ah(async (_req: Request, res: Response) => {
     const rows = await svc.listAll();
     sendCsv(res, "equipment.csv",
-      ['id', 'name', 'category'],
-      rows.map(e => [e.id, e.name, e.category]),
+      ['id', 'name', 'category', 'comment'],
+      rows.map(e => [e.id, e.name, e.category, e.comment ?? '']),
     );
   }),
 };

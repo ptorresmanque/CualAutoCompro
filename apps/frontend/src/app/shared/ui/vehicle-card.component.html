@@ -52,7 +52,21 @@
 
     <div class="ficha-name-row">
       <h3 class="ficha-name">{{ model().name }}</h3>
-      <span class="ficha-segment">{{ segmentLabel() }}</span>
+      <span class="ficha-name-meta">
+        <span class="ficha-segment">{{ segmentLabel() }}</span>
+        @if (model().comment; as note) {
+          <!-- `tabindex` para que el tooltip también salga con teclado: en
+               touch y con navegación por Tab el hover no existe. -->
+          <mat-icon
+            class="ficha-note-icon"
+            [matTooltip]="note"
+            matTooltipPosition="above"
+            tabindex="0"
+            [attr.aria-label]="'Nota sobre ' + model().name + ': ' + note"
+            [attr.data-testid]="'model-comment-' + model().id"
+          >lightbulb</mat-icon>
+        }
+      </span>
     </div>
 
     <hr class="ficha-rule" />

@@ -311,6 +311,55 @@ describe('ModelComponent — recall badge + dealers', () => {
     expect(equipo!.rows[1].value).toBe('ABS, Airbags');
   });
 
+  it('marca con tooltip solo el equipamiento que trae comentario', () => {
+    const { fixture, cmp } = createWithVersions([
+      {
+        ...{ id: 'v1', name: 'Sport', year: 2025, priceClp: 15000000, transmission: 'AUTOMATIC', fuel: 'BENCINA', powerHp: 150, engineDisplacementCc: 2000, torqueNm: 200, consumptionCityKmL: 12, consumptionHighwayKmL: 16, lengthMm: 4500, widthMm: 1800, heightMm: 1450, weightKg: 1300, trunkLiters: 450 },
+        equipmentItems: [
+          { equipmentItem: { name: 'Airbags', category: 'Seguridad', comment: 'Seis en toda la gama' } },
+          { equipmentItem: { name: 'ABS', category: 'Seguridad' } },
+        ],
+      },
+    ]);
+
+    const fila = cmp
+      .specGroupsFor('v1')
+      .find((g) => g.title === 'Equipamiento')!
+      .rows[0];
+    // El texto de la celda no cambia: sigue siendo "ABS, Airbags".
+    expect(fila.value).toBe('ABS, Airbags');
+    const celda = fixture.nativeElement.querySelector(
+      '[data-testid="spec-row-v1-Equipamiento-Seguridad"]',
+    ) as HTMLElement;
+    expect(celda.textContent).toContain('ABS, Airbags');
+
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="equipment-note-Airbags"]')).not.toBeNull();
+    expect(html.querySelector('[data-testid="equipment-note-ABS"]')).toBeNull();
+  });
+
+  it('muestra el cuadro de nota del editor solo si el modelo tiene comentario', () => {
+    const { fixture, cmp } = createWithVersions([
+      { id: 'v1', name: 'XEI', priceClp: 19990000, year: 2026 },
+    ]);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="model-comment"]'),
+    ).toBeNull();
+
+    (cmp as any).model.update((m: any) => ({
+      ...m,
+      comment: 'Es el último año con motor atmosférico',
+    }));
+    fixture.detectChanges();
+
+    const box = fixture.nativeElement.querySelector(
+      '[data-testid="model-comment"]',
+    ) as HTMLElement;
+    expect(box).not.toBeNull();
+    expect(box.textContent).toContain('Nota del editor');
+    expect(box.textContent).toContain('último año con motor atmosférico');
+  });
+
   it('manda a "Otros" el equipamiento sin categoría', () => {
     const { cmp } = createWithVersions([
       {

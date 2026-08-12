@@ -93,8 +93,8 @@ export const modelsController = {
   exportCsv: ah(async (_req: Request, res: Response) => {
     const rows = await svc.listAll();
     sendCsv(res, "models.csv",
-      ['id', 'name', 'brand', 'segment', 'imageUrl'],
-      rows.map(m => [m.id, m.name, m.brand?.name ?? '', m.segment ?? '', m.imageUrl ?? '']),
+      ['id', 'name', 'brand', 'segment', 'imageUrl', 'comment'],
+      rows.map(m => [m.id, m.name, m.brand?.name ?? '', m.segment ?? '', m.imageUrl ?? '', m.comment ?? '']),
     );
   }),
 };

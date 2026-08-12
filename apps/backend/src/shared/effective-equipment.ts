@@ -29,6 +29,8 @@ export interface EquipmentItemLite {
   id: string;
   name: string;
   category: string;
+  /** Nota del editor del ítem; la UI la muestra como tooltip. */
+  comment: string | null;
 }
 
 export interface EffectiveEquipmentEntry {
@@ -41,7 +43,9 @@ export interface EffectiveEquipmentEntry {
 /** Precedencia al deduplicar: lo propio pisa lo del modelo, que pisa lo de la marca. */
 const SOURCE_RANK: Record<EquipmentSource, number> = { VERSION: 0, MODEL: 1, BRAND: 2 };
 
-const ITEM_SELECT = { select: { id: true, name: true, category: true } } as const;
+const ITEM_SELECT = {
+  select: { id: true, name: true, category: true, comment: true },
+} as const;
 
 /**
  * Devuelve, por `versionId`, el equipamiento efectivo ya ordenado por categoría

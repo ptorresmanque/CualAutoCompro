@@ -1282,6 +1282,56 @@ describe('CompareComponent', () => {
     ).toBeNull();
   });
 
+  it('pone tooltip solo en el equipamiento con comentario, sin cambiar el texto', async () => {
+    const fixture = await mountWith([
+      {
+        id: 'a',
+        name: 'A',
+        equipmentItems: [
+          { equipmentItem: { id: 'ab', name: 'Airbags', category: 'Seguridad', comment: 'Seis en toda la gama' } },
+          { equipmentItem: { id: 'abs', name: 'ABS', category: 'Seguridad' } },
+        ],
+      },
+      { id: 'b', name: 'B', equipmentItems: [] },
+    ]);
+
+    const celda = fixture.nativeElement.querySelector(
+      '[data-testid="equipment-cell-a-Seguridad"]',
+    ) as HTMLElement;
+    expect(celda.textContent).toContain('Airbags, ABS');
+
+    const html = fixture.nativeElement as HTMLElement;
+    const conNota = html.querySelector(
+      '[data-testid="equipment-note-a-Airbags"]',
+    ) as HTMLElement;
+    expect(conNota).not.toBeNull();
+    expect(conNota.getAttribute('aria-label')).toContain('Seis en toda la gama');
+    expect(html.querySelector('[data-testid="equipment-note-a-ABS"]')).toBeNull();
+
+    // Sin equipamiento en la categoría sigue mostrando el guion largo.
+    const vacia = html.querySelector(
+      '[data-testid="equipment-cell-b-Seguridad"]',
+    ) as HTMLElement;
+    expect(vacia.textContent?.trim()).toBe('—');
+  });
+
+  it('muestra la nota del editor del modelo en la tarjeta del comparador', async () => {
+    const fixture = await mountWith([
+      {
+        id: 'a',
+        name: 'A',
+        model: { name: 'Corolla', brand: { name: 'Toyota' }, comment: 'Último año con motor atmosférico' },
+      },
+      { id: 'b', name: 'B', model: { name: 'Civic', brand: { name: 'Honda' } } },
+    ]);
+
+    const html = fixture.nativeElement as HTMLElement;
+    const icon = html.querySelector('[data-testid="model-comment-a"]') as HTMLElement;
+    expect(icon).not.toBeNull();
+    expect(icon.getAttribute('aria-label')).toContain('motor atmosférico');
+    expect(html.querySelector('[data-testid="model-comment-b"]')).toBeNull();
+  });
+
   // ---------------------------------------------------------------------------
   // Costo anual de uso y salidas del comparador
   // ---------------------------------------------------------------------------

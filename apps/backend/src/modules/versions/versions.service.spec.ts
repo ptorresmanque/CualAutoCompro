@@ -41,7 +41,11 @@ describe("VersionsService con enums abiertos", () => {
       },
     });
     const item = await prisma.equipmentItem.create({
-      data: { name: `Aire acondicionado ${Date.now()}`, category: "Confort" },
+      data: {
+        name: `Aire acondicionado ${Date.now()}`,
+        category: "Confort",
+        comment: "Climatizador bizona en las versiones tope",
+      },
     });
     await prisma.versionEquipment.create({
       data: { versionId: v.id, equipmentItemId: item.id },
@@ -51,10 +55,13 @@ describe("VersionsService con enums abiertos", () => {
     const all = await svc.listAll();
     expect(all).toHaveLength(1);
     expect(all[0]?.equipmentItems).toHaveLength(1);
+    // `comment` viaja con el ítem: es lo que la ficha y el comparador muestran
+    // como tooltip sobre el nombre del equipamiento.
     expect(all[0]?.equipmentItems?.[0]?.equipmentItem).toEqual({
       id: item.id,
       name: item.name,
       category: "Confort",
+      comment: "Climatizador bizona en las versiones tope",
     });
   });
 

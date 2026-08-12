@@ -3,6 +3,8 @@ import { z } from "zod";
 export const createEquipmentSchema = z.object({
   name: z.string().min(2).max(120),
   category: z.string().min(2).max(60),
+  // Nota del editor del ítem. `.trim()` por lo mismo que en models.dto.admin.
+  comment: z.string().trim().max(500).nullable().optional(),
 });
 
 export const updateEquipmentSchema = createEquipmentSchema.partial();

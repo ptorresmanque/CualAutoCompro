@@ -11,6 +11,9 @@ export const createModelSchema = z.object({
   segment: z.string().min(1).max(40).regex(ENUM_TOKEN_REGEX),
   imageUrl: imageUrl.nullable().optional(),
   galleryUrls: imageUrlArray.default([]),
+  // `.trim()` para que un comentario de puros espacios llegue como "" y la UI
+  // lo trate como ausente: si no, dispara un tooltip vacío.
+  comment: z.string().trim().max(500).nullable().optional(),
 });
 
 // `brandId` viaja acá igual que en el alta: el selector "Marca" del panel

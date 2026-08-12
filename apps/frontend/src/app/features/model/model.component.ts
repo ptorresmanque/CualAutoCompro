@@ -13,6 +13,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiService } from '../../core/api.service';
 import { CompareStore } from '../../core/compare-store.service';
 import { PopularityService } from '../../core/popularity.service';
@@ -58,7 +59,9 @@ interface ModelVersion {
   trunkLiters?: number | null;
   hasRecall?: boolean | null;
   recallUrl?: string | null;
-  equipmentItems?: { equipmentItem: { name: string; category: string } }[];
+  equipmentItems?: {
+    equipmentItem: { name: string; category: string; comment?: string | null };
+  }[];
 }
 
 interface BrandDealer {
@@ -77,12 +80,26 @@ interface ModelDetail {
   brand: { name: string };
   versions: ModelVersion[];
   galleryUrls?: string[];
+  /** Nota del editor sobre el modelo. */
+  comment?: string | null;
+}
+
+/** Ítem de equipamiento con su nota del editor, para el tooltip por ítem. */
+interface EquipmentEntry {
+  name: string;
+  comment?: string | null;
 }
 
 interface SpecRow {
   label: string;
   value: string;
   zebra: boolean;
+  /**
+   * Solo en las filas de equipamiento: los ítems por separado, para poder
+   * colgarle un tooltip a cada uno. `value` sigue trayendo el mismo texto
+   * (nombres unidos por coma) para el resto de las filas y como fallback.
+   */
+  items?: EquipmentEntry[];
 }
 
 interface SpecGroup {
@@ -103,6 +120,7 @@ interface SpecGroup {
     MatCheckboxModule,
     MatIconModule,
     MatTabsModule,
+    MatTooltipModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -228,24 +246,28 @@ export class ModelComponent {
     // Seguridad", como si la categoría fuera el valor del ítem.
     const items = v.equipmentItems ?? [];
     if (items.length > 0) {
-      const byCategory = new Map<string, string[]>();
+      const byCategory = new Map<string, EquipmentEntry[]>();
       for (const ei of items) {
         const category = ei.equipmentItem.category || 'Otros';
         const list = byCategory.get(category) ?? [];
-        list.push(ei.equipmentItem.name);
+        list.push({ name: ei.equipmentItem.name, comment: ei.equipmentItem.comment });
         byCategory.set(category, list);
       }
       const categories = [...byCategory.keys()].sort((a, b) => a.localeCompare(b));
       groups.push({
         title: 'Equipamiento',
         icon: 'inventory_2',
-        rows: categories.map((category, idx) => ({
-          label: category,
-          value: (byCategory.get(category) ?? [])
-            .sort((a, b) => a.localeCompare(b))
-            .join(', '),
-          zebra: idx % 2 === 1,
-        })),
+        rows: categories.map((category, idx) => {
+          const entries = (byCategory.get(category) ?? []).sort((a, b) =>
+            a.name.localeCompare(b.name),
+          );
+          return {
+            label: category,
+            value: entries.map((e) => e.name).join(', '),
+            items: entries,
+            zebra: idx % 2 === 1,
+          };
+        }),
       });
     }
 
